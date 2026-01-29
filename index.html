@@ -1,87 +1,49 @@
+
+
 <!DOCTYPE html>
 <html lang="ka">
 <head>
-    <meta charset="UTF-8">
-    <title>ტურისტული პლატფორმა ქართველებისთვის</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f8;
-            margin: 0;
-            padding: 0;
-        }
-        header {
-            background: #0a6cff;
-            color: #fff;
-            padding: 20px;
-            text-align: center;
-        }
-        section {
-            padding: 20px;
-        }
-        .box {
-            background: #fff;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        }
-        footer {
-            background: #eee;
-            text-align: center;
-            padding: 15px;
-            font-size: 14px;
-        }
-        button {
-            background: #0a6cff;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>ტურისტული ბილეთები</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f4f6f8; }
+    button { margin: 5px; padding: 10px 15px; cursor: pointer; border-radius: 5px; border: none; background: #0a6cff; color: #fff; }
+  </style>
 </head>
-
 <body>
 
-<header>
-    <h1>✈️ მოგზაურობა მარტივად</h1>
-    <p>ქართველებისთვის შექმნილი ტურისტული საიტი</p>
-</header>
+<h1 id="title">კეთილი იყოს თქვენი მობრძანება 🇬🇪</h1>
+<p id="description">აქ მალე შეძლებთ მგზავრობის ბილეთების ნახვას და შეძენას.</p>
 
-<section>
-    <div class="box">
-        <h2>🏨 სასტუმროები</h2>
-        <p>მოძებნე და დაგეგმე სასტუმროები საქართველოში და საზღვარგარეთ.</p>
-        <button>ძებნა (მალე)</button>
-    </div>
+<div>
+  <button onclick="setLang('ka')">ქართული</button>
+  <button onclick="setLang('en')">English</button>
+  <button onclick="setLang('el')">Ελληνικά</button>
+</div>
 
-    <div class="box">
-        <h2>✈️ ავიაბილეთები</h2>
-        <p>იპოვე იაფი ავიაბილეთები მარტივად.</p>
-        <button>ფრენების ნახვა</button>
-    </div>
+<script>
+const texts = {
+  ka: {
+    title: "კეთილი იყოს თქვენი მობრძანება 🇬🇪",
+    desc: "აქ მალე შეძლებთ მგზავრობის ბილეთების ნახვას და შეძენას."
+  },
+  en: {
+    title: "Welcome 🇬🇧",
+    desc: "Soon you will be able to view and purchase travel tickets."
+  },
+  el: {
+    title: "Καλώς ήρθατε 🇬🇷",
+    desc: "Σύντομα θα μπορείτε να δείτε και να αγοράσετε εισιτήρια ταξιδιού."
+  }
+};
 
-    <div class="box">
-        <h2>🚌 ტურები და ტრანსპორტი</h2>
-        <p>ტურები, ექსკურსიები და ტრანსფერები.</p>
-        <button>დეტალები</button>
-    </div>
-
-    <div class="box">
-        <h2>🤖 AI ასისტენტი</h2>
-        <p>მალე დაემატება ჩატი, რომელიც დაგეხმარება დაგეგმვაში.</p>
-    </div>
-</section>
-
-<footer>
-    © 2026 თემოს ტურისტული პლატფორმა
-</footer>
+function setLang(lang) {
+  document.getElementById('title').innerText = texts[lang].title;
+  document.getElementById('description').innerText = texts[lang].desc;
+}
+</script>
 
 </body>
-</html>https://temo75.github.io/t1/
-
+</html>
 
 
