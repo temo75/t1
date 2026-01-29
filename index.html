@@ -4,7 +4,12 @@
 <head>
   <meta charset="UTF-8">
   <title>ტურისტული ბილეთები</title>
-  <style>
+  <style><div class="box">
+  <h2 id="tickets-title">✈️ ავიაბილეთები</h2>
+  <p id="tickets-desc">იპოვე იაფი ფრენები მარტივად.</p>
+  <button onclick="openTickets()">ფრენების ნახვა</button>
+</div>
+
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
@@ -103,7 +108,10 @@ function setLang(lang) {
   document.getElementById('tickets-desc').innerText = texts[lang].ticketsDesc;
   document.getElementById('tours-title').innerText = texts[lang].toursTitle;
   document.getElementById('tours-desc').innerText = texts[lang].toursDesc;
+}function openTickets() {
+  window.open('https://example.com/tickets', '_blank');
 }
+
 </script>
 
 </body>
