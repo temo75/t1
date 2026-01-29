@@ -1,0 +1,13 @@
+index.html
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+  <meta charset="UTF-8">
+  <title>ტურისტული ბილეთები</title>
+</head>
+<body>
+  <h1>კეთილი იყოს თქვენი მობრძანება 🇬🇪</h1>
+  <p>აქ მალე შეძლებთ მგზავრობის ბილეთების ნახვას.</p>
+</body>
+</html>
+https://temo75.github.io/t1/
