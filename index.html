@@ -1,50 +1,115 @@
 
-
 <!DOCTYPE html>
 <html lang="ka">
 <head>
   <meta charset="UTF-8">
   <title>ტურისტული ბილეთები</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f4f6f8; }
-    button { margin: 5px; padding: 10px 15px; cursor: pointer; border-radius: 5px; border: none; background: #0a6cff; color: #fff; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f4f6f8;
+    }
+    h1 { color: #0a6cff; }
+    button {
+      margin: 5px;
+      padding: 10px 15px;
+      cursor: pointer;
+      border-radius: 5px;
+      border: none;
+      background: #0a6cff;
+      color: #fff;
+    }
+    .box {
+      background: #fff;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
   </style>
 </head>
 <body>
 
+<!-- სათაური და აღწერა -->
 <h1 id="title">კეთილი იყოს თქვენი მობრძანება 🇬🇪</h1>
 <p id="description">აქ მალე შეძლებთ მგზავრობის ბილეთების ნახვას და შეძენას.</p>
 
+<!-- ენის არჩევის ღილაკები -->
 <div>
   <button onclick="setLang('ka')">ქართული</button>
   <button onclick="setLang('en')">English</button>
   <button onclick="setLang('el')">Ελληνικά</button>
 </div>
 
+<!-- მაგალითური მომსახურების განყოფილებები -->
+<div class="box">
+  <h2 id="hotels-title">🏨 სასტუმროები</h2>
+  <p id="hotels-desc">მოძებნე სასტუმროები საქართველოში მარტივად.</p>
+</div>
+
+<div class="box">
+  <h2 id="tickets-title">✈️ ავიაბილეთები</h2>
+  <p id="tickets-desc">იპოვე იაფი ფრენები მარტივად.</p>
+</div>
+
+<div class="box">
+  <h2 id="tours-title">🚌 ტურები</h2>
+  <p id="tours-desc">შეარჩიე ექსკურსიები და ტრანსფერები.</p>
+</div>
+
 <script>
+// ტექსტები სამ ენაზე
 const texts = {
   ka: {
     title: "კეთილი იყოს თქვენი მობრძანება 🇬🇪",
-    desc: "აქ მალე შეძლებთ მგზავრობის ბილეთების ნახვას და შეძენას."
+    description: "აქ მალე შეძლებთ მგზავრობის ბილეთების ნახვას და შეძენას.",
+    hotelsTitle: "🏨 სასტუმროები",
+    hotelsDesc: "მოძებნე სასტუმროები საქართველოში მარტივად.",
+    ticketsTitle: "✈️ ავიაბილეთები",
+    ticketsDesc: "იპოვე იაფი ფრენები მარტივად.",
+    toursTitle: "🚌 ტურები",
+    toursDesc: "შეარჩიე ექსკურსიები და ტრანსფერები."
   },
   en: {
     title: "Welcome 🇬🇧",
-    desc: "Soon you will be able to view and purchase travel tickets."
+    description: "Soon you will be able to view and purchase travel tickets.",
+    hotelsTitle: "🏨 Hotels",
+    hotelsDesc: "Search hotels in Georgia easily.",
+    ticketsTitle: "✈️ Flights",
+    ticketsDesc: "Find cheap flights easily.",
+    toursTitle: "🚌 Tours",
+    toursDesc: "Choose excursions and transfers."
   },
   el: {
     title: "Καλώς ήρθατε 🇬🇷",
-    desc: "Σύντομα θα μπορείτε να δείτε και να αγοράσετε εισιτήρια ταξιδιού."
+    description: "Σύντομα θα μπορείτε να δείτε και να αγοράσετε εισιτήρια ταξιδιού.",
+    hotelsTitle: "🏨 Ξενοδοχεία",
+    hotelsDesc: "Βρείτε ξενοδοχεία στην Γεωργία εύκολα.",
+    ticketsTitle: "✈️ Πτήσεις",
+    ticketsDesc: "Βρείτε φθηνές πτήσεις εύκολα.",
+    toursTitle: "🚌 Εκδρομές",
+    toursDesc: "Επιλέξτε εκδρομές και μεταφορές."
   }
 };
 
+// ფუნქცია ენის შეცვლისთვის
 function setLang(lang) {
   document.getElementById('title').innerText = texts[lang].title;
-  document.getElementById('description').innerText = texts[lang].desc;
-}https://temo75.github.io/t1/
+  document.getElementById('description').innerText = texts[lang].description;
+  document.getElementById('hotels-title').innerText = texts[lang].hotelsTitle;
+  document.getElementById('hotels-desc').innerText = texts[lang].hotelsDesc;
+  document.getElementById('tickets-title').innerText = texts[lang].ticketsTitle;
+  document.getElementById('tickets-desc').innerText = texts[lang].ticketsDesc;
+  document.getElementById('tours-title').innerText = texts[lang].toursTitle;
+  document.getElementById('tours-desc').innerText = texts[lang].toursDesc;
+}
 </script>
 
 </body>
 </html>
+
+
 
 
 
