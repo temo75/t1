@@ -1,99 +1,145 @@
 
+
 <!DOCTYPE html>
-
-
-    
-
-<!-- სათაური და აღწერა -->
-<h1 id="title">კეთილი იყოს თქვენი მობრძანება 🇬🇪</h1>
-<p id="description">აქ მალე შეძლებთ მგზავრობის ბილეთების ნახვას და შეძენას.</p>
-
-<!-- ენის არჩევის ღილაკები -->
-<div>
-  <button onclick="setLang('ka')">ქართული</button>
-  <button onclick="setLang('en')">English</button>
-  <button onclick="setLang('el')">Ελληνικά</button>
-</div>
-
-<!-- მაგალითური მომსახურების განყოფილებები -->
-<div class="box">
-  <h2 id="hotels-title">🏨 სასტუმროები</h2>
-  <p id="hotels-desc">მოძებნე სასტუმროები საქართველოში მარტივად.</p>
-</div>
-
-<div class="box">
-  <h2 id="tickets-title">✈️ ავიაბილეთები</h2>
-  <p id="tickets-desc">იპოვე იაფი ფრენები მარტივად.</p>
-</div>
-
-<div class="box">
-  <h2 id="tours-title">🚌 ტურები</h2>
-  <p id="tours-desc">შეარჩიე ექსკურსიები და ტრანსფერები.</p>
-</div>
-
-<script>
-// ტექსტები სამ ენაზე
-const texts = {
-  ka: {
-    title: "კეთილი იყოს თქვენი მობრძანება 🇬🇪",
-    description: "აქ მალე შეძლებთ მგზავრობის ბილეთების ნახვას და შეძენას.",
-    hotelsTitle: "🏨 სასტუმროები",
-    hotelsDesc: "მოძებნე სასტუმროები საქართველოში მარტივად.",
-    ticketsTitle: "✈️ ავიაბილეთები",
-    ticketsDesc: "იპოვე იაფი ფრენები მარტივად.",
-    toursTitle: "🚌 ტურები",
-    toursDesc: "შეარჩიე ექსკურსიები და ტრანსფერები."
-  },
-  en: {
-    title: "Welcome 🇬🇧",
-    description: "Soon you will be able to view and purchase travel tickets.",
-    hotelsTitle: "🏨 Hotels",
-    hotelsDesc: "Search hotels in Georgia easily.",
-    ticketsTitle: "✈️ Flights",
-    ticketsDesc: "Find cheap flights easily.",
-    toursTitle: "🚌 Tours",
-    toursDesc: "Choose excursions and transfers."
-  },
-  el: {
-    title: "Καλώς ήρθατε 🇬🇷",
-    description: "Σύντομα θα μπορείτε να δείτε και να αγοράσετε εισιτήρια ταξιδιού.",
-    hotelsTitle: "🏨 Ξενοδοχεία",
-    hotelsDesc: "Βρείτε ξενοδοχεία στην Γεωργία εύκολα.",
-    ticketsTitle: "✈️ Πτήσεις",
-    ticketsDesc: "Βρείτε φθηνές πτήσεις εύκολα.",
-    toursTitle: "🚌 Εκδρομές",
-    toursDesc: "Επιλέξτε εκδρομές και μεταφορές."
+<html lang="ka">
+<head>
+<meta charset="UTF-8">
+<title>ტურისტული პლატფორმა</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f8f8f8;
+    color: #333;
   }
-};
+  header {
+    background: #0a6cff;
+    color: white;
+    text-align: center;
+    padding: 30px 20px;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 28px;
+  }
+  nav {
+    background: white;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    padding: 12px;
+    position: sticky;
+    top: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  nav a {
+    text-decoration: none;
+    color: #0a6cff;
+    font-weight: bold;
+    padding: 8px 12px;
+  }
+  section {
+    padding: 50px 20px;
+    max-width: 1000px;
+    margin: auto;
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+  }
+  .card {
+    background: white;
+    border-radius: 10px;
+    padding: 18px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+  }
+  .card h3 {
+    margin-top: 0;
+  }
+  .btn {
+    display: inline-block;
+    background: #0a6cff;
+    color: white;
+    padding: 10px 14px;
+    text-decoration: none;
+    border-radius: 6px;
+    margin-top: 8px;
+  }
+  footer {
+    text-align: center;
+    padding: 18px;
+    background: #222;
+    color: white;
+    margin-top: 40px;
+  }
+</style>
+</head>
+<body>
 
-// ფუნქცია ენის შეცვლისთვის
-function setLang(lang) {
-  document.getElementById('title').innerText = texts[lang].title;
-  document.getElementById('description').innerText = texts[lang].description;
-  document.getElementById('hotels-title').innerText = texts[lang].hotelsTitle;
-  document.getElementById('hotels-desc').innerText = texts[lang].hotelsDesc;
-  document.getElementById('tickets-title').innerText = texts[lang].ticketsTitle;
-  document.getElementById('tickets-desc').innerText = texts[lang].ticketsDesc;
-  document.getElementById('tours-title').innerText = texts[lang].toursTitle;
-  document.getElementById('tours-desc').innerText = texts[lang].toursDesc;
-}function openTickets() {
-  window.open('https://example.com/tickets', '_blank');
-}
+<header>
+  <h1>🌍 შენი ტურისტული პლატფორმა</h1>
+  <p>#hotels #flights #tours</p>
+</header>
 
-</script>
+<nav>
+  <a href="#hotels">🏨 სასტუმროები</a>
+  <a href="#flights">✈️ ფრენები</a>
+  <a href="#tours">🚌 ტურები</a>
+</nav>
 
+<section id="hotels">
+  <h2>🏨 საუკეთესო სასტუმროები</h2>
+  <div class="cards">
+    <div class="card">
+      <h3>თბილისი • სასტუმრო A</h3>
+      <p>საუკეთესო ადგილი, ქალაქის ცენტრში.</p>
+      <a class="btn" href="#">გაიგე მეტი</a>
+    </div>
+    <div class="card">
+      <h3>ბათუმი • ზღვისპირა სასტუმრო</h3>
+      <p>შენი ზღვის პლაჟის სასტუმრო.</p>
+      <a class="btn" href="#">გაიგე მეტი</a>
+    </div>
+  </div>
+</section>
 
+<section id="flights">
+  <h2>✈️ იაფი ფრენები</h2>
+  <div class="cards">
+    <div class="card">
+      <h3>თბილისი → ათენი</h3>
+      <p>ისწავლე ფასები და ჩამოთვლილი ფრენები.</p>
+      <a class="btn" href="#">ფრენების ნახვა</a>
+    </div>
+    <div class="card">
+      <h3>თბილისი → სტამბოლი</h3>
+      <p>საუკეთესო სადღესასწაულო ფრენები.</p>
+      <a class="btn" href="#">ფრენების ნახვა</a>
+    </div>
+  </div>
+</section>
 
-<div class="box">
-  <h2 id="tickets-title">✈️ ავიაბილეთები</h2>
-  <p id="tickets-desc">იპოვე იაფი ფრენები მარტივად.</p>
-  <button onclick="openTickets()">ფრენების ნახვა</button>
-</div>
+<section id="tours">
+  <h2>🚌 საინტერესო ტურები</h2>
+  <div class="cards">
+    <div class="card">
+      <h3>ყაზბეგი ექსკურსია</h3>
+      <p>დღის ექსკურსია მთაში.</p>
+      <a class="btn" href="#">ტურების ნახვა</a>
+    </div>
+    <div class="card">
+      <h3>კახეთი ღვინის ტური</h3>
+      <p>ღვინის გემო და სოფლის სილამაზე.</p>
+      <a class="btn" href="#">ტურების ნახვა</a>
+    </div>
+  </div>
+</section>
 
-}
+<footer>
+  © 2026 შენი ტურისტული პლატფორმა
+</footer>
 
-  
-
-
-
-
+</body>
+</html>
