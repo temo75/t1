@@ -182,5 +182,21 @@ header p {
   © 2026 შენი ტურისტული პლატფორმა
 </footer>
 
+<button onclick="openChat()">💬 ჩატი – სასტუმროს ძებნა</button>
+
+<div id="chatBox" style="display:none; width:400px; height:600px;">
+  <iframe
+    src="YOUR_BOT_URL"
+    width="100%"
+    height="100%"
+    style="border:none;">
+  </iframe>
+</div>
+
+<script>
+function openChat() {
+  document.getElementById("chatBox").style.display = "block";
+}
+</script>
 
 
