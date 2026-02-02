@@ -182,9 +182,29 @@ header p {
   © 2026 შენი ტურისტული პლატფორმა
 </footer>
 
-<button onclick="openChat()">💬 ჩატი – სასტუმროს ძებნა</button>
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+  <meta charset="UTF-8">
+  <title>ჩატბოტი</title>
+  <style>
+    .chatbot-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 350px;
+      height: 500px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      background-color: #fff;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
 
-<div id="chatBox" style="display:none; width:400px; height:600px;">
+<div class="chatbot-container">
   <iframe
     src="YOUR_BOT_URL"
     width="100%"
@@ -193,10 +213,5 @@ header p {
   </iframe>
 </div>
 
-<script>
-function openChat() {
-  document.getElementById("chatBox").style.display = "block";
-}
-</script>
-
-
+</body>
+</html>
