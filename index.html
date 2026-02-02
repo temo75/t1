@@ -1,98 +1,122 @@
 
 
+
 <!DOCTYPE html>
 <html lang="ka">
 <head>
-  <meta charset="UTF-8">
-  <title>ტურისტული პლატფორმა</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f8f8f8;
-      color: #333;
-    }
-    header {
-      background-image: url("https://avia.ge/wp-content/uploads/2022/08/santorini-1024x536.jpg");
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      color: white;
-      text-align: center;
-      padding: 90px 20px;
-      position: relative;
-    }
-    header::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.45);
-      z-index: 1;
-    }
-    header h1, header p {
-      position: relative;
-      z-index: 2;
-    }
-    header h1 {
-      margin: 0;
-      font-size: 28px;
-    }
-    nav {
-      background: white;
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      padding: 12px;
-      position: sticky;
-      top: 0;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    nav a {
-      text-decoration: none;
-      color: #0a6cff;
-      font-weight: bold;
-      padding: 8px 12px;
-    }
-    section {
-      padding: 50px 20px;
-      max-width: 1000px;
-      margin: auto;
-    }
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 20px;
-    }
-    .card {
-      background: white;
-      border-radius: 10px;
-      padding: 18px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.15);
-    }
-    .card h3 {
-      margin-top: 0;
-    }
-    .btn {
-      display: inline-block;
-      background: #0a6cff;
-      color: white;
-      padding: 10px 14px;
-      text-decoration: none;
-      border-radius: 6px;
-      margin-top: 8px;
-    }
-    footer {
-      text-align: center;
-      padding: 18px;
-      background: #222;
-      color: white;
-      margin-top: 40px;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>ტურისტული პლატფორმა</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f8f8f8;
+    color: #333;
+  header {
+  background-image: url("https://avia.ge/wp-content/uploads/2022/08/santorini-1024x536.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: white;
+  text-align: center;
+  padding: 90px 20px;
+  position: relative;
+}
+
+/* მუქი ფენა ტექსტისთვის */
+header::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1;
+}
+
+header h1,
+header p {
+  position: relative;
+  z-index: 2;
+}
+
+
+/* მუქი შავი ფენა, რომ ტექსტი კარგად გამოჩნდეს */
+header::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.45);
+  z-index: 1;
+}
+
+header h1,
+header p {
+  position: relative;
+  z-index: 2;
+}
+
+  header h1 {
+    margin: 0;
+    font-size: 28px;
+  }
+  nav {
+    background: white;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    padding: 12px;
+    position: sticky;
+    top: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  nav a {
+    text-decoration: none;
+    color: #0a6cff;
+    font-weight: bold;
+    padding: 8px 12px;
+  }
+  section {
+    padding: 50px 20px;
+    max-width: 1000px;
+    margin: auto;
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+  }
+  .card {
+    background: white;
+    border-radius: 10px;
+    padding: 18px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+  }
+  .card h3 {
+    margin-top: 0;
+  }
+  .btn {
+    display: inline-block;
+    background: #0a6cff;
+    color: white;
+    padding: 10px 14px;
+    text-decoration: none;
+    border-radius: 6px;
+    margin-top: 8px;
+  }
+  footer {
+    text-align: center;
+    padding: 18px;
+    background: #222;
+    color: white;
+    margin-top: 40px;
+  }
+</style>
 </head>
 <body>
 
@@ -127,5 +151,71 @@
   <h2>✈️ იაფი ფრენები</h2>
   <div class="cards">
     <div class="card">
-      <
- 
+      <h3>თბილისი → ათენი</h3>
+      <p>ისწავლე ფასები და ჩამოთვლილი ფრენები.</p>
+      <a class="btn" href="#">ფრენების ნახვა</a>
+    </div>
+    <div class="card">
+      <h3>თბილისი → სტამბოლი</h3>
+      <p>საუკეთესო სადღესასწაულო ფრენები.</p>
+      <a class="btn" href="#">ფრენების ნახვა</a>
+    </div>
+  </div>
+</section>
+
+<section id="tours">
+  <h2>🚌 საინტერესო ტურები</h2>
+  <div class="cards">
+    <div class="card">
+      <h3>ყაზბეგი ექსკურსია</h3>
+      <p>დღის ექსკურსია მთაში.</p>
+      <a class="btn" href="#">ტურების ნახვა</a>
+    </div>
+    <div class="card">
+      <h3>კახეთი ღვინის ტური</h3>
+      <p>ღვინის გემო და სოფლის სილამაზე.</p>
+      <a class="btn" href="#">ტურების ნახვა</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  © 2026 შენი ტურისტული პლატფორმა
+</footer>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+  <meta charset="UTF-8">
+  <title>ტურისტული ჩატბოტი</title>
+  <style>
+    .chatbot-box {
+      width: 100%;
+      max-width: 420px;
+      height: 600px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+
+<h3>🏨 იპოვე სასტუმრო საბერძნეთში</h3>
+
+<div class="chatbot-box">
+  <iframe
+    src="YOUR_BOT_URL"
+    width="100%"
+    height="100%"
+    style="border:none;"
+    loading="lazy">
+  </iframe>
+</div>
+
+</body>
+</html>
+
+
