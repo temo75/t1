@@ -251,7 +251,8 @@ function saveGitHubSettings(){
   alert('GitHub მონაცემები დამახსოვრებულია ამ ტელეფონში');
 }
 function loadGitHubSettings(){
-  $('ghRepo').value=localStorage.getItem('temoGitHubRepo')||'';
+  $('ghRepo').value='temo75/t1';
+  localStorage.setItem('temoGitHubRepo','temo75/t1');
   $('ghToken').value=localStorage.getItem('temoGitHubToken')||'';
 }
 function toBase64(text){
@@ -260,15 +261,8 @@ function toBase64(text){
   bytes.forEach(b=>binary+=String.fromCharCode(b));
   return btoa(binary);
 }
-function cleanGitHubToken(value){
-  return String(value||'').trim().replace(/^Bearer\s+/i,'').replace(/^token\s+/i,'').replace(/\s+/g,'');
-}
-function cleanGitHubRepo(value){
-  let r=String(value||'').trim().replace(/^https?:\/\/github\.com\//i,'').replace(/\.git$/i,'').replace(/^\/+|\/+$/g,'');
-  return r;
-}
 async function updateWebsite(){
-  const repo=cleanGitHubRepo($('ghRepo').value), token=cleanGitHubToken($('ghToken').value), file=$('siteUpdateFile').files[0];
+  const repo=$('ghRepo').value.trim(), token=$('ghToken').value.trim(), file=$('siteUpdateFile').files[0];
 
   if(!repo || !repo.includes('/')){alert('რეპოზიტორია ჩაწერე ასე: მომხმარებელი/რეპოზიტორია');return}
   if(!token){alert('GitHub Token ჩაწერე');return}
@@ -277,21 +271,14 @@ async function updateWebsite(){
 
   try{
     const headers={
-      Authorization:'token '+token,
+      Authorization:'Bearer '+token,
       Accept:'application/vnd.github+json',
       'X-GitHub-Api-Version':'2022-11-28'
     };
     const url='https://api.github.com/repos/'+repo+'/contents/index.html';
     const old=await fetch(url,{headers});
-
-    if(old.status===401){
-      throw new Error('GitHub Token არასწორია, გაუქმებულია ან ვადაგასულია. შექმენი ახალი Token და ჩასვი მთლიანად.');
-    }
-    if(old.status===403){
-      throw new Error('GitHub-მა წვდომა დაბლოკა. Token-ს უნდა ჰქონდეს repo წვდომა.');
-    }
-
     const content=await file.text();
+
     const body={
       message:'Update index.html from TEMO WORK TRACKER',
       content:toBase64(content)
@@ -313,15 +300,11 @@ async function updateWebsite(){
 
     if(!res.ok){
       const err=await res.json().catch(()=>({}));
-      if(res.status===401) throw new Error('GitHub Token არასწორია, გაუქმებულია ან ვადაგასულია.');
-      if(res.status===403) throw new Error('Token-ს არ აქვს საჭირო repo წვდომა.');
       throw new Error(err.message||'ატვირთვა ვერ მოხერხდა');
     }
 
-    $('ghRepo').value=repo;
-    $('ghToken').value=token;
     saveGitHubSettings();
-    alert('მზადაა! index.html წარმატებით აიტვირთა. ძველი ჩანაწერები არ იშლება.');
+    alert('მზადაა! index.html წარმატებით აიტვირთა.');
     $('siteUpdateFile').value='';
   }catch(err){
     alert('შეცდომა: '+err.message);
