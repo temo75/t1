@@ -200,7 +200,7 @@ function renderCalendar(){
   for(let i=0;i<start;i++)out+='<div class="dayCell empty"></div>';
   for(let d=1;d<=days;d++){
     const key=dateKey(y,m,d), count=jobMap[key]||0;
-    out+=`<div class="dayCell ${count?'hasJobs ':''}${selectedDate===key?'selected':''}" onclick="selectCalendarDate('${key}')"><div class="num">${d}</div>${count?`<div class="jobCount">${count}</div>`:''}</div>`;
+    out+=`<div class="dayCell ${count?'hasJobs ':''}${selectedDate===key?'selected ':''}${key===dateKey(new Date().getFullYear(),new Date().getMonth(),new Date().getDate())?'today':''}" onclick="selectCalendarDate('${key}')"><div class="num">${d}</div>${count?`<div class="jobCount">${count}</div>`:''}</div>`;
   }
   $('calendarGrid').innerHTML=out;
 }
