@@ -19,6 +19,7 @@
 .dayCell .num{font-size:16px;font-weight:bold}
 .dayCell .jobCount{font-size:11px;color:#62e4b5;margin-top:5px}
 .dayCell.hasJobs{border-color:#17684d}
+.dayCell.rested{border-color:#e6a24c}
 .dayCell.selected{border-color:#2999df;box-shadow:0 0 0 1px #2999df inset;background:#102b3b}
 .dayJobsTitle{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .dayJobsTitle span{color:var(--muted);font-size:13px}
@@ -63,6 +64,16 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 <button class="add" onclick="openForm()">＋ სამუშაოს დამატება</button>
 <button class="settingsBtn" onclick="showSettings()">⚙️ სეთინგები</button>
 
+<div class="toolbox">
+<div class="tools">
+<input id="search" placeholder="🔎 ძებნა: ადგილი ან შენიშვნა" oninput="renderList()">
+<select id="statusFilter" onchange="renderList()"><option value="all">ყველა სტატუსი</option><option value="paid">გადახდილი</option><option value="unpaid">მისაღები</option></select>
+<select id="monthFilter" onchange="renderList()"><option value="all">ყველა თვე</option></select>
+</div>
+</div>
+
+<div class="section"><h2>ბოლო სამუშაოები</h2><div id="list"></div></div>
+
 <div class="section">
 <h2>📅 კალენდარი</h2>
 <div class="calendarHead">
@@ -76,10 +87,13 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 <div id="calendarGrid" class="calendarGrid"></div>
 </div>
 
-<div class="section" id="dayJobsSection" style="display:none">
+<div class="section" id="dayJobsSection">
 <div class="dayJobsTitle"><h2 id="dayJobsTitle">აირჩიე თარიღი</h2><span id="dayJobsCount"></span></div>
+<div id="restDayBox" style="margin:10px 0"></div>
 <div id="dayJobs"></div>
 </div>
+
+<div class="section"><h2>თვეების ანგარიში</h2><div id="monthList" class="monthList"></div></div>
 
 
 </div>
@@ -137,6 +151,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 });
 
 let jobs=[];try{jobs=JSON.parse(localStorage.getItem('temoJobs')||'[]')}catch(e){jobs=[]}
+let restDays=[];try{restDays=JSON.parse(localStorage.getItem('temoRestDays')||'[]');if(!Array.isArray(restDays))restDays=[]}catch(e){restDays=[]}
 let editingId=null;
 let calendarDate=new Date();
 let selectedDate='';
@@ -156,7 +171,7 @@ function render(){
  $('days').textContent=jobs.length+' სამუშაო';$('paidDays').textContent=jobs.filter(j=>j.paid).length+' გადახდილი';$('unpaidDays').textContent=jobs.filter(j=>!j.paid).length+' გადასახდელი';
  $('average').textContent=euro(jobs.length?total/jobs.length:0);
  const now=new Date(), key=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');const mj=jobs.filter(j=>(j.date||'').slice(0,7)===key);$('monthTotal').textContent=euro(mj.reduce((a,j)=>a+Number(j.money||0),0));$('monthDays').textContent=mj.length+' დღე';
- renderCalendar();renderDayJobs();
+ updateMonthFilter();renderList();renderCalendar();renderDayJobs();renderMonths();
 }
 function renderList(){
  const q=$('search').value.trim().toLowerCase(), st=$('statusFilter').value, mo=$('monthFilter').value;
@@ -190,7 +205,6 @@ function renderCalendar(){
 }
 function selectCalendarDate(key){
   selectedDate=key;
-  $('dayJobsSection').style.display='block';
   const [y,m,d]=key.split('-').map(Number);
   calendarDate=new Date(y,m-1,d);
   renderCalendar();
@@ -210,9 +224,9 @@ function nextCalendarMonth(){
 function renderDayJobs(){
   const box=$('dayJobs'), title=$('dayJobsTitle'), count=$('dayJobsCount');
   if(!selectedDate){
-    title.textContent='';
+    title.textContent='აირჩიე თარიღი';
     count.textContent='';
-    box.innerHTML='';
+    box.innerHTML='<div class="empty">კალენდარში დააჭირე რიცხვს</div>';
     return;
   }
   const data=jobs.filter(j=>(j.date||'')===selectedDate).sort((a,b)=>String(a.id).localeCompare(String(b.id)));
@@ -229,6 +243,14 @@ function renderDayJobs(){
 
 function openForm(){editingId=null;$('formTitle').textContent='სამუშაოს დამატება';$('date').value=new Date().toISOString().slice(0,10);$('place').value='';$('money').value='';$('note').value='';$('paidCheck').checked=false;$('modal').classList.add('show')}
 function closeForm(){$('modal').classList.remove('show')}
+function toggleRestDay(key){
+  const i=restDays.indexOf(key);
+  if(i>=0) restDays.splice(i,1);
+  else restDays.push(key);
+  localStorage.setItem('temoRestDays',JSON.stringify(restDays));
+  renderCalendar();
+  renderDayJobs();
+}
 function editJob(id){const j=jobs.find(x=>x.id===id);if(!j)return;editingId=id;$('formTitle').textContent='სამუშაოს შეცვლა';$('date').value=j.date||'';$('place').value=j.place||'';$('money').value=j.money||'';$('note').value=j.note||'';$('paidCheck').checked=!!j.paid;$('modal').classList.add('show')}
 function saveJob(){const amount=Number($('money').value);if(!amount||amount<=0){alert('თანხა მიუთითე');return}const data={date:$('date').value,place:$('place').value.trim(),money:amount,note:$('note').value.trim(),paid:$('paidCheck').checked};if(!data.date){alert('თარიღი მიუთითე');return}if(editingId){const i=jobs.findIndex(x=>x.id===editingId);jobs[i]={...jobs[i],...data}}else jobs.push({id:Date.now().toString()+Math.random().toString(16).slice(2),...data});save();closeForm();render()}
 function togglePaid(id){const j=jobs.find(x=>x.id===id);if(j){j.paid=!j.paid;save();render()}}
