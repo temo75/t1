@@ -19,7 +19,7 @@
 .dayCell .num{font-size:16px;font-weight:bold}
 .dayCell .jobCount{font-size:11px;color:#62e4b5;margin-top:5px}
 .dayCell.hasJobs{border-color:#17684d}
-.dayCell.selected{border-color:#2999df;box-shadow:0 0 0 1px #2999df inset;background:#102b3b}
+.dayCell.selected{border-color:#2999df;box-shadow:0 0 0 1px #2999df inset;background:#102b3b}.dayCell.today{border-color:#2999ff;box-shadow:0 0 7px #2999ff,0 0 16px #2999ff,0 0 25px rgba(41,153,255,.65);background:#0d2638}.dayCell.today .num{color:#6bb8ff;text-shadow:0 0 6px #2999ff,0 0 12px #2999ff}
 .dayJobsTitle{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .dayJobsTitle span{color:var(--muted);font-size:13px}
 footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(max-width:900px){.app{padding:12px}header h1{font-size:23px}.grid{grid-template-columns:1fr 1fr}.grid .card:first-child{grid-column:1/-1}.amount{font-size:26px}.tools{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.item{grid-template-columns:1fr}.right{text-align:left}.actions{justify-content:flex-start}.monthRow{grid-template-columns:1fr auto}.monthRow span{grid-column:1/-1}}
@@ -188,7 +188,8 @@ function renderCalendar(){
   for(let i=0;i<start;i++)out+='<div class="dayCell empty"></div>';
   for(let d=1;d<=days;d++){
     const key=dateKey(y,m,d), count=jobMap[key]||0;
-    out+=`<div class="dayCell ${count?'hasJobs ':''}${selectedDate===key?'selected':''}" onclick="selectCalendarDate('${key}')"><div class="num">${d}</div>${count?`<div class="jobCount">${count}</div>`:''}</div>`;
+    const now=new Date(), todayKey=dateKey(now.getFullYear(),now.getMonth(),now.getDate());
+    out+=`<div class="dayCell ${count?'hasJobs ':''}${selectedDate===key?'selected ':''}${todayKey===key?'today':''}" onclick="selectCalendarDate('${key}')"><div class="num">${d}</div>${count?`<div class="jobCount">${count}</div>`:''}</div>`;
   }
   $('calendarGrid').innerHTML=out;
 }
