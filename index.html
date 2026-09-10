@@ -34,7 +34,7 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 
 
 
-.logoutBtn{display:block;width:100%;max-width:520px;margin:12px auto 28px;padding:10px 14px;border-radius:10px;font-size:14px;opacity:.9}
+.logoutBtn{display:block;width:100%;max-width:520px;margin:24px auto 10px;padding:10px 14px;border-radius:10px;font-size:14px;opacity:.9}
 </style>
 </head>
 <body>
@@ -89,7 +89,6 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 <div id="settingsPage" class="pageHidden">
 <header><div><h1>⚙️ სეთინგები</h1><small>მონაცემების მართვა</small></div></header>
 <button class="settingsBtn settingsBack" onclick="showMain()">← მთავარ გვერდზე დაბრუნება</button>
-<button class="settingsBtn logoutBtn" onclick="logout()">🔐 გამოსვლა</button>
 <div class="section">
 <h2>🔄 საიტის განახლება</h2>
 <div class="tools">
@@ -104,6 +103,7 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 <div class="meta" style="margin-top:12px">ატვირთული ფაილი უნდა იყოს index.html. Token მხოლოდ ამ ტელეფონში ინახება.</div>
 </div>
 
+<button class="settingsBtn logoutBtn" onclick="logout()">🔐 გამოსვლა</button>
 <div class="section"><h2>მონაცემების სარეზერვო ასლი</h2><div class="backup"><button class="backupBtn" onclick="exportData()">⬇ მონაცემების შენახვა</button><button class="backupBtn" onclick="document.getElementById('importFile').click()">⬆ მონაცემების აღდგენა</button><button class="backupBtn danger" onclick="clearAll()">🗑 ყველაფრის წაშლა</button></div><input id="importFile" type="file" accept="application/json" hidden onchange="importData(event)"></div>
 </div>
 <footer>TEMO WORK TRACKER • მონაცემები ამ ტელეფონში ინახება</footer>
