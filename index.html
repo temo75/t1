@@ -63,16 +63,6 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 <button class="add" onclick="openForm()">＋ სამუშაოს დამატება</button>
 <button class="settingsBtn" onclick="showSettings()">⚙️ სეთინგები</button>
 
-<div class="toolbox">
-<div class="tools">
-<input id="search" placeholder="🔎 ძებნა: ადგილი ან შენიშვნა" oninput="renderList()">
-<select id="statusFilter" onchange="renderList()"><option value="all">ყველა სტატუსი</option><option value="paid">გადახდილი</option><option value="unpaid">მისაღები</option></select>
-<select id="monthFilter" onchange="renderList()"><option value="all">ყველა თვე</option></select>
-</div>
-</div>
-
-<div class="section"><h2>ბოლო სამუშაოები</h2><div id="list"></div></div>
-
 <div class="section">
 <h2>📅 კალენდარი</h2>
 <div class="calendarHead">
@@ -86,12 +76,10 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 <div id="calendarGrid" class="calendarGrid"></div>
 </div>
 
-<div class="section" id="dayJobsSection">
+<div class="section" id="dayJobsSection" style="display:none">
 <div class="dayJobsTitle"><h2 id="dayJobsTitle">აირჩიე თარიღი</h2><span id="dayJobsCount"></span></div>
 <div id="dayJobs"></div>
 </div>
-
-<div class="section"><h2>თვეების ანგარიში</h2><div id="monthList" class="monthList"></div></div>
 
 
 </div>
@@ -168,7 +156,7 @@ function render(){
  $('days').textContent=jobs.length+' სამუშაო';$('paidDays').textContent=jobs.filter(j=>j.paid).length+' გადახდილი';$('unpaidDays').textContent=jobs.filter(j=>!j.paid).length+' გადასახდელი';
  $('average').textContent=euro(jobs.length?total/jobs.length:0);
  const now=new Date(), key=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');const mj=jobs.filter(j=>(j.date||'').slice(0,7)===key);$('monthTotal').textContent=euro(mj.reduce((a,j)=>a+Number(j.money||0),0));$('monthDays').textContent=mj.length+' დღე';
- updateMonthFilter();renderList();renderCalendar();renderDayJobs();renderMonths();
+ renderCalendar();renderDayJobs();
 }
 function renderList(){
  const q=$('search').value.trim().toLowerCase(), st=$('statusFilter').value, mo=$('monthFilter').value;
@@ -196,12 +184,13 @@ function renderCalendar(){
   for(let i=0;i<start;i++)out+='<div class="dayCell empty"></div>';
   for(let d=1;d<=days;d++){
     const key=dateKey(y,m,d), count=jobMap[key]||0;
-    out+=`<div class="dayCell ${count?'hasJobs ':''}${selectedDate===key?'selected':''}" onclick="selectCalendarDate('${key}')"><div class="num">${d}</div>${count?`<div class="jobCount">${count} სამუშაო</div>`:''}</div>`;
+    out+=`<div class="dayCell ${count?'hasJobs ':''}${selectedDate===key?'selected':''}" onclick="selectCalendarDate('${key}')"><div class="num">${d}</div>${count?`<div class="jobCount">${count}</div>`:''}</div>`;
   }
   $('calendarGrid').innerHTML=out;
 }
 function selectCalendarDate(key){
   selectedDate=key;
+  $('dayJobsSection').style.display='block';
   const [y,m,d]=key.split('-').map(Number);
   calendarDate=new Date(y,m-1,d);
   renderCalendar();
@@ -221,9 +210,9 @@ function nextCalendarMonth(){
 function renderDayJobs(){
   const box=$('dayJobs'), title=$('dayJobsTitle'), count=$('dayJobsCount');
   if(!selectedDate){
-    title.textContent='აირჩიე თარიღი';
+    title.textContent='';
     count.textContent='';
-    box.innerHTML='<div class="empty">კალენდარში დააჭირე რიცხვს</div>';
+    box.innerHTML='';
     return;
   }
   const data=jobs.filter(j=>(j.date||'')===selectedDate).sort((a,b)=>String(a.id).localeCompare(String(b.id)));
