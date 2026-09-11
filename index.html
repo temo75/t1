@@ -118,8 +118,8 @@ color:#fff;box-shadow:0 0 6px rgba(41,169,255,.45);}
 </div>
 
 <div class="section"><h2>მონაცემების სარეზერვო ასლი</h2><div class="backup"><button class="backupBtn" onclick="document.getElementById('importFile').click()">⬆ მონაცემების აღდგენა</button><button class="backupBtn danger" onclick="clearAll()">🗑 ყველაფრის წაშლა</button></div><input id="importFile" type="file" accept="application/json" hidden onchange="importData(event)"></div>
-<button class="temo-exit-btn" onclick="logout()">🔐 გამოსვლა</button>
 </div>
+<button class="temo-exit-btn" onclick="logout()">🔐 გამოსვლა</button>
 <footer>TEMO WORK TRACKER • მონაცემები ამ ტელეფონში ინახება</footer>
 </div>
 
@@ -252,6 +252,7 @@ function togglePaid(id){const j=jobs.find(x=>x.id===id);if(j){j.paid=!j.paid;sav
 function delJob(id){if(confirm('წავშალოთ ეს ჩანაწერი?')){jobs=jobs.filter(x=>x.id!==id);save();render()}}
 function showSettings(){document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.remove('pageHidden');window.scrollTo(0,0)}
 function showMain(){document.getElementById('settingsPage').classList.add('pageHidden');document.getElementById('mainPage').classList.remove('pageHidden');window.scrollTo(0,0)}
+function logout(){localStorage.removeItem(AUTH_KEY);window.location.reload()}
 function exportData(){const blob=new Blob([JSON.stringify({version:1,exported:new Date().toISOString(),jobs},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='TEMO_WORK_TRACKER_BACKUP.json';a.click();URL.revokeObjectURL(a.href)}
 function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result),arr=Array.isArray(d)?d:d.jobs;if(!Array.isArray(arr))throw 0;if(confirm('არსებული მონაცემები შეიცვალოს ამ სარეზერვო ასლით?')){jobs=arr;save();render();alert('მონაცემები აღდგენილია')}}catch(x){alert('ეს სარეზერვო ფაილი არასწორია')}e.target.value=''};r.readAsText(f)}
 function clearAll(){if(confirm('ნამდვილად წავშალოთ ყველა სამუშაო?')){if(confirm('ბოლოჯერ გეკითხები — ყველაფერი წაიშლება. გაგრძელება?')){jobs=[];save();render()}}}
