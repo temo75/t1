@@ -92,6 +92,7 @@ color:#fff;box-shadow:0 0 6px rgba(41,169,255,.45);}
 .noteEntry{padding:12px;margin-bottom:9px;border-radius:12px;background:#09161e;border:1px solid #1e3542;color:#eaf5f7;line-height:1.5}
 .noteEntry .noteDate{color:#62b8ff;font-size:12px}
 .noteEntry .noteStatus{margin-top:4px}
+.noteEntry .noteLine{display:flex;align-items:center;gap:6px;font-size:18px;min-height:28px}.noteEntry .noteLine .noteAmount{margin-left:auto;font-size:18px;font-weight:bold}.noteEntry .jobStatusMark{margin-left:2px}
 .noteEntry .notePaid{color:#6ee7a8}
 .noteEntry .noteUnpaid{color:#ff9a9a}
 .noteClose{width:100%;margin-top:8px;padding:12px;border:0;border-radius:11px;background:#183445;color:#fff;cursor:pointer;font-weight:bold}
@@ -321,10 +322,9 @@ function openCalendarNote(){
   const data=(selectedDate?jobs.filter(j=>(j.date||'')===selectedDate):[...jobs])
     .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.id).localeCompare(String(a.id)));
   box.innerHTML=data.length?data.map(j=>{
-    const status=j.paid
-      ? `<div class="noteStatus notePaid">ამ დროს იქ ვიმუშავე — გადაიხადა ${euro(j.money)}</div>`
-      : `<div class="noteStatus noteUnpaid">ამ დროს იქ ვიმუშავე — ჯერ არ გადაუხდია</div>`;
-    return `<div class="noteEntry"><div class="noteDate">${formatDate(j.date)}</div><b>${esc(j.place||'სამუშაო')}</b>${status}${j.note?`<div class="meta">შენიშვნა: ${esc(j.note)}</div>`:''}</div>`;
+    const mark=`<span class="jobStatusMark ${j.paid?'paid':'unpaid'}">${j.paid?'✓':'+'}</span>`;
+    const amount=j.paid?`<span class="noteAmount">${euro(j.money)}</span>`:'';
+    return `<div class="noteEntry"><div class="noteDate">${formatDate(j.date)}</div><div class="noteLine"><b>${esc(j.place||'სამუშაო')}</b>${mark}${amount}</div>${j.note?`<div class="meta">შენიშვნა: ${esc(j.note)}</div>`:''}</div>`;
   }).join(''):'<div class="noteEntry">ჯერ ჩანაწერი არ არის.</div>';
   $('noteModal').classList.add('show');
 }
