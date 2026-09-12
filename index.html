@@ -96,6 +96,12 @@ color:#fff;box-shadow:0 0 6px rgba(41,169,255,.45);}
 .noteEntry .noteUnpaid{color:#ff9a9a}
 .noteClose{width:100%;margin-top:8px;padding:12px;border:0;border-radius:11px;background:#183445;color:#fff;cursor:pointer;font-weight:bold}
 </style>
+<style id="temo-job-status-style">
+.jobStatusMark{display:inline-block;margin-left:6px;font-weight:900;font-size:20px;line-height:1}
+.jobStatusMark.unpaid{color:#f2f2f2}
+.jobStatusMark.paid{color:#63ff9a;text-shadow:0 0 5px #63ff9a,0 0 12px #63ff9a,0 0 20px #63ff9a}
+.jobDateLine{font-size:13px;opacity:.85;margin-top:3px}
+</style>
 </head>
 <body>
 <div id="uploadOverlay"><div class="uploadBox"><div class="uploadSpinner" id="uploadSpinner"></div><div class="uploadCheck" id="uploadCheck">✓</div><div class="uploadBurst" id="uploadBurst"></div></div></div>
@@ -228,7 +234,7 @@ const euro=n=>'€'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:0
 $('today').textContent=new Date().toLocaleDateString('ka-GE');
 
 function save(){localStorage.setItem('temoJobs',JSON.stringify(jobs))}
-function formatDate(s){if(!s)return '';const [y,m,d]=s.split('-');return d+'.'+m+'.'+y}
+function formatDate(s){if(!s)return '';const [y,m,d]=s.split('-');const months=['იანვარი','თებერვალი','მარტი','აპრილი','მაისი','ივნისი','ივლისი','აგვისტო','სექტემბერი','ოქტომბერი','ნოემბერი','დეკემბერი'];return Number(d)+' '+months[Number(m)-1]+' '+y}
 function monthName(key){const [y,m]=key.split('-');return new Date(y,Number(m)-1,1).toLocaleDateString('ka-GE',{year:'numeric',month:'long'})}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 
@@ -245,7 +251,7 @@ function renderList(){
  const q=$('search').value.trim().toLowerCase(), st=$('statusFilter').value, mo=$('monthFilter').value;
  const data=[...jobs].filter(j=>(!q||`${j.place||''} ${j.note||''}`.toLowerCase().includes(q))&&(st==='all'||(st==='paid'?j.paid:!j.paid))&&(mo==='all'||(j.date||'').slice(0,7)===mo)).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
  $('list').innerHTML=data.length?'':'<div class="empty">ამ ძიებით სამუშაო ვერ მოიძებნა</div>';
- data.forEach(j=>{const d=document.createElement('div');d.className='item';d.innerHTML=`<div><b>${esc(j.place||'სამუშაო')}</b><div class="meta">${formatDate(j.date)}${j.note?' • '+esc(j.note):''}</div></div><div class="right"><b>${euro(j.money)}</b><div class="status ${j.paid?'paid':'unpaid'}">${j.paid?'✓ გადახდილია':'● მისაღებია'}</div><div class="actions"><button class="small" onclick="togglePaid('${j.id}')">${j.paid?'გადაუხდელია':'გადახდა მივიღე'}</button><button class="small edit" onclick="editJob('${j.id}')">✎ შეცვლა</button><button class="small danger" onclick="delJob('${j.id}')">✕ წაშლა</button></div></div>`;$('list').appendChild(d)})
+ data.forEach(j=>{const d=document.createElement('div');d.className='item';d.innerHTML=`<div><b>${esc(j.place||'სამუშაო')} <span class="jobStatusMark ${j.paid?'paid':'unpaid'}">${j.paid?'✓':'+'}</span></b><div class="jobDateLine">${formatDate(j.date)}</div>${j.note?`<div class="meta">${esc(j.note)}</div>`:''}</div><div class="right"><b>${euro(j.money)}</b><div class="actions"><button class="small" onclick="togglePaid('${j.id}')">${j.paid?'გადაუხდელია':'გადახდა მივიღე'}</button><button class="small edit" onclick="editJob('${j.id}')">✎ შეცვლა</button><button class="small danger" onclick="delJob('${j.id}')">✕ წაშლა</button></div></div>`;$('list').appendChild(d)})
 }
 function renderMonths(){
  const map={};jobs.forEach(j=>{const k=(j.date||'').slice(0,7)||'უცნობი';if(!map[k])map[k]={total:0,paid:0,count:0};map[k].total+=Number(j.money||0);if(j.paid)map[k].paid+=Number(j.money||0);map[k].count++});
@@ -305,7 +311,7 @@ function renderDayJobs(){
   data.forEach(j=>{
     const d=document.createElement('div');
     d.className='item';
-    d.innerHTML=`<div><b>${esc(j.place||'სამუშაო')}</b><div class="meta">${formatDate(j.date)}${j.note?' • '+esc(j.note):''}</div></div><div class="right"><b>${euro(j.money)}</b><div class="status ${j.paid?'paid':'unpaid'}">${j.paid?'✓ გადახდილია':'● მისაღებია'}</div><div class="actions"><button class="small" onclick="togglePaid('${j.id}')">${j.paid?'გადაუხდელია':'გადახდა მივიღე'}</button><button class="small edit" onclick="editJob('${j.id}')">✎ შეცვლა</button><button class="small danger" onclick="delJob('${j.id}')">✕ წაშლა</button></div></div>`;
+    d.innerHTML=`<div><b>${esc(j.place||'სამუშაო')} <span class="jobStatusMark ${j.paid?'paid':'unpaid'}">${j.paid?'✓':'+'}</span></b><div class="jobDateLine">${formatDate(j.date)}</div>${j.note?`<div class="meta">${esc(j.note)}</div>`:''}</div><div class="right"><b>${euro(j.money)}</b><div class="actions"><button class="small" onclick="togglePaid('${j.id}')">${j.paid?'გადაუხდელია':'გადახდა მივიღე'}</button><button class="small edit" onclick="editJob('${j.id}')">✎ შეცვლა</button><button class="small danger" onclick="delJob('${j.id}')">✕ წაშლა</button></div></div>`;
     box.appendChild(d);
   });
 }
