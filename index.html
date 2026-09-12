@@ -81,6 +81,21 @@ color:#fff;box-shadow:0 0 6px rgba(41,169,255,.45);}
 .temo-logo{width:72px;height:72px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
 .temo-logo svg{width:72px;height:72px;display:block;filter:drop-shadow(0 0 6px rgba(41,153,255,.55))}
 </style>
+<style id="temo-calendar-note">
+.calendarNoteRow{display:flex;justify-content:flex-end;margin-top:10px}
+.calendarNoteBtn{padding:7px 12px;border-radius:10px;border:1px solid #2999ff;background:#102b3b;color:#fff;font-size:13px;cursor:pointer;box-shadow:0 0 6px rgba(41,153,255,.45)}
+.calendarNoteBtn:active{transform:scale(.96)}
+.noteModal{position:fixed;inset:0;z-index:10001;display:none;align-items:center;justify-content:center;padding:18px;background:#000b}
+.noteModal.show{display:flex}
+.noteBox{width:min(430px,100%);max-height:75vh;overflow:auto;background:linear-gradient(145deg,#0c1a23,#10232f);border:1px solid #2999ff;border-radius:20px;padding:20px;box-shadow:0 20px 60px #000c}
+.noteBox h2{margin:0 0 14px;color:#fff;font-size:20px}
+.noteEntry{padding:12px;margin-bottom:9px;border-radius:12px;background:#09161e;border:1px solid #1e3542;color:#eaf5f7;line-height:1.5}
+.noteEntry .noteDate{color:#62b8ff;font-size:12px}
+.noteEntry .noteStatus{margin-top:4px}
+.noteEntry .notePaid{color:#6ee7a8}
+.noteEntry .noteUnpaid{color:#ff9a9a}
+.noteClose{width:100%;margin-top:8px;padding:12px;border:0;border-radius:11px;background:#183445;color:#fff;cursor:pointer;font-weight:bold}
+</style>
 </head>
 <body>
 <div id="uploadOverlay"><div class="uploadBox"><div class="uploadSpinner" id="uploadSpinner"></div><div class="uploadCheck" id="uploadCheck">✓</div><div class="uploadBurst" id="uploadBurst"></div></div></div>
@@ -129,6 +144,7 @@ color:#fff;box-shadow:0 0 6px rgba(41,169,255,.45);}
   <div>ორშ</div><div>სამ</div><div>ოთხ</div><div>ხუთ</div><div>პარ</div><div>შაბ</div><div>კვი</div>
 </div>
 <div id="calendarGrid" class="calendarGrid"></div>
+<div class="calendarNoteRow"><button class="calendarNoteBtn" onclick="openCalendarNote()">📝 ნოუთი</button></div>
 </div>
 
 <div class="section" id="dayJobsSection" style="display:none">
@@ -166,6 +182,14 @@ color:#fff;box-shadow:0 0 6px rgba(41,169,255,.45);}
 <div id="deleteAuthError" class="deleteAuthError"></div>
 <div class="deleteAuthRow"><button class="deleteCancel" onclick="closeDeleteAuth()">გაუქმება</button><button class="deleteConfirm" onclick="confirmDeleteAll()">წაშლა</button></div>
 </div></div>
+<div class="noteModal" id="noteModal" onclick="if(event.target===this)closeCalendarNote()">
+<div class="noteBox">
+<h2>📝 სამუშაოს ჩანაწერები</h2>
+<div id="noteEntries"></div>
+<button class="noteClose" onclick="closeCalendarNote()">დახურვა</button>
+</div>
+</div>
+
 <div class="modal" id="modal"><div class="form">
 <h2 id="formTitle">სამუშაოს დამატება</h2>
 <label>თარიღი</label><input id="date" type="date">
@@ -285,6 +309,20 @@ function renderDayJobs(){
     box.appendChild(d);
   });
 }
+
+function openCalendarNote(){
+  const box=$('noteEntries');
+  const data=(selectedDate?jobs.filter(j=>(j.date||'')===selectedDate):[...jobs])
+    .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.id).localeCompare(String(a.id)));
+  box.innerHTML=data.length?data.map(j=>{
+    const status=j.paid
+      ? `<div class="noteStatus notePaid">ამ დროს იქ ვიმუშავე — გადაიხადა ${euro(j.money)}</div>`
+      : `<div class="noteStatus noteUnpaid">ამ დროს იქ ვიმუშავე — ჯერ არ გადაუხდია</div>`;
+    return `<div class="noteEntry"><div class="noteDate">${formatDate(j.date)}</div><b>${esc(j.place||'სამუშაო')}</b>${status}${j.note?`<div class="meta">შენიშვნა: ${esc(j.note)}</div>`:''}</div>`;
+  }).join(''):'<div class="noteEntry">ჯერ ჩანაწერი არ არის.</div>';
+  $('noteModal').classList.add('show');
+}
+function closeCalendarNote(){$('noteModal').classList.remove('show')}
 
 function openForm(){editingId=null;$('formTitle').textContent='სამუშაოს დამატება';$('date').value=new Date().toISOString().slice(0,10);$('place').value='';$('money').value='';$('note').value='';$('paidCheck').checked=false;$('modal').classList.add('show')}
 function closeForm(){$('modal').classList.remove('show')}
