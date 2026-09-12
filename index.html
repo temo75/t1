@@ -285,9 +285,21 @@ function togglePrivacy(){
   if(!app||!eye)return;
   app.classList.toggle('privacy-hidden');
   const hidden=app.classList.contains('privacy-hidden');
+  localStorage.setItem('temoPrivacyHidden',hidden?'yes':'no');
   eye.textContent=hidden?'🙈':'👁';
   eye.title=hidden?'თანხების ჩვენება':'თანხების დამალვა';
   eye.setAttribute('aria-label',hidden?'თანხების ჩვენება':'თანხების დამალვა');
+}
+function loadPrivacyState(){
+  const app=document.querySelector('.app');
+  const eye=$('privacyEye');
+  if(!app||!eye)return;
+  const hidden=localStorage.getItem('temoPrivacyHidden')==='yes';
+  app.classList.toggle('privacy-hidden',hidden);
+  eye.textContent=hidden?'🙈':'👁';
+  eye.title=hidden?'თანხების ჩვენება':'თანხების დამალვა';
+  eye.setAttribute('aria-label',hidden?'თანხების ჩვენება':'თანხების დამალვა');
+}
 }
 function showSettings(){document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.remove('pageHidden');window.scrollTo(0,0)}
 function showMain(){document.getElementById('settingsPage').classList.add('pageHidden');document.getElementById('mainPage').classList.remove('pageHidden');window.scrollTo(0,0)}
@@ -297,6 +309,7 @@ function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileRe
 function clearAll(){if(confirm('ნამდვილად წავშალოთ ყველა სამუშაო?')){if(confirm('ბოლოჯერ გეკითხები — ყველაფერი წაიშლება. გაგრძელება?')){jobs=[];save();render()}}}
 $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeForm()});
 render();
+loadPrivacyState();
 loadGitHubSettings();
 $('ghToken').addEventListener('input',()=>{localStorage.setItem('temoGitHubToken',$('ghToken').value.trim())});
 
