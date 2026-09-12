@@ -300,7 +300,6 @@ function loadPrivacyState(){
   eye.title=hidden?'თანხების ჩვენება':'თანხების დამალვა';
   eye.setAttribute('aria-label',hidden?'თანხების ჩვენება':'თანხების დამალვა');
 }
-}
 function showSettings(){document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.remove('pageHidden');window.scrollTo(0,0)}
 function showMain(){document.getElementById('settingsPage').classList.add('pageHidden');document.getElementById('mainPage').classList.remove('pageHidden');window.scrollTo(0,0)}
 function logout(){localStorage.removeItem(AUTH_KEY);window.location.reload()}
