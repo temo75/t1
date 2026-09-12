@@ -59,6 +59,18 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 font-size:13px;cursor:pointer;border:1px solid #29a9ff;background:rgba(0,20,40,.55);
 color:#fff;box-shadow:0 0 6px rgba(41,169,255,.45);}
 </style>
+<style id="temo-info-style">
+.infoRow{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 auto 8px}
+.infoBtn{width:34px;height:34px;border-radius:50%;border:1px solid #29a9ff;background:#102b3b;color:#fff;font-size:18px;font-weight:bold;cursor:pointer;box-shadow:0 0 6px #2999ff,0 0 14px rgba(41,153,255,.6);text-shadow:0 0 6px #2999ff}
+.infoModal{display:none;position:fixed;inset:0;background:#000a;align-items:center;justify-content:center;padding:18px;z-index:20}
+.infoModal.show{display:flex}
+.infoBox{width:min(430px,100%);background:linear-gradient(145deg,#0d1b24,#10232f);border:1px solid #2999ff;border-radius:22px;padding:28px;text-align:center;box-shadow:0 0 12px #2999ff,0 0 35px rgba(41,153,255,.45),0 20px 60px #0009;animation:infoIn .28s ease}
+.infoBox .infoIcon{font-size:42px;margin-bottom:8px;text-shadow:0 0 12px #2999ff}
+.infoBox h2{margin:0 0 14px;color:#eef7f7;font-size:21px}
+.infoBox p{margin:8px 0;color:#cbd8dc;line-height:1.6;font-size:16px}
+.infoClose{margin-top:18px;padding:10px 24px;border:1px solid #2999ff;border-radius:12px;background:#183445;color:#fff;cursor:pointer;box-shadow:0 0 7px #2999ff}
+@keyframes infoIn{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:scale(1)}}
+</style>
 </head>
 <body>
 <div id="uploadOverlay"><div class="uploadBox"><div class="uploadSpinner" id="uploadSpinner"></div><div class="uploadCheck" id="uploadCheck">✓</div><div class="uploadBurst" id="uploadBurst"></div></div></div>
@@ -106,7 +118,7 @@ color:#fff;box-shadow:0 0 6px rgba(41,169,255,.45);}
 <div class="dayJobsTitle"><h2 id="dayJobsTitle">აირჩიე თარიღი</h2><span id="dayJobsCount"></span></div>
 <div id="dayJobs"></div>
 </div>
-<button class="settingsBtn" onclick="showSettings()">⚙️ სეთინგები</button>
+<div class="infoRow"><button class="settingsBtn" onclick="showSettings()">⚙️ სეთინგები</button><button class="infoBtn" onclick="showInfo()" aria-label="ინფორმაცია">i</button></div>
 </div>
 
 <div id="settingsPage" class="pageHidden">
@@ -130,6 +142,14 @@ color:#fff;box-shadow:0 0 6px rgba(41,169,255,.45);}
 <button class="temo-exit-btn" onclick="logout()">🔐 გამოსვლა</button>
 <footer>TEMO WORK TRACKER • მონაცემები ამ ტელეფონში ინახება</footer>
 </div>
+
+<div class="infoModal" id="infoModal" onclick="if(event.target===this)closeInfo()"><div class="infoBox">
+<div class="infoIcon">ⓘ</div>
+<h2>TEMO სამუშაო ანგარიში</h2>
+<p>ეს საიტი შექმნა<br><b>თემო ფხოველიშვილმა</b></p>
+<p>This website was created by<br><b>Temo Pkhovelishvili</b></p>
+<button class="infoClose" onclick="closeInfo()">დახურვა • Close</button>
+</div></div>
 
 <div class="modal" id="modal"><div class="form">
 <h2 id="formTitle">სამუშაოს დამატება</h2>
@@ -257,21 +277,14 @@ function editJob(id){const j=jobs.find(x=>x.id===id);if(!j)return;editingId=id;$
 function saveJob(){const amount=Number($('money').value);if(!amount||amount<=0){alert('თანხა მიუთითე');return}const data={date:$('date').value,place:$('place').value.trim(),money:amount,note:$('note').value.trim(),paid:$('paidCheck').checked};if(!data.date){alert('თარიღი მიუთითე');return}if(editingId){const i=jobs.findIndex(x=>x.id===editingId);jobs[i]={...jobs[i],...data}}else jobs.push({id:Date.now().toString()+Math.random().toString(16).slice(2),...data});save();closeForm();render()}
 function togglePaid(id){const j=jobs.find(x=>x.id===id);if(j){j.paid=!j.paid;save();render()}}
 function delJob(id){if(confirm('წავშალოთ ეს ჩანაწერი?')){jobs=jobs.filter(x=>x.id!==id);save();render()}}
+function showInfo(){$("infoModal").classList.add("show")}
+function closeInfo(){$("infoModal").classList.remove("show")}
 function showSettings(){document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.remove('pageHidden');window.scrollTo(0,0)}
 function showMain(){document.getElementById('settingsPage').classList.add('pageHidden');document.getElementById('mainPage').classList.remove('pageHidden');window.scrollTo(0,0)}
 function logout(){localStorage.removeItem(AUTH_KEY);window.location.reload()}
 function exportData(){const blob=new Blob([JSON.stringify({version:1,exported:new Date().toISOString(),jobs},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='TEMO_WORK_TRACKER_BACKUP.json';a.click();URL.revokeObjectURL(a.href)}
 function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result),arr=Array.isArray(d)?d:d.jobs;if(!Array.isArray(arr))throw 0;if(confirm('არსებული მონაცემები შეიცვალოს ამ სარეზერვო ასლით?')){jobs=arr;save();render();alert('მონაცემები აღდგენილია')}}catch(x){alert('ეს სარეზერვო ფაილი არასწორია')}e.target.value=''};r.readAsText(f)}
-function clearAll(){
-  const pass=prompt('🔐 დაადასტურე, რომ შენ ხარ\nშეიყვანე საიტზე შესვლის პაროლი:');
-  if(pass===null)return;
-  if(pass!==AUTH_PASSWORD){alert('პაროლი არასწორია — მონაცემები არ წაიშალა');return}
-  if(confirm('ნამდვილად წავშალოთ ყველა სამუშაო?')){
-    if(confirm('ბოლოჯერ გეკითხები — ყველაფერი წაიშლება. გაგრძელება?')){
-      jobs=[];save();render();
-    }
-  }
-}
+function clearAll(){if(confirm('ნამდვილად წავშალოთ ყველა სამუშაო?')){if(confirm('ბოლოჯერ გეკითხები — ყველაფერი წაიშლება. გაგრძელება?')){jobs=[];save();render()}}}
 $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeForm()});
 render();
 loadGitHubSettings();
