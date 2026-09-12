@@ -88,7 +88,7 @@ color:#fff;box-shadow:0 0 6px rgba(41,169,255,.45);}
 .noteModal{position:fixed;inset:0;z-index:10001;display:none;align-items:center;justify-content:center;padding:18px;background:#000b}
 .noteModal.show{display:flex}
 .noteBox{width:min(430px,100%);max-height:75vh;overflow:auto;background:linear-gradient(145deg,#0c1a23,#10232f);border:1px solid #2999ff;border-radius:20px;padding:20px;box-shadow:0 20px 60px #000c}
-.noteBox h2{margin:0 0 14px;color:#fff;font-size:20px}
+.noteBox h2{margin:0 0 14px;color:#62b8ff;font-size:20px;text-shadow:0 0 5px #2999ff,0 0 12px rgba(41,153,255,.8),0 0 22px rgba(41,153,255,.45)}
 .noteEntry{padding:12px;margin-bottom:9px;border-radius:12px;background:#09161e;border:1px solid #1e3542;color:#eaf5f7;line-height:1.5}
 .noteEntry .noteDate{color:#62b8ff;font-size:12px}
 .noteEntry .noteStatus{margin-top:4px}
@@ -191,7 +191,7 @@ color:#fff;box-shadow:0 0 6px rgba(41,169,255,.45);}
 </div></div>
 <div class="noteModal" id="noteModal" onclick="if(event.target===this)closeCalendarNote()">
 <div class="noteBox">
-<h2>📝 სამუშაოს ჩანაწერები</h2>
+<h2>ჩანაწერები</h2>
 <div id="noteEntries"></div>
 <button class="noteClose" onclick="closeCalendarNote()">დახურვა</button>
 </div>
