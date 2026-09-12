@@ -48,7 +48,6 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 /* TEMO privacy eye */
 .temo-eye-btn{width:38px;height:38px;padding:0;border:1px solid #2999ff;border-radius:50%;background:#102b3b;color:#fff;font-size:20px;line-height:36px;cursor:pointer;box-shadow:0 0 6px #2999ff,0 0 14px rgba(41,153,255,.65);display:flex;align-items:center;justify-content:center}
 .temo-eye-btn:active{transform:scale(.94)}
-.card-eye{position:absolute;top:9px;right:9px;width:27px;height:27px;font-size:14px;line-height:25px;box-shadow:0 0 4px #2999ff,0 0 9px rgba(41,153,255,.5)}
 .privacy-hidden .amount,.privacy-hidden .mini b,.privacy-hidden #dayJobs .right > b{visibility:hidden}
 </style>
 
@@ -69,6 +68,11 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 font-size:13px;cursor:pointer;border:1px solid #29a9ff;background:rgba(0,20,40,.55);
 color:#fff;box-shadow:0 0 6px rgba(41,169,255,.45);}
 </style>
+
+<style id="temo-logo-inline">
+.temo-logo{width:72px;height:72px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
+.temo-logo svg{width:72px;height:72px;display:block;filter:drop-shadow(0 0 6px rgba(41,153,255,.55))}
+</style>
 </head>
 <body>
 <div id="uploadOverlay"><div class="uploadBox"><div class="uploadSpinner" id="uploadSpinner"></div><div class="uploadCheck" id="uploadCheck">✓</div><div class="uploadBurst" id="uploadBurst"></div></div></div>
@@ -84,10 +88,24 @@ color:#fff;box-shadow:0 0 6px rgba(41,169,255,.45);}
 
 <div class="app">
 <div id="mainPage">
-<header><div><h1 class="temo-3d">TEMO</h1><small>ჩემი სამუშაო და გადახდები</small></div><div id="today"></div></header>
+<header><div><div class="temo-logo" aria-label="TEMO"><svg viewBox="0 0 180 180" role="img" aria-label="TEMO logo">
+<defs><linearGradient id="tlb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fe8ff"/><stop offset=".45" stop-color="#2999ff"/><stop offset="1" stop-color="#006cff"/></linearGradient><linearGradient id="tls" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#b9c7cc"/><stop offset="1" stop-color="#4f626b"/></linearGradient><filter id="tlglow"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+<circle cx="90" cy="90" r="79" fill="#050a0f" stroke="url(#tls)" stroke-width="5"/>
+<circle cx="90" cy="90" r="73" fill="none" stroke="#15202a" stroke-width="4"/>
+<g fill="none" stroke="url(#tlb)" stroke-width="4.5" stroke-linecap="round" filter="url(#tlglow)">
+<path d="M90 17 A73 73 0 0 1 138 35"/><path d="M145 40 A73 73 0 0 1 163 72"/>
+<path d="M163 108 A73 73 0 0 1 145 140"/><path d="M138 145 A73 73 0 0 1 90 163"/>
+<path d="M72 163 A73 73 0 0 1 40 145"/><path d="M35 138 A73 73 0 0 1 17 108"/>
+<path d="M17 72 A73 73 0 0 1 35 40"/><path d="M40 35 A73 73 0 0 1 72 17"/>
+</g>
+<path d="M32 82 C47 60 66 55 88 62 C101 66 108 68 123 67 C140 66 151 72 157 84 C140 78 124 77 108 80 C83 85 58 84 32 82Z" fill="none" stroke="url(#tlb)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M43 70 C57 50 78 43 98 49 C110 52 119 58 127 66" fill="none" stroke="#2999ff" stroke-width="4" stroke-linecap="round"/>
+<text x="90" y="113" text-anchor="middle" font-family="Arial,sans-serif" font-size="36" font-weight="900" letter-spacing="2" fill="url(#tls)" filter="url(#tlglow)">TEMO</text>
+<path d="M55 127 H125" stroke="#2999ff" stroke-width="3" stroke-linecap="round" filter="url(#tlglow)"/>
+</svg></div><small>ჩემი სამუშაო და გადახდები</small></div><div style="display:flex;align-items:center;gap:8px"><button id="privacyEye" class="temo-eye-btn" onclick="togglePrivacy()" aria-label="თანხების დამალვა" title="თანხების დამალვა">👁</button><div id="today"></div></div></header>
 
 <div class="grid">
-<div class="card blue" style="position:relative"><button id="privacyEye" class="temo-eye-btn card-eye" onclick="togglePrivacy()" aria-label="თანხების დამალვა" title="თანხების დამალვა">👁</button><div class="label">🔨 სულ ნამუშევარი</div><div class="amount" id="total">€0</div><div class="meta" id="days">0 სამუშაო</div></div>
+<div class="card blue"><div class="label">🔨 სულ ნამუშევარი</div><div class="amount" id="total">€0</div><div class="meta" id="days">0 სამუშაო</div></div>
 <div class="card green"><div class="label">💶 მიღებული</div><div class="amount" id="paid">€0</div><div class="meta" id="paidDays">0 გადახდილი</div></div>
 <div class="card red"><div class="label">⏳ მისაღები</div><div class="amount" id="unpaid">€0</div><div class="meta" id="unpaidDays">0 გადასახდელი</div></div>
 </div>
