@@ -48,7 +48,8 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 /* TEMO privacy eye */
 .temo-eye-btn{width:38px;height:38px;padding:0;border:1px solid #2999ff;border-radius:50%;background:#102b3b;color:#fff;font-size:20px;line-height:36px;cursor:pointer;box-shadow:0 0 6px #2999ff,0 0 14px rgba(41,153,255,.65);display:flex;align-items:center;justify-content:center}
 .temo-eye-btn:active{transform:scale(.94)}
-.privacy-hidden .amount,.privacy-hidden #average,.privacy-hidden #monthTotal,.privacy-hidden .item .right > b,.privacy-hidden .monthRow > b,.privacy-hidden .monthRow span:last-child,.privacy-hidden #dayJobsSection .right > b{visibility:hidden!important}
+.card-eye{position:absolute;top:9px;right:9px;width:27px;height:27px;font-size:14px;line-height:25px;box-shadow:0 0 4px #2999ff,0 0 9px rgba(41,153,255,.5)}
+.privacy-hidden .amount,.privacy-hidden .mini b,.privacy-hidden #dayJobs .right > b{visibility:hidden}
 </style>
 
 <style id="temo-3d-title">
@@ -83,10 +84,10 @@ color:#fff;box-shadow:0 0 6px rgba(41,169,255,.45);}
 
 <div class="app">
 <div id="mainPage">
-<header><div><h1 class="temo-3d">TEMO</h1><small>ჩემი სამუშაო და გადახდები</small></div><div style="display:flex;align-items:center;gap:8px"><button id="privacyEye" class="temo-eye-btn" onclick="togglePrivacy()" aria-label="თანხების დამალვა" title="თანხების დამალვა">👁</button><div id="today"></div></div></header>
+<header><div><h1 class="temo-3d">TEMO</h1><small>ჩემი სამუშაო და გადახდები</small></div><div id="today"></div></header>
 
 <div class="grid">
-<div class="card blue"><div class="label">🔨 სულ ნამუშევარი</div><div class="amount" id="total">€0</div><div class="meta" id="days">0 სამუშაო</div></div>
+<div class="card blue" style="position:relative"><button id="privacyEye" class="temo-eye-btn card-eye" onclick="togglePrivacy()" aria-label="თანხების დამალვა" title="თანხების დამალვა">👁</button><div class="label">🔨 სულ ნამუშევარი</div><div class="amount" id="total">€0</div><div class="meta" id="days">0 სამუშაო</div></div>
 <div class="card green"><div class="label">💶 მიღებული</div><div class="amount" id="paid">€0</div><div class="meta" id="paidDays">0 გადახდილი</div></div>
 <div class="card red"><div class="label">⏳ მისაღები</div><div class="amount" id="unpaid">€0</div><div class="meta" id="unpaidDays">0 გადასახდელი</div></div>
 </div>
