@@ -8,24 +8,6 @@
 :root{--bg:#071117;--panel:#0d1b24;--panel2:#10232f;--text:#eef7f7;--muted:#9fb0b8;--green:#18c98b;--red:#ef5b67;--blue:#2999df;--orange:#e6a24c;--line:#1e3542}
 *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#061015,#0a1821);color:var(--text)}button,input,select,textarea{font:inherit}.app{max-width:1100px;margin:auto;padding:18px}header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}h1{margin:0;font-size:28px;color:#62e4b5}header small{color:var(--muted)}#today{color:var(--muted);white-space:nowrap}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.card,.section,.toolbox{background:linear-gradient(145deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:18px;padding:18px}.card .label{color:var(--muted);font-size:14px}.amount{font-size:30px;font-weight:bold;margin-top:10px}.blue{border-color:#1b4d6c}.green{border-color:#17684d}.red{border-color:#6e2931}.add{width:100%;margin:16px 0;padding:18px;border:0;border-radius:16px;background:linear-gradient(90deg,#119c72,#22d59a);color:white;font-size:19px;font-weight:bold;cursor:pointer}.section{margin-top:14px}.section h2{margin:0 0 14px;font-size:20px}.toolbox{margin-top:14px}.tools{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px}.tools input,.tools select,.form input,.form textarea{width:100%;padding:13px;border-radius:10px;border:1px solid #29404c;background:#071117;color:white;font-size:16px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.mini{background:#09161e;border:1px solid var(--line);border-radius:14px;padding:13px}.mini b{display:block;font-size:20px;margin-top:5px}.mini span{color:var(--muted);font-size:13px}.item{display:grid;grid-template-columns:1fr auto;gap:12px;padding:14px;margin:9px 0;background:#0a151d;border:1px solid #1a2c37;border-radius:14px}.meta{color:var(--muted);font-size:13px;margin-top:5px}.right{text-align:right}.status{font-size:13px;font-weight:bold;margin:7px 0}.paid{color:#4fe2a4}.unpaid{color:#ff7c84}.actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:5px}.small,.backupBtn{background:#183445;color:white;border:1px solid #285269;border-radius:9px;padding:8px 10px;cursor:pointer}.edit{background:#26394a}.danger{background:#4a2228;border-color:#74333d}.empty{text-align:center;color:var(--muted);padding:28px}.modal{display:none;position:fixed;inset:0;background:#000a;align-items:center;justify-content:center;padding:16px;z-index:5}.modal.show{display:flex}.form{width:min(520px,100%);max-height:92vh;overflow:auto;background:#0c1a23;border:1px solid #28404d;border-radius:20px;padding:20px}.form h2{margin:0 0 8px}label{display:block;margin:12px 0 5px;color:#c7d4d8}.checkrow{display:flex;align-items:center;gap:9px;margin-top:14px;color:#c7d4d8}.checkrow input{width:auto}.row{display:flex;gap:10px;margin-top:18px}.save{flex:1;background:var(--green);border:0;border-radius:10px;padding:14px;color:#062016;font-weight:bold;font-size:16px}.cancel{background:#20323b;color:white;border:0;border-radius:10px;padding:14px}.backup{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.backupBtn{flex:1;min-width:150px}.settingsBtn{width:100%;margin:0 0 16px;padding:16px;border:1px solid #285269;border-radius:16px;background:#183445;color:white;font-size:18px;font-weight:bold;cursor:pointer}.pageHidden{display:none}.settingsBack{margin-bottom:14px}.monthList{display:grid;gap:8px}.monthRow{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:12px;background:#09161e;border:1px solid var(--line);border-radius:12px}.monthRow span{color:var(--muted);font-size:13px}.monthRow b{font-size:16px}footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(max-width:700px){.app{padding:12px}header h1{font-size:23px}.grid{grid-template-columns:1fr 1fr}.grid .card:first-child{grid-column:1/-1}.amount{font-size:26px}.tools{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.item{grid-template-columns:1fr}.right{text-align:left}.actions{justify-content:flex-start}.monthRow{grid-template-columns:1fr auto}.monthRow span{grid-column:1/-1}}
 
-.calendarHead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
-.calendarNav{display:flex;gap:7px}
-.calendarNav button{background:#183445;color:white;border:1px solid #285269;border-radius:9px;padding:8px 12px;cursor:pointer}
-.calendarTitle{font-size:20px;font-weight:bold}
-.calendarWeek{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:5px}
-.calendarWeek div{text-align:center;color:var(--muted);font-size:12px;padding:5px 0}
-.calendarGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
-.dayCell{min-height:58px;padding:7px 4px;border:1px solid var(--line);border-radius:10px;background:#09161e;color:white;text-align:center;cursor:pointer}
-.dayCell.empty{visibility:hidden;cursor:default}
-.dayCell .num{font-size:16px;font-weight:bold}
-.dayCell .jobCount{font-size:11px;color:#62b8ff;margin-top:5px}
-.dayCell.hasJobs{border-color:#17684d}.dayCell.today{border-color:#2999ff;box-shadow:0 0 6px #2999ff,0 0 14px rgba(41,153,255,.65);text-shadow:0 0 6px #2999ff}
-.dayCell.selected{border-color:#2999df;box-shadow:0 0 0 1px #2999df inset;background:#102b3b}
-.dayJobsTitle{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.dayJobsTitle span{color:var(--muted);font-size:13px}
-footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(max-width:700px){.app{padding:12px}header h1{font-size:23px}.grid{grid-template-columns:1fr 1fr}.grid .card:first-child{grid-column:1/-1}.amount{font-size:26px}.tools{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.item{grid-template-columns:1fr}.right{text-align:left}.actions{justify-content:flex-start}.monthRow{grid-template-columns:1fr auto}.monthRow span{grid-column:1/-1}}
-
-
 #loginScreen{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px;background:linear-gradient(135deg,#061015,#0a1821)}
 #loginScreen.hidden{display:none}
 .loginBox{width:min(400px,100%);background:linear-gradient(145deg,#0d1b24,#10232f);border:1px solid #1e3542;border-radius:22px;padding:28px;text-align:center;box-shadow:0 20px 60px #0008}
@@ -34,9 +16,28 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 .loginBox button{width:100%;padding:15px;border:0;border-radius:11px;background:linear-gradient(90deg,#119c72,#22d59a);color:#062016;font-weight:bold;font-size:17px;cursor:pointer}
 #loginError{min-height:20px;color:#ff7c84;font-size:14px;margin-top:10px}
 
-</style>
 
-<style id="temo-upload-animation">#uploadOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:10000;align-items:center;justify-content:center}#uploadOverlay.show{display:flex}.uploadAnim{width:150px;height:150px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative}.uploadSpinner{width:86px;height:86px;border:7px solid #183445;border-top-color:#2999ff;border-right-color:#2999ff;border-radius:50%;animation:temoSpin 1s linear infinite;box-shadow:0 0 12px #2999ff,0 0 28px rgba(41,153,255,.7)}.uploadCheck{display:none;font-size:64px;color:#62d98b;text-shadow:0 0 8px #62d98b,0 0 22px rgba(98,217,139,.8);animation:temoCheck .35s ease-out forwards}.uploadAnim.done .uploadSpinner{display:none}.uploadAnim.done .uploadCheck{display:block}.uploadAnim.burst{animation:temoBurst .65s ease-in forwards}@keyframes temoSpin{to{transform:rotate(360deg)}}@keyframes temoCheck{from{transform:scale(.2);opacity:0}to{transform:scale(1);opacity:1}}@keyframes temoBurst{0%{transform:scale(1);opacity:1}45%{transform:scale(1.18);opacity:1}100%{transform:scale(2.8);opacity:0}}.uploadPiece{position:absolute;width:7px;height:13px;background:#62d98b;border-radius:3px;opacity:0;pointer-events:none}.uploadAnim.burst .uploadPiece{animation:temoPiece .65s ease-out forwards}@keyframes temoPiece{0%{opacity:0;transform:translate(0,0) rotate(0)}25%{opacity:1}100%{opacity:0;transform:translate(var(--tx),var(--ty)) rotate(var(--rot))}}
+/* GitHub upload animation */
+#uploadOverlay{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.72);align-items:center;justify-content:center;overflow:hidden}
+#uploadOverlay.show{display:flex}
+.uploadAnim{width:150px;height:150px;position:relative;display:flex;align-items:center;justify-content:center}
+.uploadSpinner{width:86px;height:86px;border:7px solid rgba(41,153,255,.18);border-top-color:#2999ff;border-right-color:#2999ff;border-radius:50%;animation:temoSpin 1s linear infinite;box-shadow:0 0 10px #2999ff,0 0 25px rgba(41,153,255,.7)}
+.uploadCheck{display:none;width:86px;height:86px;border:4px solid #62e0a4;border-radius:50%;align-items:center;justify-content:center;font-size:54px;font-weight:bold;color:#62e0a4;text-shadow:0 0 10px #62e0a4;box-shadow:0 0 12px #62e0a4,0 0 30px rgba(98,224,164,.75);animation:temoCheck .35s ease-out}
+#uploadOverlay.success .uploadSpinner{display:none}
+#uploadOverlay.success .uploadCheck{display:flex}
+.uploadParticle{position:absolute;width:9px;height:9px;border-radius:50%;background:#62e0a4;box-shadow:0 0 8px #62e0a4;opacity:0}
+#uploadOverlay.burst .uploadAnim{animation:temoBurst .55s ease-out forwards}
+#uploadOverlay.burst .uploadParticle{animation:temoFall .8s ease-in forwards}
+.uploadParticle:nth-child(3){--dx:-70px;transform:translate(-42px,-20px)}
+.uploadParticle:nth-child(4){--dx:65px;transform:translate(40px,-25px)}
+.uploadParticle:nth-child(5){--dx:-45px;transform:translate(-28px,42px)}
+.uploadParticle:nth-child(6){--dx:42px;transform:translate(30px,38px)}
+.uploadParticle:nth-child(7){--dx:-90px;transform:translate(-55px,12px)}
+.uploadParticle:nth-child(8){--dx:90px;transform:translate(55px,8px)}
+@keyframes temoSpin{to{transform:rotate(360deg)}}
+@keyframes temoCheck{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes temoBurst{0%{transform:scale(1)}45%{transform:scale(1.16)}100%{transform:scale(.15);opacity:0}}
+@keyframes temoFall{0%{opacity:0;transform:translate(0,0) scale(.4)}20%{opacity:1}100%{opacity:0;transform:translate(var(--dx,0),115px) rotate(180deg) scale(1.1)}}
 </style>
 </head>
 <body>
@@ -67,21 +68,6 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 
 <button class="add" onclick="openForm()">＋ სამუშაოს დამატება</button>
 <button class="settingsBtn" onclick="showSettings()">⚙️ სეთინგები</button>
-
-<div class="section">
-<h2>📅 კალენდარი</h2>
-<div class="calendarHead">
-  <button class="calendarNav" onclick="prevCalendarMonth()">‹</button>
-  <div id="calendarTitle" class="calendarTitle"></div>
-  <button class="calendarNav" onclick="nextCalendarMonth()">›</button>
-</div>
-<div class="calendarWeek"><div>ორშ</div><div>სამ</div><div>ოთხ</div><div>ხუთ</div><div>პარ</div><div>შაბ</div><div>კვი</div></div>
-<div id="calendarGrid" class="calendarGrid"></div>
-</div>
-<div class="section" id="dayJobsSection" style="display:none">
-<div class="dayJobsTitle"><h2 id="dayJobsTitle">აირჩიე თარიღი</h2><span id="dayJobsCount"></span></div>
-<div id="dayJobs"></div>
-</div>
 
 <div class="toolbox">
 <div class="tools">
@@ -130,7 +116,6 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 <div class="row"><button class="cancel" onclick="closeForm()">გაუქმება</button><button class="save" onclick="saveJob()">შენახვა</button></div>
 </div></div>
 
-<div id="uploadOverlay"><div id="uploadAnim" class="uploadAnim"><div class="uploadSpinner"></div><div class="uploadCheck">✓</div><i class="uploadPiece" style="--tx:-90px;--ty:55px;--rot:-45deg"></i><i class="uploadPiece" style="--tx:80px;--ty:70px;--rot:35deg"></i><i class="uploadPiece" style="--tx:-55px;--ty:95px;--rot:65deg"></i><i class="uploadPiece" style="--tx:50px;--ty:105px;--rot:-55deg"></i><i class="uploadPiece" style="--tx:-105px;--ty:-35px;--rot:20deg"></i><i class="uploadPiece" style="--tx:105px;--ty:-25px;--rot:-30deg"></i></div></div>
 <script>
 
 const AUTH_KEY='temoWorkTrackerAuthorized';
@@ -153,8 +138,6 @@ window.addEventListener('DOMContentLoaded',()=>{
 
 let jobs=[];try{jobs=JSON.parse(localStorage.getItem('temoJobs')||'[]')}catch(e){jobs=[]}
 let editingId=null;
-let calendarDate=new Date();
-let selectedDate='';
 const $=id=>document.getElementById(id);
 const euro=n=>'€'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2});
 $('today').textContent=new Date().toLocaleDateString('ka-GE');
@@ -183,11 +166,6 @@ function renderMonths(){
  const map={};jobs.forEach(j=>{const k=(j.date||'').slice(0,7)||'უცნობი';if(!map[k])map[k]={total:0,paid:0,count:0};map[k].total+=Number(j.money||0);if(j.paid)map[k].paid+=Number(j.money||0);map[k].count++});
  const keys=Object.keys(map).sort().reverse();$('monthList').innerHTML=keys.length?'':'<div class="empty">ჯერ მონაცემები არ არის</div>';keys.forEach(k=>{$('monthList').innerHTML+=`<div class="monthRow"><div><b>${k==='უცნობი'?k:monthName(k)}</b><br><span>${map[k].count} სამუშაო • მიღებული ${euro(map[k].paid)}</span></div><b>${euro(map[k].total)}</b><span>მისაღები ${euro(map[k].total-map[k].paid)}</span></div>`})
 }
-function renderCalendar(){const y=calendarDate.getFullYear(),m=calendarDate.getMonth();$('calendarTitle').textContent=new Date(y,m,1).toLocaleDateString('ka-GE',{year:'numeric',month:'long'});const first=new Date(y,m,1),start=(first.getDay()+6)%7,days=new Date(y,m+1,0).getDate(),jobMap={};jobs.forEach(j=>{if(j.date){jobMap[j.date]=(jobMap[j.date]||0)+1}});let out='';for(let i=0;i<start;i++)out+='<div class="dayCell empty"></div>';for(let d=1;d<=days;d++){const key=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'),count=jobMap[key]||0,now=new Date(),todayKey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');out+=`<div class="dayCell ${count?'hasJobs ':''}${key===todayKey?'today ':''}${selectedDate===key?'selected':''}" onclick="selectCalendarDate('${key}')"><div class="num">${d}</div>${count?`<div class="jobCount">${count}</div>`:''}</div>`}$('calendarGrid').innerHTML=out}
-function selectCalendarDate(key){selectedDate=key;$('dayJobsSection').style.display='block';const[y,m,d]=key.split('-').map(Number);calendarDate=new Date(y,m-1,d);renderCalendar();renderDayJobs();setTimeout(()=>$('dayJobsSection').scrollIntoView({behavior:'smooth',block:'start'}),30)}
-function prevCalendarMonth(){calendarDate=new Date(calendarDate.getFullYear(),calendarDate.getMonth()-1,1);selectedDate='';renderCalendar();renderDayJobs()}
-function nextCalendarMonth(){calendarDate=new Date(calendarDate.getFullYear(),calendarDate.getMonth()+1,1);selectedDate='';renderCalendar();renderDayJobs()}
-function renderDayJobs(){const box=$('dayJobs'),title=$('dayJobsTitle'),count=$('dayJobsCount');if(!selectedDate){title.textContent='';count.textContent='';box.innerHTML='';return}const data=jobs.filter(j=>(j.date||'')===selectedDate).sort((a,b)=>String(a.id).localeCompare(String(b.id)));title.textContent=formatDate(selectedDate);count.textContent=data.length+' სამუშაო';box.innerHTML=data.length?'':'<div class="empty">ამ დღეს სამუშაო არ არის</div>';data.forEach(j=>{const d=document.createElement('div');d.className='item';d.innerHTML=`<div><b>${esc(j.place||'სამუშაო')}</b><div class="meta">${formatDate(j.date)}${j.note?' • '+esc(j.note):''}</div></div><div class="right"><b>${euro(j.money)}</b><div class="status ${j.paid?'paid':'unpaid'}">${j.paid?'✓ გადახდილია':'● მისაღებია'}</div></div>`;box.appendChild(d)})}
 function openForm(){editingId=null;$('formTitle').textContent='სამუშაოს დამატება';$('date').value=new Date().toISOString().slice(0,10);$('place').value='';$('money').value='';$('note').value='';$('paidCheck').checked=false;$('modal').classList.add('show')}
 function closeForm(){$('modal').classList.remove('show')}
 function editJob(id){const j=jobs.find(x=>x.id===id);if(!j)return;editingId=id;$('formTitle').textContent='სამუშაოს შეცვლა';$('date').value=j.date||'';$('place').value=j.place||'';$('money').value=j.money||'';$('note').value=j.note||'';$('paidCheck').checked=!!j.paid;$('modal').classList.add('show')}
@@ -223,63 +201,31 @@ function toBase64(text){
 }
 async function updateWebsite(){
   const repo=$('ghRepo').value.trim(), token=$('ghToken').value.trim(), file=$('siteUpdateFile').files[0];
-
   if(!repo || !repo.includes('/')){alert('რეპოზიტორია ჩაწერე ასე: მომხმარებელი/რეპოზიტორია');return}
   if(!token){alert('GitHub Token ჩაწერე');return}
   if(!file){alert('აირჩიე ახალი index.html ფაილი');return}
+
+  const overlay=$('uploadOverlay');
+  overlay.className='show';
   try{
-    const overlay=$('uploadOverlay'), anim=$('uploadAnim');
-    overlay.classList.add('show');
-    anim.className='uploadAnim';
-    const headers={
-      Authorization:'Bearer '+token,
-      Accept:'application/vnd.github+json',
-      'X-GitHub-Api-Version':'2022-11-28'
-    };
+    const headers={Authorization:'Bearer '+token,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'};
     const url='https://api.github.com/repos/'+repo+'/contents/index.html';
     const old=await fetch(url,{headers});
     const content=await file.text();
-
-    const body={
-      message:'Update index.html from TEMO WORK TRACKER',
-      content:toBase64(content)
-    };
-
-    if(old.ok){
-      const oldData=await old.json();
-      body.sha=oldData.sha;
-    }else if(old.status!==404){
-      const err=await old.json().catch(()=>({}));
-      throw new Error(err.message||'GitHub-თან დაკავშირება ვერ მოხერხდა');
-    }
-
-    const res=await fetch(url,{
-      method:'PUT',
-      headers:{...headers,'Content-Type':'application/json'},
-      body:JSON.stringify(body)
-    });
-
-    if(!res.ok){
-      const err=await res.json().catch(()=>({}));
-      throw new Error(err.message||'ატვირთვა ვერ მოხერხდა');
-    }
-
-    saveGitHubSettings();
-    anim.classList.add('done');
-    await new Promise(r=>setTimeout(r,900));
-    anim.classList.add('burst');
-    await new Promise(r=>setTimeout(r,700));
-    overlay.classList.remove('show');
-    anim.className='uploadAnim';
-    $('siteUpdateFile').value='';
-  }catch(err){
-    $('uploadOverlay').classList.remove('show');
-    $('uploadAnim').className='uploadAnim';
-    alert('შეცდომა: '+err.message);
-  }
+    const body={message:'Update index.html from TEMO WORK TRACKER',content:toBase64(content)};
+    if(old.ok){const oldData=await old.json();body.sha=oldData.sha}
+    else if(old.status!==404){const err=await old.json().catch(()=>({}));throw new Error(err.message||'GitHub-თან დაკავშირება ვერ მოხერხდა')}
+    const res=await fetch(url,{method:'PUT',headers:{...headers,'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.message||'ატვირთვა ვერ მოხერხდა')}
+    localStorage.setItem('temoGitHubRepo',repo);
+    localStorage.setItem('temoGitHubToken',token);
+    overlay.classList.add('success');
+    setTimeout(()=>{overlay.classList.add('burst');setTimeout(()=>{overlay.className='';$('siteUpdateFile').value=''},850)},900);
+  }catch(err){overlay.className='';alert('შეცდომა: '+err.message)}
 }
 </script>
 
 
+<div id="uploadOverlay"><div class="uploadAnim"><div class="uploadSpinner"></div><div class="uploadCheck">✓</div><i class="uploadParticle"></i><i class="uploadParticle"></i><i class="uploadParticle"></i><i class="uploadParticle"></i><i class="uploadParticle"></i><i class="uploadParticle"></i></div></div>
 </body>
 </html>
