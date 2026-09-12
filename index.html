@@ -46,6 +46,10 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 @keyframes burst{to{transform:translate(var(--x),var(--y)) scale(.2);opacity:0}}
 </style>
 
+<style id="temo-3d-title">
+.temo-3d{font-size:32px !important;font-weight:900;letter-spacing:3px;color:#eef7f7;text-shadow:1px 1px 0 #b9c7cc,2px 2px 0 #8fa1a8,3px 3px 0 #667980,4px 4px 0 #43545b,0 0 8px #2999ff,0 0 18px rgba(41,153,255,.8);transform:perspective(220px) rotateX(4deg);display:inline-block;}
+</style>
+
 <style id="temo-calendar-neon-fix">
 .calendar .today, .calendar .today-cell, .calendar td.today {
   border-color:#29a9ff !important;
@@ -74,7 +78,7 @@ color:#fff;box-shadow:0 0 6px rgba(41,169,255,.45);}
 
 <div class="app">
 <div id="mainPage">
-<header><div><h1>TEMO სამუშაო ანგარიში</h1><small>ჩემი სამუშაო და გადახდები</small></div><div id="today"></div></header>
+<header><div><h1 class="temo-3d">TEMO</h1><small>ჩემი სამუშაო და გადახდები</small></div><div id="today"></div></header>
 
 <div class="grid">
 <div class="card blue"><div class="label">🔨 სულ ნამუშევარი</div><div class="amount" id="total">€0</div><div class="meta" id="days">0 სამუშაო</div></div>
