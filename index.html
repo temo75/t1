@@ -72,9 +72,11 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 </style>
 
 <style id="temo-settings-exit-fix">
-.temo-exit-btn{display:block;margin:28px auto 10px;padding:8px 16px;border-radius:14px;
-font-size:13px;cursor:pointer;border:1px solid #29a9ff;background:rgba(0,20,40,.55);
-color:#fff;box-shadow:0 0 6px rgba(41,169,255,.45);}
+.temo-exit-btn{display:block;margin:18px auto 10px;padding:6px 10px;border-radius:12px;
+font-size:11px;cursor:pointer;border:1px solid #29a9ff;background:rgba(0,20,40,.55);
+color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
+.temo-exit-btn .homeIcon{display:block;font-size:22px;line-height:22px;color:#fff;margin-bottom:1px}
+.temo-exit-btn .homeLabel{display:block;color:#ff8c00;font-size:11px;font-weight:bold}
 </style>
 
 <style id="temo-logo-inline">
@@ -169,7 +171,7 @@ color:#fff;box-shadow:0 0 6px rgba(41,169,255,.45);}
 
 <div id="settingsPage" class="pageHidden">
 <header><div><h1>⚙️ სეთინგები</h1><small>მონაცემების მართვა</small></div></header>
-<button class="settingsBtn settingsBack" onclick="showMain()">← მთავარ გვერდზე დაბრუნება</button>
+<button class="settingsBtn settingsBack temo-exit-btn" onclick="showMain()"><span class="homeIcon">⌂</span><span class="homeLabel">მთავარი</span></button>
 <div class="section">
 <h2>🔄 საიტის განახლება</h2>
 <div class="tools">
