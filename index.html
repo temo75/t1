@@ -44,6 +44,11 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 @keyframes uploadSpin{to{transform:rotate(360deg)}}
 @keyframes checkPop{0%{transform:scale(.2);opacity:0}70%{transform:scale(1.25);opacity:1}100%{transform:scale(1)}}
 @keyframes burst{to{transform:translate(var(--x),var(--y)) scale(.2);opacity:0}}
+
+/* TEMO privacy eye */
+.temo-eye-btn{width:38px;height:38px;padding:0;border:1px solid #2999ff;border-radius:50%;background:#102b3b;color:#fff;font-size:20px;line-height:36px;cursor:pointer;box-shadow:0 0 6px #2999ff,0 0 14px rgba(41,153,255,.65);display:flex;align-items:center;justify-content:center}
+.temo-eye-btn:active{transform:scale(.94)}
+.privacy-hidden .grid,.privacy-hidden .stats,.privacy-hidden #dayJobsSection{display:none!important}
 </style>
 
 <style id="temo-3d-title">
@@ -78,7 +83,7 @@ color:#fff;box-shadow:0 0 6px rgba(41,169,255,.45);}
 
 <div class="app">
 <div id="mainPage">
-<header><div><h1 class="temo-3d">TEMO</h1><small>ჩემი სამუშაო და გადახდები</small></div><div id="today"></div></header>
+<header><div><h1 class="temo-3d">TEMO</h1><small>ჩემი სამუშაო და გადახდები</small></div><div style="display:flex;align-items:center;gap:8px"><button id="privacyEye" class="temo-eye-btn" onclick="togglePrivacy()" aria-label="თანხების დამალვა" title="თანხების დამალვა">👁</button><div id="today"></div></div></header>
 
 <div class="grid">
 <div class="card blue"><div class="label">🔨 სულ ნამუშევარი</div><div class="amount" id="total">€0</div><div class="meta" id="days">0 სამუშაო</div></div>
@@ -261,6 +266,16 @@ function editJob(id){const j=jobs.find(x=>x.id===id);if(!j)return;editingId=id;$
 function saveJob(){const amount=Number($('money').value);if(!amount||amount<=0){alert('თანხა მიუთითე');return}const data={date:$('date').value,place:$('place').value.trim(),money:amount,note:$('note').value.trim(),paid:$('paidCheck').checked};if(!data.date){alert('თარიღი მიუთითე');return}if(editingId){const i=jobs.findIndex(x=>x.id===editingId);jobs[i]={...jobs[i],...data}}else jobs.push({id:Date.now().toString()+Math.random().toString(16).slice(2),...data});save();closeForm();render()}
 function togglePaid(id){const j=jobs.find(x=>x.id===id);if(j){j.paid=!j.paid;save();render()}}
 function delJob(id){if(confirm('წავშალოთ ეს ჩანაწერი?')){jobs=jobs.filter(x=>x.id!==id);save();render()}}
+function togglePrivacy(){
+  const app=document.querySelector('.app');
+  const eye=$('privacyEye');
+  if(!app||!eye)return;
+  app.classList.toggle('privacy-hidden');
+  const hidden=app.classList.contains('privacy-hidden');
+  eye.textContent=hidden?'🙈':'👁';
+  eye.title=hidden?'თანხების ჩვენება':'თანხების დამალვა';
+  eye.setAttribute('aria-label',hidden?'თანხების ჩვენება':'თანხების დამალვა');
+}
 function showSettings(){document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.remove('pageHidden');window.scrollTo(0,0)}
 function showMain(){document.getElementById('settingsPage').classList.add('pageHidden');document.getElementById('mainPage').classList.remove('pageHidden');window.scrollTo(0,0)}
 function logout(){localStorage.removeItem(AUTH_KEY);window.location.reload()}
