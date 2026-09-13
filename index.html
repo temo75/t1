@@ -127,7 +127,7 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 .noteClose{width:38px;min-width:38px;height:38px;margin:0;padding:0;display:flex;align-items:center;justify-content:center;border:1px solid #ff3b3b;border-radius:50%;background:rgba(70,0,0,.45);color:#ff4d4d;cursor:pointer;font-size:25px;font-weight:900;line-height:1;text-shadow:0 0 5px #ff3b3b,0 0 12px #ff3b3b,0 0 20px #ff3b3b;box-shadow:0 0 5px rgba(255,59,59,.8),0 0 14px rgba(255,59,59,.45)}
 </style>
 <style>
-#newUserAuthModal{display:none;position:fixed;inset:0;background:#000d;align-items:center;justify-content:center;z-index:60000;padding:18px;overflow-y:auto}
+#newUserAuthModal{display:none;position:fixed;inset:0;background:#000d;align-items:center;justify-content:center;z-index:60000;padding:18px}
 #newUserAuthModal.show{display:flex}
 .newUserAuthBox{width:min(390px,100%);background:#10232f;border:1px solid #2999df;border-radius:20px;padding:22px;box-shadow:0 0 30px #2999df55}
 .newUserAuthBox h2{text-align:center;color:#fff;margin:0 0 18px}
@@ -147,6 +147,7 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 <button onclick="login()">შესვლა</button>
 <button id="passwordOnlyBtn" class="loginModeBtn" onclick="enablePasswordOnlyLogin()">🔐 მხოლოდ პაროლით შესვლა</button>
 <button id="nameLoginBtn" class="loginModeBtn secondary" onclick="enableNameLogin()" style="display:none">👤 სახელით შესვლა</button>
+<button class="loginModeBtn" onclick="showNewUserAuth()">➕ ახალი მომხმარებელი</button>
 <div id="loginError"></div>
 </div></div>
 
@@ -643,14 +644,13 @@ function registerNewUser(){
 }
 </script>
 <div id="newUserAuthModal"><div class="newUserAuthBox">
-<h2>🔐 ავტორიზაცია</h2>
+<h2>🔐 ახალი მომხმარებლის ავტორიზაცია</h2>
 <label>1. თქვენი სახელი</label><input id="newUserAuthName" maxlength="40">
 <label>2. თქვენი ახალი პაროლი</label><input id="newUserAuthPassword" type="password" maxlength="80">
 <button onclick="registerNewUser()">შესვლა</button>
+<button type="button" onclick="document.getElementById('newUserAuthModal').classList.remove('show')" style="background:#20323b;border-color:#285269">✕ გაუქმება</button>
 </div></div><script>
-document.addEventListener('DOMContentLoaded',function(){
- const users=getUsers(), session=localStorage.getItem(SESSION_USER_KEY);
- if(!session && users.some(u=>u.admin)) showNewUserAuth();
-});
+// ახალი მომხმარებლის ფანჯარა აღარ იხსნება ავტომატურად და აღარ ეფარება ავტორიზაციის მთავარ ფანჯარას.
+// მისი გახსნა ხდება მხოლოდ ღილაკით.
 </script></body>
 </html>
