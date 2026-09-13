@@ -74,45 +74,45 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 .credentialsClose{width:100%;margin-top:14px;padding:10px;border-radius:10px;border:1px solid #74333d;background:#4a2228;color:#ff6b6b;font-weight:bold}
 
 <style>
-/* TEMO: fixed bottom navigation — only the 3 app pages */
+/* TEMO: fixed bottom navigation — screen bottom */
 #bottomNav{
   position:fixed !important;
+  top:auto !important;
   left:0 !important;
   right:0 !important;
   bottom:0 !important;
-  width:100% !important;
-  z-index:9000 !important;
+  width:100vw !important;
+  height:auto !important;
+  margin:0 !important;
+  padding:7px 8px calc(7px + env(safe-area-inset-bottom)) !important;
+  box-sizing:border-box !important;
   display:flex !important;
-  gap:8px;
-  padding:8px;
-  padding-bottom:calc(8px + env(safe-area-inset-bottom));
-  box-sizing:border-box;
-  background:rgba(10,18,30,.97);
-  border-top:1px solid rgba(80,170,255,.22);
-  box-shadow:0 -4px 18px rgba(0,0,0,.35);
-  transform:translate3d(0,0,0);
+  flex-direction:row !important;
+  justify-content:stretch !important;
+  align-items:stretch !important;
+  gap:8px !important;
+  z-index:2147483647 !important;
+  background:rgba(10,18,30,.98) !important;
+  border-top:1px solid rgba(80,170,255,.25) !important;
+  box-shadow:0 -5px 20px rgba(0,0,0,.45) !important;
 }
 #bottomNav button{
-  flex:1 1 0;
-  min-width:0;
-  min-height:48px;
-  pointer-events:auto !important;
-  touch-action:manipulation;
-  border:1px solid rgba(41,153,223,.45);
-  border-radius:12px;
-  background:#1b2a36;
-  color:#fff;
-  box-shadow:0 0 6px rgba(41,153,223,.18);
-  text-shadow:none;
-  font-size:15px;
-  font-weight:600;
-  cursor:pointer;
+  position:static !important;
+  flex:1 1 0 !important;
+  width:33.333% !important;
+  min-width:0 !important;
+  height:48px !important;
+  margin:0 !important;
+  padding:0 5px !important;
+  border:1px solid rgba(41,153,223,.5) !important;
+  border-radius:12px !important;
+  background:#1b2a36 !important;
+  color:#fff !important;
+  font-size:15px !important;
+  font-weight:600 !important;
+  cursor:pointer !important;
 }
-#bottomNav button:active{
-  transform:scale(.97);
-}
-body{padding-bottom:82px;}
-#loginScreen:not(.hidden) ~ .app + * + * + * + * + * + #bottomNav{display:none !important;}
+body{padding-bottom:90px !important;}
 </style>
 </style>
 
