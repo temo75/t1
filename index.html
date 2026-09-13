@@ -132,7 +132,11 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 .newUserAuthBox label{display:block;color:#d8e3e7;margin:10px 0 5px}
 .newUserAuthBox input{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #29404c;background:#071117;color:#fff}
 .newUserAuthBox button{width:100%;margin-top:15px;padding:11px;border:1px solid #2999df;border-radius:10px;background:#12354a;color:#fff;font-weight:bold}
-</style></head>
+</style>
+<style id="temo-main-user-label">
+.main-user-label{margin:3px 0 7px;color:#eef7f7;font-size:15px;font-weight:bold;letter-spacing:.4px;text-shadow:0 0 6px rgba(41,153,255,.65)}
+</style>
+</head>
 <body>
 <div id="uploadOverlay"><div class="uploadBox"><div class="uploadSpinner" id="uploadSpinner"></div><div class="uploadCheck" id="uploadCheck">✓</div><div class="uploadBurst" id="uploadBurst"></div></div></div>
 
@@ -155,7 +159,7 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 <path d="M43 70 C57 50 78 43 98 49 C110 52 119 58 127 66" fill="none" stroke="#2999ff" stroke-width="4" stroke-linecap="round"/>
 <text x="90" y="113" text-anchor="middle" font-family="Arial,sans-serif" font-size="36" font-weight="900" letter-spacing="2" fill="url(#tls)" filter="url(#tlglow)">TEMO</text>
 <path d="M55 127 H125" stroke="#2999ff" stroke-width="3" stroke-linecap="round" filter="url(#tlglow)"/>
-</svg></div><small>ჩემი სამუშაო</small></div><div id="today"></div></header>
+</svg></div><div id="mainUserLabel" class="main-user-label"></div><small>ჩემი სამუშაო</small></div><div id="today"></div></header>
 
 <div class="grid">
 <div class="card blue"><button id="privacyEye" class="temo-eye-btn" onclick="togglePrivacy()" aria-label="თანხების დამალვა" title="თანხების დამალვა">👁</button><div class="label">🔨 სულ ნამუშევარი</div><div class="amount" id="total">€0</div><div class="meta" id="days">0 სამუშაო</div></div>
@@ -193,7 +197,7 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 
 <div id="settingsPage" class="pageHidden">
 <header><div><h1>⚙️ სეთინგები</h1><small>მონაცემების მართვა</small></div></header>
-<button class="settingsBtn settingsBack temo-exit-btn" onclick="showMain()"><span class="homeIcon">⌂</span><span class="homeLabel">მთავარი</span></button><div class="section"><h2>👤 მომხმარებელი</h2><div class="meta" id="currentUserLabel"></div></div>
+<button class="settingsBtn settingsBack temo-exit-btn" onclick="showMain()"><span class="homeIcon">⌂</span><span class="homeLabel">მთავარი</span></button>
 
 <div class="section" id="websiteUpdateSection">
 <h2>🔄 საიტის განახლება</h2>
@@ -436,7 +440,7 @@ function updateUserUI(){
  const isAdmin=currentUser===ADMIN_USER;
  const site=$('websiteUpdateSection'); if(site)site.style.display=isAdmin?'':'none';
  const users=$('userManagementSection'); if(users)users.style.display=isAdmin?'':'none';
- const label=$('currentUserLabel'); if(label)label.textContent=currentUser?'შენ შეხვედი... '+(currentUser===ADMIN_USER?'TEMO ADMIN':currentUser):'';
+ const label=$('mainUserLabel'); if(label)label.textContent=currentUser?(currentUser===ADMIN_USER?'TEMO admin':currentUser):'';
  if(isAdmin)renderManagedUsers();
 }
 function renderManagedUsers(){
