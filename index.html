@@ -265,7 +265,14 @@ const ADMIN_USER='TEMO';
 let currentUser=localStorage.getItem(SESSION_USER_KEY)||'';
 function getUsers(){
  let users; try{users=JSON.parse(localStorage.getItem(USERS_KEY)||'null')}catch(e){users=null}
- if(!Array.isArray(users)||!users.length){users=[{name:ADMIN_USER,password:AUTH_PASSWORD,admin:true}];localStorage.setItem(USERS_KEY,JSON.stringify(users))}
+ if(!Array.isArray(users)||!users.length){users=[{name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true}];localStorage.setItem(USERS_KEY,JSON.stringify(users))}
+ // ძველი მომხმარებლებისთვის authorized ველის აღდგენა, რათა უკვე გავლილი ავტორიზაციები არ დაიკარგოს.
+ let changed=false; users=users.map(u=>{
+   if(u.admin||u.name===ADMIN_USER){if(u.authorized!==true){u.authorized=true;changed=true}}
+   else if(u.authorized!==true){u.authorized=true;changed=true}
+   return u;
+ });
+ if(changed)localStorage.setItem(USERS_KEY,JSON.stringify(users));
  return users;
 }
 function renderLoginUsers(){
