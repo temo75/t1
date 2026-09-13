@@ -61,15 +61,6 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 .privacy-hidden .amount,.privacy-hidden .mini b,.privacy-hidden #dayJobs .right > b{visibility:hidden}
 
 .yearPickerBtn{border:0;background:none;color:inherit;font:inherit;font-weight:bold;cursor:pointer;padding:4px 8px;border-radius:9px}.yearPickerModal{display:none;position:fixed;inset:0;background:#000a;align-items:center;justify-content:center;padding:16px;z-index:10003}.yearPickerModal.show{display:flex}.yearPickerBox{width:min(340px,100%);max-height:75vh;overflow:auto;background:linear-gradient(145deg,#0c1a23,#10232f);border:1px solid #2999df;border-radius:20px;padding:18px;box-shadow:0 20px 60px #000b}.yearPickerBox h2{margin:0 0 14px;text-align:center;color:#fff;font-size:20px}.yearPickerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.yearPickerGrid button{padding:11px 6px;border-radius:10px;border:1px solid #285269;background:#183445;color:#fff;cursor:pointer}.yearPickerGrid button.active{border-color:#2999df;box-shadow:0 0 8px #2999df;color:#62b8ff}.yearPickerClose{width:100%;margin-top:14px;padding:11px;border:1px solid #74333d;border-radius:10px;background:#4a2228;color:#ff6b6b;font-weight:bold;cursor:pointer}
-<style>
-.repoTokenOpenBtn{display:inline-block;width:auto;padding:6px 10px;margin:8px auto;border:1px solid #2999df;border-radius:9px;background:#102b3b;color:#fff;font-size:12px;font-weight:bold;cursor:pointer;box-shadow:0 0 5px rgba(41,153,223,.35)}
-.credentialsModal{display:none;position:fixed;inset:0;background:#000b;align-items:center;justify-content:center;padding:16px;z-index:10005}
-.credentialsModal.show{display:flex}
-.credentialsBox{width:min(400px,100%);background:#10232f;border:1px solid #2999df;border-radius:18px;padding:20px;box-shadow:0 20px 60px #000b;text-align:center}
-.credentialsBox h2{margin:0 0 14px;color:#fff}
-.credentialsBox label{display:block;text-align:left;margin:10px 0 5px;color:#c7d4d8}
-.credentialsBox input{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #29404c;background:#071117;color:#fff}
-.credentialsClose{width:100%;margin-top:14px;padding:10px;border-radius:10px;border:1px solid #74333d;background:#4a2228;color:#ff6b6b;font-weight:bold}
 </style>
 
 <style id="temo-3d-title">
@@ -123,6 +114,18 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 .noteHeader h2{margin:0}
 .noteEntriesScroll{flex:1;min-height:0;overflow-y:auto;margin-top:14px;padding-right:3px}
 .noteClose{width:38px;min-width:38px;height:38px;margin:0;padding:0;display:flex;align-items:center;justify-content:center;border:1px solid #ff3b3b;border-radius:50%;background:rgba(70,0,0,.45);color:#ff4d4d;cursor:pointer;font-size:25px;font-weight:900;line-height:1;text-shadow:0 0 5px #ff3b3b,0 0 12px #ff3b3b,0 0 20px #ff3b3b;box-shadow:0 0 5px rgba(255,59,59,.8),0 0 14px rgba(255,59,59,.45)}
+</style>
+
+<style>
+.firstAuthModal{display:none;position:fixed;inset:0;background:#000d;align-items:center;justify-content:center;padding:18px;z-index:20000}
+.firstAuthModal.show{display:flex}
+.firstAuthBox{width:min(390px,100%);background:linear-gradient(145deg,#0c1a23,#10232f);border:1px solid #2999df;border-radius:20px;padding:22px;box-shadow:0 0 30px #2999df55;text-align:center}
+.firstAuthBox h2{margin:0 0 18px;color:#fff}
+.firstAuthBox label{display:block;text-align:left;margin:10px 0 5px;color:#d8e3e7}
+.firstAuthBox input{width:100%;box-sizing:border-box;padding:13px;border-radius:10px;border:1px solid #29404c;background:#071117;color:#fff;font-size:16px}
+.firstAuthBtn{width:100%;margin-top:15px;padding:12px;border:1px solid #2999df;border-radius:10px;background:#12354a;color:#fff;font-weight:bold}
+.adminUsersBox{margin-top:12px;padding:10px;border:1px solid #29404c;border-radius:10px}
+.adminUserRow{padding:7px;border-bottom:1px solid #203642;color:#fff}
 </style>
 </head>
 <body>
@@ -185,14 +188,15 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 
 <div id="settingsPage" class="pageHidden">
 <header><div><h1>⚙️ სეთინგები</h1><small>მონაცემების მართვა</small></div></header>
-<button class="settingsBtn settingsBack temo-exit-btn" onclick="showMain()"><span class="homeIcon">⌂</span><span class="homeLabel">მთავარი</span></button><div class="section"><h2>👤 მომხმარებელი</h2><div class="meta" id="currentUserLabel"></div></div>
+<button class="settingsBtn settingsBack temo-exit-btn" onclick="showMain()"><span class="homeIcon">⌂</span><span class="homeLabel">მთავარი</span></button><div class="section"><div class="section" id="adminUsersBox"></div><h2>👤 მომხმარებელი</h2><div class="meta" id="currentUserLabel"></div></div>
 
 <div class="section" id="websiteUpdateSection">
 <h2>🔄 საიტის განახლება</h2>
 <div class="tools">
+<input id="ghRepo" placeholder="GitHub: მომხმარებელი/რეპოზიტორია">
+<input id="ghToken" type="password" placeholder="GitHub Token">
 <input id="siteUpdateFile" type="file" accept=".html,text/html">
 </div>
-<button class="repoTokenOpenBtn" onclick="openCredentials()">🔐 Repository / Token</button>
 <div class="backup">
 <button class="backupBtn" onclick="updateWebsite()">⬆ ახალი index.html ატვირთვა</button>
 </div>
@@ -212,15 +216,6 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 </div>
 
 <div class="yearPickerModal" id="yearPickerModal" onclick="if(event.target===this)closeYearPicker()"><div class="yearPickerBox"><h2>აირჩიე წელი</h2><div id="yearPickerGrid" class="yearPickerGrid"></div><button class="yearPickerClose" onclick="closeYearPicker()">✕ დახურვა</button></div></div>
-<div class="credentialsModal" id="credentialsModal" onclick="if(event.target===this)closeCredentials()">
-<div class="credentialsBox">
-<h2>🔐 Repository / Token</h2>
-<label>Repository</label>
-<input id="ghRepo" value="temo75/t1" autocomplete="off">
-<label>GitHub Token</label>
-<input id="ghToken" type="password" placeholder="GitHub Token" autocomplete="off">
-<button class="credentialsClose" onclick="closeCredentials()">✕ დახურვა</button>
-</div></div>
 <div class="deleteAuthModal" id="deleteAuthModal"><div class="deleteAuthBox">
 <h2>🔐 დადასტურება</h2><p>ყველა სამუშაოს წასაშლელად შეიყვანე საიტზე შესასვლელი პაროლი.</p>
 <input id="deleteAuthPassword" type="password" placeholder="პაროლი" autocomplete="current-password">
@@ -443,14 +438,6 @@ function addManagedUser(){
  const users=getUsers();users.push({name:n,password:p,admin:false});localStorage.setItem(USERS_KEY,JSON.stringify(users));$('newUserName').value='';$('newUserPassword').value='';renderLoginUsers();renderManagedUsers();
 }
 function deleteManagedUser(name){if(currentUser!==ADMIN_USER)return;if(!confirm('წავშალოთ მომხმარებელი '+name+'?'))return;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers().filter(u=>u.name!==name)));localStorage.removeItem('temoJobs_'+name);renderLoginUsers();renderManagedUsers()}
-function openCredentials(){
-  $('ghRepo').value=localStorage.getItem('temoGitHubRepo')||'temo75/t1';
-  $('ghToken').value=localStorage.getItem('temoGitHubToken')||'';
-  $('credentialsModal').classList.add('show');
-}
-function closeCredentials(){
-  $('credentialsModal').classList.remove('show');
-}
 function showSettings(){updateUserUI();document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.remove('pageHidden');window.scrollTo(0,0)}
 function showMain(){document.getElementById('settingsPage').classList.add('pageHidden');document.getElementById('mainPage').classList.remove('pageHidden');window.scrollTo(0,0)}
 function logout(){localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);window.location.reload()}
@@ -567,6 +554,64 @@ async function updateWebsite(){
     alert('შეცდომა: '+err.message);
   }
 }
+
+const TEMO_FIRST_AUTH_KEY='temoFirstAuthorizationDone';
+function showFirstAuthorization(){
+  const m=document.getElementById('firstAuthModal');
+  if(m)m.classList.add('show');
+}
+function registerFirstUser(){
+  const name=(document.getElementById('firstAuthName')||{}).value?.trim()||'';
+  const password=(document.getElementById('firstAuthPassword')||{}).value||'';
+  if(!name||!password){alert('სახელი და ახალი პაროლი ორივე შეავსე');return}
+  let users=JSON.parse(localStorage.getItem(TEMO_USERS_KEY)||'[]');
+  if(!users.length){
+    users=[{name:name,password:password,admin:true}];
+    localStorage.setItem(TEMO_USERS_KEY,JSON.stringify(users));
+    currentUser=name;
+    localStorage.setItem(TEMO_SESSION_KEY,currentUser);
+  }else{
+    if(users.some(u=>u.name.toLowerCase()===name.toLowerCase())){
+      alert('ეს მომხმარებელი უკვე არსებობს');return
+    }
+    users.push({name:name,password:password,admin:false});
+    localStorage.setItem(TEMO_USERS_KEY,JSON.stringify(users));
+    currentUser=name;
+    localStorage.setItem(TEMO_SESSION_KEY,currentUser);
+  }
+  localStorage.setItem(TEMO_FIRST_AUTH_KEY,'1');
+  jobs=loadUserJobs();
+  document.getElementById('firstAuthModal').classList.remove('show');
+  if(typeof updateUserUI==='function')updateUserUI();
+  if(typeof render==='function')render();
+  if(typeof updateAdminUsersBlock==='function')updateAdminUsersBlock();
+}
+function updateAdminUsersBlock(){
+  let b=document.getElementById('adminUsersBox');
+  if(!b)return;
+  if(currentUser!==TEMO_ADMIN_USER && !getUsers().some(u=>u.name===currentUser&&u.admin)){b.style.display='none';return}
+  const users=getUsers();
+  b.innerHTML='<b>👥 ვინ დაემატა</b>'+users.map(u=>'<div class="adminUserRow">'+(u.admin?'👑 ':'')+u.name+'</div>').join('');
+}
+</script>
+
+<div class="firstAuthModal" id="firstAuthModal">
+<div class="firstAuthBox">
+<h2>🔐 ავტორიზაცია</h2>
+<label>1. თქვენი სახელი</label>
+<input id="firstAuthName" maxlength="40" autocomplete="name">
+<label>2. თქვენი ახალი პაროლი</label>
+<input id="firstAuthPassword" type="password" maxlength="80" autocomplete="new-password">
+<button class="firstAuthBtn" onclick="registerFirstUser()">შესვლა</button>
+</div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+  const users=getUsers();
+  if(!users.length || !localStorage.getItem(TEMO_FIRST_AUTH_KEY)) showFirstAuthorization();
+  updateAdminUsersBlock();
+});
 </script>
 </body>
 </html>
