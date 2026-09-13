@@ -180,7 +180,7 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 <h2>🔐 </h2>
 <p id="loginHint">შეიყვანე პაროლი</p>
 
-<select id="loginUser" class="loginSelect" style="display:none"></select>
+<input id="loginName" class="loginSelect" type="text" placeholder="სახელი" autocomplete="username">
 <input id="loginPassword" type="password" placeholder="პაროლი" autocomplete="current-password">
 <button onclick="login()">შესვლა</button>
 <button class="loginModeBtn" onclick="showNewUserAuth()">➕ ახალი მომხმარებელი</button>
@@ -374,30 +374,13 @@ function renderLoginUsers(){
 }
 function enablePasswordOnlyLogin(){
  const users=getUsers().filter(u=>u.authorized);
- if(!users.length){
-   $('loginError').textContent='ჯერ არც ერთ მომხმარებელს არ აქვს გავლილი ავტორიზაცია';
-   return;
- }
- $('loginUser').style.display='none';
- $('loginUserDisplay').style.display='flex';
- $('loginHint').textContent='შეიყვანე პაროლი';
- $('loginPassword').value='';
- $('loginPassword').placeholder='პაროლი';
- $('nameLoginBtn').style.display='block';
- $('loginError').textContent='';
- $('loginPassword').focus();
+ if(!users.length){$('loginError').textContent='ჯერ არც ერთ მომხმარებელს არ აქვს გავლილი ავტორიზაცია';return;}
+ $('loginName').style.display='block';
+ $('loginHint').textContent='შეიყვანე სახელი და პაროლი';
+ $('loginName').value='';$('loginPassword').value='';
+ $('loginName').focus();
 }
-function enableNameLogin(){
- $('loginUser').style.display='block';
- $('loginUserDisplay').style.display='none';
- renderLoginUsers();
- $('loginHint').textContent='აირჩიე მომხმარებელი და შეიყვანე პაროლი';
- $('loginPassword').value='';
- $('loginPassword').placeholder='პაროლი';
- $('nameLoginBtn').style.display='none';
- $('loginError').textContent='';
- $('loginPassword').focus();
-}
+function enableNameLogin(){enablePasswordOnlyLogin()}
 function completeLogin(u){
  currentUser=u.name;
  u.authorized=true;
@@ -412,18 +395,11 @@ function completeLogin(u){
  jobs=loadUserJobs();updateUserUI();render();
 }
 function login(){
+ const name=$('loginName').value.trim();
  const pass=$('loginPassword').value;
- const passwordOnly=$('loginUser').style.display==='none';
- if(passwordOnly){
-   const admin=getUsers().find(u=>u.name===ADMIN_USER&&u.authorized);
-   if(admin&&pass===admin.password){completeLogin(admin);return}
-   $('loginError').textContent='პაროლი არასწორია';
-   $('loginPassword').value='';$('loginPassword').focus();
-   return;
- }
- const name=$('loginUser').value, u=getUsers().find(x=>x.name===name);
+ const u=getUsers().find(x=>x.name.toLowerCase()===name.toLowerCase()&&x.authorized);
  if(u&&pass===u.password){completeLogin(u)}
- else{$('loginError').textContent='პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus()}
+ else{$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus()}
 }
 window.addEventListener('DOMContentLoaded',async()=>{
  await syncUsersFromFirebase().then(()=>{
