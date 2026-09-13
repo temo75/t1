@@ -549,7 +549,7 @@ function addManagedUser(){
  const n=$('newUserName').value.trim(),p=$('newUserPassword').value;
  if(!n||!p){alert('სახელი და პაროლი ორივე შეავსე');return}
  if(n.toUpperCase()===ADMIN_USER||getUsers().some(u=>u.name.toLowerCase()===n.toLowerCase())){alert('ეს მომხმარებელი უკვე არსებობს');return}
- const users=getUsers();users.push({name:n,password:p,admin:false,authorized:false});localStorage.setItem(USERS_KEY,JSON.stringify(users));$('newUserName').value='';$('newUserPassword').value='';renderLoginUsers();renderManagedUsers();
+ const users=getUsers();users.push({name:n,password:p,admin:false,authorized:true});localStorage.setItem(USERS_KEY,JSON.stringify(users));$('newUserName').value='';$('newUserPassword').value='';renderLoginUsers();renderManagedUsers();
 }
 function deleteManagedUser(name){if(currentUser!==ADMIN_USER)return;if(!confirm('წავშალოთ მომხმარებელი '+name+'?'))return;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers().filter(u=>u.name!==name)));localStorage.removeItem('temoJobs_'+name);renderLoginUsers();renderManagedUsers()}
 function openCredentials(){
