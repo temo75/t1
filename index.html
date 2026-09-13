@@ -171,34 +171,18 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 .newUserAuthBox label{display:block;color:#d8e3e7;margin:10px 0 5px}
 .newUserAuthBox input{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #29404c;background:#071117;color:#fff}
 .newUserAuthBox button{width:100%;margin-top:15px;padding:11px;border:1px solid #2999df;border-radius:10px;background:#12354a;color:#fff;font-weight:bold}
-</style>
-<style id="fixedBottomNavStyle">
-#bottomNav{
-  position:fixed;
-  left:0;
-  right:0;
-  bottom:0;
-  z-index:99999;
-  width:100%;
-  box-sizing:border-box;
-}
-body{
-  padding-bottom:72px;
-}
-</style>
-
-</head>
+</style></head>
 <body>
 <div id="uploadOverlay"><div class="uploadBox"><div class="uploadSpinner" id="uploadSpinner"></div><div class="uploadCheck" id="uploadCheck">✓</div><div class="uploadBurst" id="uploadBurst"></div></div></div>
 
 
 <div id="loginScreen"><div class="loginBox">
 <h2>🔐 </h2>
-<p id="loginHint">შეიყვანე შენი პაროლი</p>
-<select id="loginUser" class="loginSelect" style="display:none"></select>
+<p id="loginHint">შეიყვანე პაროლი</p>
+
+<input id="loginName" class="loginSelect" type="text" placeholder="სახელი" autocomplete="username">
 <input id="loginPassword" type="password" placeholder="პაროლი" autocomplete="current-password">
 <button onclick="login()">შესვლა</button>
-<button id="nameLoginBtn" class="loginModeBtn secondary" onclick="enableNameLogin()" style="display:none">👤 სახელით შესვლა</button>
 <button class="loginModeBtn" onclick="showNewUserAuth()">➕ ახალი მომხმარებელი</button>
 <div id="loginError"></div>
 </div></div>
@@ -245,7 +229,7 @@ body{
 <div class="dayJobsTitle"><h2 id="dayJobsTitle">აირჩიე თარიღი</h2><span id="dayJobsCount"></span></div>
 <div id="dayJobs"></div>
 </div>
-<div class="adminButtons"><button class="settingsBtn" onclick="showSettings()">⚙️ სეთინგები</button><button id="userManagementOpenBtn" class="settingsBtn adminOnly" onclick="showUserManagement()">👥 მომხმარებლები</button></div>
+
 </div>
 
 <div id="settingsPage" class="pageHidden">
@@ -266,7 +250,7 @@ body{
 
 </div>
 
-<div class="section"><h2>მონაცემების სარეზერვო ასლი</h2><div class="backup"><button class="backupBtn" onclick="document.getElementById('importFile').click()">⬆ მონაცემების აღდგენა</button><button class="backupBtn danger" onclick="clearAll()">🗑 ყველაფრის წაშლა</button></div><input id="importFile" type="file" accept="application/json" hidden onchange="importData(event)"></div>
+
 </div>
 <div id="userManagementPage" class="pageHidden">
 <header><div><h1>👥 მომხმარებლების მართვა</h1><small>მომხმარებლების დამატება და მართვა</small></div></header>
@@ -274,7 +258,7 @@ body{
 <div class="section adminOnly" id="userManagementSection">
 <h2>👥 მომხმარებლების მართვა</h2>
 <div id="userManagementList"></div>
-<div class="userManage"><input id="newUserName" placeholder="ახალი მომხმარებელი" maxlength="40"><input id="newUserPassword" type="password" placeholder="ახალი მომხმარებლის პაროლი" maxlength="80"><button class="backupBtn" onclick="addManagedUser()">➕ მომხმარებლის დამატება</button></div>
+
 </div>
 </div>
 
@@ -390,29 +374,13 @@ function renderLoginUsers(){
 }
 function enablePasswordOnlyLogin(){
  const users=getUsers().filter(u=>u.authorized);
- if(!users.length){
-   $('loginError').textContent='ჯერ არც ერთ მომხმარებელს არ აქვს გავლილი ავტორიზაცია';
-   return;
- }
- $('loginUser').style.display='none';
- $('loginHint').textContent='შეიყვანე მხოლოდ შენი პაროლი';
- $('loginPassword').value='';
- $('loginPassword').placeholder='მხოლოდ პაროლი';
- $('passwordOnlyBtn').style.display='none';
- $('nameLoginBtn').style.display='block';
- $('loginError').textContent='';
- $('loginPassword').focus();
+ if(!users.length){$('loginError').textContent='ჯერ არც ერთ მომხმარებელს არ აქვს გავლილი ავტორიზაცია';return;}
+ $('loginName').style.display='block';
+ $('loginHint').textContent='შეიყვანე სახელი და პაროლი';
+ $('loginName').value='';$('loginPassword').value='';
+ $('loginName').focus();
 }
-function enableNameLogin(){
- $('loginUser').style.display='block';
- $('loginHint').textContent='აირჩიე მომხმარებელი და შეიყვანე პაროლი';
- $('loginPassword').value='';
- $('loginPassword').placeholder='პაროლი';
- $('passwordOnlyBtn').style.display='block';
- $('nameLoginBtn').style.display='none';
- $('loginError').textContent='';
- $('loginPassword').focus();
-}
+function enableNameLogin(){enablePasswordOnlyLogin()}
 function completeLogin(u){
  currentUser=u.name;
  u.authorized=true;
@@ -427,20 +395,11 @@ function completeLogin(u){
  jobs=loadUserJobs();updateUserUI();render();
 }
 function login(){
+ const name=$('loginName').value.trim();
  const pass=$('loginPassword').value;
- const passwordOnly=$('loginUser').style.display==='none';
- if(passwordOnly){
-   const matches=getUsers().filter(u=>u.authorized&&u.password===pass);
-   if(matches.length===1){completeLogin(matches[0]);return}
-   if(matches.length>1){
-     $('loginError').textContent='ეს პაროლი ერთზე მეტ მომხმარებელს ეკუთვნის — თითოეულ მომხმარებელს უნიკალური პაროლი უნდა ჰქონდეს';
-   }else{$('loginError').textContent='პაროლი არასწორია';}
-   $('loginPassword').value='';$('loginPassword').focus();
-   return;
- }
- const name=$('loginUser').value, u=getUsers().find(x=>x.name===name);
+ const u=getUsers().find(x=>x.name.toLowerCase()===name.toLowerCase()&&x.authorized);
  if(u&&pass===u.password){completeLogin(u)}
- else{$('loginError').textContent='პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus()}
+ else{$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus()}
 }
 window.addEventListener('DOMContentLoaded',async()=>{
  await syncUsersFromFirebase().then(()=>{
