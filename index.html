@@ -177,7 +177,7 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 
 
 <div id="loginScreen"><div class="loginBox">
-<h2>🔐 </h2>
+<h2>🔐 TEMO სამუშაო ანგარიში</h2>
 <p id="loginHint">აირჩიე მომხმარებელი და შეიყვანე პაროლი</p>
 <select id="loginUser" class="loginSelect"></select>
 <input id="loginPassword" type="password" placeholder="პაროლი" autocomplete="current-password">
@@ -369,7 +369,7 @@ function getUsers(){
  return users;
 }
 function renderLoginUsers(){
- const sel=$('loginUser'); if(!sel)return; const users=getUsers(); sel.innerHTML=users.map(u=>`<option value="${esc(u.name)}">${u.admin?'👑 ':''}${esc(u.name)}</option>`).join('');
+ const sel=$('loginUser'); if(!sel)return; const users=getUsers().filter(u=>u.admin||u.authorized); sel.innerHTML=users.map(u=>`<option value="${esc(u.name)}">${u.admin?'👑 ':''}${esc(u.name)}</option>`).join('');
  if(currentUser&&users.some(u=>u.name===currentUser))sel.value=currentUser;
 }
 function enablePasswordOnlyLogin(){
@@ -615,7 +615,9 @@ function renderManagedUsers(){
  // ადმინისტრატორი ყოველთვის ჩანს პირველ ადგილზე.
  const admin=users.find(u=>u.admin||u.name===ADMIN_USER);
  if(admin){
-   
+   const row=document.createElement('div');row.className='userRow';
+   const b=document.createElement('button');b.className='backupBtn';b.textContent='👑 TEMO ADMIN';b.disabled=true;
+   row.appendChild(b);box.appendChild(row);
  }
  // აქ ჩანს მხოლოდ ის მომხმარებლები, რომლებმაც ავტორიზაცია რეალურად გაიარეს.
  users.filter(u=>!u.admin && u.authorized===true).forEach(u=>{
