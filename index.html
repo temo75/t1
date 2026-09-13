@@ -32,15 +32,14 @@
 .dayJobsTitle span{color:var(--muted);font-size:13px}
 footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(max-width:700px){.app{padding:12px}header h1{font-size:23px}.grid{grid-template-columns:1fr 1fr}.grid .card:first-child{grid-column:1/-1}.amount{font-size:26px}.tools{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.item{grid-template-columns:1fr}.right{text-align:left}.actions{justify-content:flex-start}.monthRow{grid-template-columns:1fr auto}.monthRow span{grid-column:1/-1}}
 
-#loginScreen{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px;background:linear-gradient(135deg,#061015,#0a1821)}
+#loginScreen{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;background:linear-gradient(135deg,#061015,#0a1821)}
 #loginScreen.hidden{display:none}
-.loginModeBtn{width:100%;margin-top:10px;padding:13px;border:1px solid #2999df;border-radius:11px;background:#183445;color:#fff;font-weight:bold;font-size:15px;cursor:pointer;box-shadow:0 0 6px rgba(41,153,223,.35)}
-.loginModeBtn.secondary{border-color:#285269;background:#10232f;color:#9fb0b8;box-shadow:none}
-.loginBox{width:min(400px,100%);background:linear-gradient(145deg,#0d1b24,#10232f);border:1px solid #1e3542;border-radius:22px;padding:28px;text-align:center;box-shadow:0 20px 60px #0008}
-.loginBox h2{margin:0 0 10px;color:#eef7f7}.loginBox p{color:#9fb0b8;margin:0 0 20px}
-.loginBox input{width:100%;padding:15px;border-radius:11px;border:1px solid #29404c;background:#071117;color:#fff;font-size:17px;text-align:center;margin-bottom:12px}
-.loginBox button{width:100%;padding:15px;border:1px solid #2999ff;border-radius:11px;background:#102b3b;color:#fff;font-weight:bold;font-size:17px;cursor:pointer;box-shadow:0 0 7px #2999ff,0 0 16px #2999ff}
-.loginSelect{width:100%;padding:15px;border-radius:11px;border:1px solid #29404c;background:#071117;color:#fff;font-size:17px;text-align:center;margin-bottom:12px}
+.loginBox{width:min(380px,100%);background:linear-gradient(145deg,#0d1b24,#10232f);border:1px solid #1e3542;border-radius:24px;padding:24px 22px 20px;text-align:center;box-shadow:0 20px 60px #0008}
+.loginBox h2{margin:0 0 8px;color:#eef7f7;font-size:26px;line-height:1.2}.loginBox p{color:#9fb0b8;margin:0 0 18px;font-size:15px;line-height:1.4}
+.loginBox input{width:100%;padding:14px;border-radius:12px;border:1px solid #29404c;background:#071117;color:#fff;font-size:17px;text-align:center;margin-bottom:10px}
+.loginBox button{width:100%;padding:14px;border:1px solid #2999ff;border-radius:12px;background:#102b3b;color:#fff;font-weight:bold;font-size:17px;cursor:pointer;box-shadow:0 0 7px #2999ff,0 0 16px #2999ff}
+.loginSelect{width:100%;padding:14px;border-radius:12px;border:1px solid #29404c;background:#071117;color:#fff;font-size:17px;text-align:center;margin-bottom:10px}
+.loginModeBtn{width:100%;margin-top:10px!important;padding:11px!important;border:1px solid #285269!important;border-radius:11px!important;background:#0d202b!important;color:#aebdc3!important;font-weight:bold;font-size:14px!important;cursor:pointer;box-shadow:none!important}
 .userManage{margin-top:14px}.userManage input{margin-bottom:8px!important}.userRow{display:flex;gap:7px;margin:7px 0}.userRow button{padding:9px;font-size:14px}.adminOnly{display:block}
 #loginError{min-height:20px;color:#ff7c84;font-size:14px;margin-top:10px}
 
@@ -141,13 +140,11 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 
 <div id="loginScreen"><div class="loginBox">
 <h2>🔐 TEMO სამუშაო ანგარიში</h2>
-<p id="loginHint">აირჩიე მომხმარებელი და შეიყვანე პაროლი</p>
+<p id="loginHint">აირჩიე შენი სახელი და შეიყვანე პაროლი</p>
 <select id="loginUser" class="loginSelect"></select>
 <input id="loginPassword" type="password" placeholder="პაროლი" autocomplete="current-password">
 <button onclick="login()">შესვლა</button>
 <button id="passwordOnlyBtn" class="loginModeBtn" onclick="enablePasswordOnlyLogin()">🔐 მხოლოდ პაროლით შესვლა</button>
-<button id="nameLoginBtn" class="loginModeBtn secondary" onclick="enableNameLogin()" style="display:none">👤 სახელით შესვლა</button>
-<button class="loginModeBtn" onclick="showNewUserAuth()">➕ ახალი მომხმარებელი</button>
 <div id="loginError"></div>
 </div></div>
 
@@ -644,13 +641,14 @@ function registerNewUser(){
 }
 </script>
 <div id="newUserAuthModal"><div class="newUserAuthBox">
-<h2>🔐 ახალი მომხმარებლის ავტორიზაცია</h2>
+<h2>🔐 ავტორიზაცია</h2>
 <label>1. თქვენი სახელი</label><input id="newUserAuthName" maxlength="40">
 <label>2. თქვენი ახალი პაროლი</label><input id="newUserAuthPassword" type="password" maxlength="80">
 <button onclick="registerNewUser()">შესვლა</button>
-<button type="button" onclick="document.getElementById('newUserAuthModal').classList.remove('show')" style="background:#20323b;border-color:#285269">✕ გაუქმება</button>
 </div></div><script>
-// ახალი მომხმარებლის ფანჯარა აღარ იხსნება ავტომატურად და აღარ ეფარება ავტორიზაციის მთავარ ფანჯარას.
-// მისი გახსნა ხდება მხოლოდ ღილაკით.
+document.addEventListener('DOMContentLoaded',function(){
+ const users=getUsers(), session=localStorage.getItem(SESSION_USER_KEY);
+ if(!session && users.some(u=>u.admin)) showNewUserAuth();
+});
 </script></body>
 </html>
