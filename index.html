@@ -38,6 +38,8 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 .loginBox h2{margin:0 0 10px;color:#eef7f7}.loginBox p{color:#9fb0b8;margin:0 0 20px}
 .loginBox input{width:100%;padding:15px;border-radius:11px;border:1px solid #29404c;background:#071117;color:#fff;font-size:17px;text-align:center;margin-bottom:12px}
 .loginBox button{width:100%;padding:15px;border:1px solid #2999ff;border-radius:11px;background:#102b3b;color:#fff;font-weight:bold;font-size:17px;cursor:pointer;box-shadow:0 0 7px #2999ff,0 0 16px #2999ff}
+.loginSelect{width:100%;padding:15px;border-radius:11px;border:1px solid #29404c;background:#071117;color:#fff;font-size:17px;text-align:center;margin-bottom:12px}
+.userManage{margin-top:14px}.userManage input{margin-bottom:8px!important}.userRow{display:flex;gap:7px;margin:7px 0}.userRow button{padding:9px;font-size:14px}.adminOnly{display:block}
 #loginError{min-height:20px;color:#ff7c84;font-size:14px;margin-top:10px}
 
 .tools input[type=file]{width:100%;max-width:100%;justify-self:stretch;border-color:#ff8a00;box-shadow:0 0 7px #ff8a00,0 0 16px rgba(255,138,0,.65);background:#0b1a24}.tools input[type=file]::file-selector-button{max-width:100%;border:1px solid #ff8a00;border-radius:12px;padding:9px 14px;background:#2a2418;color:#fff;cursor:pointer;box-shadow:0 0 6px #ff8a00,0 0 14px rgba(255,138,0,.7);text-shadow:0 0 6px #ff8a00;}
@@ -57,6 +59,8 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 .temo-eye-btn{width:38px;height:38px;padding:0;border:1px solid #2999ff;border-radius:50%;background:#102b3b;color:#fff;font-size:20px;line-height:36px;cursor:pointer;box-shadow:0 0 6px #2999ff,0 0 14px rgba(41,153,255,.65);display:flex;align-items:center;justify-content:center}
 .temo-eye-btn:active{transform:scale(.94)}
 .privacy-hidden .amount,.privacy-hidden .mini b,.privacy-hidden #dayJobs .right > b{visibility:hidden}
+
+.yearPickerBtn{border:0;background:none;color:inherit;font:inherit;font-weight:bold;cursor:pointer;padding:4px 8px;border-radius:9px}.yearPickerModal{display:none;position:fixed;inset:0;background:#000a;align-items:center;justify-content:center;padding:16px;z-index:10003}.yearPickerModal.show{display:flex}.yearPickerBox{width:min(340px,100%);max-height:75vh;overflow:auto;background:linear-gradient(145deg,#0c1a23,#10232f);border:1px solid #2999df;border-radius:20px;padding:18px;box-shadow:0 20px 60px #000b}.yearPickerBox h2{margin:0 0 14px;text-align:center;color:#fff;font-size:20px}.yearPickerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.yearPickerGrid button{padding:11px 6px;border-radius:10px;border:1px solid #285269;background:#183445;color:#fff;cursor:pointer}.yearPickerGrid button.active{border-color:#2999df;box-shadow:0 0 8px #2999df;color:#62b8ff}.yearPickerClose{width:100%;margin-top:14px;padding:11px;border:1px solid #74333d;border-radius:10px;background:#4a2228;color:#ff6b6b;font-weight:bold;cursor:pointer}
 </style>
 
 <style id="temo-3d-title">
@@ -111,23 +115,15 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 .noteEntriesScroll{flex:1;min-height:0;overflow-y:auto;margin-top:14px;padding-right:3px}
 .noteClose{width:38px;min-width:38px;height:38px;margin:0;padding:0;display:flex;align-items:center;justify-content:center;border:1px solid #ff3b3b;border-radius:50%;background:rgba(70,0,0,.45);color:#ff4d4d;cursor:pointer;font-size:25px;font-weight:900;line-height:1;text-shadow:0 0 5px #ff3b3b,0 0 12px #ff3b3b,0 0 20px #ff3b3b;box-shadow:0 0 5px rgba(255,59,59,.8),0 0 14px rgba(255,59,59,.45)}
 </style>
-<style>
-.credentialsBtn{display:block;width:58%;max-width:260px;margin:12px auto 0;padding:10px 14px;border:1px solid #2999df;border-radius:12px;background:rgba(16,43,59,.8);color:#fff;font-weight:bold;cursor:pointer;box-shadow:0 0 7px rgba(41,153,223,.5)}
-.credentialsModal{display:none;position:fixed;inset:0;background:#000b;align-items:center;justify-content:center;padding:16px;z-index:10002}
-.credentialsModal.show{display:flex}
-.credentialsBox{width:min(430px,100%);background:linear-gradient(145deg,#0c1a23,#10232f);border:1px solid #2999df;border-radius:20px;padding:22px;box-shadow:0 20px 60px #000b;text-align:center}
-.credentialsBox h2{margin:0 0 16px;color:#fff}
-.credentialsBox label{display:block;text-align:left;margin:12px 0 5px;color:#c7d4d8}
-.credentialsBox input{width:100%;box-sizing:border-box;padding:14px;border-radius:11px;border:1px solid #29404c;background:#071117;color:#fff;font-size:16px;text-align:center}
-.credentialsClose{width:100%;margin-top:16px;padding:12px;border-radius:10px;border:1px solid #74333d;background:#4a2228;color:#ff6b6b;font-weight:bold;cursor:pointer}
-</style></head>
+</head>
 <body>
 <div id="uploadOverlay"><div class="uploadBox"><div class="uploadSpinner" id="uploadSpinner"></div><div class="uploadCheck" id="uploadCheck">✓</div><div class="uploadBurst" id="uploadBurst"></div></div></div>
 
 
 <div id="loginScreen"><div class="loginBox">
 <h2>🔐 TEMO სამუშაო ანგარიში</h2>
-<p>შეიყვანე პაროლი საიტზე შესასვლელად</p>
+<p>აირჩიე მომხმარებელი და შეიყვანე პაროლი</p>
+<select id="loginUser" class="loginSelect"></select>
 <input id="loginPassword" type="password" placeholder="პაროლი" autocomplete="current-password">
 <button onclick="login()">შესვლა</button>
 <div id="loginError"></div>
@@ -161,7 +157,7 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 <h2>📅 კალენდარი</h2>
 <div class="calendarHead">
   <button class="calendarNav" onclick="prevCalendarMonth()">‹</button>
-  <div id="calendarTitle" class="calendarTitle"></div>
+  <button id="calendarTitle" class="calendarTitle yearPickerBtn" onclick="openYearPicker()"></button>
   <button class="calendarNav" onclick="nextCalendarMonth()">›</button>
 </div>
 <div class="calendarWeek">
@@ -180,17 +176,25 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 
 <div id="settingsPage" class="pageHidden">
 <header><div><h1>⚙️ სეთინგები</h1><small>მონაცემების მართვა</small></div></header>
-<button class="settingsBtn settingsBack temo-exit-btn" onclick="showMain()"><span class="homeIcon">⌂</span><span class="homeLabel">მთავარი</span></button>
-<div class="section">
+<button class="settingsBtn settingsBack temo-exit-btn" onclick="showMain()"><span class="homeIcon">⌂</span><span class="homeLabel">მთავარი</span></button><div class="section"><h2>👤 მომხმარებელი</h2><div class="meta" id="currentUserLabel"></div></div>
+
+<div class="section" id="websiteUpdateSection">
 <h2>🔄 საიტის განახლება</h2>
 <div class="tools">
+<input id="ghRepo" placeholder="GitHub: მომხმარებელი/რეპოზიტორია">
+<input id="ghToken" type="password" placeholder="GitHub Token">
 <input id="siteUpdateFile" type="file" accept=".html,text/html">
 </div>
-<button class="credentialsBtn" onclick="openCredentials()">🔐 Repository / Token</button>
 <div class="backup">
 <button class="backupBtn" onclick="updateWebsite()">⬆ ახალი index.html ატვირთვა</button>
 </div>
 <div class="meta" style="margin-top:12px">ატვირთული ფაილი უნდა იყოს index.html. Token მხოლოდ ამ ტელეფონში ინახება.</div>
+</div>
+
+<div class="section adminOnly" id="userManagementSection">
+<h2>👥 მომხმარებლების მართვა</h2>
+<div id="userManagementList"></div>
+<div class="userManage"><input id="newUserName" placeholder="ახალი მომხმარებელი" maxlength="40"><input id="newUserPassword" type="password" placeholder="ახალი მომხმარებლის პაროლი" maxlength="80"><button class="backupBtn" onclick="addManagedUser()">➕ მომხმარებლის დამატება</button></div>
 </div>
 
 <div class="section"><h2>მონაცემების სარეზერვო ასლი</h2><div class="backup"><button class="backupBtn" onclick="document.getElementById('importFile').click()">⬆ მონაცემების აღდგენა</button><button class="backupBtn danger" onclick="clearAll()">🗑 ყველაფრის წაშლა</button></div><input id="importFile" type="file" accept="application/json" hidden onchange="importData(event)"></div>
@@ -199,16 +203,7 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 <footer>TEMO WORK TRACKER • მონაცემები ამ ტელეფონში ინახება</footer>
 </div>
 
-<div class="credentialsModal" id="credentialsModal" onclick="if(event.target===this)closeCredentials()">
-<div class="credentialsBox">
-<h2>🔐 Repository / Token</h2>
-<label>Repository</label>
-<input id="ghRepo" value="temo75/t1" autocomplete="off">
-<label>GitHub Token</label>
-<input id="ghToken" type="password" placeholder="GitHub Token" autocomplete="off">
-<button class="credentialsClose" onclick="closeCredentials()">✕ დახურვა</button>
-</div>
-</div>
+<div class="yearPickerModal" id="yearPickerModal" onclick="if(event.target===this)closeYearPicker()"><div class="yearPickerBox"><h2>აირჩიე წელი</h2><div id="yearPickerGrid" class="yearPickerGrid"></div><button class="yearPickerClose" onclick="closeYearPicker()">✕ დახურვა</button></div></div>
 <div class="deleteAuthModal" id="deleteAuthModal"><div class="deleteAuthBox">
 <h2>🔐 დადასტურება</h2><p>ყველა სამუშაოს წასაშლელად შეიყვანე საიტზე შესასვლელი პაროლი.</p>
 <input id="deleteAuthPassword" type="password" placeholder="პაროლი" autocomplete="current-password">
@@ -235,23 +230,32 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 <script>
 const AUTH_KEY='temoWorkTrackerAuthorized';
 const AUTH_PASSWORD='temo2139-590';
+const USERS_KEY='temoWorkTrackerUsers';
+const SESSION_USER_KEY='temoWorkTrackerUser';
+const ADMIN_USER='TEMO';
+let currentUser=localStorage.getItem(SESSION_USER_KEY)||'';
+function getUsers(){
+ let users; try{users=JSON.parse(localStorage.getItem(USERS_KEY)||'null')}catch(e){users=null}
+ if(!Array.isArray(users)||!users.length){users=[{name:ADMIN_USER,password:AUTH_PASSWORD,admin:true}];localStorage.setItem(USERS_KEY,JSON.stringify(users))}
+ return users;
+}
+function renderLoginUsers(){
+ const sel=$('loginUser'); if(!sel)return; const users=getUsers(); sel.innerHTML=users.map(u=>`<option value="${esc(u.name)}">${u.admin?'👑 ':''}${esc(u.name)}</option>`).join('');
+ if(currentUser&&users.some(u=>u.name===currentUser))sel.value=currentUser;
+}
 function login(){
- const pass=$('loginPassword').value;
- if(pass===AUTH_PASSWORD){
-  localStorage.setItem(AUTH_KEY,'yes');
-  $('loginScreen').classList.add('hidden');
-  $('loginPassword').value='';$('loginError').textContent='';
- }else{
-  $('loginError').textContent='პაროლი არასწორია';
-  $('loginPassword').value='';$('loginPassword').focus();
- }
+ const name=$('loginUser').value, pass=$('loginPassword').value, u=getUsers().find(x=>x.name===name);
+ if(u&&pass===u.password){currentUser=u.name;localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(AUTH_KEY,'yes');$('loginScreen').classList.add('hidden');$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
+ else{$('loginError').textContent='პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus()}
 }
 window.addEventListener('DOMContentLoaded',()=>{
- if(localStorage.getItem(AUTH_KEY)==='yes')$('loginScreen').classList.add('hidden');
+ renderLoginUsers();
+ if(localStorage.getItem(AUTH_KEY)==='yes'&&currentUser)getUsers().some(u=>u.name===currentUser)&&$('loginScreen').classList.add('hidden');
  $('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+ updateUserUI();
 });
 
-let jobs=[];try{jobs=JSON.parse(localStorage.getItem('temoJobs')||'[]')}catch(e){jobs=[]}
+let jobs=[];function loadUserJobs(){try{return JSON.parse(localStorage.getItem('temoJobs_'+(currentUser||ADMIN_USER))|| (currentUser===ADMIN_USER?localStorage.getItem('temoJobs')||'[]':'[]'))}catch(e){return []}} jobs=loadUserJobs();
 let editingId=null;
 let calendarDate=new Date();
 let selectedDate='';
@@ -259,7 +263,7 @@ const $=id=>document.getElementById(id);
 const euro=n=>'€'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2});
 $('today').textContent=new Date().toLocaleDateString('ka-GE');
 
-function save(){localStorage.setItem('temoJobs',JSON.stringify(jobs))}
+function save(){localStorage.setItem('temoJobs_'+(currentUser||ADMIN_USER),JSON.stringify(jobs));if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs))}
 function formatDate(s){if(!s)return '';const [y,m,d]=s.split('-');const months=['იანვარი','თებერვალი','მარტი','აპრილი','მაისი','ივნისი','ივლისი','აგვისტო','სექტემბერი','ოქტომბერი','ნოემბერი','დეკემბერი'];return Number(d)+' '+months[Number(m)-1]+' '+y}
 function monthName(key){const [y,m]=key.split('-');return new Date(y,Number(m)-1,1).toLocaleDateString('ka-GE',{year:'numeric',month:'long'})}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
@@ -287,6 +291,9 @@ function renderMonths(){
 function dateKey(y,m,d){
   return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
 }
+function openYearPicker(){const grid=$('yearPickerGrid'),current=calendarDate.getFullYear(),now=new Date().getFullYear();grid.innerHTML='';for(let y=Math.min(current,now)-10;y<=Math.max(current,now)+10;y++){const b=document.createElement('button');b.textContent=y;if(y===current)b.className='active';b.onclick=()=>selectCalendarYear(y);grid.appendChild(b)}$('yearPickerModal').classList.add('show')}
+function closeYearPicker(){$('yearPickerModal').classList.remove('show')}
+function selectCalendarYear(year){calendarDate=new Date(year,calendarDate.getMonth(),1);selectedDate='';closeYearPicker();renderCalendar();renderDayJobs()}
 function renderCalendar(){
   const y=calendarDate.getFullYear(), m=calendarDate.getMonth();
   $('calendarTitle').textContent=new Date(y,m,1).toLocaleDateString('ka-GE',{year:'numeric',month:'long'});
@@ -382,18 +389,28 @@ function loadPrivacyState(){
   eye.title=hidden?'თანხების ჩვენება':'თანხების დამალვა';
   eye.setAttribute('aria-label',hidden?'თანხების ჩვენება':'თანხების დამალვა');
 }
-function openCredentials(){
-  $('ghRepo').value=localStorage.getItem('temoGitHubRepo')||'temo75/t1';
-  $('ghToken').value=localStorage.getItem('temoGitHubToken')||'';
-  $('credentialsModal').classList.add('show');
+function updateUserUI(){
+ const isAdmin=currentUser===ADMIN_USER;
+ const site=$('websiteUpdateSection'); if(site)site.style.display=isAdmin?'':'none';
+ const users=$('userManagementSection'); if(users)users.style.display=isAdmin?'':'none';
+ const label=$('currentUserLabel'); if(label)label.textContent=currentUser?'შესული ხარ: '+currentUser:'';
+ if(isAdmin)renderManagedUsers();
 }
-function closeCredentials(){
-  $('credentialsModal').classList.remove('show');
-  $('ghToken').value='';
+function renderManagedUsers(){
+ const box=$('userManagementList'); if(!box)return; box.innerHTML='';
+ getUsers().filter(u=>!u.admin).forEach(u=>{const row=document.createElement('div');row.className='userRow';const b=document.createElement('button');b.className='backupBtn';b.textContent='👤 '+u.name;const d=document.createElement('button');d.className='backupBtn danger';d.textContent='წაშლა';d.onclick=()=>deleteManagedUser(u.name);row.append(b,d);box.appendChild(row)})
 }
-function showSettings(){document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.remove('pageHidden');window.scrollTo(0,0)}
+function addManagedUser(){
+ if(currentUser!==ADMIN_USER)return;
+ const n=$('newUserName').value.trim(),p=$('newUserPassword').value;
+ if(!n||!p){alert('სახელი და პაროლი ორივე შეავსე');return}
+ if(n.toUpperCase()===ADMIN_USER||getUsers().some(u=>u.name.toLowerCase()===n.toLowerCase())){alert('ეს მომხმარებელი უკვე არსებობს');return}
+ const users=getUsers();users.push({name:n,password:p,admin:false});localStorage.setItem(USERS_KEY,JSON.stringify(users));$('newUserName').value='';$('newUserPassword').value='';renderLoginUsers();renderManagedUsers();
+}
+function deleteManagedUser(name){if(currentUser!==ADMIN_USER)return;if(!confirm('წავშალოთ მომხმარებელი '+name+'?'))return;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers().filter(u=>u.name!==name)));localStorage.removeItem('temoJobs_'+name);renderLoginUsers();renderManagedUsers()}
+function showSettings(){updateUserUI();document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.remove('pageHidden');window.scrollTo(0,0)}
 function showMain(){document.getElementById('settingsPage').classList.add('pageHidden');document.getElementById('mainPage').classList.remove('pageHidden');window.scrollTo(0,0)}
-function logout(){localStorage.removeItem(AUTH_KEY);window.location.reload()}
+function logout(){localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);window.location.reload()}
 function exportData(){const blob=new Blob([JSON.stringify({version:1,exported:new Date().toISOString(),jobs},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='TEMO_WORK_TRACKER_BACKUP.json';a.click();URL.revokeObjectURL(a.href)}
 function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result),arr=Array.isArray(d)?d:d.jobs;if(!Array.isArray(arr))throw 0;if(confirm('არსებული მონაცემები შეიცვალოს ამ სარეზერვო ასლით?')){jobs=arr;save();render();alert('მონაცემები აღდგენილია')}}catch(x){alert('ეს სარეზერვო ფაილი არასწორია')}e.target.value=''};r.readAsText(f)}
 function clearAll(){
