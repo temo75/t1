@@ -256,6 +256,38 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 <div class="row"><button class="cancel" onclick="closeForm()">გაუქმება</button><button class="save" onclick="saveJob()">შენახვა</button></div>
 </div></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAQqkrE6BweLfFEI179irLpkc6OVmIHArc",
+  authDomain: "temo-75.firebaseapp.com",
+  databaseURL: "https://temo-75-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "temo-75",
+  storageBucket: "temo-75.firebasestorage.app",
+  messagingSenderId: "966586658574",
+  appId: "1:966586658574:web:4537c8b2b3e13b5615b15f",
+  measurementId: "G-G7J1FBF18Y"
+};
+firebase.initializeApp(firebaseConfig);
+const firebaseDb = firebase.database();
+const firebaseJobsRoot = 'temoJobs';
+function firebaseUserKey(name){ return encodeURIComponent(name || ADMIN_USER); }
+async function syncJobsFromFirebase(){
+  try{
+    const snap = await firebaseDb.ref(firebaseJobsRoot + '/' + firebaseUserKey(currentUser || ADMIN_USER)).once('value');
+    const cloudJobs = snap.val();
+    if(Array.isArray(cloudJobs)){
+      jobs = cloudJobs;
+      localStorage.setItem('temoJobs_'+(currentUser||ADMIN_USER), JSON.stringify(jobs));
+      if(currentUser===ADMIN_USER) localStorage.setItem('temoJobs', JSON.stringify(jobs));
+      render();
+    }else if(jobs.length){
+      await firebaseDb.ref(firebaseJobsRoot + '/' + firebaseUserKey(currentUser || ADMIN_USER)).set(jobs);
+    }
+  }catch(e){ console.warn('Firebase sync error:', e); }
+}
+</script>
 <script>
 const AUTH_KEY='temoWorkTrackerAuthorized';
 const AUTH_PASSWORD='temo2139-590';
@@ -306,7 +338,7 @@ function completeLogin(u){
  $('loginScreen').classList.add('hidden');
  $('loginPassword').value='';
  $('loginError').textContent='';
- jobs=loadUserJobs();updateUserUI();render();
+ jobs=loadUserJobs();updateUserUI();render();syncJobsFromFirebase();
 }
 function login(){
  const pass=$('loginPassword').value;
@@ -357,7 +389,11 @@ const $=id=>document.getElementById(id);
 const euro=n=>'€'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2});
 $('today').textContent=new Date().toLocaleDateString('ka-GE');
 
-function save(){localStorage.setItem('temoJobs_'+(currentUser||ADMIN_USER),JSON.stringify(jobs));if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs))}
+function save(){
+  localStorage.setItem('temoJobs_'+(currentUser||ADMIN_USER),JSON.stringify(jobs));
+  if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs));
+  try{ firebaseDb.ref(firebaseJobsRoot + '/' + firebaseUserKey(currentUser || ADMIN_USER)).set(jobs); }catch(e){ console.warn('Firebase save error:',e); }
+}
 function formatDate(s){if(!s)return '';const [y,m,d]=s.split('-');const months=['იანვარი','თებერვალი','მარტი','აპრილი','მაისი','ივნისი','ივლისი','აგვისტო','სექტემბერი','ოქტომბერი','ნოემბერი','დეკემბერი'];return Number(d)+' '+months[Number(m)-1]+' '+y}
 function monthName(key){const [y,m]=key.split('-');return new Date(y,Number(m)-1,1).toLocaleDateString('ka-GE',{year:'numeric',month:'long'})}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
@@ -501,7 +537,7 @@ function renderManagedUsers(){
    row.appendChild(b);box.appendChild(row);
  }
  // აქ ჩანს მხოლოდ ის მომხმარებლები, რომლებმაც ავტორიზაცია რეალურად გაიარეს.
- users.filter(u=>!u.admin).forEach(u=>{
+ users.filter(u=>!u.admin && u.authorized===true).forEach(u=>{
    const row=document.createElement('div');row.className='userRow';
    const b=document.createElement('button');b.className='backupBtn';b.textContent='👤 '+u.name;b.disabled=true;
    const d=document.createElement('button');d.className='backupBtn danger';d.textContent='წაშლა';d.onclick=()=>deleteManagedUser(u.name);
@@ -653,7 +689,7 @@ function registerNewUser(){
  localStorage.setItem(USERS_KEY,JSON.stringify(users));
  currentUser=n; localStorage.setItem(SESSION_USER_KEY,n); localStorage.setItem(AUTH_KEY,'yes');
  document.getElementById('newUserAuthModal').classList.remove('show');
- jobs=loadUserJobs(); updateUserUI(); render();
+ jobs=loadUserJobs(); updateUserUI(); render(); syncJobsFromFirebase();
 }
 </script>
 <div id="newUserAuthModal"><div class="newUserAuthBox">
