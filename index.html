@@ -74,45 +74,40 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 .credentialsClose{width:100%;margin-top:14px;padding:10px;border-radius:10px;border:1px solid #74333d;background:#4a2228;color:#ff6b6b;font-weight:bold}
 
 <style>
-/* TEMO: fixed bottom navigation — screen bottom */
+/* TEMO: bottom navigation fixed to the device screen */
 #bottomNav{
   position:fixed !important;
-  top:auto !important;
-  left:0 !important;
-  right:0 !important;
-  bottom:0 !important;
+  inset:auto 0 0 0 !important;
   width:100vw !important;
-  height:auto !important;
+  max-width:none !important;
+  height:64px !important;
   margin:0 !important;
-  padding:7px 8px calc(7px + env(safe-area-inset-bottom)) !important;
+  padding:8px !important;
+  padding-bottom:calc(8px + env(safe-area-inset-bottom)) !important;
   box-sizing:border-box !important;
   display:flex !important;
   flex-direction:row !important;
-  justify-content:stretch !important;
   align-items:stretch !important;
+  justify-content:space-between !important;
   gap:8px !important;
   z-index:2147483647 !important;
   background:rgba(10,18,30,.98) !important;
-  border-top:1px solid rgba(80,170,255,.25) !important;
+  border-top:1px solid rgba(80,170,255,.22) !important;
   box-shadow:0 -5px 20px rgba(0,0,0,.45) !important;
+  transform:none !important;
 }
 #bottomNav button{
   position:static !important;
   flex:1 1 0 !important;
-  width:33.333% !important;
+  width:auto !important;
   min-width:0 !important;
   height:48px !important;
   margin:0 !important;
-  padding:0 5px !important;
-  border:1px solid rgba(41,153,223,.5) !important;
-  border-radius:12px !important;
-  background:#1b2a36 !important;
-  color:#fff !important;
-  font-size:15px !important;
-  font-weight:600 !important;
-  cursor:pointer !important;
+  padding:0 6px !important;
+  pointer-events:auto !important;
+  touch-action:manipulation !important;
 }
-body{padding-bottom:90px !important;}
+body{padding-bottom:78px;}
 </style>
 </style>
 
@@ -176,18 +171,35 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 .newUserAuthBox label{display:block;color:#d8e3e7;margin:10px 0 5px}
 .newUserAuthBox input{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #29404c;background:#071117;color:#fff}
 .newUserAuthBox button{width:100%;margin-top:15px;padding:11px;border:1px solid #2999df;border-radius:10px;background:#12354a;color:#fff;font-weight:bold}
-</style></head>
+</style>
+<style id="fixedBottomNavStyle">
+body{
+  padding-bottom:72px;
+}
+</style>
+
+
+<style id="loginHideBottomNav">
+#loginScreen #bottomNav,
+#passwordScreen #bottomNav,
+.login-screen #bottomNav,
+.password-screen #bottomNav{
+  display:none !important;
+}
+</style>
+
+</head>
 <body>
 <div id="uploadOverlay"><div class="uploadBox"><div class="uploadSpinner" id="uploadSpinner"></div><div class="uploadCheck" id="uploadCheck">✓</div><div class="uploadBurst" id="uploadBurst"></div></div></div>
 
 
 <div id="loginScreen"><div class="loginBox">
 <h2>🔐 </h2>
-<p id="loginHint">შეიყვანე პაროლი</p>
-
-<input id="loginName" class="loginSelect" type="text" placeholder="სახელი" autocomplete="username">
+<p id="loginHint">შეიყვანე შენი პაროლი</p>
+<select id="loginUser" class="loginSelect" style="display:none"></select>
 <input id="loginPassword" type="password" placeholder="პაროლი" autocomplete="current-password">
 <button onclick="login()">შესვლა</button>
+<button id="nameLoginBtn" class="loginModeBtn secondary" onclick="enableNameLogin()" style="display:none">👤 სახელით შესვლა</button>
 <button class="loginModeBtn" onclick="showNewUserAuth()">➕ ახალი მომხმარებელი</button>
 <div id="loginError"></div>
 </div></div>
@@ -234,7 +246,7 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 <div class="dayJobsTitle"><h2 id="dayJobsTitle">აირჩიე თარიღი</h2><span id="dayJobsCount"></span></div>
 <div id="dayJobs"></div>
 </div>
-
+<div class="adminButtons"><button class="settingsBtn" onclick="showSettings()">⚙️ სეთინგები</button><button id="userManagementOpenBtn" class="settingsBtn adminOnly" onclick="showUserManagement()">👥 მომხმარებლები</button></div>
 </div>
 
 <div id="settingsPage" class="pageHidden">
@@ -255,7 +267,7 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 
 </div>
 
-
+<div class="section"><h2>მონაცემების სარეზერვო ასლი</h2><div class="backup"><button class="backupBtn" onclick="document.getElementById('importFile').click()">⬆ მონაცემების აღდგენა</button><button class="backupBtn danger" onclick="clearAll()">🗑 ყველაფრის წაშლა</button></div><input id="importFile" type="file" accept="application/json" hidden onchange="importData(event)"></div>
 </div>
 <div id="userManagementPage" class="pageHidden">
 <header><div><h1>👥 მომხმარებლების მართვა</h1><small>მომხმარებლების დამატება და მართვა</small></div></header>
@@ -263,7 +275,7 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 <div class="section adminOnly" id="userManagementSection">
 <h2>👥 მომხმარებლების მართვა</h2>
 <div id="userManagementList"></div>
-
+<div class="userManage"><input id="newUserName" placeholder="ახალი მომხმარებელი" maxlength="40"><input id="newUserPassword" type="password" placeholder="ახალი მომხმარებლის პაროლი" maxlength="80"><button class="backupBtn" onclick="addManagedUser()">➕ მომხმარებლის დამატება</button></div>
 </div>
 </div>
 
@@ -379,13 +391,29 @@ function renderLoginUsers(){
 }
 function enablePasswordOnlyLogin(){
  const users=getUsers().filter(u=>u.authorized);
- if(!users.length){$('loginError').textContent='ჯერ არც ერთ მომხმარებელს არ აქვს გავლილი ავტორიზაცია';return;}
- $('loginName').style.display='block';
- $('loginHint').textContent='შეიყვანე სახელი და პაროლი';
- $('loginName').value='';$('loginPassword').value='';
- $('loginName').focus();
+ if(!users.length){
+   $('loginError').textContent='ჯერ არც ერთ მომხმარებელს არ აქვს გავლილი ავტორიზაცია';
+   return;
+ }
+ $('loginUser').style.display='none';
+ $('loginHint').textContent='შეიყვანე მხოლოდ შენი პაროლი';
+ $('loginPassword').value='';
+ $('loginPassword').placeholder='მხოლოდ პაროლი';
+ $('passwordOnlyBtn').style.display='none';
+ $('nameLoginBtn').style.display='block';
+ $('loginError').textContent='';
+ $('loginPassword').focus();
 }
-function enableNameLogin(){enablePasswordOnlyLogin()}
+function enableNameLogin(){
+ $('loginUser').style.display='block';
+ $('loginHint').textContent='აირჩიე მომხმარებელი და შეიყვანე პაროლი';
+ $('loginPassword').value='';
+ $('loginPassword').placeholder='პაროლი';
+ $('passwordOnlyBtn').style.display='block';
+ $('nameLoginBtn').style.display='none';
+ $('loginError').textContent='';
+ $('loginPassword').focus();
+}
 function completeLogin(u){
  currentUser=u.name;
  u.authorized=true;
@@ -400,11 +428,20 @@ function completeLogin(u){
  jobs=loadUserJobs();updateUserUI();render();
 }
 function login(){
- const name=$('loginName').value.trim();
  const pass=$('loginPassword').value;
- const u=getUsers().find(x=>x.name.toLowerCase()===name.toLowerCase()&&x.authorized);
+ const passwordOnly=$('loginUser').style.display==='none';
+ if(passwordOnly){
+   const matches=getUsers().filter(u=>u.authorized&&u.password===pass);
+   if(matches.length===1){completeLogin(matches[0]);return}
+   if(matches.length>1){
+     $('loginError').textContent='ეს პაროლი ერთზე მეტ მომხმარებელს ეკუთვნის — თითოეულ მომხმარებელს უნიკალური პაროლი უნდა ჰქონდეს';
+   }else{$('loginError').textContent='პაროლი არასწორია';}
+   $('loginPassword').value='';$('loginPassword').focus();
+   return;
+ }
+ const name=$('loginUser').value, u=getUsers().find(x=>x.name===name);
  if(u&&pass===u.password){completeLogin(u)}
- else{$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus()}
+ else{$('loginError').textContent='პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus()}
 }
 window.addEventListener('DOMContentLoaded',async()=>{
  await syncUsersFromFirebase().then(()=>{
