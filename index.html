@@ -40,7 +40,7 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 .loginBox button{width:100%;padding:15px;border:1px solid #2999ff;border-radius:11px;background:#102b3b;color:#fff;font-weight:bold;font-size:17px;cursor:pointer;box-shadow:0 0 7px #2999ff,0 0 16px #2999ff}
 .loginSelect{width:100%;padding:15px;border-radius:11px;border:1px solid #29404c;background:#071117;color:#fff;font-size:17px;text-align:center;margin-bottom:12px}
 .userManage{margin-top:14px}.userManage input{margin-bottom:8px!important}.userRow{display:flex;gap:7px;margin:7px 0}.userRow button{padding:9px;font-size:14px}.adminOnly{display:block}
-#loginError{min-height:20px;color:#ff7c84;font-size:14px;margin-top:10px}
+#loginError{min-height:20px;color:#ff7c84;font-size:14px;margin-top:10px}.passwordOnlyBtn{width:100%;margin-top:10px;padding:12px;border:1px solid #2999ff;border-radius:11px;background:#0d2636;color:#fff;font-weight:bold;font-size:15px;cursor:pointer;box-shadow:0 0 5px rgba(41,153,255,.45)}.secondaryLoginBtn{border-color:#285269;background:#183445}
 
 .tools input[type=file]{width:100%;max-width:100%;justify-self:stretch;border-color:#ff8a00;box-shadow:0 0 7px #ff8a00,0 0 16px rgba(255,138,0,.65);background:#0b1a24}.tools input[type=file]::file-selector-button{max-width:100%;border:1px solid #ff8a00;border-radius:12px;padding:9px 14px;background:#2a2418;color:#fff;cursor:pointer;box-shadow:0 0 6px #ff8a00,0 0 14px rgba(255,138,0,.7);text-shadow:0 0 6px #ff8a00;}
 
@@ -139,16 +139,12 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 
 <div id="loginScreen"><div class="loginBox">
 <h2>🔐 TEMO სამუშაო ანგარიში</h2>
-<p>აირჩიე მომხმარებელი და შეიყვანე პაროლი</p>
-<select id="loginUser" class="loginSelect"></select>
+<p id="loginHint">აირჩიე მომხმარებელი და შეიყვანე პაროლი</p>
+<div id="loginUserWrap"><select id="loginUser" class="loginSelect"></select></div>
 <input id="loginPassword" type="password" placeholder="პაროლი" autocomplete="current-password">
-<button id="normalLoginBtn" onclick="login()">შესვლა</button>
-<button id="passwordOnlyBtn" type="button" onclick="togglePasswordOnlyLogin()" style="margin-top:10px">🔑 მხოლოდ პაროლით შესვლა</button>
-<div id="passwordOnlyMode" style="display:none">
-  <input id="passwordOnlyInput" type="password" placeholder="შეიყვანე შენი პაროლი" autocomplete="current-password">
-  <button type="button" onclick="loginByPasswordOnly()">შესვლა</button>
-  <button type="button" onclick="togglePasswordOnlyLogin()" style="margin-top:8px;background:#20323b;box-shadow:none">↩ სახელით შესვლა</button>
-</div>
+<button id="loginButton" onclick="login()">შესვლა</button>
+<button id="passwordOnlyButton" class="passwordOnlyBtn" onclick="showPasswordOnlyLogin()">🔐 პაროლით შესვლა</button>
+<button id="backToUserLoginButton" class="passwordOnlyBtn secondaryLoginBtn" onclick="showUserLogin()" style="display:none">↩ სახელით შესვლა</button>
 <div id="loginError"></div>
 </div></div>
 
@@ -274,45 +270,45 @@ function renderLoginUsers(){
  const sel=$('loginUser'); if(!sel)return; const users=getUsers(); sel.innerHTML=users.map(u=>`<option value="${esc(u.name)}">${u.admin?'👑 ':''}${esc(u.name)}</option>`).join('');
  if(currentUser&&users.some(u=>u.name===currentUser))sel.value=currentUser;
 }
-function enterUserSession(user){
- currentUser=user.name;
- localStorage.setItem(SESSION_USER_KEY,currentUser);
- localStorage.setItem(AUTH_KEY,'yes');
- $('loginScreen').classList.add('hidden');
- $('loginPassword').value='';
- $('passwordOnlyInput').value='';
- $('loginError').textContent='';
- jobs=loadUserJobs();
- updateUserUI();
- render();
-}
 function login(){
- const name=$('loginUser').value, pass=$('loginPassword').value, u=getUsers().find(x=>x.name===name);
- if(u&&pass===u.password) enterUserSession(u);
+ const pass=$('loginPassword').value;
+ const passwordOnly=$('loginScreen').classList.contains('password-only-mode');
+ let u;
+ if(passwordOnly){
+   const matches=getUsers().filter(x=>!x.admin&&x.password===pass);
+   if(matches.length===1) u=matches[0];
+   else if(matches.length>1){$('loginError').textContent='ეს პაროლი ერთზე მეტ მომხმარებელს აქვს';$('loginPassword').value='';$('loginPassword').focus();return}
+ }else{
+   const name=$('loginUser').value;
+   u=getUsers().find(x=>x.name===name);
+ }
+ if(u&&pass===u.password){currentUser=u.name;localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(AUTH_KEY,'yes');$('loginScreen').classList.add('hidden');$('loginScreen').classList.remove('password-only-mode');$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
  else{$('loginError').textContent='პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus()}
 }
-function togglePasswordOnlyLogin(){
- const normal=$('loginUser'), normalPass=$('loginPassword'), normalBtn=$('normalLoginBtn'), only=$('passwordOnlyMode'), switchBtn=$('passwordOnlyBtn');
- const active=only.style.display==='none';
- normal.style.display=active?'none':'';
- normalPass.style.display=active?'none':'';
- normalBtn.style.display=active?'none':'';
- only.style.display=active?'block':'none';
- switchBtn.style.display=active?'none':'';
+function showPasswordOnlyLogin(){
+ $('loginScreen').classList.add('password-only-mode');
+ $('loginUserWrap').style.display='none';
+ $('loginHint').textContent='შეიყვანე მხოლოდ შენი ინდივიდუალური პაროლი';
+ $('loginButton').textContent='შესვლა';
+ $('passwordOnlyButton').style.display='none';
+ $('backToUserLoginButton').style.display='block';
+ $('loginPassword').value='';
  $('loginError').textContent='';
- if(active){$('passwordOnlyInput').value='';setTimeout(()=>$('passwordOnlyInput').focus(),50)}else{$('loginPassword').value='';setTimeout(()=>$('loginPassword').focus(),50)}
+ $('loginPassword').focus();
 }
-function loginByPasswordOnly(){
- const pass=$('passwordOnlyInput').value;
- const u=getUsers().find(x=>x.password===pass);
- if(u){enterUserSession(u)}
- else{$('loginError').textContent='პაროლი არასწორია';$('passwordOnlyInput').value='';$('passwordOnlyInput').focus()}
+function showUserLogin(){
+ $('loginScreen').classList.remove('password-only-mode');
+ $('loginUserWrap').style.display='block';
+ $('loginHint').textContent='აირჩიე მომხმარებელი და შეიყვანე პაროლი';
+ $('passwordOnlyButton').style.display='block';
+ $('backToUserLoginButton').style.display='none';
+ $('loginPassword').value='';
+ $('loginError').textContent='';
 }
 window.addEventListener('DOMContentLoaded',()=>{
  renderLoginUsers();
  if(localStorage.getItem(AUTH_KEY)==='yes'&&currentUser)getUsers().some(u=>u.name===currentUser)&&$('loginScreen').classList.add('hidden');
  $('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
- $('passwordOnlyInput').addEventListener('keydown',e=>{if(e.key==='Enter')loginByPasswordOnly()});
  updateUserUI();
 });
 
