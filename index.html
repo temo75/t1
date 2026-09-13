@@ -57,8 +57,6 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 .temo-eye-btn{width:38px;height:38px;padding:0;border:1px solid #2999ff;border-radius:50%;background:#102b3b;color:#fff;font-size:20px;line-height:36px;cursor:pointer;box-shadow:0 0 6px #2999ff,0 0 14px rgba(41,153,255,.65);display:flex;align-items:center;justify-content:center}
 .temo-eye-btn:active{transform:scale(.94)}
 .privacy-hidden .amount,.privacy-hidden .mini b,.privacy-hidden #dayJobs .right > b{visibility:hidden}
-
-.yearPickerBtn{border:0;background:none;color:inherit;font:inherit;font-weight:bold;cursor:pointer;padding:4px 8px;border-radius:9px}.yearPickerModal{display:none;position:fixed;inset:0;background:#000a;align-items:center;justify-content:center;padding:16px;z-index:10003}.yearPickerModal.show{display:flex}.yearPickerBox{width:min(340px,100%);max-height:75vh;overflow:auto;background:linear-gradient(145deg,#0c1a23,#10232f);border:1px solid #2999df;border-radius:20px;padding:18px;box-shadow:0 20px 60px #000b}.yearPickerBox h2{margin:0 0 14px;text-align:center;color:#fff;font-size:20px}.yearPickerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.yearPickerGrid button{padding:11px 6px;border-radius:10px;border:1px solid #285269;background:#183445;color:#fff;cursor:pointer}.yearPickerGrid button.active{border-color:#2999df;box-shadow:0 0 8px #2999df;color:#62b8ff}.yearPickerClose{width:100%;margin-top:14px;padding:11px;border:1px solid #74333d;border-radius:10px;background:#4a2228;color:#ff6b6b;font-weight:bold;cursor:pointer}
 </style>
 
 <style id="temo-3d-title">
@@ -113,7 +111,16 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 .noteEntriesScroll{flex:1;min-height:0;overflow-y:auto;margin-top:14px;padding-right:3px}
 .noteClose{width:38px;min-width:38px;height:38px;margin:0;padding:0;display:flex;align-items:center;justify-content:center;border:1px solid #ff3b3b;border-radius:50%;background:rgba(70,0,0,.45);color:#ff4d4d;cursor:pointer;font-size:25px;font-weight:900;line-height:1;text-shadow:0 0 5px #ff3b3b,0 0 12px #ff3b3b,0 0 20px #ff3b3b;box-shadow:0 0 5px rgba(255,59,59,.8),0 0 14px rgba(255,59,59,.45)}
 </style>
-</head>
+<style>
+.credentialsBtn{display:block;width:58%;max-width:260px;margin:12px auto 0;padding:10px 14px;border:1px solid #2999df;border-radius:12px;background:rgba(16,43,59,.8);color:#fff;font-weight:bold;cursor:pointer;box-shadow:0 0 7px rgba(41,153,223,.5)}
+.credentialsModal{display:none;position:fixed;inset:0;background:#000b;align-items:center;justify-content:center;padding:16px;z-index:10002}
+.credentialsModal.show{display:flex}
+.credentialsBox{width:min(430px,100%);background:linear-gradient(145deg,#0c1a23,#10232f);border:1px solid #2999df;border-radius:20px;padding:22px;box-shadow:0 20px 60px #000b;text-align:center}
+.credentialsBox h2{margin:0 0 16px;color:#fff}
+.credentialsBox label{display:block;text-align:left;margin:12px 0 5px;color:#c7d4d8}
+.credentialsBox input{width:100%;box-sizing:border-box;padding:14px;border-radius:11px;border:1px solid #29404c;background:#071117;color:#fff;font-size:16px;text-align:center}
+.credentialsClose{width:100%;margin-top:16px;padding:12px;border-radius:10px;border:1px solid #74333d;background:#4a2228;color:#ff6b6b;font-weight:bold;cursor:pointer}
+</style></head>
 <body>
 <div id="uploadOverlay"><div class="uploadBox"><div class="uploadSpinner" id="uploadSpinner"></div><div class="uploadCheck" id="uploadCheck">✓</div><div class="uploadBurst" id="uploadBurst"></div></div></div>
 
@@ -154,7 +161,7 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 <h2>📅 კალენდარი</h2>
 <div class="calendarHead">
   <button class="calendarNav" onclick="prevCalendarMonth()">‹</button>
-  <button id="calendarTitle" class="calendarTitle yearPickerBtn" onclick="openYearPicker()"></button>
+  <div id="calendarTitle" class="calendarTitle"></div>
   <button class="calendarNav" onclick="nextCalendarMonth()">›</button>
 </div>
 <div class="calendarWeek">
@@ -177,10 +184,9 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 <div class="section">
 <h2>🔄 საიტის განახლება</h2>
 <div class="tools">
-<input id="ghRepo" placeholder="GitHub: მომხმარებელი/რეპოზიტორია">
-<input id="ghToken" type="password" placeholder="GitHub Token">
 <input id="siteUpdateFile" type="file" accept=".html,text/html">
 </div>
+<button class="credentialsBtn" onclick="openCredentials()">🔐 Repository / Token</button>
 <div class="backup">
 <button class="backupBtn" onclick="updateWebsite()">⬆ ახალი index.html ატვირთვა</button>
 </div>
@@ -193,7 +199,16 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 <footer>TEMO WORK TRACKER • მონაცემები ამ ტელეფონში ინახება</footer>
 </div>
 
-<div class="yearPickerModal" id="yearPickerModal" onclick="if(event.target===this)closeYearPicker()"><div class="yearPickerBox"><h2>აირჩიე წელი</h2><div id="yearPickerGrid" class="yearPickerGrid"></div><button class="yearPickerClose" onclick="closeYearPicker()">✕ დახურვა</button></div></div>
+<div class="credentialsModal" id="credentialsModal" onclick="if(event.target===this)closeCredentials()">
+<div class="credentialsBox">
+<h2>🔐 Repository / Token</h2>
+<label>Repository</label>
+<input id="ghRepo" value="temo75/t1" autocomplete="off">
+<label>GitHub Token</label>
+<input id="ghToken" type="password" placeholder="GitHub Token" autocomplete="off">
+<button class="credentialsClose" onclick="closeCredentials()">✕ დახურვა</button>
+</div>
+</div>
 <div class="deleteAuthModal" id="deleteAuthModal"><div class="deleteAuthBox">
 <h2>🔐 დადასტურება</h2><p>ყველა სამუშაოს წასაშლელად შეიყვანე საიტზე შესასვლელი პაროლი.</p>
 <input id="deleteAuthPassword" type="password" placeholder="პაროლი" autocomplete="current-password">
@@ -272,9 +287,6 @@ function renderMonths(){
 function dateKey(y,m,d){
   return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
 }
-function openYearPicker(){const grid=$('yearPickerGrid'),current=calendarDate.getFullYear(),now=new Date().getFullYear();grid.innerHTML='';for(let y=Math.min(current,now)-10;y<=Math.max(current,now)+10;y++){const b=document.createElement('button');b.textContent=y;if(y===current)b.className='active';b.onclick=()=>selectCalendarYear(y);grid.appendChild(b)}$('yearPickerModal').classList.add('show')}
-function closeYearPicker(){$('yearPickerModal').classList.remove('show')}
-function selectCalendarYear(year){calendarDate=new Date(year,calendarDate.getMonth(),1);selectedDate='';closeYearPicker();renderCalendar();renderDayJobs()}
 function renderCalendar(){
   const y=calendarDate.getFullYear(), m=calendarDate.getMonth();
   $('calendarTitle').textContent=new Date(y,m,1).toLocaleDateString('ka-GE',{year:'numeric',month:'long'});
@@ -369,6 +381,15 @@ function loadPrivacyState(){
   eye.textContent=hidden?'🙈':'👁';
   eye.title=hidden?'თანხების ჩვენება':'თანხების დამალვა';
   eye.setAttribute('aria-label',hidden?'თანხების ჩვენება':'თანხების დამალვა');
+}
+function openCredentials(){
+  $('ghRepo').value=localStorage.getItem('temoGitHubRepo')||'temo75/t1';
+  $('ghToken').value=localStorage.getItem('temoGitHubToken')||'';
+  $('credentialsModal').classList.add('show');
+}
+function closeCredentials(){
+  $('credentialsModal').classList.remove('show');
+  $('ghToken').value='';
 }
 function showSettings(){document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.remove('pageHidden');window.scrollTo(0,0)}
 function showMain(){document.getElementById('settingsPage').classList.add('pageHidden');document.getElementById('mainPage').classList.remove('pageHidden');window.scrollTo(0,0)}
