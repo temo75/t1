@@ -124,18 +124,6 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 .noteEntriesScroll{flex:1;min-height:0;overflow-y:auto;margin-top:14px;padding-right:3px}
 .noteClose{width:38px;min-width:38px;height:38px;margin:0;padding:0;display:flex;align-items:center;justify-content:center;border:1px solid #ff3b3b;border-radius:50%;background:rgba(70,0,0,.45);color:#ff4d4d;cursor:pointer;font-size:25px;font-weight:900;line-height:1;text-shadow:0 0 5px #ff3b3b,0 0 12px #ff3b3b,0 0 20px #ff3b3b;box-shadow:0 0 5px rgba(255,59,59,.8),0 0 14px rgba(255,59,59,.45)}
 </style>
-
-<style>
-.new-user-auth{display:none;position:fixed;inset:0;background:#000d;align-items:center;justify-content:center;padding:18px;z-index:50000}
-.new-user-auth.show{display:flex}
-.new-user-auth-box{width:min(390px,100%);background:linear-gradient(145deg,#0c1a23,#10232f);border:1px solid #2999df;border-radius:20px;padding:22px;box-shadow:0 0 30px #2999df55;text-align:center}
-.new-user-auth-box h2{margin:0 0 18px;color:#fff}
-.new-user-auth-box label{display:block;text-align:left;margin:10px 0 5px;color:#d8e3e7}
-.new-user-auth-box input{width:100%;box-sizing:border-box;padding:13px;border-radius:10px;border:1px solid #29404c;background:#071117;color:#fff;font-size:16px}
-.new-user-auth-box button{width:100%;margin-top:15px;padding:12px;border:1px solid #2999df;border-radius:10px;background:#12354a;color:#fff;font-weight:bold}
-.admin-added{display:none;margin-top:12px;padding:10px;border:1px solid #2999df;border-radius:12px}
-.admin-added-row{padding:7px 0;border-bottom:1px solid #203642;color:#fff}
-</style>
 </head>
 <body>
 <div id="uploadOverlay"><div class="uploadBox"><div class="uploadSpinner" id="uploadSpinner"></div><div class="uploadCheck" id="uploadCheck">✓</div><div class="uploadBurst" id="uploadBurst"></div></div></div>
@@ -211,7 +199,7 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 <div class="meta" style="margin-top:12px">ატვირთული ფაილი უნდა იყოს index.html. Token მხოლოდ ამ ტელეფონში ინახება.</div>
 </div>
 
-<div class="section adminOnly" id="userManagementSection"><div class="admin-added" id="adminAddedUsers"><b>👥 ვინ დაემატა</b><div id="adminAddedUsersList"></div></div>
+<div class="section adminOnly" id="userManagementSection">
 <h2>👥 მომხმარებლების მართვა</h2>
 <div id="userManagementList"></div>
 <div class="userManage"><input id="newUserName" placeholder="ახალი მომხმარებელი" maxlength="40"><input id="newUserPassword" type="password" placeholder="ახალი მომხმარებლის პაროლი" maxlength="80"><button class="backupBtn" onclick="addManagedUser()">➕ მომხმარებლის დამატება</button></div>
@@ -436,6 +424,7 @@ function loadPrivacyState(){
   eye.title=hidden?'თანხების ჩვენება':'თანხების დამალვა';
   eye.setAttribute('aria-label',hidden?'თანხების ჩვენება':'თანხების დამალვა');
 }
+function adminDisplayName(){return currentUser===TEMO_ADMIN_USER?'TEMO ADMIN':currentUser}
 function updateUserUI(){
  const isAdmin=currentUser===ADMIN_USER;
  const site=$('websiteUpdateSection'); if(site)site.style.display=isAdmin?'':'none';
@@ -579,65 +568,6 @@ async function updateWebsite(){
     alert('შეცდომა: '+err.message);
   }
 }
-
-const NEW_USER_AUTH_KEY='temo_new_user_authorized_v1';
-function showNewUserAuth(){
-  const m=document.getElementById('newUserAuth');
-  if(m)m.classList.add('show');
-}
-function hideNewUserAuth(){
-  const m=document.getElementById('newUserAuth');
-  if(m)m.classList.remove('show');
-}
-function registerNewUserFromStart(){
-  const n=(document.getElementById('newUserAuthName')||{}).value?.trim()||'';
-  const p=(document.getElementById('newUserAuthPassword')||{}).value||'';
-  if(!n||!p){alert('სახელი და ახალი პაროლი ორივე შეავსე');return}
-  if(n.toUpperCase()===TEMO_ADMIN_USER){alert('ადმინისტრატორის სახელი უკვე დაკავებულია');return}
-  const users=getUsers();
-  if(users.some(u=>u.name.toLowerCase()===n.toLowerCase())){alert('ეს მომხმარებელი უკვე არსებობს');return}
-  users.push({name:n,password:p,admin:false});
-  localStorage.setItem(TEMO_USERS_KEY,JSON.stringify(users));
-  currentUser=n;
-  localStorage.setItem(TEMO_SESSION_KEY,currentUser);
-  localStorage.setItem(NEW_USER_AUTH_KEY,'1');
-  jobs=loadUserJobs();
-  hideNewUserAuth();
-  if(typeof updateUserUI==='function')updateUserUI();
-  if(typeof updateAdminAddedUsers==='function')updateAdminAddedUsers();
-  if(typeof render==='function')render();
-}
-function updateAdminAddedUsers(){
-  const box=document.getElementById('adminAddedUsers');
-  const list=document.getElementById('adminAddedUsersList');
-  if(!box||!list)return;
-  if(currentUser!==TEMO_ADMIN_USER){box.style.display='none';return}
-  box.style.display='';
-  const users=getUsers().filter(u=>!u.admin);
-  list.innerHTML=users.length
-    ? users.map(u=>'<div class="admin-added-row">👤 '+u.name+'</div>').join('')
-    : '<div class="meta">ჯერ მომხმარებელი არ დამატებულა</div>';
-}
 </script>
-
-<div class="new-user-auth" id="newUserAuth">
-  <div class="new-user-auth-box">
-    <h2>🔐 ავტორიზაცია</h2>
-    <label>1. თქვენი სახელი</label>
-    <input id="newUserAuthName" maxlength="40" autocomplete="name">
-    <label>2. თქვენი ახალი პაროლი</label>
-    <input id="newUserAuthPassword" type="password" maxlength="80" autocomplete="new-password">
-    <button onclick="registerNewUserFromStart()">შესვლა</button>
-  </div>
-</div>
-<script>
-document.addEventListener('DOMContentLoaded',function(){
-  const session=localStorage.getItem(TEMO_SESSION_KEY);
-  const users=getUsers();
-  if(!session && users.some(u=>u.admin)){
-    showNewUserAuth();
-  }
-  updateAdminAddedUsers();
-});
-</script></body>
+</body>
 </html>
