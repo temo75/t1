@@ -89,7 +89,11 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
   box-sizing:border-box;
   background:rgba(10,18,30,.96);
   border-top:1px solid rgba(80,170,255,.18);
-  transform:translateZ(0);
+  transform:translate3d(0,0,0);
+}
+#bottomNav button{
+  pointer-events:auto !important;
+  touch-action:manipulation;
 }
 #bottomNav button{
   flex:1;
@@ -572,27 +576,9 @@ function editJob(id){const j=jobs.find(x=>x.id===id);if(!j)return;editingId=id;$
 function saveJob(){const amount=Number($('money').value);if(!amount||amount<=0){alert('თანხა მიუთითე');return}const data={date:$('date').value,place:$('place').value.trim(),money:amount,note:$('note').value.trim(),paid:$('paidCheck').checked};if(!data.date){alert('თარიღი მიუთითე');return}if(editingId){const i=jobs.findIndex(x=>x.id===editingId);jobs[i]={...jobs[i],...data}}else jobs.push({id:Date.now().toString()+Math.random().toString(16).slice(2),...data});save();closeForm();render()}
 function togglePaid(id){const j=jobs.find(x=>x.id===id);if(j){j.paid=!j.paid;save();render()}}
 function delJob(id){if(confirm('წავშალოთ ეს ჩანაწერი?')){jobs=jobs.filter(x=>x.id!==id);save();render()}}
-function goHome(){
-  document.querySelectorAll('section[id]').forEach(x=>x.classList.remove('hidden'));
-  const el=document.querySelector('.app');
-  if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
-}
-function goSettings(){
-  const el=document.querySelector('#settingsSection');
-  if(el){
-    el.style.display='';
-    el.classList.remove('hidden');
-    el.scrollIntoView({behavior:'smooth',block:'start'});
-  }
-}
-function goUsers(){
-  const el=document.querySelector('#userManagementSection');
-  if(el){
-    el.style.display='';
-    el.classList.remove('hidden');
-    el.scrollIntoView({behavior:'smooth',block:'start'});
-  }
-}
+function goHome(){showMain()}
+function goSettings(){showSettings()}
+function goUsers(){if(currentUser===ADMIN_USER)showUserManagement()}
 
 function togglePrivacy(){
   const app=document.querySelector('.app');
