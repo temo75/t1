@@ -292,10 +292,25 @@ async function syncUsersFromFirebase(){
     const local=getUsers();
     const remote=await loadUsersFromFirebase();
     if(remote===null){await saveUsersToFirebase(local);return}
-    if(remote.length){
-      localStorage.setItem(USERS_KEY,JSON.stringify(remote));
-    }else if(local.length){
-      await saveUsersToFirebase(local);
+
+    const byName=new Map();
+    [...remote,...local].forEach(u=>{
+      if(!u||!u.name)return;
+      const key=u.name.toLowerCase();
+      const prev=byName.get(key);
+      if(!prev) byName.set(key,{...u});
+      else byName.set(key,{
+        ...prev,...u,
+        name:prev.name||u.name,
+        admin:!!(prev.admin||u.admin),
+        authorized:!!(prev.authorized||u.authorized)
+      });
+    });
+
+    const merged=Array.from(byName.values());
+    if(merged.length){
+      localStorage.setItem(USERS_KEY,JSON.stringify(merged));
+      await saveUsersToFirebase(merged);
     }
   }finally{firebaseSyncBusy=false}
 }
@@ -364,7 +379,10 @@ function login(){
  else{$('loginError').textContent='პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus()}
 }
 window.addEventListener('DOMContentLoaded',async()=>{
- await syncUsersFromFirebase();
+ await syncUsersFromFirebase().then(()=>{
+  renderLoginUsers();
+  if(typeof renderManagedUsers==='function' && currentUser===ADMIN_USER) renderManagedUsers();
+});
  renderLoginUsers();
  if(localStorage.getItem(AUTH_KEY)==='yes'&&currentUser)getUsers().some(u=>u.name===currentUser)&&$('loginScreen').classList.add('hidden');
  $('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
