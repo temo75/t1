@@ -76,17 +76,20 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 <style>
 /* SUPER_CODE35: fixed bottom navigation */
 #bottomNav{
-  position:fixed;
-  left:0;
-  right:0;
-  bottom:0;
-  z-index:9999;
-  display:flex;
+  position:fixed !important;
+  left:0 !important;
+  right:0 !important;
+  bottom:0 !important;
+  width:100% !important;
+  z-index:2147483647 !important;
+  display:flex !important;
   gap:8px;
   padding:8px;
   padding-bottom:calc(8px + env(safe-area-inset-bottom));
+  box-sizing:border-box;
   background:rgba(10,18,30,.96);
   border-top:1px solid rgba(80,170,255,.18);
+  transform:translateZ(0);
 }
 #bottomNav button{
   flex:1;
@@ -571,18 +574,24 @@ function togglePaid(id){const j=jobs.find(x=>x.id===id);if(j){j.paid=!j.paid;sav
 function delJob(id){if(confirm('წავშალოთ ეს ჩანაწერი?')){jobs=jobs.filter(x=>x.id!==id);save();render()}}
 function goHome(){
   document.querySelectorAll('section[id]').forEach(x=>x.classList.remove('hidden'));
-  const el=document.querySelector('#home')||document.querySelector('.app');
+  const el=document.querySelector('.app');
   if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function goSettings(){
-  const el=document.querySelector('#settingsScreen')||document.querySelector('#settingsSection');
-  if(el)el.classList.remove('hidden');
-  if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+  const el=document.querySelector('#settingsSection');
+  if(el){
+    el.style.display='';
+    el.classList.remove('hidden');
+    el.scrollIntoView({behavior:'smooth',block:'start'});
+  }
 }
 function goUsers(){
   const el=document.querySelector('#userManagementSection');
-  if(el)el.classList.remove('hidden');
-  if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+  if(el){
+    el.style.display='';
+    el.classList.remove('hidden');
+    el.scrollIntoView({behavior:'smooth',block:'start'});
+  }
 }
 
 function togglePrivacy(){
