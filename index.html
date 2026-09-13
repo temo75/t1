@@ -212,8 +212,9 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 </div>
 
 <div class="section adminOnly" id="userManagementSection">
-<h2>👥 მომხმარებლები</h2>
+<h2>👥 მომხმარებლების მართვა</h2>
 <div id="userManagementList"></div>
+<div class="userManage"><input id="newUserName" placeholder="ახალი მომხმარებელი" maxlength="40"><input id="newUserPassword" type="password" placeholder="ახალი მომხმარებლის პაროლი" maxlength="80"><button class="backupBtn" onclick="addManagedUser()">➕ მომხმარებლის დამატება</button></div>
 </div>
 
 <div class="section"><h2>მონაცემების სარეზერვო ასლი</h2><div class="backup"><button class="backupBtn" onclick="document.getElementById('importFile').click()">⬆ მონაცემების აღდგენა</button><button class="backupBtn danger" onclick="clearAll()">🗑 ყველაფრის წაშლა</button></div><input id="importFile" type="file" accept="application/json" hidden onchange="importData(event)"></div>
@@ -298,8 +299,11 @@ function enableNameLogin(){
 }
 function completeLogin(u){
  currentUser=u.name;
- u.authorized=true;
- localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));
+ // ავტორიზაციის წარმატებით გავლა ვინახავთ მომხმარებლის სტატუსად.
+ const users=getUsers();
+ const saved=users.find(x=>x.name===u.name);
+ if(saved){saved.authorized=true;saved.lastAuthorizedAt=new Date().toISOString();}
+ localStorage.setItem(USERS_KEY,JSON.stringify(users));
  localStorage.setItem(SESSION_USER_KEY,currentUser);
  localStorage.setItem(AUTH_KEY,'yes');
  $('loginScreen').classList.add('hidden');
@@ -491,7 +495,26 @@ function updateUserUI(){
 }
 function renderManagedUsers(){
  const box=$('userManagementList'); if(!box)return; box.innerHTML='';
- getUsers().filter(u=>!u.admin).forEach(u=>{const row=document.createElement('div');row.className='userRow';const b=document.createElement('button');b.className='backupBtn';b.textContent='👤 '+u.name;const d=document.createElement('button');d.className='backupBtn danger';d.textContent='წაშლა';d.onclick=()=>deleteManagedUser(u.name);row.append(b,d);box.appendChild(row)})
+ const users=getUsers();
+ // ადმინი ყოველთვის პირველ რიგში ჩანს.
+ const admin=users.find(u=>u.admin) || {name:ADMIN_USER,admin:true};
+ const adminRow=document.createElement('div'); adminRow.className='userRow';
+ const adminBtn=document.createElement('button'); adminBtn.className='backupBtn'; adminBtn.textContent='👑 TEMO ADMIN'; adminBtn.disabled=true; adminBtn.style.opacity='1'; adminBtn.style.cursor='default';
+ adminRow.appendChild(adminBtn); box.appendChild(adminRow);
+ // მხოლოდ ის მომხმარებლები ჩანს, რომლებმაც ავტორიზაცია უკვე გაიარეს.
+ users.filter(u=>!u.admin && u.authorized===true).forEach(u=>{
+   const row=document.createElement('div'); row.className='userRow';
+   const b=document.createElement('button'); b.className='backupBtn'; b.textContent='👤 '+u.name; b.disabled=true; b.style.opacity='1'; b.style.cursor='default';
+   const d=document.createElement('button'); d.className='backupBtn danger'; d.textContent='წაშლა'; d.onclick=()=>deleteManagedUser(u.name);
+   row.append(b,d); box.appendChild(row);
+ });
+}
+function addManagedUser(){
+ if(currentUser!==ADMIN_USER)return;
+ const n=$('newUserName').value.trim(),p=$('newUserPassword').value;
+ if(!n||!p){alert('სახელი და პაროლი ორივე შეავსე');return}
+ if(n.toUpperCase()===ADMIN_USER||getUsers().some(u=>u.name.toLowerCase()===n.toLowerCase())){alert('ეს მომხმარებელი უკვე არსებობს');return}
+ const users=getUsers();users.push({name:n,password:p,admin:false,authorized:false});localStorage.setItem(USERS_KEY,JSON.stringify(users));$('newUserName').value='';$('newUserPassword').value='';renderLoginUsers();renderManagedUsers();
 }
 function deleteManagedUser(name){if(currentUser!==ADMIN_USER)return;if(!confirm('წავშალოთ მომხმარებელი '+name+'?'))return;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers().filter(u=>u.name!==name)));localStorage.removeItem('temoJobs_'+name);renderLoginUsers();renderManagedUsers()}
 function openCredentials(){
@@ -502,7 +525,7 @@ function openCredentials(){
 function closeCredentials(){
   $('credentialsModal').classList.remove('show');
 }
-function showSettings(){updateUserUI();document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.remove('pageHidden');window.scrollTo(0,0)}
+function showSettings(){updateUserUI();if(currentUser===ADMIN_USER)renderManagedUsers();document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.remove('pageHidden');window.scrollTo(0,0)}
 function showMain(){document.getElementById('settingsPage').classList.add('pageHidden');document.getElementById('mainPage').classList.remove('pageHidden');window.scrollTo(0,0)}
 function logout(){localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);window.location.reload()}
 function exportData(){const blob=new Blob([JSON.stringify({version:1,exported:new Date().toISOString(),jobs},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='TEMO_WORK_TRACKER_BACKUP.json';a.click();URL.revokeObjectURL(a.href)}
@@ -627,7 +650,7 @@ function registerNewUser(){
  if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return}
  const users=getUsers();
  if(users.some(u=>u.name.toLowerCase()===n.toLowerCase())){alert('ეს მომხმარებელი უკვე არსებობს');return}
- users.push({name:n,password:p,admin:false,authorized:true});
+ users.push({name:n,password:p,admin:false,authorized:true,lastAuthorizedAt:new Date().toISOString()});
  localStorage.setItem(USERS_KEY,JSON.stringify(users));
  currentUser=n; localStorage.setItem(SESSION_USER_KEY,n); localStorage.setItem(AUTH_KEY,'yes');
  document.getElementById('newUserAuthModal').classList.remove('show');
