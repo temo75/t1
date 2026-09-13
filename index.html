@@ -72,6 +72,36 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 .credentialsBox label{display:block;text-align:left;margin:10px 0 5px;color:#c7d4d8}
 .credentialsBox input{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #29404c;background:#071117;color:#fff}
 .credentialsClose{width:100%;margin-top:14px;padding:10px;border-radius:10px;border:1px solid #74333d;background:#4a2228;color:#ff6b6b;font-weight:bold}
+
+<style>
+/* SUPER_CODE35: fixed bottom navigation */
+#bottomNav{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  z-index:9999;
+  display:flex;
+  gap:8px;
+  padding:8px;
+  padding-bottom:calc(8px + env(safe-area-inset-bottom));
+  background:rgba(10,18,30,.96);
+  border-top:1px solid rgba(80,170,255,.18);
+}
+#bottomNav button{
+  flex:1;
+  min-height:46px;
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:10px;
+  background:#1b2430;
+  color:#fff;
+  box-shadow:none;
+  text-shadow:none;
+  font-size:15px;
+  font-weight:600;
+}
+body{padding-bottom:78px;}
+</style>
 </style>
 
 <style id="temo-3d-title">
@@ -262,6 +292,11 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 <div class="row"><button class="cancel" onclick="closeForm()">გაუქმება</button><button class="save" onclick="saveJob()">შენახვა</button></div>
 </div></div>
 
+<nav id="bottomNav">
+  <button type="button" onclick="goHome()">მთავარი</button>
+  <button type="button" onclick="goSettings()">სეთინგები</button>
+  <button type="button" onclick="goUsers()">მომხმარებლები</button>
+</nav>
 <script>
 const AUTH_KEY='temoWorkTrackerAuthorized';
 const AUTH_PASSWORD='temo2139-590';
@@ -534,6 +569,22 @@ function editJob(id){const j=jobs.find(x=>x.id===id);if(!j)return;editingId=id;$
 function saveJob(){const amount=Number($('money').value);if(!amount||amount<=0){alert('თანხა მიუთითე');return}const data={date:$('date').value,place:$('place').value.trim(),money:amount,note:$('note').value.trim(),paid:$('paidCheck').checked};if(!data.date){alert('თარიღი მიუთითე');return}if(editingId){const i=jobs.findIndex(x=>x.id===editingId);jobs[i]={...jobs[i],...data}}else jobs.push({id:Date.now().toString()+Math.random().toString(16).slice(2),...data});save();closeForm();render()}
 function togglePaid(id){const j=jobs.find(x=>x.id===id);if(j){j.paid=!j.paid;save();render()}}
 function delJob(id){if(confirm('წავშალოთ ეს ჩანაწერი?')){jobs=jobs.filter(x=>x.id!==id);save();render()}}
+function goHome(){
+  document.querySelectorAll('section[id]').forEach(x=>x.classList.remove('hidden'));
+  const el=document.querySelector('#home')||document.querySelector('.app');
+  if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function goSettings(){
+  const el=document.querySelector('#settingsScreen')||document.querySelector('#settingsSection');
+  if(el)el.classList.remove('hidden');
+  if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function goUsers(){
+  const el=document.querySelector('#userManagementSection');
+  if(el)el.classList.remove('hidden');
+  if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
 function togglePrivacy(){
   const app=document.querySelector('.app');
   const eye=$('privacyEye');
