@@ -255,7 +255,25 @@ window.addEventListener('DOMContentLoaded',()=>{
  updateUserUI();
 });
 
-let jobs=[];function loadUserJobs(){try{return JSON.parse(localStorage.getItem('temoJobs_'+(currentUser||ADMIN_USER))|| (currentUser===ADMIN_USER?localStorage.getItem('temoJobs')||'[]':'[]'))}catch(e){return []}} jobs=loadUserJobs();
+let jobs=[];
+function loadUserJobs(){
+  try{
+    const key='temoJobs_'+(currentUser||ADMIN_USER);
+    const own=localStorage.getItem(key);
+    if(currentUser===ADMIN_USER){
+      const legacy=localStorage.getItem('temoJobs');
+      if((own===null || own==='[]') && legacy){
+        const legacyJobs=JSON.parse(legacy||'[]');
+        if(Array.isArray(legacyJobs) && legacyJobs.length){
+          localStorage.setItem(key,JSON.stringify(legacyJobs));
+          return legacyJobs;
+        }
+      }
+    }
+    return JSON.parse(own||'[]');
+  }catch(e){return []}
+}
+jobs=loadUserJobs();
 let editingId=null;
 let calendarDate=new Date();
 let selectedDate='';
