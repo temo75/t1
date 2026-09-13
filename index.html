@@ -214,7 +214,6 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 <div class="section adminOnly" id="userManagementSection">
 <h2>👥 მომხმარებლების მართვა</h2>
 <div id="userManagementList"></div>
-<div class="userManage"><input id="newUserName" placeholder="ახალი მომხმარებელი" maxlength="40"><input id="newUserPassword" type="password" placeholder="ახალი მომხმარებლის პაროლი" maxlength="80"><button class="backupBtn" onclick="addManagedUser()">➕ მომხმარებლის დამატება</button></div>
 </div>
 
 <div class="section"><h2>მონაცემების სარეზერვო ასლი</h2><div class="backup"><button class="backupBtn" onclick="document.getElementById('importFile').click()">⬆ მონაცემების აღდგენა</button><button class="backupBtn danger" onclick="clearAll()">🗑 ყველაფრის წაშლა</button></div><input id="importFile" type="file" accept="application/json" hidden onchange="importData(event)"></div>
@@ -492,14 +491,22 @@ function updateUserUI(){
 }
 function renderManagedUsers(){
  const box=$('userManagementList'); if(!box)return; box.innerHTML='';
- getUsers().filter(u=>!u.admin).forEach(u=>{const row=document.createElement('div');row.className='userRow';const b=document.createElement('button');b.className='backupBtn';b.textContent='👤 '+u.name;const d=document.createElement('button');d.className='backupBtn danger';d.textContent='წაშლა';d.onclick=()=>deleteManagedUser(u.name);row.append(b,d);box.appendChild(row)})
-}
-function addManagedUser(){
- if(currentUser!==ADMIN_USER)return;
- const n=$('newUserName').value.trim(),p=$('newUserPassword').value;
- if(!n||!p){alert('სახელი და პაროლი ორივე შეავსე');return}
- if(n.toUpperCase()===ADMIN_USER||getUsers().some(u=>u.name.toLowerCase()===n.toLowerCase())){alert('ეს მომხმარებელი უკვე არსებობს');return}
- const users=getUsers();users.push({name:n,password:p,admin:false,authorized:false});localStorage.setItem(USERS_KEY,JSON.stringify(users));$('newUserName').value='';$('newUserPassword').value='';renderLoginUsers();renderManagedUsers();
+ getUsers().forEach(u=>{
+   const row=document.createElement('div');
+   row.className='userRow';
+   const b=document.createElement('button');
+   b.className='backupBtn';
+   b.textContent=u.admin?'👑 TEMO ADMIN':'👤 '+u.name;
+   row.appendChild(b);
+   if(!u.admin){
+     const d=document.createElement('button');
+     d.className='backupBtn danger';
+     d.textContent='წაშლა';
+     d.onclick=()=>deleteManagedUser(u.name);
+     row.appendChild(d);
+   }
+   box.appendChild(row);
+ })
 }
 function deleteManagedUser(name){if(currentUser!==ADMIN_USER)return;if(!confirm('წავშალოთ მომხმარებელი '+name+'?'))return;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers().filter(u=>u.name!==name)));localStorage.removeItem('temoJobs_'+name);renderLoginUsers();renderManagedUsers()}
 function openCredentials(){
