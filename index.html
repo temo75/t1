@@ -369,7 +369,7 @@ function getUsers(){
  return users;
 }
 function renderLoginUsers(){
- const sel=$('loginUser'); if(!sel)return; const users=getUsers().filter(u=>u.admin||u.authorized); sel.innerHTML=users.map(u=>`<option value="${esc(u.name)}">${u.admin?'👑 ':''}${esc(u.name)}</option>`).join('');
+ const sel=$('loginUser'); if(!sel)return; const users=getUsers().filter(u=>u.admin||u.authorized===true); sel.innerHTML=users.map(u=>`<option value="${esc(u.name)}">${u.admin?'👑 ':''}${esc(u.name)}</option>`).join('');
  if(currentUser&&users.some(u=>u.name===currentUser))sel.value=currentUser;
 }
 function enablePasswordOnlyLogin(){
