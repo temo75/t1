@@ -177,12 +177,13 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 
 
 <div id="loginScreen"><div class="loginBox">
-<h2>🔐 TEMO სამუშაო ანგარიში</h2>
-<p id="loginHint">აირჩიე მომხმარებელი და შეიყვანე პაროლი</p>
-<select id="loginUser" class="loginSelect"></select>
+<h2>🔐 </h2>
+<p id="loginHint">შეიყვანე პაროლი</p>
+<div id="loginUserDisplay" class="loginSelect" style="display:flex;align-items:center;justify-content:center;gap:8px;cursor:default">👑 TEMO</div>
+<select id="loginUser" class="loginSelect" style="display:none"></select>
 <input id="loginPassword" type="password" placeholder="პაროლი" autocomplete="current-password">
 <button onclick="login()">შესვლა</button>
-<button id="nameLoginBtn" class="loginModeBtn secondary" onclick="enableNameLogin()" style="display:none">👤 სახელით შესვლა</button>
+<button id="nameLoginBtn" class="loginModeBtn secondary" onclick="enableNameLogin()">👤 სახელით შესვლა</button>
 <button class="loginModeBtn" onclick="showNewUserAuth()">➕ ახალი მომხმარებელი</button>
 <div id="loginError"></div>
 </div></div>
@@ -369,7 +370,7 @@ function getUsers(){
  return users;
 }
 function renderLoginUsers(){
- const sel=$('loginUser'); if(!sel)return; const users=getUsers().filter(u=>u.admin||u.authorized===true); sel.innerHTML=users.map(u=>`<option value="${esc(u.name)}">${u.admin?'👑 ':''}${esc(u.name)}</option>`).join('');
+ const sel=$('loginUser'); if(!sel)return; const users=getUsers(); sel.innerHTML=users.map(u=>`<option value="${esc(u.name)}">${u.admin?'👑 ':''}${esc(u.name)}</option>`).join('');
  if(currentUser&&users.some(u=>u.name===currentUser))sel.value=currentUser;
 }
 function enablePasswordOnlyLogin(){
@@ -379,20 +380,21 @@ function enablePasswordOnlyLogin(){
    return;
  }
  $('loginUser').style.display='none';
- $('loginHint').textContent='შეიყვანე მხოლოდ შენი პაროლი';
+ $('loginUserDisplay').style.display='flex';
+ $('loginHint').textContent='შეიყვანე პაროლი';
  $('loginPassword').value='';
- $('loginPassword').placeholder='მხოლოდ პაროლი';
- $('passwordOnlyBtn').style.display='none';
+ $('loginPassword').placeholder='პაროლი';
  $('nameLoginBtn').style.display='block';
  $('loginError').textContent='';
  $('loginPassword').focus();
 }
 function enableNameLogin(){
  $('loginUser').style.display='block';
+ $('loginUserDisplay').style.display='none';
+ renderLoginUsers();
  $('loginHint').textContent='აირჩიე მომხმარებელი და შეიყვანე პაროლი';
  $('loginPassword').value='';
  $('loginPassword').placeholder='პაროლი';
- $('passwordOnlyBtn').style.display='block';
  $('nameLoginBtn').style.display='none';
  $('loginError').textContent='';
  $('loginPassword').focus();
@@ -414,11 +416,9 @@ function login(){
  const pass=$('loginPassword').value;
  const passwordOnly=$('loginUser').style.display==='none';
  if(passwordOnly){
-   const matches=getUsers().filter(u=>u.authorized&&u.password===pass);
-   if(matches.length===1){completeLogin(matches[0]);return}
-   if(matches.length>1){
-     $('loginError').textContent='ეს პაროლი ერთზე მეტ მომხმარებელს ეკუთვნის — თითოეულ მომხმარებელს უნიკალური პაროლი უნდა ჰქონდეს';
-   }else{$('loginError').textContent='პაროლი არასწორია';}
+   const admin=getUsers().find(u=>u.name===ADMIN_USER&&u.authorized);
+   if(admin&&pass===admin.password){completeLogin(admin);return}
+   $('loginError').textContent='პაროლი არასწორია';
    $('loginPassword').value='';$('loginPassword').focus();
    return;
  }
@@ -615,9 +615,7 @@ function renderManagedUsers(){
  // ადმინისტრატორი ყოველთვის ჩანს პირველ ადგილზე.
  const admin=users.find(u=>u.admin||u.name===ADMIN_USER);
  if(admin){
-   const row=document.createElement('div');row.className='userRow';
-   const b=document.createElement('button');b.className='backupBtn';b.textContent='👑 TEMO ADMIN';b.disabled=true;
-   row.appendChild(b);box.appendChild(row);
+   
  }
  // აქ ჩანს მხოლოდ ის მომხმარებლები, რომლებმაც ავტორიზაცია რეალურად გაიარეს.
  users.filter(u=>!u.admin && u.authorized===true).forEach(u=>{
