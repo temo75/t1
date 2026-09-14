@@ -837,94 +837,159 @@ function registerNewUser(){
 </script>
 <script id="temo-swipe-navigation">
 (function(){
-  let sx=0,sy=0,tracking=false,locked=false,current=null,next=null,currentIndex=-1;
-  const threshold=70,lockDistance=10;
+  let sx=0, sy=0, tracking=false, locked=false, current=null, next=null, currentIndex=-1;
+  const threshold=70, lockDistance=10;
 
-  const pages=()=>[
-    document.getElementById('mainPage'),
-    document.getElementById('settingsPage'),
-    document.getElementById('userManagementPage'),
-    document.getElementById('walletPage')
-  ].filter(Boolean);
-
-  const index=()=>pages().findIndex(p=>!p.classList.contains('pageHidden'));
-
-  function pos(p,x){
-    p.classList.remove('pageHidden');
-    Object.assign(p.style,{position:'fixed',left:'0',top:'0',width:'100%',height:'100dvh',
-      maxHeight:'100dvh',overflowY:'auto',boxSizing:'border-box',zIndex:'10000',
-      transform:`translate3d(${x}px,0,0)`,transition:'none',willChange:'transform'});
+  function navPages(){
+    const buttons=[...document.querySelectorAll('#bottomNav > button')];
+    const ids=buttons.map(b=>{
+      const m=(b.getAttribute('onclick')||'').match(/go(?:Home|Settings|Users|Wallet)\(\)/);
+      if(!m)return null;
+      return ({goHome:'mainPage',goSettings:'settingsPage',goUsers:'userManagementPage',goWallet:'walletPage'})
+        [m[0].replace('()','')];
+    });
+    return ids.map(id=>document.getElementById(id)).filter(Boolean);
   }
+
+  function currentPage(){
+    const p=navPages();
+    return p.findIndex(x=>!x.classList.contains('pageHidden'));
+  }
+
+  function prepare(p,x){
+    p.classList.remove('pageHidden');
+    Object.assign(p.style,{
+      position:'fixed',left:'0',top:'0',width:'100%',height:'100dvh',
+      maxHeight:'100dvh',overflowY:'auto',boxSizing:'border-box',
+      zIndex:'10000',transform:`translate3d(${x}px,0,0)`,
+      transition:'none',willChange:'transform'
+    });
+  }
+
   function clean(p){
     if(!p)return;
-    ['position','left','top','width','height','maxHeight','overflowY','boxSizing',
-     'zIndex','transform','transition','willChange'].forEach(k=>p.style[k]='');
+    ['position','left','top','width','height','maxHeight','overflowY',
+     'boxSizing','zIndex','transform','transition','willChange']
+      .forEach(k=>p.style[k]='');
   }
+
   function finish(p){
-    pages().forEach(x=>{if(x!==p)x.classList.add('pageHidden')});
-    p.classList.remove('pageHidden'); clean(p); window.scrollTo(0,0);
+    navPages().forEach(x=>{if(x!==p)x.classList.add('pageHidden')});
+    p.classList.remove('pageHidden');
+    clean(p);
+    window.scrollTo(0,0);
     if(p.id==='mainPage')render();
     updateUserUI();
   }
+
   function reset(){
-    if(next)clean(next); if(current)clean(current);
-    current=next=null; tracking=locked=false;
+    if(current)clean(current);
+    if(next)clean(next);
+    current=next=null;
+    tracking=locked=false;
   }
 
   document.addEventListener('touchstart',e=>{
     if(e.touches.length!==1)return;
-    if(e.target.closest('button,input,textarea,select,.modal,#loginScreen,#newUserAuthModal'))return;
-    currentIndex=index(); const p=pages();
+
+    /* The bottom buttons keep their normal click/tap behavior. */
+    if(e.target.closest('#bottomNav,button,input,textarea,select,.modal,#loginScreen,#newUserAuthModal'))
+      return;
+
+    const p=navPages();
+    currentIndex=currentPage();
     if(currentIndex<0)return;
-    sx=e.touches[0].clientX; sy=e.touches[0].clientY;
-    current=p[currentIndex]; next=null; tracking=true; locked=false;
+
+    sx=e.touches[0].clientX;
+    sy=e.touches[0].clientY;
+    current=p[currentIndex];
+    next=null;
+    tracking=true;
+    locked=false;
   },{passive:true});
 
   document.addEventListener('touchmove',e=>{
     if(!tracking||!current||e.touches.length!==1)return;
-    const dx=e.touches[0].clientX-sx,dy=e.touches[0].clientY-sy;
+
+    const dx=e.touches[0].clientX-sx;
+    const dy=e.touches[0].clientY-sy;
+
+    /* Decide direction once; vertical scrolling stays untouched. */
     if(!locked){
       if(Math.hypot(dx,dy)<lockDistance)return;
-      if(Math.abs(dy)>Math.abs(dx)){tracking=false;return;}
+      if(Math.abs(dy)>=Math.abs(dx)){
+        tracking=false;
+        return;
+      }
       locked=true;
     }
+
     e.preventDefault();
-    const p=pages(),ti=currentIndex+(dx<0?1:-1);
-    if(ti<0||ti>=p.length){
-      current.style.transform=`translate3d(${Math.round(dx*.1)}px,0,0)`; return;
+
+    const p=navPages();
+    const targetIndex=currentIndex+(dx<0?1:-1);
+
+    if(targetIndex<0||targetIndex>=p.length){
+      current.style.transform=`translate3d(${Math.round(dx*.08)}px,0,0)`;
+      return;
     }
-    next=p[ti]; const w=window.innerWidth;
-    if(next.style.position!=='fixed')pos(next,dx<0?w:-w);
+
+    next=p[targetIndex];
+    const w=window.innerWidth;
+
+    if(next.style.position!=='fixed')
+      prepare(next,dx<0?w:-w);
+
     current.style.transform=`translate3d(${Math.round(dx)}px,0,0)`;
     next.style.transform=`translate3d(${Math.round((dx<0?w:-w)+dx)}px,0,0)`;
   },{passive:false});
 
   document.addEventListener('touchend',e=>{
     if(!tracking||!current)return;
-    const dx=e.changedTouches[0].clientX-sx, p=pages();
-    const ti=currentIndex+(dx<0?1:-1);
+
+    const dx=e.changedTouches[0].clientX-sx;
+    const p=navPages();
+    const targetIndex=currentIndex+(dx<0?1:-1);
     tracking=false;
-    if(!locked||Math.abs(dx)<threshold||ti<0||ti>=p.length){
+
+    if(!locked){
+      clean(current);
+      current=next=null;
+      return;
+    }
+
+    if(Math.abs(dx)<threshold||targetIndex<0||targetIndex>=p.length){
       if(next){
         current.style.transition='transform .18s ease-out';
         next.style.transition='transform .18s ease-out';
         current.style.transform='translate3d(0,0,0)';
         next.style.transform=`translate3d(${dx<0?window.innerWidth:-window.innerWidth}px,0,0)`;
-        const c=current,n=next; setTimeout(()=>{clean(c);clean(n)},190);
+        const c=current,n=next;
+        setTimeout(()=>{clean(c);clean(n)},190);
       }else{
         current.style.transition='transform .18s ease-out';
         current.style.transform='translate3d(0,0,0)';
-        const c=current; setTimeout(()=>clean(c),190);
+        const c=current;
+        setTimeout(()=>clean(c),190);
       }
-      current=next=null; locked=false; return;
+      current=next=null;
+      locked=false;
+      return;
     }
-    next=p[ti]; const w=window.innerWidth;
+
+    next=p[targetIndex];
+    const w=window.innerWidth;
     current.style.transition='transform .22s cubic-bezier(.22,.61,.36,1)';
     next.style.transition='transform .22s cubic-bezier(.22,.61,.36,1)';
     current.style.transform=`translate3d(${dx<0?-w:w}px,0,0)`;
     next.style.transform='translate3d(0,0,0)';
+
     const target=next;
-    setTimeout(()=>{finish(target);current=next=null;locked=false},230);
+    setTimeout(()=>{
+      finish(target);
+      current=next=null;
+      locked=false;
+    },230);
   },{passive:true});
 
   document.addEventListener('touchcancel',reset,{passive:true});
