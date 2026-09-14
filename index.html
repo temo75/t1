@@ -835,132 +835,138 @@ function registerNewUser(){
 // ახალი მომხმარებლის ავტორიზაციისას მთავარი ავტორიზაციის ფანჯარა იმალება, რათა ორი ფანჯარა ერთმანეთს არ დაეფაროს.
 // გაუქმებისას მთავარი ავტორიზაციის ფანჯარა ისევ გამოჩნდება.
 </script>
-<style id="temo-swipe-v2-style">
+<style id="temo-swipe-navigation-style">
 #mainPage,#settingsPage,#userManagementPage,#walletPage{
-  touch-action: pan-y;
-  overscroll-behavior-x: contain;
+  touch-action:pan-y;
+  overscroll-behavior-x:contain;
 }
 </style>
 <script id="temo-swipe-navigation">
 (function(){
+  /* Internal page numbers only — never displayed on the buttons. */
+  const NAV=[
+    {n:1,id:'mainPage',button:'goHome'},
+    {n:2,id:'settingsPage',button:'goSettings'},
+    {n:3,id:'userManagementPage',button:'goUsers'},
+    {n:4,id:'walletPage',button:'goWallet'}
+  ];
+
   let startX=0,startY=0,lastX=0;
-  let active=false,locked=false,pointerId=null;
-  let current=null,next=null,currentIndex=-1;
-  const LOCK=10, THRESHOLD=72;
+  let tracking=false,locked=false,current=null,next=null,currentIndex=-1;
+  const LOCK_DISTANCE=10;
+  const SWIPE_DISTANCE=72;
 
   function pages(){
-    const buttons=[...document.querySelectorAll('#bottomNav > button')];
-    const map={
-      goHome:'mainPage',
-      goSettings:'settingsPage',
-      goUsers:'userManagementPage',
-      goWallet:'walletPage'
-    };
-    const ids=buttons.map(b=>{
-      const m=(b.getAttribute('onclick')||'').match(/^(goHome|goSettings|goUsers|goWallet)\(\)$/);
-      return m ? map[m[1]] : null;
-    }).filter(Boolean);
-    return ids.map(id=>document.getElementById(id)).filter(Boolean);
+    return NAV.map(item=>document.getElementById(item.id)).filter(Boolean);
   }
 
-  function currentIndexOf(){
+  function getCurrentIndex(){
     const p=pages();
-    return p.findIndex(x=>!x.classList.contains('pageHidden'));
+    return p.findIndex(page=>!page.classList.contains('pageHidden'));
   }
 
-  function prepare(p,x){
-    p.classList.remove('pageHidden');
-    Object.assign(p.style,{
-      position:'fixed',left:'0',top:'0',width:'100%',
-      height:'100dvh',maxHeight:'100dvh',overflowY:'auto',
-      boxSizing:'border-box',zIndex:'10000',
-      transform:`translate3d(${x}px,0,0)`,
-      transition:'none',willChange:'transform'
+  function prepare(page,x){
+    page.classList.remove('pageHidden');
+    Object.assign(page.style,{
+      position:'fixed',
+      left:'0',
+      top:'0',
+      width:'100%',
+      height:'100dvh',
+      maxHeight:'100dvh',
+      overflowY:'auto',
+      boxSizing:'border-box',
+      zIndex:'10000',
+      transform:'translate3d('+x+'px,0,0)',
+      transition:'none',
+      willChange:'transform'
     });
   }
 
-  function clean(p){
-    if(!p)return;
-    ['position','left','top','width','height','maxHeight','overflowY',
-     'boxSizing','zIndex','transform','transition','willChange']
-      .forEach(k=>p.style[k]='');
+  function clean(page){
+    if(!page)return;
+    [
+      'position','left','top','width','height','maxHeight','overflowY',
+      'boxSizing','zIndex','transform','transition','willChange'
+    ].forEach(k=>page.style[k]='');
   }
 
-  function finish(p){
-    pages().forEach(x=>{if(x!==p)x.classList.add('pageHidden')});
-    p.classList.remove('pageHidden');
-    clean(p);
+  function finish(page){
+    pages().forEach(p=>{
+      if(p!==page)p.classList.add('pageHidden');
+    });
+    page.classList.remove('pageHidden');
+    clean(page);
     window.scrollTo(0,0);
-    if(p.id==='mainPage')render();
+
+    if(page.id==='mainPage')render();
     updateUserUI();
   }
 
-  function reset(){
-    if(current)clean(current);
-    if(next)clean(next);
-    current=next=null;
-    active=false;
-    locked=false;
-    pointerId=null;
-  }
-
-  function cancel(){
-    if(!active||!current)return;
+  function abort(){
     if(next){
       current.style.transition='transform .18s ease-out';
       next.style.transition='transform .18s ease-out';
       current.style.transform='translate3d(0,0,0)';
-      next.style.transform=`translate3d(${lastX<0?innerWidth:-innerWidth}px,0,0)`;
+      next.style.transform='translate3d('+
+        (lastX<startX?window.innerWidth:-window.innerWidth)+
+        'px,0,0)';
+
       const c=current,n=next;
-      setTimeout(()=>{clean(c);clean(n)},190);
-    }else{
+      setTimeout(()=>{clean(c);clean(n);},190);
+    }else if(current){
       current.style.transition='transform .18s ease-out';
       current.style.transform='translate3d(0,0,0)';
       const c=current;
       setTimeout(()=>clean(c),190);
     }
-    reset();
+
+    current=next=null;
+    tracking=false;
+    locked=false;
+    currentIndex=-1;
   }
 
-  document.addEventListener('pointerdown',e=>{
-    if(e.pointerType==='mouse' && e.button!==0)return;
-    if(e.isPrimary===false)return;
+  document.addEventListener('touchstart',e=>{
+    if(e.touches.length!==1)return;
 
-    /* Bottom buttons stay native: tap/click logic is untouched. */
-    if(e.target.closest('#bottomNav,button,input,textarea,select,.modal,#loginScreen,#newUserAuthModal'))
-      return;
+    /* Visible buttons keep their original click logic. */
+    if(e.target.closest(
+      '#bottomNav,button,input,textarea,select,.modal,#loginScreen,#newUserAuthModal'
+    ))return;
 
     const p=pages();
-    currentIndex=currentIndexOf();
+    currentIndex=getCurrentIndex();
     if(currentIndex<0||!p[currentIndex])return;
 
-    startX=e.clientX;
-    startY=e.clientY;
+    startX=e.touches[0].clientX;
+    startY=e.touches[0].clientY;
     lastX=startX;
+
     current=p[currentIndex];
     next=null;
-    active=true;
+    tracking=true;
     locked=false;
-    pointerId=e.pointerId;
+  },{passive:true});
 
-    try{current.setPointerCapture(pointerId)}catch(_){}
-  });
+  document.addEventListener('touchmove',e=>{
+    if(!tracking||!current||e.touches.length!==1)return;
 
-  document.addEventListener('pointermove',e=>{
-    if(!active||e.pointerId!==pointerId||!current)return;
-
-    const dx=e.clientX-startX;
-    const dy=e.clientY-startY;
-    lastX=e.clientX;
+    const x=e.touches[0].clientX;
+    const y=e.touches[0].clientY;
+    const dx=x-startX;
+    const dy=y-startY;
+    lastX=x;
 
     if(!locked){
-      if(Math.hypot(dx,dy)<LOCK)return;
+      if(Math.hypot(dx,dy)<LOCK_DISTANCE)return;
 
-      /* Vertical movement belongs entirely to normal page scrolling. */
-      if(Math.abs(dy)>Math.abs(dx)){
-        cancel();
+      /* Vertical movement is normal scrolling, not Swipe. */
+      if(Math.abs(dy)>=Math.abs(dx)){
+        tracking=false;
         return;
       }
+
       locked=true;
     }
 
@@ -969,60 +975,75 @@ function registerNewUser(){
     const p=pages();
     const targetIndex=currentIndex+(dx<0?1:-1);
 
+    /* At the first/last page, give a small resistance instead of changing page. */
     if(targetIndex<0||targetIndex>=p.length){
-      current.style.transform=`translate3d(${Math.round(dx*.08)}px,0,0)`;
+      current.style.transform=
+        'translate3d('+Math.round(dx*0.10)+'px,0,0)';
       return;
     }
 
     next=p[targetIndex];
-    const w=innerWidth;
+    const width=window.innerWidth;
 
-    if(next.style.position!=='fixed')
-      prepare(next,dx<0?w:-w);
+    if(next.style.position!=='fixed'){
+      prepare(next,dx<0?width:-width);
+    }
 
-    current.style.transform=`translate3d(${Math.round(dx)}px,0,0)`;
-    next.style.transform=`translate3d(${Math.round((dx<0?w:-w)+dx)}px,0,0)`;
-  });
+    current.style.transform=
+      'translate3d('+Math.round(dx)+'px,0,0)';
 
-  document.addEventListener('pointerup',e=>{
-    if(!active||e.pointerId!==pointerId||!current)return;
+    next.style.transform=
+      'translate3d('+Math.round((dx<0?width:-width)+dx)+'px,0,0)';
+  },{passive:false});
 
-    const dx=e.clientX-startX;
+  document.addEventListener('touchend',e=>{
+    if(!tracking||!current)return;
+
+    const dx=e.changedTouches[0].clientX-startX;
+    tracking=false;
+
     const p=pages();
     const targetIndex=currentIndex+(dx<0?1:-1);
 
     if(!locked){
-      reset();
+      clean(current);
+      current=next=null;
+      currentIndex=-1;
       return;
     }
 
-    if(Math.abs(dx)<THRESHOLD||targetIndex<0||targetIndex>=p.length){
-      cancel();
+    if(
+      Math.abs(dx)<SWIPE_DISTANCE ||
+      targetIndex<0 ||
+      targetIndex>=p.length
+    ){
+      abort();
       return;
     }
 
     next=p[targetIndex];
-    const w=innerWidth;
+    const width=window.innerWidth;
 
-    current.style.transition='transform .23s cubic-bezier(.22,.61,.36,1)';
-    next.style.transition='transform .23s cubic-bezier(.22,.61,.36,1)';
-    current.style.transform=`translate3d(${dx<0?-w:w}px,0,0)`;
+    current.style.transition=
+      'transform .22s cubic-bezier(.22,.61,.36,1)';
+    next.style.transition=
+      'transform .22s cubic-bezier(.22,.61,.36,1)';
+
+    current.style.transform=
+      'translate3d('+(dx<0?-width:width)+'px,0,0)';
     next.style.transform='translate3d(0,0,0)';
 
     const target=next;
+
     setTimeout(()=>{
       finish(target);
-      reset();
-    },240);
-  });
-
-  document.addEventListener('pointercancel',e=>{
-    if(active&&e.pointerId===pointerId)cancel();
-  });
-
-  document.addEventListener('pointerdown',e=>{
-    if(e.isPrimary===false)return;
+      current=next=null;
+      locked=false;
+      currentIndex=-1;
+    },230);
   },{passive:true});
+
+  document.addEventListener('touchcancel',abort,{passive:true});
 })();
 </script>
 
