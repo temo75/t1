@@ -829,60 +829,160 @@ function registerNewUser(){
 </script>
 <script id="temo-swipe-navigation">
 (function(){
-  let sx=0, sy=0, tracking=false;
-  const threshold=60;
+  let sx=0, sy=0, dx=0, tracking=false, active=false;
+  let current=null, next=null, currentIndex=-1;
+  const threshold=70;
 
   function pages(){
     return [
       document.getElementById('mainPage'),
-      document.getElementById('walletPage'),
       document.getElementById('settingsPage'),
-      document.getElementById('userManagementPage')
+      document.getElementById('userManagementPage'),
+      document.getElementById('walletPage')
     ].filter(Boolean);
   }
 
-  function currentIndex(){
+  function getIndex(){
     const p=pages();
     return p.findIndex(x=>!x.classList.contains('pageHidden'));
   }
 
-  function goToIndex(i){
-    const p=pages();
-    if(i<0 || i>=p.length)return;
-    p.forEach((x,n)=>x.classList.toggle('pageHidden',n!==i));
+  function prepare(page){
+    page.classList.remove('pageHidden');
+    page.style.position='fixed';
+    page.style.left='0';
+    page.style.top='0';
+    page.style.width='100%';
+    page.style.minHeight='100vh';
+    page.style.maxHeight='100vh';
+    page.style.overflowY='auto';
+    page.style.boxSizing='border-box';
+    page.style.zIndex='10000';
+    page.style.willChange='transform';
+    page.style.transition='none';
+  }
+
+  function cleanup(page){
+    if(!page)return;
+    page.style.position='';
+    page.style.left='';
+    page.style.top='';
+    page.style.width='';
+    page.style.minHeight='';
+    page.style.maxHeight='';
+    page.style.overflowY='';
+    page.style.boxSizing='';
+    page.style.zIndex='';
+    page.style.willChange='';
+    page.style.transition='';
+    page.style.transform='';
+  }
+
+  function finishPage(page){
+    pages().forEach(x=>{
+      if(x!==page)x.classList.add('pageHidden');
+    });
+    page.classList.remove('pageHidden');
+    cleanup(page);
     window.scrollTo(0,0);
-    if(i===0)render();
-    if(i===1)updateUserUI();
-    if(i===2)updateUserUI();
-    if(i===3)updateUserUI();
+    if(page.id==='mainPage')render();
+    updateUserUI();
   }
 
   document.addEventListener('touchstart',function(e){
     if(e.touches.length!==1)return;
-    sx=e.touches[0].clientX;
-    sy=e.touches[0].clientY;
-    tracking=true;
-  },{passive:true});
 
-  document.addEventListener('touchend',function(e){
-    if(!tracking || !e.changedTouches.length)return;
-    tracking=false;
-
-    const ex=e.changedTouches[0].clientX;
-    const ey=e.changedTouches[0].clientY;
-    const dx=ex-sx, dy=ey-sy;
-
-    if(Math.abs(dx)<threshold || Math.abs(dx)<=Math.abs(dy))return;
-
-    // Do not trigger swipe while interacting with form fields/buttons/modals.
     const t=e.target;
     if(t.closest('input,textarea,select,button,.modal,#loginScreen,#newUserAuthModal'))return;
 
-    const i=currentIndex();
-    if(i<0)return;
+    const p=pages();
+    currentIndex=getIndex();
+    if(currentIndex<0)return;
 
-    if(dx<0)goToIndex(i+1);
-    else goToIndex(i-1);
+    sx=e.touches[0].clientX;
+    sy=e.touches[0].clientY;
+    dx=0;
+    current=p[currentIndex];
+    tracking=true;
+    active=false;
+  },{passive:true});
+
+  document.addEventListener('touchmove',function(e){
+    if(!tracking || !current || e.touches.length!==1)return;
+
+    dx=e.touches[0].clientX-sx;
+    const dy=e.touches[0].clientY-sy;
+
+    if(Math.abs(dx)<=Math.abs(dy)){
+      return;
+    }
+
+    e.preventDefault();
+
+    const p=pages();
+    const targetIndex=currentIndex+(dx<0?1:-1);
+
+    if(targetIndex<0 || targetIndex>=p.length){
+      current.style.transform='translateX('+Math.round(dx*.18)+'px)';
+      return;
+    }
+
+    next=p[targetIndex];
+    prepare(current);
+    prepare(next);
+
+    const offset=dx<0?window.innerWidth+dx:-window.innerWidth+dx;
+    current.style.transform='translateX('+Math.round(dx)+'px)';
+    next.style.transform='translateX('+Math.round(offset)+'px)';
+    active=true;
+  },{passive:false});
+
+  document.addEventListener('touchend',function(){
+    if(!tracking)return;
+    tracking=false;
+
+    if(!active || !current || !next){
+      if(current)current.style.transform='';
+      current=next=null;
+      return;
+    }
+
+    const goNext=Math.abs(dx)>=threshold;
+    const direction=dx<0?1:-1;
+
+    current.style.transition='transform .22s ease-out';
+    next.style.transition='transform .22s ease-out';
+
+    if(goNext){
+      current.style.transform='translateX('+(direction<0?window.innerWidth:-window.innerWidth)+'px)';
+      next.style.transform='translateX(0)';
+
+      const target=next;
+      setTimeout(function(){
+        finishPage(target);
+        current=next=null;
+      },230);
+    }else{
+      current.style.transform='translateX(0)';
+      next.style.transform=dx<0?'translateX('+window.innerWidth+'px)':'translateX(-'+window.innerWidth+'px)';
+
+      setTimeout(function(){
+        const keep=current;
+        cleanup(next);
+        pages().forEach(x=>{
+          if(x!==keep)x.classList.add('pageHidden');
+        });
+        keep.classList.remove('pageHidden');
+        current=next=null;
+      },230);
+    }
+  },{passive:true});
+
+  document.addEventListener('touchcancel',function(){
+    if(current)cleanup(current);
+    if(next)cleanup(next);
+    current=next=null;
+    tracking=false;
   },{passive:true});
 })();
 </script>
