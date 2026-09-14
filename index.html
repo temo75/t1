@@ -402,7 +402,15 @@ window.addEventListener('DOMContentLoaded',async()=>{
   if(typeof renderManagedUsers==='function' && currentUser===ADMIN_USER) renderManagedUsers();
 });
  renderLoginUsers();
- if(localStorage.getItem(AUTH_KEY)==='yes'&&currentUser)getUsers().some(u=>u.name===currentUser)&&$('loginScreen').classList.add('hidden');
+ const savedUser=currentUser;
+ const matched=getUsers().find(u=>u.name.toLowerCase()===savedUser.toLowerCase()&&u.authorized===true);
+ const sessionValid=localStorage.getItem(AUTH_KEY)==='yes'&&!!savedUser&&!!matched;
+ if(sessionValid){
+  currentUser=matched.name;
+  localStorage.setItem(SESSION_USER_KEY,currentUser);
+  $('loginScreen').classList.add('hidden');
+  jobs=loadUserJobs();updateUserUI();render();
+ }
  $('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
  updateUserUI();
  setInterval(async()=>{
