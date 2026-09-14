@@ -401,7 +401,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
  await syncUsersFromFirebase().then(()=>{
   if(typeof renderManagedUsers==='function' && currentUser===ADMIN_USER) renderManagedUsers();
 });
- renderLoginUsers();
+ if(typeof renderLoginUsers==='function') renderLoginUsers();
  const savedUser=currentUser;
  const matched=getUsers().find(u=>u.name.toLowerCase()===savedUser.toLowerCase());
  const sessionValid=localStorage.getItem(AUTH_KEY)==='yes'&&!!savedUser;
