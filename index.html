@@ -837,9 +837,8 @@ function registerNewUser(){
 </script>
 <script id="temo-swipe-navigation">
 (function(){
-  let sx=0, sy=0, dx=0, tracking=false, active=false;
-  let current=null, next=null, currentIndex=-1;
-  const threshold=70;
+  let sx=0, sy=0, dx=0, tracking=false, current=null, next=null, currentIndex=-1;
+  const threshold=60;
 
   function pages(){
     return [
@@ -855,43 +854,38 @@ function registerNewUser(){
     return p.findIndex(x=>!x.classList.contains('pageHidden'));
   }
 
-  function prepare(page){
+  function startPage(page, x){
     page.classList.remove('pageHidden');
     page.style.position='fixed';
-    page.style.left='0';
-    page.style.top='0';
+    page.style.inset='0';
     page.style.width='100%';
-    page.style.minHeight='100vh';
-    page.style.maxHeight='100vh';
+    page.style.height='100dvh';
+    page.style.maxHeight='100dvh';
     page.style.overflowY='auto';
     page.style.boxSizing='border-box';
     page.style.zIndex='10000';
-    page.style.willChange='transform';
+    page.style.transform='translate3d('+x+'px,0,0)';
     page.style.transition='none';
   }
 
-  function cleanup(page){
+  function clean(page){
     if(!page)return;
     page.style.position='';
-    page.style.left='';
-    page.style.top='';
+    page.style.inset='';
     page.style.width='';
-    page.style.minHeight='';
+    page.style.height='';
     page.style.maxHeight='';
     page.style.overflowY='';
     page.style.boxSizing='';
     page.style.zIndex='';
-    page.style.willChange='';
-    page.style.transition='';
     page.style.transform='';
+    page.style.transition='';
   }
 
-  function finishPage(page){
-    pages().forEach(x=>{
-      if(x!==page)x.classList.add('pageHidden');
-    });
+  function finish(page){
+    pages().forEach(p=>{ if(p!==page)p.classList.add('pageHidden'); });
     page.classList.remove('pageHidden');
-    cleanup(page);
+    clean(page);
     window.scrollTo(0,0);
     if(page.id==='mainPage')render();
     updateUserUI();
@@ -899,20 +893,19 @@ function registerNewUser(){
 
   document.addEventListener('touchstart',function(e){
     if(e.touches.length!==1)return;
-
     const t=e.target;
-    if(t.closest('input,textarea,select,button,.modal,#loginScreen,#newUserAuthModal'))return;
+    if(t.closest('button,input,textarea,select,.modal,#loginScreen,#newUserAuthModal'))return;
 
-    const p=pages();
     currentIndex=getIndex();
-    if(currentIndex<0)return;
+    const p=pages();
+    if(currentIndex<0 || !p[currentIndex])return;
 
     sx=e.touches[0].clientX;
     sy=e.touches[0].clientY;
     dx=0;
     current=p[currentIndex];
+    next=null;
     tracking=true;
-    active=false;
   },{passive:true});
 
   document.addEventListener('touchmove',function(e){
@@ -921,75 +914,81 @@ function registerNewUser(){
     dx=e.touches[0].clientX-sx;
     const dy=e.touches[0].clientY-sy;
 
-    if(Math.abs(dx)<=Math.abs(dy)){
-      return;
-    }
-
-    e.preventDefault();
+    if(Math.abs(dx)<=Math.abs(dy) || Math.abs(dx)<5)return;
 
     const p=pages();
     const targetIndex=currentIndex+(dx<0?1:-1);
 
     if(targetIndex<0 || targetIndex>=p.length){
-      current.style.transform='translateX('+Math.round(dx*.18)+'px)';
+      e.preventDefault();
+      current.style.transform='translate3d('+Math.round(dx*.12)+'px,0,0)';
       return;
     }
 
-    next=p[targetIndex];
-    prepare(current);
-    prepare(next);
+    e.preventDefault();
 
-    const offset=dx<0?window.innerWidth+dx:-window.innerWidth+dx;
-    current.style.transform='translateX('+Math.round(dx)+'px)';
-    next.style.transform='translateX('+Math.round(offset)+'px)';
-    active=true;
+    next=p[targetIndex];
+    const width=window.innerWidth;
+
+    if(next.style.position!=='fixed'){
+      startPage(next,dx<0?width:-width);
+    }
+
+    current.style.transform='translate3d('+Math.round(dx)+'px,0,0)';
+    next.style.transform='translate3d('+Math.round((dx<0?width:-width)+dx)+'px,0,0)';
   },{passive:false});
 
   document.addEventListener('touchend',function(){
     if(!tracking)return;
     tracking=false;
 
-    if(!active || !current || !next){
-      if(current)current.style.transform='';
-      current=next=null;
+    if(!current)return;
+
+    const p=pages();
+    const targetIndex=currentIndex+(dx<0?1:-1);
+    const valid=targetIndex>=0 && targetIndex<p.length;
+
+    if(!valid){
+      current.style.transition='transform .18s ease-out';
+      current.style.transform='translate3d(0,0,0)';
+      setTimeout(()=>clean(current),190);
+      current=null;
+      next=null;
       return;
     }
 
-    const goNext=Math.abs(dx)>=threshold;
-    const direction=dx<0?1:-1;
+    next=p[targetIndex];
+    const width=window.innerWidth;
+    const shouldGo=Math.abs(dx)>=threshold;
 
-    current.style.transition='transform .22s ease-out';
-    next.style.transition='transform .22s ease-out';
+    current.style.transition='transform .20s ease-out';
+    next.style.transition='transform .20s ease-out';
 
-    if(goNext){
-      current.style.transform='translateX('+(direction<0?window.innerWidth:-window.innerWidth)+'px)';
-      next.style.transform='translateX(0)';
-
+    if(shouldGo){
+      current.style.transform='translate3d('+(dx<0?-width:width)+'px,0,0)';
+      next.style.transform='translate3d(0,0,0)';
       const target=next;
-      setTimeout(function(){
-        finishPage(target);
-        current=next=null;
-      },230);
+      setTimeout(()=>{
+        finish(target);
+        current=null;
+        next=null;
+      },210);
     }else{
-      current.style.transform='translateX(0)';
-      next.style.transform=dx<0?'translateX('+window.innerWidth+'px)':'translateX(-'+window.innerWidth+'px)';
-
-      setTimeout(function(){
-        const keep=current;
-        cleanup(next);
-        pages().forEach(x=>{
-          if(x!==keep)x.classList.add('pageHidden');
-        });
-        keep.classList.remove('pageHidden');
-        current=next=null;
-      },230);
+      current.style.transform='translate3d(0,0,0)';
+      next.style.transform='translate3d('+(dx<0?width:-width)+'px,0,0)';
+      setTimeout(()=>{
+        clean(next);
+        current=null;
+        next=null;
+      },210);
     }
   },{passive:true});
 
   document.addEventListener('touchcancel',function(){
-    if(current)cleanup(current);
-    if(next)cleanup(next);
-    current=next=null;
+    if(current)clean(current);
+    if(next)clean(next);
+    current=null;
+    next=null;
     tracking=false;
   },{passive:true});
 })();
