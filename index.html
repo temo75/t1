@@ -57,10 +57,6 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 @keyframes checkPop{0%{transform:scale(.2);opacity:0}70%{transform:scale(1.25);opacity:1}100%{transform:scale(1)}}
 @keyframes burst{to{transform:translate(var(--x),var(--y)) scale(.2);opacity:0}}
 
-.main-summary-grid{position:relative;min-height:54px;grid-template-columns:1fr 1fr 1fr}
-.main-eye-position{display:flex;align-items:center;justify-content:flex-start;min-height:54px}
-.wallet-grid{margin-top:8px}
-.privacy-hidden #walletPage .amount{visibility:hidden}
 /* TEMO privacy eye */
 .temo-eye-btn{width:38px;height:38px;padding:0;border:1px solid #2999ff;border-radius:50%;background:#102b3b;color:#fff;font-size:20px;line-height:36px;cursor:pointer;box-shadow:0 0 6px #2999ff,0 0 14px rgba(41,153,255,.65);display:flex;align-items:center;justify-content:center}
 .temo-eye-btn:active{transform:scale(.94)}
@@ -202,9 +198,10 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 <path d="M55 127 H125" stroke="#2999ff" stroke-width="3" stroke-linecap="round" filter="url(#tlglow)"/>
 </svg></div><small>ჩემი სამუშაო</small></div><div id="today"></div></header>
 
-<div class="grid main-summary-grid">
-<div class="main-eye-position"><button id="privacyEye" class="temo-eye-btn" onclick="togglePrivacy()" aria-label="თანხების დამალვა" title="თანხების დამალვა">👁</button></div>
-<div></div><div></div>
+<div class="grid">
+<div class="card blue"><button id="privacyEye" class="temo-eye-btn" onclick="togglePrivacy()" aria-label="თანხების დამალვა" title="თანხების დამალვა">👁</button><div class="label">🔨 სულ ნამუშევარი</div><div class="amount" id="total">€0</div><div class="meta" id="days">0 სამუშაო</div></div>
+<div class="card green"><div class="label">💶 მიღებული</div><div class="amount" id="paid">€0</div><div class="meta" id="paidDays">0 გადახდილი</div></div>
+<div class="card red"><div class="label">⏳ მისაღები</div><div class="amount" id="unpaid">€0</div><div class="meta" id="unpaidDays">0 გადასახდელი</div></div>
 </div>
 
 <div class="stats">
@@ -233,15 +230,6 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 <div id="dayJobs"></div>
 </div>
 
-</div>
-
-<div id="walletPage" class="pageHidden">
-<header><div><h1>👛 საფულე</h1><small>სამუშაოს თანხების შეჯამება</small></div></header>
-<div class="grid wallet-grid">
-<div class="card blue"><div class="label">🔨 სულ ნამუშევარი</div><div class="amount" id="walletTotal">€0</div><div class="meta" id="walletDays">0 სამუშაო</div></div>
-<div class="card green"><div class="label">💶 მიღებული</div><div class="amount" id="walletPaid">€0</div><div class="meta" id="walletPaidDays">0 გადახდილი</div></div>
-</div>
-<button class="settingsBtn settingsBack temo-exit-btn" onclick="showMain()"><span class="homeIcon">⌂</span><span class="homeLabel">მთავარი</span></button>
 </div>
 
 <div id="settingsPage" class="pageHidden">
@@ -315,7 +303,6 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
   <button type="button" onclick="goHome()">მთავარი</button>
   <button type="button" onclick="goSettings()">სეთინგები</button>
   <button type="button" onclick="goUsers()">მომხმარებლები</button>
-  <button type="button" class="walletNavBtn" onclick="goWallet()">საფულე</button>
 </nav>
 <script>
 const AUTH_KEY='temoWorkTrackerAuthorized';
@@ -414,7 +401,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
  await syncUsersFromFirebase().then(()=>{
   if(typeof renderManagedUsers==='function' && currentUser===ADMIN_USER) renderManagedUsers();
 });
- if(typeof renderLoginUsers==='function') renderLoginUsers();
+ renderLoginUsers();
  const savedUser=currentUser;
  const matched=getUsers().find(u=>u.name.toLowerCase()===savedUser.toLowerCase());
  const sessionValid=localStorage.getItem(AUTH_KEY)==='yes'&&!!savedUser;
@@ -470,7 +457,7 @@ function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function updateMonthFilter(){const old=$('monthFilter').value;const months=[...new Set(jobs.map(j=>(j.date||'').slice(0,7)).filter(Boolean))].sort().reverse();$('monthFilter').innerHTML='<option value="all">ყველა თვე</option>'+months.map(m=>`<option value="${m}">${monthName(m)}</option>`).join('');if(months.includes(old))$('monthFilter').value=old}
 function render(){
  const total=jobs.reduce((a,j)=>a+Number(j.money||0),0), paid=jobs.filter(j=>j.paid).reduce((a,j)=>a+Number(j.money||0),0), unpaid=total-paid;
- $('total').textContent=euro(total);$('paid').textContent=euro(paid);$('unpaid').textContent=euro(unpaid);$('walletTotal').textContent=euro(total);$('walletPaid').textContent=euro(paid);$('walletDays').textContent=jobs.length+' სამუშაო';$('walletPaidDays').textContent=jobs.filter(j=>j.paid).length+' გადახდილი';
+ $('total').textContent=euro(total);$('paid').textContent=euro(paid);$('unpaid').textContent=euro(unpaid);
  $('days').textContent=jobs.length+' სამუშაო';$('paidDays').textContent=jobs.filter(j=>j.paid).length+' გადახდილი';$('unpaidDays').textContent=jobs.filter(j=>!j.paid).length+' გადასახდელი';
  $('average').textContent=euro(jobs.length?total/jobs.length:0);
  const now=new Date(), key=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');const mj=jobs.filter(j=>(j.date||'').slice(0,7)===key);$('monthTotal').textContent=euro(mj.reduce((a,j)=>a+Number(j.money||0),0));$('monthDays').textContent=mj.length+' დღე';
@@ -570,7 +557,6 @@ function delJob(id){if(confirm('წავშალოთ ეს ჩანაწ�
 function goHome(){showMain()}
 function goSettings(){showSettings()}
 function goUsers(){if(currentUser===ADMIN_USER)showUserManagement()}
-function goWallet(){showWallet()}
 
 function togglePrivacy(){
   const app=document.querySelector('.app');
@@ -633,10 +619,9 @@ function openCredentials(){
 function closeCredentials(){
   $('credentialsModal').classList.remove('show');
 }
-function showSettings(){updateUserUI();document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('walletPage').classList.add('pageHidden');document.getElementById('userManagementPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.remove('pageHidden');window.scrollTo(0,0)}
-function showUserManagement(){if(currentUser!==ADMIN_USER)return;updateUserUI();document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('walletPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.add('pageHidden');document.getElementById('userManagementPage').classList.remove('pageHidden');window.scrollTo(0,0)}
-function showWallet(){render();document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.add('pageHidden');document.getElementById('userManagementPage').classList.add('pageHidden');document.getElementById('walletPage').classList.remove('pageHidden');window.scrollTo(0,0)}
-function showMain(){document.getElementById('settingsPage').classList.add('pageHidden');document.getElementById('walletPage').classList.add('pageHidden');document.getElementById('userManagementPage').classList.add('pageHidden');document.getElementById('mainPage').classList.remove('pageHidden');window.scrollTo(0,0)}
+function showSettings(){updateUserUI();document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('userManagementPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.remove('pageHidden');window.scrollTo(0,0)}
+function showUserManagement(){if(currentUser!==ADMIN_USER)return;updateUserUI();document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.add('pageHidden');document.getElementById('userManagementPage').classList.remove('pageHidden');window.scrollTo(0,0)}
+function showMain(){document.getElementById('settingsPage').classList.add('pageHidden');document.getElementById('userManagementPage').classList.add('pageHidden');document.getElementById('mainPage').classList.remove('pageHidden');window.scrollTo(0,0)}
 function logout(){localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);window.location.reload()}
 function exportData(){const blob=new Blob([JSON.stringify({version:1,exported:new Date().toISOString(),jobs},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='TEMO_WORK_TRACKER_BACKUP.json';a.click();URL.revokeObjectURL(a.href)}
 function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result),arr=Array.isArray(d)?d:d.jobs;if(!Array.isArray(arr))throw 0;if(confirm('არსებული მონაცემები შეიცვალოს ამ სარეზერვო ასლით?')){jobs=arr;save();render();alert('მონაცემები აღდგენილია')}}catch(x){alert('ეს სარეზერვო ფაილი არასწორია')}e.target.value=''};r.readAsText(f)}
