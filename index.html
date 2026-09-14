@@ -368,10 +368,6 @@ function getUsers(){
  if(!Array.isArray(users)||!users.length){users=[{name:ADMIN_USER,password:AUTH_PASSWORD,admin:true}];localStorage.setItem(USERS_KEY,JSON.stringify(users))}
  return users;
 }
-function renderLoginUsers(){
- const sel=$('loginUser'); if(!sel)return; const users=getUsers(); sel.innerHTML=users.map(u=>`<option value="${esc(u.name)}">${u.admin?'👑 ':''}${esc(u.name)}</option>`).join('');
- if(currentUser&&users.some(u=>u.name===currentUser))sel.value=currentUser;
-}
 function enablePasswordOnlyLogin(){
  const users=getUsers().filter(u=>u.authorized);
  if(!users.length){$('loginError').textContent='ჯერ არც ერთ მომხმარებელს არ აქვს გავლილი ავტორიზაცია';return;}
@@ -403,7 +399,6 @@ function login(){
 }
 window.addEventListener('DOMContentLoaded',async()=>{
  await syncUsersFromFirebase().then(()=>{
-  renderLoginUsers();
   if(typeof renderManagedUsers==='function' && currentUser===ADMIN_USER) renderManagedUsers();
 });
  renderLoginUsers();
@@ -415,7 +410,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
      const before=JSON.stringify(getUsers());
      await syncUsersFromFirebase();
      const after=JSON.stringify(getUsers());
-     if(before!==after){renderLoginUsers();renderManagedUsers();}
+     if(before!==after){renderManagedUsers();}
    }
  },30000);
 });
@@ -605,7 +600,7 @@ function addManagedUser(){
  const n=$('newUserName').value.trim(),p=$('newUserPassword').value;
  if(!n||!p){alert('სახელი და პაროლი ორივე შეავსე');return}
  if(n.toUpperCase()===ADMIN_USER||getUsers().some(u=>u.name.toLowerCase()===n.toLowerCase())){alert('ეს მომხმარებელი უკვე არსებობს');return}
- const users=getUsers();users.push({name:n,password:p,admin:false,authorized:false});localStorage.setItem(USERS_KEY,JSON.stringify(users));saveUsersToFirebase(users);$('newUserName').value='';$('newUserPassword').value='';renderLoginUsers();renderManagedUsers();
+ const users=getUsers();users.push({name:n,password:p,admin:false,authorized:false});localStorage.setItem(USERS_KEY,JSON.stringify(users));saveUsersToFirebase(users);$('newUserName').value='';$('newUserPassword').value='';renderManagedUsers();
 }
 function deleteManagedUser(name){if(currentUser!==ADMIN_USER)return;if(!confirm('წავშალოთ მომხმარებელი '+name+'?'))return;const users=getUsers().filter(u=>u.name!==name);localStorage.setItem(USERS_KEY,JSON.stringify(users));saveUsersToFirebase(users);localStorage.removeItem('temoJobs_'+name);renderLoginUsers();renderManagedUsers()}
 function openCredentials(){
@@ -649,8 +644,7 @@ function saveGitHubSettings(showMessage=true){
   if(showMessage) alert('GitHub მონაცემები დამახსოვრებულია ამ ტელეფონში');
 }
 function loadGitHubSettings(){
-  $('ghRepo').value='temo75/t1';
-  localStorage.setItem('temoGitHubRepo','temo75/t1');
+  $('ghRepo').value=localStorage.getItem('temoGitHubRepo')||'temo75/t1';
   $('ghToken').value=localStorage.getItem('temoGitHubToken')||'';
 }
 function toBase64(text){
