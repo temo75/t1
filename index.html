@@ -826,5 +826,66 @@ function registerNewUser(){
 </div></div><script>
 // ახალი მომხმარებლის ავტორიზაციისას მთავარი ავტორიზაციის ფანჯარა იმალება, რათა ორი ფანჯარა ერთმანეთს არ დაეფაროს.
 // გაუქმებისას მთავარი ავტორიზაციის ფანჯარა ისევ გამოჩნდება.
-</script></body>
+</script>
+<script id="temo-swipe-navigation">
+(function(){
+  let sx=0, sy=0, tracking=false;
+  const threshold=60;
+
+  function pages(){
+    return [
+      document.getElementById('mainPage'),
+      document.getElementById('walletPage'),
+      document.getElementById('settingsPage'),
+      document.getElementById('userManagementPage')
+    ].filter(Boolean);
+  }
+
+  function currentIndex(){
+    const p=pages();
+    return p.findIndex(x=>!x.classList.contains('pageHidden'));
+  }
+
+  function goToIndex(i){
+    const p=pages();
+    if(i<0 || i>=p.length)return;
+    p.forEach((x,n)=>x.classList.toggle('pageHidden',n!==i));
+    window.scrollTo(0,0);
+    if(i===0)render();
+    if(i===1)updateUserUI();
+    if(i===2)updateUserUI();
+    if(i===3)updateUserUI();
+  }
+
+  document.addEventListener('touchstart',function(e){
+    if(e.touches.length!==1)return;
+    sx=e.touches[0].clientX;
+    sy=e.touches[0].clientY;
+    tracking=true;
+  },{passive:true});
+
+  document.addEventListener('touchend',function(e){
+    if(!tracking || !e.changedTouches.length)return;
+    tracking=false;
+
+    const ex=e.changedTouches[0].clientX;
+    const ey=e.changedTouches[0].clientY;
+    const dx=ex-sx, dy=ey-sy;
+
+    if(Math.abs(dx)<threshold || Math.abs(dx)<=Math.abs(dy))return;
+
+    // Do not trigger swipe while interacting with form fields/buttons/modals.
+    const t=e.target;
+    if(t.closest('input,textarea,select,button,.modal,#loginScreen,#newUserAuthModal'))return;
+
+    const i=currentIndex();
+    if(i<0)return;
+
+    if(dx<0)goToIndex(i+1);
+    else goToIndex(i-1);
+  },{passive:true});
+})();
+</script>
+
+</body>
 </html>
