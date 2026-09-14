@@ -626,10 +626,28 @@ function editJob(id){const j=jobs.find(x=>x.id===id);if(!j)return;editingId=id;$
 function saveJob(){const amount=Number($('money').value);if(!amount||amount<=0){alert('თანხა მიუთითე');return}const data={date:$('date').value,place:$('place').value.trim(),money:amount,note:$('note').value.trim(),paid:$('paidCheck').checked};if(!data.date){alert('თარიღი მიუთითე');return}if(editingId){const i=jobs.findIndex(x=>x.id===editingId);jobs[i]={...jobs[i],...data}}else jobs.push({id:Date.now().toString()+Math.random().toString(16).slice(2),...data});save();closeForm();render()}
 function togglePaid(id){const j=jobs.find(x=>x.id===id);if(j){j.paid=!j.paid;save();render()}}
 function delJob(id){if(confirm('წავშალოთ ეს ჩანაწერი?')){jobs=jobs.filter(x=>x.id!==id);save();render()}}
-function goHome(){showMain()}
-function goSettings(){showSettings()}
-function goUsers(){if(currentUser===ADMIN_USER)showUserManagement()}
-function goWallet(){updateUserUI();document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.add('pageHidden');document.getElementById('userManagementPage').classList.add('pageHidden');document.getElementById('walletPage').classList.remove('pageHidden');window.scrollTo(0,0)}
+function temoNavigatePage(pageId){
+  const ids=['mainPage','settingsPage','userManagementPage','walletPage'];
+  ids.forEach(id=>{
+    const p=document.getElementById(id);
+    if(!p)return;
+    p.classList.toggle('pageHidden',id!==pageId);
+    p.scrollTop=0;
+  });
+  window.scrollTo(0,0);
+  const index=ids.indexOf(pageId);
+  const buttons=[...document.querySelectorAll('#bottomNav > button')];
+  buttons.forEach((b,i)=>{
+    b.classList.toggle('active',i===index);
+    b.setAttribute('aria-current',i===index?'page':'false');
+  });
+  if(pageId==='mainPage')render();
+  updateUserUI();
+}
+function goHome(){temoNavigatePage('mainPage')}
+function goSettings(){temoNavigatePage('settingsPage')}
+function goUsers(){if(currentUser===ADMIN_USER)temoNavigatePage('userManagementPage')}
+function goWallet(){temoNavigatePage('walletPage')}
 
 function togglePrivacy(){
   const app=document.querySelector('.app');
@@ -843,17 +861,20 @@ function registerNewUser(){
 </style>
 <script id="temo-swipe-navigation">
 (function(){
+  /* Internal order only. Numbers are never rendered on the buttons. */
   const NAV=[
-    {n:1,id:'mainPage',button:'goHome'},
-    {n:2,id:'settingsPage',button:'goSettings'},
-    {n:3,id:'userManagementPage',button:'goUsers'},
-    {n:4,id:'walletPage',button:'goWallet'}
+    {n:1,id:'mainPage'},
+    {n:2,id:'settingsPage'},
+    {n:3,id:'userManagementPage'},
+    {n:4,id:'walletPage'}
   ];
 
-  let sx=0,sy=0,dx=0,tracking=false,locked=false;
+  let sx=0,sy=0,dx=0;
+  let tracking=false,locked=false;
   let current=null,next=null,currentIndex=-1;
 
-  const LOCK=10,THRESHOLD=72;
+  const LOCK=12;
+  const THRESHOLD=72;
 
   function pages(){
     return NAV.map(x=>document.getElementById(x.id)).filter(Boolean);
@@ -864,12 +885,10 @@ function registerNewUser(){
     return p.findIndex(x=>!x.classList.contains('pageHidden'));
   }
 
-  function setActive(index){
-    const buttons=[...document.querySelectorAll('#bottomNav > button')];
-    buttons.forEach((b,i)=>{
-      const active=(i===index);
-      b.classList.toggle('active',active);
-      b.setAttribute('aria-current',active?'page':'false');
+  function activeButton(index){
+    document.querySelectorAll('#bottomNav > button').forEach((b,i)=>{
+      b.classList.toggle('active',i===index);
+      b.setAttribute('aria-current',i===index?'page':'false');
     });
   }
 
@@ -878,7 +897,9 @@ function registerNewUser(){
     page.scrollTop=0;
     Object.assign(page.style,{
       position:'fixed',
-      inset:'0',
+      left:'0',
+      top:'0',
+      right:'0',
       width:'100%',
       height:'100dvh',
       maxHeight:'100dvh',
@@ -887,53 +908,47 @@ function registerNewUser(){
       zIndex:'10000',
       transform:'translate3d('+x+'px,0,0)',
       transition:'none',
-      willChange:'transform'
+      willChange:'transform',
+      backfaceVisibility:'hidden'
     });
   }
 
   function clean(page){
     if(!page)return;
-    ['position','inset','left','top','width','height','maxHeight',
-     'overflowY','boxSizing','zIndex','transform','transition','willChange']
-      .forEach(k=>page.style[k]='');
+    [
+      'position','left','top','right','width','height','maxHeight',
+      'overflowY','boxSizing','zIndex','transform','transition',
+      'willChange','backfaceVisibility'
+    ].forEach(k=>page.style[k]='');
   }
 
-  function finish(page,index){
-    pages().forEach(p=>{if(p!==page)p.classList.add('pageHidden')});
-    page.classList.remove('pageHidden');
-    page.scrollTop=0;
-    clean(page);
-    window.scrollTo(0,0);
-    setActive(index);
-
-    if(page.id==='mainPage')render();
-    updateUserUI();
-  }
-
-  function rollback(){
-    if(current){
-      current.style.transition='transform .18s ease-out';
-      current.style.transform='translate3d(0,0,0)';
-    }
-    if(next){
-      next.style.transition='transform .18s ease-out';
-      next.style.transform='translate3d('+(dx<0?innerWidth:-innerWidth)+'px,0,0)';
-      const n=next;
-      setTimeout(()=>clean(n),190);
-    }
-    const c=current;
-    setTimeout(()=>clean(c),190);
-
+  function resetState(){
     current=next=null;
     tracking=false;
     locked=false;
     currentIndex=-1;
   }
 
+  function cancelSwipe(){
+    if(!current){resetState();return;}
+
+    const c=current,n=next;
+    c.style.transition='transform .18s ease-out';
+    c.style.transform='translate3d(0,0,0)';
+
+    if(n){
+      n.style.transition='transform .18s ease-out';
+      n.style.transform='translate3d('+(dx<0?innerWidth:-innerWidth)+'px,0,0)';
+      setTimeout(()=>clean(n),190);
+    }
+    setTimeout(()=>clean(c),190);
+    resetState();
+  }
+
   document.addEventListener('touchstart',e=>{
     if(e.touches.length!==1)return;
 
-    /* Buttons remain normal buttons; Swipe never starts on them. */
+    /* The four buttons keep their normal tap/click behavior. */
     if(e.target.closest('#bottomNav,button,input,textarea,select,.modal,#loginScreen,#newUserAuthModal'))
       return;
 
@@ -953,11 +968,15 @@ function registerNewUser(){
   document.addEventListener('touchmove',e=>{
     if(!tracking||!current||e.touches.length!==1)return;
 
-    dx=e.touches[0].clientX-sx;
-    const dy=e.touches[0].clientY-sy;
+    const x=e.touches[0].clientX;
+    const y=e.touches[0].clientY;
+    dx=x-sx;
+    const dy=y-sy;
 
     if(!locked){
       if(Math.hypot(dx,dy)<LOCK)return;
+
+      /* Let the browser handle vertical scrolling normally. */
       if(Math.abs(dy)>=Math.abs(dx)){
         tracking=false;
         return;
@@ -976,15 +995,12 @@ function registerNewUser(){
     }
 
     next=p[targetIndex];
-    const w=innerWidth;
-
-    if(next.style.position!=='fixed'){
-      prepare(next,dx<0?w:-w);
-    }
+    if(next.style.position!=='fixed')
+      prepare(next,dx<0?innerWidth:-innerWidth);
 
     current.style.transform='translate3d('+Math.round(dx)+'px,0,0)';
-    next.style.transform=
-      'translate3d('+Math.round((dx<0?w:-w)+dx)+'px,0,0)';
+    next.style.transform='translate3d('+
+      Math.round((dx<0?innerWidth:-innerWidth)+dx)+'px,0,0)';
   },{passive:false});
 
   document.addEventListener('touchend',e=>{
@@ -993,40 +1009,67 @@ function registerNewUser(){
     dx=e.changedTouches[0].clientX-sx;
     const p=pages();
     const targetIndex=currentIndex+(dx<0?1:-1);
+    tracking=false;
 
     if(!locked){
       clean(current);
-      current=next=null;
-      tracking=false;
+      resetState();
       return;
     }
-
-    tracking=false;
 
     if(Math.abs(dx)<THRESHOLD||targetIndex<0||targetIndex>=p.length){
-      rollback();
+      cancelSwipe();
       return;
     }
 
-    next=p[targetIndex];
+    const target=p[targetIndex];
+    const c=current;
     const w=innerWidth;
 
-    current.style.transition='transform .23s cubic-bezier(.22,.61,.36,1)';
-    next.style.transition='transform .23s cubic-bezier(.22,.61,.36,1)';
-    current.style.transform=
-      'translate3d('+(dx<0?-w:w)+'px,0,0)';
-    next.style.transform='translate3d(0,0,0)';
+    c.style.transition='transform .22s cubic-bezier(.22,.61,.36,1)';
+    target.style.transition='transform .22s cubic-bezier(.22,.61,.36,1)';
+    c.style.transform='translate3d('+(dx<0?-w:w)+'px,0,0)';
+    target.style.transform='translate3d(0,0,0)';
 
-    const target=next;
+    /*
+      Important: do NOT clean the target immediately after the animation.
+      First make it the single active page while it is still at exactly x=0.
+      This prevents the visible "up -> down" correction.
+    */
     setTimeout(()=>{
-      finish(target,targetIndex);
-      current=next=null;
-      locked=false;
-      currentIndex=-1;
-    },240);
+      p.forEach((page,i)=>{
+        if(page!==target){
+          page.classList.add('pageHidden');
+          clean(page);
+        }
+        page.scrollTop=0;
+      });
+
+      target.classList.remove('pageHidden');
+      target.style.position='relative';
+      target.style.left='auto';
+      target.style.top='auto';
+      target.style.right='auto';
+      target.style.width='100%';
+      target.style.height='auto';
+      target.style.maxHeight='none';
+      target.style.overflowY='visible';
+      target.style.boxSizing='';
+      target.style.zIndex='';
+      target.style.transform='none';
+      target.style.transition='none';
+      target.style.willChange='auto';
+      target.style.backfaceVisibility='';
+
+      window.scrollTo(0,0);
+      activeButton(targetIndex);
+      if(target.id==='mainPage')render();
+      updateUserUI();
+      resetState();
+    },230);
   },{passive:true});
 
-  document.addEventListener('touchcancel',rollback,{passive:true});
+  document.addEventListener('touchcancel',cancelSwipe,{passive:true});
 })();
 </script>
 
