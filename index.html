@@ -843,7 +843,6 @@ function registerNewUser(){
 </style>
 <script id="temo-swipe-navigation">
 (function(){
-  /* Internal page numbers only — never displayed on the buttons. */
   const NAV=[
     {n:1,id:'mainPage',button:'goHome'},
     {n:2,id:'settingsPage',button:'goSettings'},
@@ -851,26 +850,35 @@ function registerNewUser(){
     {n:4,id:'walletPage',button:'goWallet'}
   ];
 
-  let startX=0,startY=0,lastX=0;
-  let tracking=false,locked=false,current=null,next=null,currentIndex=-1;
-  const LOCK_DISTANCE=10;
-  const SWIPE_DISTANCE=72;
+  let sx=0,sy=0,dx=0,tracking=false,locked=false;
+  let current=null,next=null,currentIndex=-1;
+
+  const LOCK=10,THRESHOLD=72;
 
   function pages(){
-    return NAV.map(item=>document.getElementById(item.id)).filter(Boolean);
+    return NAV.map(x=>document.getElementById(x.id)).filter(Boolean);
   }
 
-  function getCurrentIndex(){
+  function getIndex(){
     const p=pages();
-    return p.findIndex(page=>!page.classList.contains('pageHidden'));
+    return p.findIndex(x=>!x.classList.contains('pageHidden'));
+  }
+
+  function setActive(index){
+    const buttons=[...document.querySelectorAll('#bottomNav > button')];
+    buttons.forEach((b,i)=>{
+      const active=(i===index);
+      b.classList.toggle('active',active);
+      b.setAttribute('aria-current',active?'page':'false');
+    });
   }
 
   function prepare(page,x){
     page.classList.remove('pageHidden');
+    page.scrollTop=0;
     Object.assign(page.style,{
       position:'fixed',
-      left:'0',
-      top:'0',
+      inset:'0',
       width:'100%',
       height:'100dvh',
       maxHeight:'100dvh',
@@ -885,41 +893,36 @@ function registerNewUser(){
 
   function clean(page){
     if(!page)return;
-    [
-      'position','left','top','width','height','maxHeight','overflowY',
-      'boxSizing','zIndex','transform','transition','willChange'
-    ].forEach(k=>page.style[k]='');
+    ['position','inset','left','top','width','height','maxHeight',
+     'overflowY','boxSizing','zIndex','transform','transition','willChange']
+      .forEach(k=>page.style[k]='');
   }
 
-  function finish(page){
-    pages().forEach(p=>{
-      if(p!==page)p.classList.add('pageHidden');
-    });
+  function finish(page,index){
+    pages().forEach(p=>{if(p!==page)p.classList.add('pageHidden')});
     page.classList.remove('pageHidden');
+    page.scrollTop=0;
     clean(page);
     window.scrollTo(0,0);
+    setActive(index);
 
     if(page.id==='mainPage')render();
     updateUserUI();
   }
 
-  function abort(){
-    if(next){
-      current.style.transition='transform .18s ease-out';
-      next.style.transition='transform .18s ease-out';
-      current.style.transform='translate3d(0,0,0)';
-      next.style.transform='translate3d('+
-        (lastX<startX?window.innerWidth:-window.innerWidth)+
-        'px,0,0)';
-
-      const c=current,n=next;
-      setTimeout(()=>{clean(c);clean(n);},190);
-    }else if(current){
+  function rollback(){
+    if(current){
       current.style.transition='transform .18s ease-out';
       current.style.transform='translate3d(0,0,0)';
-      const c=current;
-      setTimeout(()=>clean(c),190);
     }
+    if(next){
+      next.style.transition='transform .18s ease-out';
+      next.style.transform='translate3d('+(dx<0?innerWidth:-innerWidth)+'px,0,0)';
+      const n=next;
+      setTimeout(()=>clean(n),190);
+    }
+    const c=current;
+    setTimeout(()=>clean(c),190);
 
     current=next=null;
     tracking=false;
@@ -930,19 +933,17 @@ function registerNewUser(){
   document.addEventListener('touchstart',e=>{
     if(e.touches.length!==1)return;
 
-    /* Visible buttons keep their original click logic. */
-    if(e.target.closest(
-      '#bottomNav,button,input,textarea,select,.modal,#loginScreen,#newUserAuthModal'
-    ))return;
+    /* Buttons remain normal buttons; Swipe never starts on them. */
+    if(e.target.closest('#bottomNav,button,input,textarea,select,.modal,#loginScreen,#newUserAuthModal'))
+      return;
 
     const p=pages();
-    currentIndex=getCurrentIndex();
+    currentIndex=getIndex();
     if(currentIndex<0||!p[currentIndex])return;
 
-    startX=e.touches[0].clientX;
-    startY=e.touches[0].clientY;
-    lastX=startX;
-
+    sx=e.touches[0].clientX;
+    sy=e.touches[0].clientY;
+    dx=0;
     current=p[currentIndex];
     next=null;
     tracking=true;
@@ -952,21 +953,15 @@ function registerNewUser(){
   document.addEventListener('touchmove',e=>{
     if(!tracking||!current||e.touches.length!==1)return;
 
-    const x=e.touches[0].clientX;
-    const y=e.touches[0].clientY;
-    const dx=x-startX;
-    const dy=y-startY;
-    lastX=x;
+    dx=e.touches[0].clientX-sx;
+    const dy=e.touches[0].clientY-sy;
 
     if(!locked){
-      if(Math.hypot(dx,dy)<LOCK_DISTANCE)return;
-
-      /* Vertical movement is normal scrolling, not Swipe. */
+      if(Math.hypot(dx,dy)<LOCK)return;
       if(Math.abs(dy)>=Math.abs(dx)){
         tracking=false;
         return;
       }
-
       locked=true;
     }
 
@@ -975,75 +970,63 @@ function registerNewUser(){
     const p=pages();
     const targetIndex=currentIndex+(dx<0?1:-1);
 
-    /* At the first/last page, give a small resistance instead of changing page. */
     if(targetIndex<0||targetIndex>=p.length){
-      current.style.transform=
-        'translate3d('+Math.round(dx*0.10)+'px,0,0)';
+      current.style.transform='translate3d('+Math.round(dx*.08)+'px,0,0)';
       return;
     }
 
     next=p[targetIndex];
-    const width=window.innerWidth;
+    const w=innerWidth;
 
     if(next.style.position!=='fixed'){
-      prepare(next,dx<0?width:-width);
+      prepare(next,dx<0?w:-w);
     }
 
-    current.style.transform=
-      'translate3d('+Math.round(dx)+'px,0,0)';
-
+    current.style.transform='translate3d('+Math.round(dx)+'px,0,0)';
     next.style.transform=
-      'translate3d('+Math.round((dx<0?width:-width)+dx)+'px,0,0)';
+      'translate3d('+Math.round((dx<0?w:-w)+dx)+'px,0,0)';
   },{passive:false});
 
   document.addEventListener('touchend',e=>{
     if(!tracking||!current)return;
 
-    const dx=e.changedTouches[0].clientX-startX;
-    tracking=false;
-
+    dx=e.changedTouches[0].clientX-sx;
     const p=pages();
     const targetIndex=currentIndex+(dx<0?1:-1);
 
     if(!locked){
       clean(current);
       current=next=null;
-      currentIndex=-1;
+      tracking=false;
       return;
     }
 
-    if(
-      Math.abs(dx)<SWIPE_DISTANCE ||
-      targetIndex<0 ||
-      targetIndex>=p.length
-    ){
-      abort();
+    tracking=false;
+
+    if(Math.abs(dx)<THRESHOLD||targetIndex<0||targetIndex>=p.length){
+      rollback();
       return;
     }
 
     next=p[targetIndex];
-    const width=window.innerWidth;
+    const w=innerWidth;
 
-    current.style.transition=
-      'transform .22s cubic-bezier(.22,.61,.36,1)';
-    next.style.transition=
-      'transform .22s cubic-bezier(.22,.61,.36,1)';
-
+    current.style.transition='transform .23s cubic-bezier(.22,.61,.36,1)';
+    next.style.transition='transform .23s cubic-bezier(.22,.61,.36,1)';
     current.style.transform=
-      'translate3d('+(dx<0?-width:width)+'px,0,0)';
+      'translate3d('+(dx<0?-w:w)+'px,0,0)';
     next.style.transform='translate3d(0,0,0)';
 
     const target=next;
-
     setTimeout(()=>{
-      finish(target);
+      finish(target,targetIndex);
       current=next=null;
       locked=false;
       currentIndex=-1;
-    },230);
+    },240);
   },{passive:true});
 
-  document.addEventListener('touchcancel',abort,{passive:true});
+  document.addEventListener('touchcancel',rollback,{passive:true});
 })();
 </script>
 
