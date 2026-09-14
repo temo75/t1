@@ -856,53 +856,57 @@ function registerNewUser(){
 <style id="temo-swipe-navigation-style">
 #mainPage,#settingsPage,#userManagementPage,#walletPage{
   touch-action:pan-y;
-  overscroll-behavior-x:contain;
+  overscroll-behavior-x:none;
 }
 </style>
 <script id="temo-swipe-navigation">
 (function(){
-  /* Internal order only. Numbers are never rendered on the buttons. */
-  const NAV=[
-    {n:1,id:'mainPage'},
-    {n:2,id:'settingsPage'},
-    {n:3,id:'userManagementPage'},
-    {n:4,id:'walletPage'}
-  ];
-
-  let sx=0,sy=0,dx=0;
-  let tracking=false,locked=false;
+  /* One internal order for both Swipe and the four visible buttons. */
+  const NAV=['mainPage','settingsPage','userManagementPage','walletPage'];
+  let sx=0,sy=0,dx=0,tracking=false,locked=false;
   let current=null,next=null,currentIndex=-1;
 
-  const LOCK=12;
-  const THRESHOLD=72;
+  const LOCK=12, THRESHOLD=72;
 
-  function pages(){
-    return NAV.map(x=>document.getElementById(x.id)).filter(Boolean);
-  }
-
-  function getIndex(){
+  function pages(){ return NAV.map(id=>document.getElementById(id)).filter(Boolean); }
+  function indexOfPage(){
     const p=pages();
     return p.findIndex(x=>!x.classList.contains('pageHidden'));
   }
-
-  function activeButton(index){
-    document.querySelectorAll('#bottomNav > button').forEach((b,i)=>{
-      b.classList.toggle('active',i===index);
-      b.setAttribute('aria-current',i===index?'page':'false');
+  function syncButtons(i){
+    document.querySelectorAll('#bottomNav > button').forEach((b,n)=>{
+      b.classList.toggle('active',n===i);
+      b.setAttribute('aria-current',n===i?'page':'false');
     });
   }
 
-  function prepare(page,x){
-    page.classList.remove('pageHidden');
-    page.scrollTop=0;
-    Object.assign(page.style,{
-      position:'fixed',
+  function basePage(p){
+    p.style.position='relative';
+    p.style.left='0';
+    p.style.top='0';
+    p.style.right='0';
+    p.style.width='100%';
+    p.style.height='auto';
+    p.style.maxHeight='none';
+    p.style.overflowY='visible';
+    p.style.boxSizing='border-box';
+    p.style.zIndex='';
+    p.style.transform='none';
+    p.style.transition='none';
+    p.style.willChange='auto';
+  }
+
+  function prepare(p,x){
+    p.classList.remove('pageHidden');
+    p.scrollTop=0;
+    Object.assign(p.style,{
+      position:'absolute',
       left:'0',
       top:'0',
       right:'0',
       width:'100%',
-      height:'100dvh',
-      maxHeight:'100dvh',
+      height:'100%',
+      maxHeight:'100%',
       overflowY:'auto',
       boxSizing:'border-box',
       zIndex:'10000',
@@ -913,47 +917,66 @@ function registerNewUser(){
     });
   }
 
-  function clean(page){
-    if(!page)return;
-    [
-      'position','left','top','right','width','height','maxHeight',
-      'overflowY','boxSizing','zIndex','transform','transition',
-      'willChange','backfaceVisibility'
-    ].forEach(k=>page.style[k]='');
+  function hideOthers(target){
+    pages().forEach(p=>{
+      if(p!==target){
+        p.classList.add('pageHidden');
+        p.style.transform='none';
+        p.style.transition='none';
+        p.style.willChange='auto';
+      }
+    });
   }
 
-  function resetState(){
+  function finish(target,i){
+    hideOthers(target);
+    target.classList.remove('pageHidden');
+    target.scrollTop=0;
+
+    /*
+      Keep the target in the exact same normal layout immediately after
+      the animation. No fixed->relative jump and no window scroll correction.
+    */
+    basePage(target);
+    syncButtons(i);
+
+    if(target.id==='mainPage')render();
+    updateUserUI();
     current=next=null;
+    currentIndex=-1;
     tracking=false;
     locked=false;
-    currentIndex=-1;
   }
 
-  function cancelSwipe(){
-    if(!current){resetState();return;}
-
+  function rollback(){
+    if(!current){reset();return;}
     const c=current,n=next;
     c.style.transition='transform .18s ease-out';
     c.style.transform='translate3d(0,0,0)';
-
     if(n){
       n.style.transition='transform .18s ease-out';
       n.style.transform='translate3d('+(dx<0?innerWidth:-innerWidth)+'px,0,0)';
-      setTimeout(()=>clean(n),190);
+      setTimeout(()=>basePage(n),190);
     }
-    setTimeout(()=>clean(c),190);
-    resetState();
+    setTimeout(()=>basePage(c),190);
+    reset();
   }
 
+  function reset(){
+    current=next=null;
+    currentIndex=-1;
+    tracking=false;
+    locked=false;
+  }
+
+  /* Do not start Swipe on controls. Buttons retain their existing handlers. */
   document.addEventListener('touchstart',e=>{
     if(e.touches.length!==1)return;
-
-    /* The four buttons keep their normal tap/click behavior. */
     if(e.target.closest('#bottomNav,button,input,textarea,select,.modal,#loginScreen,#newUserAuthModal'))
       return;
 
     const p=pages();
-    currentIndex=getIndex();
+    currentIndex=indexOfPage();
     if(currentIndex<0||!p[currentIndex])return;
 
     sx=e.touches[0].clientX;
@@ -975,10 +998,8 @@ function registerNewUser(){
 
     if(!locked){
       if(Math.hypot(dx,dy)<LOCK)return;
-
-      /* Let the browser handle vertical scrolling normally. */
       if(Math.abs(dy)>=Math.abs(dx)){
-        tracking=false;
+        reset();
         return;
       }
       locked=true;
@@ -987,20 +1008,21 @@ function registerNewUser(){
     e.preventDefault();
 
     const p=pages();
-    const targetIndex=currentIndex+(dx<0?1:-1);
+    const ti=currentIndex+(dx<0?1:-1);
 
-    if(targetIndex<0||targetIndex>=p.length){
+    if(ti<0||ti>=p.length){
       current.style.transform='translate3d('+Math.round(dx*.08)+'px,0,0)';
       return;
     }
 
-    next=p[targetIndex];
-    if(next.style.position!=='fixed')
+    next=p[ti];
+    if(next.style.position!=='absolute')
       prepare(next,dx<0?innerWidth:-innerWidth);
 
+    const w=innerWidth;
     current.style.transform='translate3d('+Math.round(dx)+'px,0,0)';
     next.style.transform='translate3d('+
-      Math.round((dx<0?innerWidth:-innerWidth)+dx)+'px,0,0)';
+      Math.round((dx<0?w:-w)+dx)+'px,0,0)';
   },{passive:false});
 
   document.addEventListener('touchend',e=>{
@@ -1008,21 +1030,20 @@ function registerNewUser(){
 
     dx=e.changedTouches[0].clientX-sx;
     const p=pages();
-    const targetIndex=currentIndex+(dx<0?1:-1);
-    tracking=false;
+    const ti=currentIndex+(dx<0?1:-1);
 
     if(!locked){
-      clean(current);
-      resetState();
+      reset();
+      return;
+    }
+    tracking=false;
+
+    if(Math.abs(dx)<THRESHOLD||ti<0||ti>=p.length){
+      rollback();
       return;
     }
 
-    if(Math.abs(dx)<THRESHOLD||targetIndex<0||targetIndex>=p.length){
-      cancelSwipe();
-      return;
-    }
-
-    const target=p[targetIndex];
+    const target=p[ti];
     const c=current;
     const w=innerWidth;
 
@@ -1031,45 +1052,10 @@ function registerNewUser(){
     c.style.transform='translate3d('+(dx<0?-w:w)+'px,0,0)';
     target.style.transform='translate3d(0,0,0)';
 
-    /*
-      Important: do NOT clean the target immediately after the animation.
-      First make it the single active page while it is still at exactly x=0.
-      This prevents the visible "up -> down" correction.
-    */
-    setTimeout(()=>{
-      p.forEach((page,i)=>{
-        if(page!==target){
-          page.classList.add('pageHidden');
-          clean(page);
-        }
-        page.scrollTop=0;
-      });
-
-      target.classList.remove('pageHidden');
-      target.style.position='relative';
-      target.style.left='auto';
-      target.style.top='auto';
-      target.style.right='auto';
-      target.style.width='100%';
-      target.style.height='auto';
-      target.style.maxHeight='none';
-      target.style.overflowY='visible';
-      target.style.boxSizing='';
-      target.style.zIndex='';
-      target.style.transform='none';
-      target.style.transition='none';
-      target.style.willChange='auto';
-      target.style.backfaceVisibility='';
-
-      window.scrollTo(0,0);
-      activeButton(targetIndex);
-      if(target.id==='mainPage')render();
-      updateUserUI();
-      resetState();
-    },230);
+    setTimeout(()=>finish(target,ti),230);
   },{passive:true});
 
-  document.addEventListener('touchcancel',cancelSwipe,{passive:true});
+  document.addEventListener('touchcancel',rollback,{passive:true});
 })();
 </script>
 
