@@ -192,8 +192,47 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
   text-overflow:clip !important;
 }
 </style>
+
+<style id="temo-bottom-nav-final">
+#bottomNav{
+  position:fixed !important;
+  left:0 !important;
+  right:0 !important;
+  bottom:0 !important;
+  width:100vw !important;
+  height:58px !important;
+  margin:0 !important;
+  padding:4px 4px env(safe-area-inset-bottom) !important;
+  display:flex !important;
+  flex-direction:row !important;
+  flex-wrap:nowrap !important;
+  justify-content:stretch !important;
+  align-items:stretch !important;
+  box-sizing:border-box !important;
+  z-index:2147483647 !important;
+}
+#bottomNav > button{
+  flex:1 1 0 !important;
+  width:0 !important;
+  min-width:0 !important;
+  max-width:none !important;
+  margin:0 !important;
+  box-sizing:border-box !important;
+}
+#loginScreen ~ #bottomNav,
+body:has(#loginScreen:not(.hidden)) #bottomNav{
+  display:none !important;
+}
+</style>
 </head>
 <body>
+<nav id="bottomNav">
+  <button type="button" onclick="goHome()">მთავარი</button>
+  <button type="button" onclick="goSettings()">სეთინგები</button>
+  <button type="button" onclick="goUsers()">მომხმარებლები</button>
+  <button type="button" class="walletNav" onclick="goWallet()">საფულე</button>
+</nav>
+
 <div id="uploadOverlay"><div class="uploadBox"><div class="uploadSpinner" id="uploadSpinner"></div><div class="uploadCheck" id="uploadCheck">✓</div><div class="uploadBurst" id="uploadBurst"></div></div></div>
 
 
@@ -328,12 +367,7 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 <div class="row"><button class="cancel" onclick="closeForm()">გაუქმება</button><button class="save" onclick="saveJob()">შენახვა</button></div>
 </div></div>
 
-<nav id="bottomNav">
-  <button type="button" onclick="goHome()">მთავარი</button>
-  <button type="button" onclick="goSettings()">სეთინგები</button>
-  <button type="button" onclick="goUsers()">მომხმარებლები</button>
-  <button type="button" class="walletNav" onclick="goWallet()">საფულე</button>
-</nav>
+
 <script>
 const AUTH_KEY='temoWorkTrackerAuthorized';
 const AUTH_PASSWORD='temo2139-590';
