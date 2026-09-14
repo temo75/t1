@@ -81,6 +81,11 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
   right:0 !important;
   bottom:0 !important;
   width:100% !important;
+  display:flex !important;
+  flex-wrap:nowrap !important;
+  gap:4px !important;
+  padding:6px 6px calc(6px + env(safe-area-inset-bottom)) !important;
+  z-index:9998 !important;
   z-index:2147483647 !important;
   display:flex !important;
   gap:8px;
@@ -108,7 +113,9 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
   font-weight:600;
 }
 body{padding-bottom:78px;}
-#bottomNav .walletNav{flex:.7;font-size:13px;}
+#bottomNav .walletNav{flex:1;font-size:13px;}
+#bottomNav button{min-width:0 !important;white-space:nowrap !important;font-size:13px !important;padding:8px 4px !important;}
+#loginScreen #bottomNav{display:none !important;}
 </style>
 </style>
 
