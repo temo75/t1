@@ -681,18 +681,22 @@ function renderReceivableModal(){
   const list=$('receivableList'), summary=$('receivableSummary'), all=$('receivableAllCheck');
   if(!list||!summary||!all)return;
   const data=[...jobs].sort((a,b)=>(b.date||'').localeCompare(a.date||'')||String(b.id).localeCompare(String(a.id)));
+  const unpaidData=data.filter(j=>!j.paid);
   const total=data.reduce((s,j)=>s+Number(j.money||0),0);
   const paid=data.filter(j=>j.paid).reduce((s,j)=>s+Number(j.money||0),0);
   const unpaid=total-paid;
-  const unpaidCount=data.filter(j=>!j.paid).length;
+  const unpaidCount=unpaidData.length;
   summary.innerHTML=`სულ სამუშაოები: <b>${data.length}</b> • მიღებული: <b>${euro(paid)}</b> • ჯერ მისაღები: <b>${euro(unpaid)}</b> • ${unpaidCount} გადაუხდელი`;
-  all.checked=data.length>0 && data.every(j=>j.paid);
+  all.checked=data.length>0 && unpaidCount===0;
   list.innerHTML='';
-  if(!data.length){list.innerHTML='<div class="receivableEmpty">ჯერ სამუშაოები არ არის.</div>';return}
-  data.forEach(j=>{
+  if(!unpaidData.length){
+    list.innerHTML='<div class="receivableEmpty">ყველასგან მიღებულია თანხა. 🎉</div>';
+    return;
+  }
+  unpaidData.forEach(j=>{
     const row=document.createElement('div');
-    row.className='receivableRow '+(j.paid?'receivablePaid':'receivableUnpaid');
-    row.innerHTML=`<label class="receivableCheck"><input type="checkbox" ${j.paid?'checked':''} onchange="setReceivablePaid('${j.id}',this.checked)"><div class="receivableInfo"><div class="receivablePlace">${esc(j.place||'სამუშაო')}</div><div class="receivableDate">${formatDate(j.date)}${j.note?' • '+esc(j.note):''}</div></div></label><div class="receivableAmount">${euro(j.money)}</div>`;
+    row.className='receivableRow receivableUnpaid';
+    row.innerHTML=`<label class="receivableCheck"><input type="checkbox" onchange="setReceivablePaid('${j.id}',this.checked)"><div class="receivableInfo"><div class="receivablePlace">${esc(j.place||'სამუშაო')}</div><div class="receivableDate">${formatDate(j.date)}${j.note?' • '+esc(j.note):''}</div></div></label><div class="receivableAmount">${euro(j.money)}</div>`;
     list.appendChild(row);
   });
 }
