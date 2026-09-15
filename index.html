@@ -41,7 +41,7 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 .loginBox input{width:100%;padding:15px;border-radius:11px;border:1px solid #29404c;background:#071117;color:#fff;font-size:17px;text-align:center;margin-bottom:12px}
 .loginBox button{width:100%;padding:15px;border:1px solid #2999ff;border-radius:11px;background:#102b3b;color:#fff;font-weight:bold;font-size:17px;cursor:pointer;box-shadow:0 0 7px #2999ff,0 0 16px #2999ff}
 .loginSelect{width:100%;padding:15px;border-radius:11px;border:1px solid #29404c;background:#071117;color:#fff;font-size:17px;text-align:center;margin-bottom:12px}
-.userManage{margin-top:14px}.userManage input{margin-bottom:8px!important}.userRow{display:flex;gap:7px;margin:7px 0}.userRow button{padding:9px;font-size:14px}.adminOnly{display:block}
+.userManage{margin-top:14px}.userManage input{margin-bottom:8px!important}.userRow{display:grid;grid-template-columns:minmax(0,1fr) 1fr 1fr;gap:7px;margin:7px 0;width:100%}.userRow button{padding:9px;font-size:14px;min-width:0;width:100%}.userRow .userNameBtn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.userRow .lockBtn{background:#183445;border-color:#2999df}.userRow .lockBtn.locked{background:#4a2228;border-color:#74333d;color:#ff8c8c}.adminOnly{display:block}@media(max-width:700px){.userRow{grid-template-columns:minmax(0,1fr) 1fr 1fr;gap:5px}.userRow button{font-size:12px;padding:9px 5px}}
 #loginError{min-height:20px;color:#ff7c84;font-size:14px;margin-top:10px}
 
 .tools input[type=file]{width:100%;max-width:100%;justify-self:stretch;border-color:#ff8a00;box-shadow:0 0 10px #ff8a00,0 0 23px rgba(255,138,0,.82),0 0 32px rgba(255,138,0,.30);background:#0b1a24}.tools input[type=file]::file-selector-button{max-width:100%;border:1px solid #ff8a00;border-radius:12px;padding:9px 14px;background:#2a2418;color:#fff;cursor:pointer;box-shadow:0 0 9px #ff8a00,0 0 20px rgba(255,138,0,.84),0 0 28px rgba(255,138,0,.32);text-shadow:0 0 6px #ff8a00;}
@@ -881,20 +881,17 @@ function updateUserUI(){
  if(isAdmin)renderManagedUsers();
 }
 function renderManagedUsers(){
- const box=$('userManagementList'); if(!box)return; box.innerHTML='';
- const users=getUsers();
- // ადმინისტრატორი ყოველთვის ჩანს პირველ ადგილზე.
- const admin=users.find(u=>u.admin||u.name===ADMIN_USER);
- if(admin){
-   
- }
- // აქ ჩანს მხოლოდ ის მომხმარებლები, რომლებმაც ავტორიზაცია რეალურად გაიარეს.
- users.filter(u=>!u.admin && u.authorized===true).forEach(u=>{
-   const row=document.createElement('div');row.className='userRow';
-   const b=document.createElement('button');b.className='backupBtn';b.textContent='👤 '+u.name;b.disabled=true;
-   const d=document.createElement('button');d.className='backupBtn danger';d.textContent='წაშლა';d.onclick=()=>deleteManagedUser(u.name);
-   row.append(b,d);box.appendChild(row);
- });
+  const box=$('userManagementList'); if(!box)return; box.innerHTML='';
+  const users=getUsers();
+  users.filter(u=>!u.admin && String(u.name).trim().toUpperCase()!==ADMIN_USER).forEach(u=>{
+    const row=document.createElement('div');row.className='userRow';
+    const b=document.createElement('button');b.className='backupBtn userNameBtn';b.textContent='👤 '+u.name;b.disabled=true;
+    const l=document.createElement('button');l.className='backupBtn lockBtn'+(u.authorized!==true?' locked':'');
+    l.textContent=u.authorized===true?'🔒 დაბლოკვა':'🔓 განბლოკვა';
+    l.onclick=()=>toggleUserBlock(u.name);
+    const d=document.createElement('button');d.className='backupBtn danger';d.textContent='წაშლა';d.onclick=()=>deleteManagedUser(u.name);
+    row.append(b,l,d);box.appendChild(row);
+  });
 }
 async function addManagedUser(){
  if(currentUser!==ADMIN_USER)return;
@@ -904,6 +901,20 @@ async function addManagedUser(){
  const users=getUsers();localStorage.setItem(DELETED_USERS_KEY,JSON.stringify(getDeletedUsers().filter(d=>String(d).toLowerCase()!==n.toLowerCase())));
   users.push({name:n,password:p,admin:false,authorized:false});localStorage.setItem(USERS_KEY,JSON.stringify(users));await saveUsersToFirebase(users);$('newUserName').value='';$('newUserPassword').value='';renderManagedUsers();
 }
+async function toggleUserBlock(name){
+  if(currentUser!==ADMIN_USER)return;
+  const users=getUsers();
+  const u=users.find(x=>String(x.name).toLowerCase()===String(name).toLowerCase());
+  if(!u)return;
+  const willLock=u.authorized===true;
+  if(!confirm((willLock?'დავბლოკოთ ':'განვბლოკოთ ')+name+'?'))return;
+  u.authorized=!willLock;
+  localStorage.setItem(USERS_KEY,JSON.stringify(users));
+  await saveUsersToFirebase(users);
+  renderLoginUsers();
+  renderManagedUsers();
+}
+
 async function deleteManagedUser(name){
   if(currentUser!==ADMIN_USER)return;
   if(!confirm('წავშალოთ მომხმარებელი '+name+'?'))return;
