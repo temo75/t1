@@ -546,6 +546,18 @@ window.addEventListener('DOMContentLoaded',async()=>{
 });
 
 let jobs=[];
+// ისტორიული ჩანაწერების ათვლა იწყება 2026-09-01-დან.
+// ძველი წლების/თვეების მონაცემები ავტომატურად იშლება მხოლოდ ერთხელ.
+(function(){
+  const START='2026-09-01';
+  const KEY='temo_history_trimmed_2026_09_01';
+  if(localStorage.getItem(KEY)!=='1'){
+    jobs=jobs.filter(j=>(j.date||'')>=START);
+    localStorage.setItem(KEY,'1');
+    try{save();}catch(e){}
+  }
+})();
+
 function loadUserJobs(){
   try{
     const key='temoJobs_'+(currentUser||ADMIN_USER);
