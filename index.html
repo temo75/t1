@@ -431,6 +431,7 @@ const AUTH_KEY='temoWorkTrackerAuthorized';
 const AUTH_PASSWORD='temo2139-590';
 const USERS_KEY='temoWorkTrackerUsers';
 const SESSION_USER_KEY='temoWorkTrackerUser';
+const DELETED_USERS_KEY='temoWorkTrackerDeletedUsers';
 const ADMIN_USER='TEMO';
 const FIREBASE_DB_URL='https://temo-75-default-rtdb.europe-west1.firebasedatabase.app';
 let currentUser=localStorage.getItem(SESSION_USER_KEY)||'';
@@ -475,7 +476,9 @@ async function syncUsersFromFirebase(){
     // Do NOT merge localStorage back into it: a locally deleted user must
     // stay deleted instead of being recreated on the next sync.
     if(remote!==null){
-      const clean=remote.filter(u=>u&&u.name);
+      const deleted=getDeletedUsers();
+      const clean=remote.filter(u=>u&&u.name&&!deleted.some(d=>String(d).toLowerCase()===String(u.name).toLowerCase()));
+      if(!clean.some(u=>u.name===ADMIN_USER)) clean.unshift({name:ADMIN_USER,password:AUTH_PASSWORD,admin:true});
       localStorage.setItem(USERS_KEY,JSON.stringify(clean));
       return;
     }
@@ -485,10 +488,27 @@ async function syncUsersFromFirebase(){
   }finally{firebaseSyncBusy=false}
 }
 
+function getDeletedUsers(){
+  try{
+    const a=JSON.parse(localStorage.getItem(DELETED_USERS_KEY)||'[]');
+    return Array.isArray(a)?a:[];
+  }catch(e){return []}
+}
+function markUserDeleted(name){
+  const a=getDeletedUsers();
+  if(!a.some(x=>String(x).toLowerCase()===String(name).toLowerCase())){
+    a.push(name);
+    localStorage.setItem(DELETED_USERS_KEY,JSON.stringify(a));
+  }
+}
 function getUsers(){
  let users; try{users=JSON.parse(localStorage.getItem(USERS_KEY)||'null')}catch(e){users=null}
- if(!Array.isArray(users)||!users.length){users=[{name:ADMIN_USER,password:AUTH_PASSWORD,admin:true}];localStorage.setItem(USERS_KEY,JSON.stringify(users))}
- return users;
+ if(!Array.isArray(users)||!users.length) users=[{name:ADMIN_USER,password:AUTH_PASSWORD,admin:true}];
+ const deleted=getDeletedUsers();
+ const filtered=users.filter(u=>u&&u.name&&!deleted.some(d=>String(d).toLowerCase()===String(u.name).toLowerCase()));
+ if(!filtered.some(u=>u.name===ADMIN_USER)) filtered.unshift({name:ADMIN_USER,password:AUTH_PASSWORD,admin:true});
+ localStorage.setItem(USERS_KEY,JSON.stringify(filtered));
+ return filtered;
 }
 function enablePasswordOnlyLogin(){
  const users=getUsers().filter(u=>u.authorized);
@@ -500,17 +520,22 @@ function enablePasswordOnlyLogin(){
 }
 function enableNameLogin(){enablePasswordOnlyLogin()}
 async function completeLogin(u){
- currentUser=u.name;
- u.authorized=true;
- const users=getUsers();
- localStorage.setItem(USERS_KEY,JSON.stringify(users));
- saveUsersToFirebase(users);
- localStorage.setItem(SESSION_USER_KEY,currentUser);
- localStorage.setItem(AUTH_KEY,'yes');
- $('loginScreen').classList.add('hidden');
- $('loginPassword').value='';
- $('loginError').textContent='';
- jobs=loadUserJobs();updateUserUI();render();
+  if(getDeletedUsers().some(d=>String(d).toLowerCase()===String(u.name).toLowerCase())){
+    $('loginError').textContent='ეს მომხმარებელი წაშლილია';
+    $('loginPassword').value='';
+    return;
+  }
+  currentUser=u.name;
+  u.authorized=true;
+  const users=getUsers();
+  localStorage.setItem(USERS_KEY,JSON.stringify(users));
+  saveUsersToFirebase(users);
+  localStorage.setItem(SESSION_USER_KEY,currentUser);
+  localStorage.setItem(AUTH_KEY,'yes');
+  $('loginScreen').classList.add('hidden');
+  $('loginPassword').value='';
+  $('loginError').textContent='';
+  jobs=loadUserJobs();updateUserUI();render();
 }
 function login(){
  const name=$('loginName').value.trim();
@@ -829,13 +854,24 @@ async function addManagedUser(){
  const n=$('newUserName').value.trim(),p=$('newUserPassword').value;
  if(!n||!p){alert('სახელი და პაროლი ორივე შეავსე');return}
  if(n.toUpperCase()===ADMIN_USER||getUsers().some(u=>u.name.toLowerCase()===n.toLowerCase())){alert('ეს მომხმარებელი უკვე არსებობს');return}
- const users=getUsers();users.push({name:n,password:p,admin:false,authorized:false});localStorage.setItem(USERS_KEY,JSON.stringify(users));await saveUsersToFirebase(users);$('newUserName').value='';$('newUserPassword').value='';renderManagedUsers();
+ const users=getUsers();localStorage.setItem(DELETED_USERS_KEY,JSON.stringify(getDeletedUsers().filter(d=>String(d).toLowerCase()!==n.toLowerCase())));
+  users.push({name:n,password:p,admin:false,authorized:false});localStorage.setItem(USERS_KEY,JSON.stringify(users));await saveUsersToFirebase(users);$('newUserName').value='';$('newUserPassword').value='';renderManagedUsers();
 }
-async function deleteManagedUser(name){if(currentUser!==ADMIN_USER)return;if(!confirm('წავშალოთ მომხმარებელი '+name+'?'))return;const users=getUsers().filter(u=>u.name!==name);localStorage.setItem(USERS_KEY,JSON.stringify(users));await saveUsersToFirebase(users);localStorage.removeItem('temoJobs_'+name);renderLoginUsers();renderManagedUsers()}
-function openCredentials(){
-  $('ghRepo').value=localStorage.getItem('temoGitHubRepo')||'temo75/t1';
-  $('ghToken').value=localStorage.getItem('temoGitHubToken')||'';
-  $('credentialsModal').classList.add('show');
+async function deleteManagedUser(name){
+  if(currentUser!==ADMIN_USER)return;
+  if(!confirm('წავშალოთ მომხმარებელი '+name+'?'))return;
+  markUserDeleted(name);
+  const users=getUsers().filter(u=>u.name!==name);
+  localStorage.setItem(USERS_KEY,JSON.stringify(users));
+  try{
+    await firebaseWriteQueue;
+    const r=await fetch(FIREBASE_DB_URL+'/users/'+firebaseUserKey(name)+'.json',{method:'DELETE'});
+    if(!r.ok)throw new Error('Firebase DELETE HTTP '+r.status);
+  }catch(e){console.warn('Firebase user delete failed:',e)}
+  await saveUsersToFirebase(getUsers());
+  localStorage.removeItem('temoJobs_'+name);
+  renderLoginUsers();
+  renderManagedUsers();
 }
 function closeCredentials(){
   $('credentialsModal').classList.remove('show');
@@ -983,7 +1019,8 @@ function registerNewUser(){
  if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return}
  const users=getUsers();
  if(users.some(u=>u.name.toLowerCase()===n.toLowerCase())){alert('ეს მომხმარებელი უკვე არსებობს');return}
- users.push({name:n,password:p,admin:false,authorized:true});
+ localStorage.setItem(DELETED_USERS_KEY,JSON.stringify(getDeletedUsers().filter(d=>String(d).toLowerCase()!==n.toLowerCase())));
+  users.push({name:n,password:p,admin:false,authorized:true});
  localStorage.setItem(USERS_KEY,JSON.stringify(users));
  saveUsersToFirebase(users);
  currentUser=n; localStorage.setItem(SESSION_USER_KEY,n); localStorage.setItem(AUTH_KEY,'yes');
