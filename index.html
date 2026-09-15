@@ -546,18 +546,6 @@ window.addEventListener('DOMContentLoaded',async()=>{
 });
 
 let jobs=[];
-// ისტორიული ჩანაწერების ათვლა იწყება 2026-09-01-დან.
-// ძველი წლების/თვეების მონაცემები ავტომატურად იშლება მხოლოდ ერთხელ.
-(function(){
-  const START='2026-09-01';
-  const KEY='temo_history_trimmed_2026_09_01';
-  if(localStorage.getItem(KEY)!=='1'){
-    jobs=jobs.filter(j=>(j.date||'')>=START);
-    localStorage.setItem(KEY,'1');
-    try{save();}catch(e){}
-  }
-})();
-
 function loadUserJobs(){
   try{
     const key='temoJobs_'+(currentUser||ADMIN_USER);
@@ -576,6 +564,25 @@ function loadUserJobs(){
   }catch(e){return []}
 }
 jobs=loadUserJobs();
+
+// 2026 წლის სექტემბრის 1-დან მიმდინარე თვის ყველა სამუშაო/თანხა რჩება.
+// მხოლოდ 2026-09-01-მდე არსებული ძველი ჩანაწერები იშლება.
+(function(){
+  const START='2026-09-01';
+  const before=jobs.length;
+  jobs=jobs.filter(j=>{
+    const d=String(j.date||'').slice(0,10);
+    return d && d>=START;
+  });
+  if(jobs.length!==before){
+    try{
+      const key='temoJobs_'+(currentUser||ADMIN_USER);
+      localStorage.setItem(key,JSON.stringify(jobs));
+      if(currentUser===ADMIN_USER) localStorage.setItem('temoJobs',JSON.stringify(jobs));
+    }catch(e){}
+  }
+})();
+
 let editingId=null;
 let calendarDate=new Date();
 let selectedDate='';
