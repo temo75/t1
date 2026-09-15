@@ -436,7 +436,11 @@ const ADMIN_USER='TEMO';
 const FIREBASE_DB_URL='https://temo-75-default-rtdb.europe-west1.firebasedatabase.app';
 let currentUser=localStorage.getItem(SESSION_USER_KEY)||'';
 let firebaseSyncBusy=false;
-function firebaseUserKey(name){return encodeURIComponent(name).replace(/%/g,'_');}
+function firebaseUserKey(name){
+  // Firebase-ში ქართული და სხვა Unicode სახელები პირდაპირ ინახება.
+  // მხოლოდ Firebase-ისთვის აკრძალული სიმბოლოები იცვლება.
+  return String(name||'').trim().replace(/[.#$\[\]\/]/g,'_');
+}
 async function loadUsersFromFirebase(){
   try{
     const r=await fetch(FIREBASE_DB_URL+'/users.json',{cache:'no-store'});
