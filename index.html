@@ -499,7 +499,7 @@ function enablePasswordOnlyLogin(){
  $('loginName').focus();
 }
 function enableNameLogin(){enablePasswordOnlyLogin()}
-function completeLogin(u){
+async function completeLogin(u){
  currentUser=u.name;
  u.authorized=true;
  const users=getUsers();
@@ -564,25 +564,6 @@ function loadUserJobs(){
   }catch(e){return []}
 }
 jobs=loadUserJobs();
-
-// 2026 წლის სექტემბრის 1-დან მიმდინარე თვის ყველა სამუშაო/თანხა რჩება.
-// მხოლოდ 2026-09-01-მდე არსებული ძველი ჩანაწერები იშლება.
-(function(){
-  const START='2026-09-01';
-  const before=jobs.length;
-  jobs=jobs.filter(j=>{
-    const d=String(j.date||'').slice(0,10);
-    return d && d>=START;
-  });
-  if(jobs.length!==before){
-    try{
-      const key='temoJobs_'+(currentUser||ADMIN_USER);
-      localStorage.setItem(key,JSON.stringify(jobs));
-      if(currentUser===ADMIN_USER) localStorage.setItem('temoJobs',JSON.stringify(jobs));
-    }catch(e){}
-  }
-})();
-
 let editingId=null;
 let calendarDate=new Date();
 let selectedDate='';
@@ -590,7 +571,46 @@ const $=id=>document.getElementById(id);
 const euro=n=>'€'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2});
 $('today').textContent=new Date().toLocaleDateString('ka-GE');
 
-function save(){localStorage.setItem('temoJobs_'+(currentUser||ADMIN_USER),JSON.stringify(jobs));if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs))}
+function save(){
+  const data=JSON.stringify(jobs);
+  const key='temoJobs_'+(currentUser||ADMIN_USER);
+  localStorage.setItem(key,data);
+  if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',data);
+  saveJobsToFirebase();
+}
+async function loadJobsFromFirebase(){
+  const user=currentUser||ADMIN_USER;
+  try{
+    const r=await fetch(FIREBASE_DB_URL+'/jobs/'+firebaseUserKey(user)+'.json',{cache:'no-store'});
+    if(!r.ok)throw new Error('Firebase HTTP '+r.status);
+    const data=await r.json();
+    if(data===null){
+      const local=loadUserJobs();
+      if(local.length) await saveJobsToFirebase(local);
+      return local;
+    }
+    const remote=Array.isArray(data)?data.filter(Boolean):Object.values(data||{}).filter(Boolean);
+    localStorage.setItem('temoJobs_'+user,JSON.stringify(remote));
+    if(user===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(remote));
+    return remote;
+  }catch(e){
+    console.warn('Firebase jobs read failed:',e);
+    return loadUserJobs();
+  }
+}
+async function saveJobsToFirebase(data=jobs){
+  const user=currentUser||ADMIN_USER;
+  try{
+    const r=await fetch(FIREBASE_DB_URL+'/jobs/'+firebaseUserKey(user)+'.json',{
+      method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data||[])
+    });
+    if(!r.ok)throw new Error('Firebase HTTP '+r.status);
+    return true;
+  }catch(e){console.warn('Firebase jobs write failed:',e);return false}
+}
+// სამუშაოები ინახება localStorage-ში და Firebase-ში; ბრაუზერის დახურვა/განახლება მონაცემებს არ შლის.
+window.addEventListener('beforeunload',()=>{try{save()}catch(e){}});
+window.addEventListener('pagehide',()=>{try{save()}catch(e){}});
 function formatDate(s){if(!s)return '';const [y,m,d]=s.split('-');const months=['იანვარი','თებერვალი','მარტი','აპრილი','მაისი','ივნისი','ივლისი','აგვისტო','სექტემბერი','ოქტომბერი','ნოემბერი','დეკემბერი'];return Number(d)+' '+months[Number(m)-1]+' '+y}
 function monthName(key){const [y,m]=key.split('-');return new Date(y,Number(m)-1,1).toLocaleDateString('ka-GE',{year:'numeric',month:'long'})}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
