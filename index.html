@@ -462,17 +462,23 @@ async function loadUsersFromFirebase(){
     return Object.values(data||{}).filter(Boolean);
   }catch(e){console.warn('Firebase users read failed:',e);return null}
 }
+function normalizeUser(raw){
+  const u=(raw&&typeof raw==='object')?raw:{};
+  const name=String(u.name||'').trim();
+  const admin=(name.toUpperCase()===ADMIN_USER)||u.admin===true;
+  const blocked=admin ? false : (typeof u.blocked==='boolean' ? u.blocked : u.authorized===false);
+  const authorized=admin ? true : !blocked;
+  return {name,password:String(u.password??''),admin,authorized,blocked};
+}
+
 async function saveUsersToFirebase(users){
-  // IMPORTANT: never replace the whole /users node.
-  // Each phone may have a different local list; PATCH only the users known
-  // on this device so users created on other phones are preserved.
-  const snapshot=users.filter(u=>u&&u.name).map(u=>({name:u.name,password:u.password,admin:!!u.admin,authorized:u.authorized===true}));
+  const snapshot=users.filter(u=>u&&u.name).map(normalizeUser);
   firebaseWriteQueue=firebaseWriteQueue.then(async()=>{
     try{
       for(const u of snapshot){
         const r=await fetch(FIREBASE_DB_URL+'/users/'+firebaseUserKey(u.name)+'.json',{
           method:'PATCH',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({name:u.name,password:u.password,admin:u.admin,authorized:u.authorized})
+          body:JSON.stringify({name:u.name,password:u.password,admin:u.admin,authorized:u.authorized,blocked:u.blocked})
         });
         if(!r.ok)throw new Error('Firebase HTTP '+r.status);
       }
@@ -529,14 +535,13 @@ async function syncUsersFromFirebase(){
     const remote=await loadUsersFromFirebase();
     if(remote!==null){
       const deleted=getDeletedUsers();
-      const clean=remote.filter(u=>u&&u.name&&!deleted.some(d=>String(d).toLowerCase()===String(u.name).toLowerCase()));
-      if(!clean.some(u=>String(u.name).trim().toUpperCase()===ADMIN_USER)){
-        clean.unshift({name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true});
+      const clean=remote.map(normalizeUser).filter(u=>u.name&&!deleted.some(d=>String(d).toLowerCase()===u.name.toLowerCase()));
+      if(!clean.some(u=>u.name.toUpperCase()===ADMIN_USER)){
+        clean.unshift({name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true,blocked:false});
       }
       localStorage.setItem(USERS_KEY,JSON.stringify(clean));
       return clean;
     }
-    // Only when Firebase /users is genuinely empty do we initialize it.
     const local=getUsers();
     await saveUsersToFirebase(local);
     return local;
@@ -562,72 +567,78 @@ function markUserDeleted(name){
   }
 }
 function getUsers(){
- let users; try{users=JSON.parse(localStorage.getItem(USERS_KEY)||'null')}catch(e){users=null}
- if(!Array.isArray(users)||!users.length) users=[{name:ADMIN_USER,password:AUTH_PASSWORD,admin:true}];
- const deleted=getDeletedUsers();
- const filtered=users.filter(u=>u&&u.name&&!deleted.some(d=>String(d).toLowerCase()===String(u.name).toLowerCase()));
- if(!filtered.some(u=>u.name===ADMIN_USER)) filtered.unshift({name:ADMIN_USER,password:AUTH_PASSWORD,admin:true});
- localStorage.setItem(USERS_KEY,JSON.stringify(filtered));
- return filtered;
+  let users;
+  try{users=JSON.parse(localStorage.getItem(USERS_KEY)||'null')}catch(e){users=null}
+  if(!Array.isArray(users)||!users.length){
+    users=[{name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true,blocked:false}];
+  }
+  const deleted=getDeletedUsers();
+  const filtered=users.map(normalizeUser).filter(u=>u.name&&!deleted.some(d=>String(d).toLowerCase()===u.name.toLowerCase()));
+  if(!filtered.some(u=>u.name.toUpperCase()===ADMIN_USER)){
+    filtered.unshift({name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true,blocked:false});
+  }
+  localStorage.setItem(USERS_KEY,JSON.stringify(filtered));
+  return filtered;
 }
+
 function enablePasswordOnlyLogin(){
- const users=getUsers().filter(u=>u.authorized);
- if(!users.length){$('loginError').textContent='ჯერ არც ერთ მომხმარებელს არ აქვს გავლილი ავტორიზაცია';return;}
- $('loginName').style.display='block';
- $('loginHint').textContent='შეიყვანე სახელი და პაროლი';
- $('loginName').value='';$('loginPassword').value='';
- $('loginName').focus();
+  const users=getUsers().filter(u=>u.authorized===true && u.blocked===false);
+  if(!users.length){$('loginError').textContent='ჯერ არც ერთ მომხმარებელს არ აქვს აქტიური ანგარიში';return;}
+  $('loginName').style.display='block';
+  $('loginHint').textContent='შეიყვანე სახელი და პაროლი';
+  $('loginName').value='';$('loginPassword').value='';
+  $('loginName').focus();
 }
 function enableNameLogin(){enablePasswordOnlyLogin()}
-async function completeLogin(u){
-  if(getDeletedUsers().some(d=>String(d).toLowerCase()===String(u.name).toLowerCase())){
-    $('loginError').textContent='ეს მომხმარებელი წაშლილია';
+function completeLogin(u){
+  const user=normalizeUser(u);
+  if(user.blocked===true || user.authorized!==true){
+    $('loginError').textContent='ეს მომხმარებელი დაბლოკილია';
     $('loginPassword').value='';
     return;
   }
-  currentUser=u.name;
-  u.authorized=true;
-  const users=getUsers();
-  localStorage.setItem(USERS_KEY,JSON.stringify(users));
-  saveUsersToFirebase(users);
+  currentUser=user.name;
+  localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));
   localStorage.setItem(SESSION_USER_KEY,currentUser);
   localStorage.setItem(AUTH_KEY,'yes');
   $('loginScreen').classList.add('hidden');
-  $('loginPassword').value='';
-  $('loginError').textContent='';
+  $('loginPassword').value='';$('loginError').textContent='';
   jobs=loadUserJobs();updateUserUI();render();
 }
 function login(){
- const name=$('loginName').value.trim();
- const pass=$('loginPassword').value;
- const u=getUsers().find(x=>x.name.toLowerCase()===name.toLowerCase()&&x.authorized);
- if(u&&pass===u.password){completeLogin(u)}
- else{$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus()}
+  const name=$('loginName').value.trim();
+  const pass=$('loginPassword').value;
+  const u=getUsers().find(x=>x.name.toLowerCase()===name.toLowerCase());
+  if(!u){$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus();return}
+  if(u.blocked===true || u.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';$('loginPassword').focus();return}
+  if(pass===u.password)completeLogin(u);
+  else{$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus()}
 }
+function renderLoginUsers(){}
 window.addEventListener('DOMContentLoaded',async()=>{
- syncUsersFromFirebase().then(()=>{
-  if(typeof renderManagedUsers==='function' && currentUser===ADMIN_USER) renderManagedUsers();
-});
- if(typeof renderLoginUsers==='function') renderLoginUsers();
- const savedUser=currentUser;
- const matched=getUsers().find(u=>u.name.toLowerCase()===savedUser.toLowerCase());
- const sessionValid=localStorage.getItem(AUTH_KEY)==='yes'&&!!savedUser;
- if(sessionValid){
-  currentUser=matched?matched.name:savedUser;
-  localStorage.setItem(SESSION_USER_KEY,currentUser);
-  $('loginScreen').classList.add('hidden');
-  jobs=loadUserJobs();updateUserUI();render();
- }
- $('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
- updateUserUI();
- setInterval(async()=>{
-   if(currentUser===ADMIN_USER){
-     const before=JSON.stringify(getUsers());
-     await syncUsersFromFirebase();
-     const after=JSON.stringify(getUsers());
-     if(before!==after){renderManagedUsers();}
-   }
- },30000);
+  await syncUsersFromFirebase();
+  const savedUser=currentUser;
+  const matched=getUsers().find(u=>u.name.toLowerCase()===savedUser.toLowerCase());
+  const sessionValid=localStorage.getItem(AUTH_KEY)==='yes' && !!savedUser && !!matched && matched.authorized===true && matched.blocked===false;
+  if(sessionValid){
+    currentUser=matched.name;
+    localStorage.setItem(SESSION_USER_KEY,currentUser);
+    $('loginScreen').classList.add('hidden');
+    jobs=loadUserJobs();updateUserUI();render();
+  }else{
+    localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);currentUser='';
+  }
+  $('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+  updateUserUI();
+  if(currentUser===ADMIN_USER)renderManagedUsers();
+  setInterval(async()=>{
+    if(currentUser===ADMIN_USER){
+      const before=JSON.stringify(getUsers());
+      await syncUsersFromFirebase();
+      const after=JSON.stringify(getUsers());
+      if(before!==after)renderManagedUsers();
+    }
+  },30000);
 });
 
 let jobs=[];
@@ -893,78 +904,73 @@ function updateUserUI(){
  const label=$('currentUserLabel'); if(label)label.textContent=currentUser?'შენ შეხვედი... '+(currentUser===ADMIN_USER?'TEMO ADMIN':currentUser):'';
  if(isAdmin)renderManagedUsers();
 }
-async function renderManagedUsers(refreshRemote=true){
-  const box=$('userManagementList'); if(!box)return; box.innerHTML='<div class="empty">მომხმარებლები იტვირთება...</div>';
+async function renderManagedUsers(){
+  const box=$('userManagementList'); if(!box)return;
+  box.innerHTML='<div class="empty">მომხმარებლები იტვირთება...</div>';
   let users=getUsers();
-  // Always read the shared Firebase list for the admin panel. This prevents
-  // a phone with an old local cache from hiding users created elsewhere.
-  if(currentUser===ADMIN_USER && refreshRemote){
+  if(currentUser===ADMIN_USER){
     const remote=await loadUsersFromFirebase();
     if(Array.isArray(remote)){
       const deleted=getDeletedUsers();
-      users=remote.filter(u=>u&&u.name&&!deleted.some(d=>String(d).toLowerCase()===String(u.name).toLowerCase()));
-      if(!users.some(u=>String(u.name).trim().toUpperCase()===ADMIN_USER)){
-        users.unshift({name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true});
-      }
+      users=remote.map(normalizeUser).filter(u=>u.name&&!deleted.some(d=>String(d).toLowerCase()===u.name.toLowerCase()));
+      if(!users.some(u=>u.name.toUpperCase()===ADMIN_USER))users.unshift({name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true,blocked:false});
       localStorage.setItem(USERS_KEY,JSON.stringify(users));
     }
   }
-  // Show every registered non-admin user, including blocked and not-yet-authorized users.
-  const list=users.filter(u=>u&&!u.admin&&String(u.name).trim().toUpperCase()!==ADMIN_USER);
+  const list=users.filter(u=>!u.admin&&u.name.toUpperCase()!==ADMIN_USER);
   if(!list.length){box.innerHTML='<div class="empty">მომხმარებლები ჯერ არ არის</div>';return;}
   list.forEach(u=>{
     const row=document.createElement('div');row.className='userRow';
     const b=document.createElement('button');b.className='backupBtn userNameBtn';b.textContent='👤 '+u.name;b.disabled=true;
-    const l=document.createElement('button');l.className='backupBtn lockBtn'+(u.authorized!==true?' locked':'');
-    l.textContent=u.authorized===true?'🔒 დაბლოკვა':'🔓 განბლოკვა';
-    l.title=u.authorized===true?'მომხმარებლის დაბლოკვა':'მომხმარებლის განბლოკვა';
+    const l=document.createElement('button');l.className='backupBtn lockBtn'+(u.blocked===true?' locked':'');
+    l.textContent=u.blocked===true?'🔓 განბლოკვა':'🔒 დაბლოკვა';
+    l.title=u.blocked===true?'მომხმარებლის განბლოკვა':'მომხმარებლის დაბლოკვა';
     l.onclick=()=>toggleUserBlock(u.name);
     const d=document.createElement('button');d.className='backupBtn danger';d.textContent='🗑️ წაშლა';d.onclick=()=>deleteManagedUser(u.name);
     row.append(b,l,d);box.appendChild(row);
   });
 }
 async function addManagedUser(){
- if(currentUser!==ADMIN_USER)return;
- const n=$('newUserName').value.trim(),p=$('newUserPassword').value;
- if(!n||!p){alert('სახელი და პაროლი ორივე შეავსე');return}
- if(n.toUpperCase()===ADMIN_USER||getUsers().some(u=>u.name.toLowerCase()===n.toLowerCase())){alert('ეს მომხმარებელი უკვე არსებობს');return}
- const users=getUsers();localStorage.setItem(DELETED_USERS_KEY,JSON.stringify(getDeletedUsers().filter(d=>String(d).toLowerCase()!==n.toLowerCase())));
-  users.push({name:n,password:p,admin:false,authorized:false});localStorage.setItem(USERS_KEY,JSON.stringify(users));await saveUsersToFirebase(users);$('newUserName').value='';$('newUserPassword').value='';renderManagedUsers();
+  if(currentUser!==ADMIN_USER)return;
+  const n=$('newUserName')?.value.trim(),p=$('newUserPassword')?.value;
+  if(!n||!p){alert('სახელი და პაროლი ორივე შეავსე');return}
+  if(n.toUpperCase()===ADMIN_USER||getUsers().some(u=>u.name.toLowerCase()===n.toLowerCase())){alert('ეს მომხმარებელი უკვე არსებობს');return}
+  const users=getUsers();
+  users.push(normalizeUser({name:n,password:p,admin:false,authorized:true,blocked:false}));
+  localStorage.setItem(DELETED_USERS_KEY,JSON.stringify(getDeletedUsers().filter(d=>String(d).toLowerCase()!==n.toLowerCase())));
+  localStorage.setItem(USERS_KEY,JSON.stringify(users));
+  await saveUsersToFirebase(users);
+  if($('newUserName'))$('newUserName').value='';if($('newUserPassword'))$('newUserPassword').value='';
+  await renderManagedUsers();
 }
 async function toggleUserBlock(name){
   if(currentUser!==ADMIN_USER)return;
   const users=getUsers();
-  const u=users.find(x=>String(x.name).toLowerCase()===String(name).toLowerCase());
-  if(!u)return;
-  const willLock=u.authorized===true;
-  if(!confirm((willLock?'დავბლოკოთ ':'განვბლოკოთ ')+name+'?'))return;
-  u.authorized=!willLock;
-  localStorage.setItem(USERS_KEY,JSON.stringify(users));
-  // ჯერვე განვაახლოთ ეკრანი — გვერდის Refresh აღარ არის საჭირო.
-  renderLoginUsers();
-  renderManagedUsers(false);
-  // შემდეგ შევინახოთ Firebase-ში ფონურად.
-  await saveUsersToFirebase([u]);
+  const u=users.find(x=>x.name.toLowerCase()===String(name).toLowerCase());
+  if(!u||u.admin)return;
+  const willBlock=u.blocked!==true;
+  if(!confirm((willBlock?'დავბლოკოთ ':'განვბლოკოთ ')+name+'?'))return;
+  u.blocked=willBlock;u.authorized=!willBlock;
+  localStorage.setItem(USERS_KEY,JSON.stringify(users.map(normalizeUser)));
+  renderManagedUsers();renderLoginUsers();
+  await saveUsersToFirebase([normalizeUser(u)]);
 }
-
 async function deleteManagedUser(name){
   if(currentUser!==ADMIN_USER)return;
   if(!confirm('წავშალოთ მომხმარებელი '+name+'?'))return;
   markUserDeleted(name);
-  const users=getUsers().filter(u=>u.name!==name);
+  const users=getUsers().filter(u=>u.name.toLowerCase()!==String(name).toLowerCase());
   localStorage.setItem(USERS_KEY,JSON.stringify(users));
-  // მომხმარებელი ეკრანიდან მაშინვე ქრება — Refresh აღარ არის საჭირო.
-  localStorage.removeItem('temoJobs_'+name);
-  renderLoginUsers();
-  renderManagedUsers(false);
-  // Firebase-ში წაშლა შესრულდეს ამის შემდეგ.
+  renderManagedUsers();renderLoginUsers();
   try{
     await firebaseWriteQueue;
     const r=await fetch(FIREBASE_DB_URL+'/users/'+firebaseUserKey(name)+'.json',{method:'DELETE'});
     if(!r.ok)throw new Error('Firebase DELETE HTTP '+r.status);
   }catch(e){console.warn('Firebase user delete failed:',e)}
   await saveUsersToFirebase(getUsers());
+  localStorage.removeItem('temoJobs_'+name);
 }
+
 function closeCredentials(){
   $('credentialsModal').classList.remove('show');
 }
@@ -1103,21 +1109,29 @@ async function updateWebsite(){
 }
 
 function showNewUserAuth(){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('newUserAuthModal').classList.add('show')}
-function registerNewUser(){
- const n=document.getElementById('newUserAuthName').value.trim();
- const p=document.getElementById('newUserAuthPassword').value;
- if(!n||!p){alert('სახელი და ახალი პაროლი ორივე შეავსე');return}
- if(!/^[A-Za-z]+$/.test(n)){alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');document.getElementById('newUserAuthName').value=n.replace(/[^A-Za-z]/g,'');return}
- if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return}
- const users=getUsers();
- if(users.some(u=>u.name.toLowerCase()===n.toLowerCase())){alert('ეს მომხმარებელი უკვე არსებობს');return}
- localStorage.setItem(DELETED_USERS_KEY,JSON.stringify(getDeletedUsers().filter(d=>String(d).toLowerCase()!==n.toLowerCase())));
-  users.push({name:n,password:p,admin:false,authorized:true});
- localStorage.setItem(USERS_KEY,JSON.stringify(users));
- saveUsersToFirebase(users);
- currentUser=n; localStorage.setItem(SESSION_USER_KEY,n); localStorage.setItem(AUTH_KEY,'yes');
- document.getElementById('newUserAuthModal').classList.remove('show');
- jobs=loadUserJobs(); updateUserUI(); render();
+async function registerNewUser(){
+  const nameEl=document.getElementById('newUserAuthName');
+  const passEl=document.getElementById('newUserAuthPassword');
+  const n=nameEl.value.trim();
+  const p=passEl.value;
+  if(!n||!p){alert('სახელი და ახალი პაროლი ორივე შეავსე');return}
+  if(!/^[A-Za-z]+$/.test(n)){
+    alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');
+    nameEl.value=n.replace(/[^A-Za-z]/g,'');return;
+  }
+  if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return}
+  const users=getUsers();
+  const existing=users.find(u=>u.name.toLowerCase()===n.toLowerCase());
+  if(existing){
+    alert(existing.blocked===true?'ეს მომხმარებელი დაბლოკილია. ჯერ განბლოკე ადმინისტრაციიდან.':'ეს მომხმარებელი უკვე არსებობს');return;
+  }
+  localStorage.setItem(DELETED_USERS_KEY,JSON.stringify(getDeletedUsers().filter(d=>String(d).toLowerCase()!==n.toLowerCase())));
+  const user=normalizeUser({name:n,password:p,admin:false,authorized:true,blocked:false});
+  users.push(user);localStorage.setItem(USERS_KEY,JSON.stringify(users));
+  await saveUsersToFirebase([user]);
+  currentUser=user.name;localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(AUTH_KEY,'yes');
+  nameEl.value='';passEl.value='';document.getElementById('newUserAuthModal').classList.remove('show');
+  $('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();
 }
 </script>
 <div id="newUserAuthModal"><div class="newUserAuthBox">
@@ -1369,5 +1383,6 @@ function registerNewUser(){
 })();
 </script>
 
+<!-- index 4: authentication true/false logic normalized -->
 </body>
 </html>
