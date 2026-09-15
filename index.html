@@ -351,6 +351,7 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
 <div id="settingsPage" class="pageHidden">
 <header><div><h1>⚙️ სეთინგები</h1><small>მონაცემების მართვა</small></div></header>
 <div class="section"><h2>👤 მომხმარებელი</h2><div class="meta" id="currentUserLabel"></div></div>
+<div class="section" id="userLogoutSection" style="display:none"><button type="button" class="temo-exit-btn" onclick="logout()">🔐 გამოსვლა</button></div>
 
 <div class="section" id="websiteUpdateSection">
 <h2>🔄 საიტის განახლება</h2>
@@ -426,13 +427,6 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
 </div></div>
 
 
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
-<script>
-const firebaseConfig={apiKey:"AIzaSyAQqkrE6BweLfFEI179irLpkc6OVmIHArc",authDomain:"temo-75.firebaseapp.com",databaseURL:"https://temo-75-default-rtdb.europe-west1.firebasedatabase.app",projectId:"temo-75",storageBucket:"temo-75.firebasestorage.app",messagingSenderId:"966586658574",appId:"1:966586658574:web:4537c8b2b3e13b5615b15f",measurementId:"G-G7J1FBF18Y"};
-firebase.initializeApp(firebaseConfig);
-const firebaseAuth=firebase.auth();
-</script>
 <script>
 const AUTH_KEY='temoWorkTrackerAuthorized';
 const AUTH_PASSWORD='temo2139-590';
@@ -442,55 +436,55 @@ const ADMIN_USER='TEMO';
 const FIREBASE_DB_URL='https://temo-75-default-rtdb.europe-west1.firebasedatabase.app';
 let currentUser=localStorage.getItem(SESSION_USER_KEY)||'';
 let firebaseSyncBusy=false;
-let firebaseUid='';
 function firebaseUserKey(name){return encodeURIComponent(name).replace(/%/g,'_');}
-function authEmail(name){return (String(name||'').trim().toLowerCase().replace(/[^a-z0-9._-]/g,'_')||'user')+'@temo-75.firebaseapp.com';}
-async function firebaseToken(){const u=firebaseAuth.currentUser;if(!u)return null;return await u.getIdToken(true);}
-async function fbFetch(path,options={}){
- const token=await firebaseToken();
- const headers={...(options.headers||{})};
- if(token)headers.Authorization='Bearer '+token;
- return fetch(FIREBASE_DB_URL+path,{...options,headers,cache:'no-store'});
-}
-async function signInOrCreateFirebase(name,password){
- const email=authEmail(name);
- try{
-   const c=await firebaseAuth.signInWithEmailAndPassword(email,password);
-   firebaseUid=c.user.uid; return true;
- }catch(e){
-   if(e.code!=='auth/user-not-found' && e.code!=='auth/invalid-credential' && e.code!=='auth/invalid-login-credentials') throw e;
-   const c=await firebaseAuth.createUserWithEmailAndPassword(email,password);
-   firebaseUid=c.user.uid; return true;
- }
-}
 async function loadUsersFromFirebase(){
- try{const r=await fbFetch('/users.json');if(!r.ok)throw new Error('Firebase HTTP '+r.status);const data=await r.json();if(data===null)return null;if(Array.isArray(data))return data.filter(Boolean);return Object.values(data||{}).filter(Boolean)}catch(e){console.warn('Firebase users read failed:',e);return null}
+  try{
+    const r=await fetch(FIREBASE_DB_URL+'/users.json',{cache:'no-store'});
+    if(!r.ok)throw new Error('Firebase HTTP '+r.status);
+    const data=await r.json();
+    if(data===null)return null;
+    if(Array.isArray(data))return data.filter(Boolean);
+    return Object.values(data||{}).filter(Boolean);
+  }catch(e){console.warn('Firebase users read failed:',e);return null}
 }
 async function saveUsersToFirebase(users){
- try{const payload={};users.forEach(u=>{payload[firebaseUserKey(u.name)]={name:u.name,admin:!!u.admin,authorized:u.authorized===true}});const r=await fbFetch('/users.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!r.ok)throw new Error('Firebase HTTP '+r.status);return true}catch(e){console.warn('Firebase users write failed:',e);return false}
-}
-async function saveProfileToFirebase(name,u){
- try{if(!firebaseUid)return false;const r=await fbFetch('/profiles/'+firebaseUid+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,admin:!!u.admin,authorized:true})});return r.ok}catch(e){return false}
-}
-async function loadProfileFromFirebase(){
- try{if(!firebaseUid)return null;const r=await fbFetch('/profiles/'+firebaseUid+'.json');if(!r.ok)return null;return await r.json()}catch(e){return null}
-}
-async function migrateJobsToFirebase(){
- try{if(!firebaseUid)return false;const localKey='temoJobs_'+(currentUser||ADMIN_USER);const localJobs=loadUserJobs();const oldPath='/jobs/'+firebaseUserKey(currentUser);const oldRes=await fbFetch(oldPath+'.json');let remoteOld=null;if(oldRes.ok)remoteOld=await oldRes.json();const source=Array.isArray(remoteOld)&&remoteOld.length?remoteOld:localJobs;
-   if(Array.isArray(source)){const r=await fbFetch('/jobs/'+firebaseUid+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(source)});if(r.ok){localStorage.setItem(localKey,JSON.stringify(source));jobs=source;return true}}
- }catch(e){console.warn('Firebase jobs migration failed:',e)}return false;
-}
-async function loadJobsFromFirebase(){
- try{if(!firebaseUid)return null;const r=await fbFetch('/jobs/'+firebaseUid+'.json');if(!r.ok)throw new Error('Firebase HTTP '+r.status);const data=await r.json();if(data===null)return null;return Array.isArray(data)?data:Object.values(data||{}).filter(Boolean)}catch(e){console.warn('Firebase jobs read failed:',e);return null}
-}
-async function saveJobsToFirebase(){
- try{if(!firebaseUid)return false;const r=await fbFetch('/jobs/'+firebaseUid+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(jobs)});return r.ok}catch(e){console.warn('Firebase jobs write failed:',e);return false}
-}
-async function syncCurrentJobs(){
- if(!firebaseUid)return;const remote=await loadJobsFromFirebase();if(Array.isArray(remote)){jobs=remote;localStorage.setItem('temoJobs_'+(currentUser||ADMIN_USER),JSON.stringify(jobs));if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs));}else await saveJobsToFirebase();
+  try{
+    const payload={};
+    users.forEach(u=>{payload[firebaseUserKey(u.name)]={name:u.name,password:u.password,admin:!!u.admin,authorized:u.authorized===true}});
+    const r=await fetch(FIREBASE_DB_URL+'/users.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!r.ok)throw new Error('Firebase HTTP '+r.status);
+    return true;
+  }catch(e){console.warn('Firebase users write failed:',e);return false}
 }
 async function syncUsersFromFirebase(){
- if(firebaseSyncBusy)return;firebaseSyncBusy=true;try{const local=getUsers();const remote=await loadUsersFromFirebase();if(remote===null)return;const byName=new Map();[...remote,...local].forEach(u=>{if(!u||!u.name)return;const key=u.name.toLowerCase();const prev=byName.get(key);if(!prev)byName.set(key,{...u});else byName.set(key,{...prev,...u,name:prev.name||u.name,admin:!!(prev.admin||u.admin),authorized:!!(prev.authorized||u.authorized)});});const merged=Array.from(byName.values());if(merged.length)localStorage.setItem(USERS_KEY,JSON.stringify(merged));}finally{firebaseSyncBusy=false}}
+  if(firebaseSyncBusy)return;
+  firebaseSyncBusy=true;
+  try{
+    const local=getUsers();
+    const remote=await loadUsersFromFirebase();
+    if(remote===null){await saveUsersToFirebase(local);return}
+
+    const byName=new Map();
+    [...remote,...local].forEach(u=>{
+      if(!u||!u.name)return;
+      const key=u.name.toLowerCase();
+      const prev=byName.get(key);
+      if(!prev) byName.set(key,{...u});
+      else byName.set(key,{
+        ...prev,...u,
+        name:prev.name||u.name,
+        admin:!!(prev.admin||u.admin),
+        authorized:!!(prev.authorized||u.authorized)
+      });
+    });
+
+    const merged=Array.from(byName.values());
+    if(merged.length){
+      localStorage.setItem(USERS_KEY,JSON.stringify(merged));
+      await saveUsersToFirebase(merged);
+    }
+  }finally{firebaseSyncBusy=false}
+}
 
 function getUsers(){
  let users; try{users=JSON.parse(localStorage.getItem(USERS_KEY)||'null')}catch(e){users=null}
@@ -506,25 +500,25 @@ function enablePasswordOnlyLogin(){
  $('loginName').focus();
 }
 function enableNameLogin(){enablePasswordOnlyLogin()}
-async function completeLogin(u){
- currentUser=u.name;u.authorized=true;
- try{await signInOrCreateFirebase(currentUser,u.password);}catch(e){$('loginError').textContent='Firebase ავტორიზაცია ვერ შესრულდა';return false}
- const users=getUsers();localStorage.setItem(USERS_KEY,JSON.stringify(users));
- await saveProfileToFirebase(currentUser,u);
- localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(AUTH_KEY,'yes');
- $('loginScreen').classList.add('hidden');$('loginPassword').value='';$('loginError').textContent='';
- await migrateJobsToFirebase();await syncCurrentJobs();updateUserUI();render();return true;
+function completeLogin(u){
+ currentUser=u.name;
+ u.authorized=true;
+ const users=getUsers();
+ localStorage.setItem(USERS_KEY,JSON.stringify(users));
+ saveUsersToFirebase(users);
+ localStorage.setItem(SESSION_USER_KEY,currentUser);
+ localStorage.setItem(AUTH_KEY,'yes');
+ $('loginScreen').classList.add('hidden');
+ $('loginPassword').value='';
+ $('loginError').textContent='';
+ jobs=loadUserJobs();updateUserUI();render();
 }
-async function login(){
- const name=$('loginName').value.trim();const pass=$('loginPassword').value;if(!name||!pass){$('loginError').textContent='სახელი და პაროლი შეავსე';return}
- if(name.toUpperCase()===ADMIN_USER && pass!==AUTH_PASSWORD){$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus();return}
- let u=getUsers().find(x=>x.name.toLowerCase()===name.toLowerCase()&&x.authorized);
- try{
-   if(u&&pass!==u.password){$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus();return}
-   if(!u)u={name, password:pass, admin:name.toUpperCase()===ADMIN_USER, authorized:true};
-   const ok=await completeLogin(u);
-   if(ok && !getUsers().some(x=>x.name.toLowerCase()===name.toLowerCase())){const users=getUsers();users.push({name,password:pass,admin:!!u.admin,authorized:true});localStorage.setItem(USERS_KEY,JSON.stringify(users));}
- }catch(e){console.error(e);$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus()}
+function login(){
+ const name=$('loginName').value.trim();
+ const pass=$('loginPassword').value;
+ const u=getUsers().find(x=>x.name.toLowerCase()===name.toLowerCase()&&x.authorized);
+ if(u&&pass===u.password){completeLogin(u)}
+ else{$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus()}
 }
 window.addEventListener('DOMContentLoaded',async()=>{
  await syncUsersFromFirebase().then(()=>{
@@ -578,7 +572,7 @@ const $=id=>document.getElementById(id);
 const euro=n=>'€'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2});
 $('today').textContent=new Date().toLocaleDateString('ka-GE');
 
-function save(){localStorage.setItem('temoJobs_'+(currentUser||ADMIN_USER),JSON.stringify(jobs));if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs));saveJobsToFirebase().catch(e=>console.warn('Firebase jobs save failed:',e))}
+function save(){localStorage.setItem('temoJobs_'+(currentUser||ADMIN_USER),JSON.stringify(jobs));if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs))}
 function formatDate(s){if(!s)return '';const [y,m,d]=s.split('-');const months=['იანვარი','თებერვალი','მარტი','აპრილი','მაისი','ივნისი','ივლისი','აგვისტო','სექტემბერი','ოქტომბერი','ნოემბერი','დეკემბერი'];return Number(d)+' '+months[Number(m)-1]+' '+y}
 function monthName(key){const [y,m]=key.split('-');return new Date(y,Number(m)-1,1).toLocaleDateString('ka-GE',{year:'numeric',month:'long'})}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
@@ -785,6 +779,7 @@ function updateUserUI(){
  const users=$('userManagementSection'); if(users)users.style.display=isAdmin?'':'none';
  const manageBtn=$('userManagementOpenBtn'); if(manageBtn)manageBtn.style.display=isAdmin?'block':'none';
  const label=$('currentUserLabel'); if(label)label.textContent=currentUser?'შენ შეხვედი... '+(currentUser===ADMIN_USER?'TEMO ADMIN':currentUser):'';
+ const userLogout=$('userLogoutSection'); if(userLogout)userLogout.style.display=isAdmin?'none':'';
  if(isAdmin)renderManagedUsers();
 }
 function renderManagedUsers(){
@@ -954,23 +949,19 @@ async function updateWebsite(){
 }
 
 function showNewUserAuth(){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('newUserAuthModal').classList.add('show')}
-async function registerNewUser(){
+function registerNewUser(){
  const n=document.getElementById('newUserAuthName').value.trim();
  const p=document.getElementById('newUserAuthPassword').value;
  if(!n||!p){alert('სახელი და ახალი პაროლი ორივე შეავსე');return}
  if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return}
  const users=getUsers();
  if(users.some(u=>u.name.toLowerCase()===n.toLowerCase())){alert('ეს მომხმარებელი უკვე არსებობს');return}
- const u={name:n,password:p,admin:false,authorized:true};
- try{
-   await signInOrCreateFirebase(n,p);
-   users.push(u);
-   localStorage.setItem(USERS_KEY,JSON.stringify(users));
-   await saveProfileToFirebase(n,u);
-   currentUser=n;localStorage.setItem(SESSION_USER_KEY,n);localStorage.setItem(AUTH_KEY,'yes');
-   document.getElementById('newUserAuthModal').classList.remove('show');
-   jobs=loadUserJobs();await syncCurrentJobs();updateUserUI();render();
- }catch(e){console.error(e);alert('Firebase ავტორიზაცია ვერ შესრულდა');}
+ users.push({name:n,password:p,admin:false,authorized:true});
+ localStorage.setItem(USERS_KEY,JSON.stringify(users));
+ saveUsersToFirebase(users);
+ currentUser=n; localStorage.setItem(SESSION_USER_KEY,n); localStorage.setItem(AUTH_KEY,'yes');
+ document.getElementById('newUserAuthModal').classList.remove('show');
+ jobs=loadUserJobs(); updateUserUI(); render();
 }
 </script>
 <div id="newUserAuthModal"><div class="newUserAuthBox">
