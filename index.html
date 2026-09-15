@@ -937,7 +937,6 @@ async function addManagedUser(){
   if(n.toUpperCase()===ADMIN_USER||getUsers().some(u=>u.name.toLowerCase()===n.toLowerCase())){alert('ეს მომხმარებელი უკვე არსებობს');return}
   const users=getUsers();
   users.push(normalizeUser({name:n,password:p,admin:false,authorized:true,blocked:false}));
-  localStorage.setItem(DELETED_USERS_KEY,JSON.stringify(getDeletedUsers().filter(d=>String(d).toLowerCase()!==n.toLowerCase())));
   localStorage.setItem(USERS_KEY,JSON.stringify(users));
   await saveUsersToFirebase(users);
   if($('newUserName'))$('newUserName').value='';if($('newUserPassword'))$('newUserPassword').value='';
@@ -1121,11 +1120,10 @@ async function registerNewUser(){
   }
   if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return}
   const users=getUsers();
-  const existing=users.find(u=>u.name.toLowerCase()===n.toLowerCase());
+  const existing=users.find(u=>u.name.toLowerCase()===n.toLowerCase() && String(u.password)===p);
   if(existing){
-    alert(existing.blocked===true?'ეს მომხმარებელი დაბლოკილია. ჯერ განბლოკე ადმინისტრაციიდან.':'ეს მომხმარებელი უკვე არსებობს');return;
+    alert('ასეთი მომხმარებელი უკვე არსებობს');return;
   }
-  localStorage.setItem(DELETED_USERS_KEY,JSON.stringify(getDeletedUsers().filter(d=>String(d).toLowerCase()!==n.toLowerCase())));
   const user=normalizeUser({name:n,password:p,admin:false,authorized:true,blocked:false});
   users.push(user);localStorage.setItem(USERS_KEY,JSON.stringify(users));
   await saveUsersToFirebase([user]);
