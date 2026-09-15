@@ -463,34 +463,6 @@ async function saveUsersToFirebase(users){
   });
   return firebaseWriteQueue;
 }
-async function keepOnlyTemoAndJimi(){
-  try{
-    const remote=await loadUsersFromFirebase();
-    if(remote===null)return;
-
-    const kept=remote.filter(u=>{
-      const n=String(u?.name||'').trim().toLowerCase();
-      return n==='temo' || n==='jimi';
-    });
-
-    if(!kept.some(u=>String(u.name).trim().toLowerCase()==='temo')){
-      kept.unshift({name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true});
-    }
-
-    const normalized=kept.map(u=>({
-      name:u.name,
-      password:u.password,
-      admin:String(u.name).trim().toUpperCase()===ADMIN_USER,
-      authorized:u.authorized===true
-    }));
-
-    await saveUsersToFirebase(normalized);
-    localStorage.setItem(USERS_KEY,JSON.stringify(normalized));
-  }catch(e){
-    console.warn('TEMO/JIMI cleanup failed:',e);
-  }
-}
-
 async function syncUsersFromFirebase(){
   if(firebaseSyncBusy)return;
   firebaseSyncBusy=true;
@@ -573,7 +545,6 @@ function login(){
  else{$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus()}
 }
 window.addEventListener('DOMContentLoaded',async()=>{
- await keepOnlyTemoAndJimi();
  await syncUsersFromFirebase().then(()=>{
   if(typeof renderManagedUsers==='function' && currentUser===ADMIN_USER) renderManagedUsers();
 });
