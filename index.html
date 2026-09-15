@@ -893,12 +893,12 @@ function updateUserUI(){
  const label=$('currentUserLabel'); if(label)label.textContent=currentUser?'შენ შეხვედი... '+(currentUser===ADMIN_USER?'TEMO ADMIN':currentUser):'';
  if(isAdmin)renderManagedUsers();
 }
-async function renderManagedUsers(){
+async function renderManagedUsers(refreshRemote=true){
   const box=$('userManagementList'); if(!box)return; box.innerHTML='<div class="empty">მომხმარებლები იტვირთება...</div>';
   let users=getUsers();
   // Always read the shared Firebase list for the admin panel. This prevents
   // a phone with an old local cache from hiding users created elsewhere.
-  if(currentUser===ADMIN_USER){
+  if(currentUser===ADMIN_USER && refreshRemote){
     const remote=await loadUsersFromFirebase();
     if(Array.isArray(remote)){
       const deleted=getDeletedUsers();
@@ -940,9 +940,11 @@ async function toggleUserBlock(name){
   if(!confirm((willLock?'დავბლოკოთ ':'განვბლოკოთ ')+name+'?'))return;
   u.authorized=!willLock;
   localStorage.setItem(USERS_KEY,JSON.stringify(users));
-  await saveUsersToFirebase([u]);
+  // ჯერვე განვაახლოთ ეკრანი — გვერდის Refresh აღარ არის საჭირო.
   renderLoginUsers();
-  renderManagedUsers();
+  renderManagedUsers(false);
+  // შემდეგ შევინახოთ Firebase-ში ფონურად.
+  await saveUsersToFirebase([u]);
 }
 
 async function deleteManagedUser(name){
@@ -951,15 +953,17 @@ async function deleteManagedUser(name){
   markUserDeleted(name);
   const users=getUsers().filter(u=>u.name!==name);
   localStorage.setItem(USERS_KEY,JSON.stringify(users));
+  // მომხმარებელი ეკრანიდან მაშინვე ქრება — Refresh აღარ არის საჭირო.
+  localStorage.removeItem('temoJobs_'+name);
+  renderLoginUsers();
+  renderManagedUsers(false);
+  // Firebase-ში წაშლა შესრულდეს ამის შემდეგ.
   try{
     await firebaseWriteQueue;
     const r=await fetch(FIREBASE_DB_URL+'/users/'+firebaseUserKey(name)+'.json',{method:'DELETE'});
     if(!r.ok)throw new Error('Firebase DELETE HTTP '+r.status);
   }catch(e){console.warn('Firebase user delete failed:',e)}
   await saveUsersToFirebase(getUsers());
-  localStorage.removeItem('temoJobs_'+name);
-  renderLoginUsers();
-  renderManagedUsers();
 }
 function closeCredentials(){
   $('credentialsModal').classList.remove('show');
