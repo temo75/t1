@@ -315,7 +315,8 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
 <div class="section" id="websiteUpdateSection">
 <h2>🔄 საიტის განახლება</h2>
 <div class="tools">
-<input id="siteUpdateFile" type="file" accept=".html,text/html">
+<input id="siteUpdateFile" type="file" accept=".html,text/html" onchange="siteFileSelected()" style="display:none">
+<button type="button" class="backupBtn" id="siteFileBtn" onclick="handleSiteFileButton()">📁 აირჩიე ფაილი</button>
 </div>
 <button class="repoTokenOpenBtn" onclick="openCredentials()">🔐 Repository / Token</button>
 <div class="backup">
@@ -778,6 +779,22 @@ function showUploadSuccess(){
 }
 function hideUploadAnimation(){ $('uploadOverlay').classList.remove('show'); }
 
+function siteFileSelected(){
+  const file=$('siteUpdateFile').files[0];
+  const btn=$('siteFileBtn');
+  if(file && btn){
+    btn.textContent='⬆ ატვირთე';
+  }
+}
+function handleSiteFileButton(){
+  const input=$('siteUpdateFile'), file=input.files[0];
+  if(!file){
+    input.click();
+  }else{
+    updateWebsite();
+  }
+}
+
 async function updateWebsite(){
   const repo=$('ghRepo').value.trim(), token=$('ghToken').value.trim(), file=$('siteUpdateFile').files[0];
 
@@ -821,6 +838,7 @@ async function updateWebsite(){
 
     saveGitHubSettings(false);
     $('siteUpdateFile').value='';
+    $('siteFileBtn').textContent='📁 აირჩიე ფაილი';
     showUploadSuccess();
   }catch(err){
     hideUploadAnimation();
