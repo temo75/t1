@@ -582,7 +582,7 @@ function render(){
  $('total').textContent=euro(total);$('paid').textContent=euro(paid);$('unpaid').textContent=euro(unpaid);
  $('days').textContent=jobs.length+' სამუშაო';$('paidDays').textContent=jobs.filter(j=>j.paid).length+' გადახდილი';$('unpaidDays').textContent=jobs.filter(j=>!j.paid).length+' გადასახდელი';
  $('average').textContent=euro(jobs.length?total/jobs.length:0);
- const now=new Date(), key=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');const mj=jobs.filter(j=>(j.date||'').slice(0,7)===key);const monthTotal=mj.reduce((a,j)=>a+Number(j.money||0),0);$('monthTotal').textContent=euro(monthTotal);$('monthDays').textContent=mj.length+' დღე';
+ const now=new Date(), key=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');const mj=jobs.filter(j=>(j.date||'').slice(0,7)===key);const monthTotal=mj.filter(j=>j.paid).reduce((a,j)=>a+Number(j.money||0),0);$('monthTotal').textContent=euro(monthTotal);$('monthDays').textContent=mj.length+' დღე';
  renderCalendar();renderDayJobs();
 }
 function renderList(){
