@@ -112,6 +112,7 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 }
 body{padding-bottom:78px;}
 #bottomNav .walletNav{flex:1;font-size:13px;}
+#bottomNav .logoutNav{color:#ff8c8c;border-color:rgba(255,92,103,.38);text-shadow:0 0 7px rgba(255,92,103,.45);}
 #bottomNav button{min-width:0 !important;white-space:nowrap !important;font-size:13px !important;padding:8px 4px !important;}
 #loginScreen #bottomNav{display:none !important;}
 body:has(#loginScreen:not(.hidden)) #bottomNav{display:none !important;}
@@ -277,6 +278,7 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
 <nav id="bottomNav">
   <button type="button" onclick="goHome()">მთავარი</button>
   <button type="button" onclick="goSettings()">სეთინგები</button>
+  <button type="button" onclick="logout()" class="logoutNav">🚪 გამოსვლა</button>
   <button type="button" onclick="goUsers()">მომხმარებლები</button>
   <button type="button" class="walletNav" onclick="goWallet()">საფულე</button>
 </nav>
