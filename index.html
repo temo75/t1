@@ -432,6 +432,7 @@ const AUTH_PASSWORD='temo2139-590';
 const USERS_KEY='temoWorkTrackerUsers';
 const SESSION_USER_KEY='temoWorkTrackerUser';
 const DELETED_USERS_KEY='temoWorkTrackerDeletedUsers';
+const PERMANENTLY_DELETED_USERS=['jimi'];
 const ADMIN_USER='TEMO';
 const FIREBASE_DB_URL='https://temo-75-default-rtdb.europe-west1.firebasedatabase.app';
 let currentUser=localStorage.getItem(SESSION_USER_KEY)||'';
@@ -449,54 +450,17 @@ async function loadUsersFromFirebase(){
   }catch(e){console.warn('Firebase users read failed:',e);return null}
 }
 async function saveUsersToFirebase(users){
-  // FINAL FIREBASE USER WHITELIST:
-  // Only TEMO (admin) and jimi may ever be written to /users.
-  // Any stale localStorage data or old user list is discarded here.
-  const allowed=['temo','jimi'];
-  const safe=(Array.isArray(users)?users:[]).filter(u=>{
-    const n=String(u?.name||'').trim().toLowerCase();
-    return allowed.includes(n);
-  }).map(u=>({
-    name:u.name,
-    password:u.password,
-    admin:String(u.name).trim().toUpperCase()===ADMIN_USER,
-    authorized:u.authorized===true
-  }));
-
-  // Always ensure TEMO exists as the administrator.
-  if(!safe.some(u=>String(u.name).trim().toLowerCase()==='temo')){
-    safe.unshift({name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true});
-  }
-
-  const snapshot=safe.map(u=>({
-    name:u.name,
-    password:u.password,
-    admin:!!u.admin,
-    authorized:u.authorized===true
-  }));
-
+  // Serialize Firebase writes so an older request can never overwrite a newer
+  // deletion/update that was made immediately afterwards.
+  const snapshot=users.map(u=>({name:u.name,password:u.password,admin:!!u.admin,authorized:u.authorized===true}));
   firebaseWriteQueue=firebaseWriteQueue.then(async()=>{
     try{
       const payload={};
-      snapshot.forEach(u=>{
-        payload[firebaseUserKey(u.name)]={
-          name:u.name,
-          password:u.password,
-          admin:u.admin,
-          authorized:u.authorized
-        };
-      });
-      const r=await fetch(FIREBASE_DB_URL+'/users.json',{
-        method:'PUT',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(payload)
-      });
+      snapshot.forEach(u=>{payload[firebaseUserKey(u.name)]={name:u.name,password:u.password,admin:u.admin,authorized:u.authorized}});
+      const r=await fetch(FIREBASE_DB_URL+'/users.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
       if(!r.ok)throw new Error('Firebase HTTP '+r.status);
       return true;
-    }catch(e){
-      console.warn('Firebase users write failed:',e);
-      return false;
-    }
+    }catch(e){console.warn('Firebase users write failed:',e);return false}
   });
   return firebaseWriteQueue;
 }
@@ -528,6 +492,17 @@ async function keepOnlyTemoAndJimi(){
   }
 }
 
+async function removeJimiFromFirebase(){
+  try{
+    await firebaseWriteQueue;
+    const r=await fetch(FIREBASE_DB_URL+'/users/'+firebaseUserKey('jimi')+'.json',{
+      method:'DELETE',
+      headers:{'Content-Type':'application/json'}
+    });
+    if(!r.ok) throw new Error('Firebase DELETE jimi HTTP '+r.status);
+  }catch(e){console.warn('Firebase jimi cleanup failed:',e)}
+}
+
 async function syncUsersFromFirebase(){
   if(firebaseSyncBusy)return;
   firebaseSyncBusy=true;
@@ -556,8 +531,13 @@ async function syncUsersFromFirebase(){
 function getDeletedUsers(){
   try{
     const a=JSON.parse(localStorage.getItem(DELETED_USERS_KEY)||'[]');
-    return Array.isArray(a)?a:[];
-  }catch(e){return []}
+    const list=Array.isArray(a)?a:[];
+    PERMANENTLY_DELETED_USERS.forEach(name=>{
+      if(!list.some(x=>String(x).toLowerCase()===name.toLowerCase())) list.push(name);
+    });
+    localStorage.setItem(DELETED_USERS_KEY,JSON.stringify(list));
+    return list;
+  }catch(e){return [...PERMANENTLY_DELETED_USERS]}
 }
 function markUserDeleted(name){
   const a=getDeletedUsers();
@@ -611,7 +591,8 @@ function login(){
 }
 window.addEventListener('DOMContentLoaded',async()=>{
  await keepOnlyTemoAndJimi();
- await syncUsersFromFirebase().then(()=>{
+ await await removeJimiFromFirebase();
+ syncUsersFromFirebase().then(()=>{
   if(typeof renderManagedUsers==='function' && currentUser===ADMIN_USER) renderManagedUsers();
 });
  if(typeof renderLoginUsers==='function') renderLoginUsers();
