@@ -44,7 +44,7 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 .userManage{margin-top:14px}.userManage input{margin-bottom:8px!important}.userRow{display:flex;gap:7px;margin:7px 0}.userRow button{padding:9px;font-size:14px}.adminOnly{display:block}
 #loginError{min-height:20px;color:#ff7c84;font-size:14px;margin-top:10px}
 
-.tools input[type=file]{width:100%;max-width:100%;justify-self:stretch;border-color:#ff8a00;box-shadow:0 0 7px #ff8a00,0 0 16px rgba(255,138,0,.65);background:#0b1a24}.tools input[type=file]::file-selector-button{max-width:100%;border:1px solid #ff8a00;border-radius:12px;padding:9px 14px;background:#2a2418;color:#fff;cursor:pointer;box-shadow:0 0 6px #ff8a00,0 0 14px rgba(255,138,0,.7);text-shadow:0 0 6px #ff8a00;}
+.tools input[type=file]{width:100%;max-width:100%;justify-self:stretch;border-color:#ff8a00;box-shadow:0 0 9px #ff8a00,0 0 20px rgba(255,138,0,.78),0 0 30px rgba(255,138,0,.28);background:#0b1a24}.tools input[type=file]::file-selector-button{max-width:100%;border:1px solid #ffb13b;border-radius:12px;padding:9px 14px;background:#2a2418;color:#fff;cursor:pointer;box-shadow:0 0 8px #ff8a00,0 0 18px rgba(255,138,0,.78),0 0 26px rgba(255,138,0,.32);text-shadow:0 0 7px #ffb13b;}
 
 #uploadOverlay{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.72);align-items:center;justify-content:center}
 #uploadOverlay.show{display:flex}
@@ -115,7 +115,7 @@ body{padding-bottom:78px;}
 #bottomNav button{min-width:0 !important;white-space:nowrap !important;font-size:13px !important;padding:8px 4px !important;}
 #loginScreen #bottomNav{display:none !important;}
 body:has(#loginScreen:not(.hidden)) #bottomNav{display:none !important;}
-</style>
+footer{display:none!important;}</style>
 </style>
 
 <style id="temo-3d-title">
@@ -131,7 +131,7 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{display:none !important;}
 </style>
 
 <style id="temo-settings-exit-fix">
-.temo-exit-btn{display:block;margin:18px auto 10px;padding:6px 10px;border-radius:12px;
+.temo-exit-btn{display:block;margin:28px auto 4px;padding:6px 10px;border-radius:12px;
 font-size:11px;cursor:pointer;border:1px solid #29a9ff;background:rgba(0,20,40,.55);
 color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 .temo-exit-btn .homeIcon{display:block;font-size:22px;line-height:22px;color:#fff;margin-bottom:1px}
@@ -227,56 +227,11 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
 
 <style id="temo-orange-bottom-glow">
 #bottomNav > button{
-  box-shadow: inset 0 -2px 8px rgba(255,165,0,.28),
-              0 2px 7px rgba(255,165,0,.22) !important;
-}
-</style>
-
-
-<style id="index21-neon-only">
-/* INDEX21 — neon visual enhancement only */
-#mainNav button,
-#bottomNav button,
-.bottomNav button,
-nav button {
-  filter: drop-shadow(0 0 5px rgba(0,255,255,.55))
-          drop-shadow(0 0 11px rgba(0,255,255,.32));
-  box-shadow: 0 0 7px rgba(0,255,255,.35),
-              0 0 16px rgba(0,255,255,.22),
-              inset 0 0 8px rgba(0,255,255,.10) !important;
-  transition: box-shadow .2s ease, filter .2s ease;
-}
-#mainNav button:hover,
-#bottomNav button:hover,
-.bottomNav button:hover,
-nav button:hover {
-  filter: drop-shadow(0 0 7px rgba(0,255,255,.75))
-          drop-shadow(0 0 16px rgba(0,255,255,.45));
-  box-shadow: 0 0 10px rgba(0,255,255,.55),
-              0 0 23px rgba(0,255,255,.35),
-              inset 0 0 10px rgba(0,255,255,.14) !important;
-}
-
-/* Native "Choose file" control — same neon family */
-#siteUpdateFile {
-  filter: drop-shadow(0 0 5px rgba(0,255,255,.55))
-          drop-shadow(0 0 11px rgba(0,255,255,.30));
-  border-color: rgba(0,255,255,.65) !important;
-  box-shadow: 0 0 8px rgba(0,255,255,.30),
-              0 0 18px rgba(0,255,255,.18),
-              inset 0 0 7px rgba(0,255,255,.08) !important;
-}
-#siteUpdateFile::file-selector-button {
-  border: 1px solid rgba(0,255,255,.72);
-  border-radius: 10px;
-  padding: 9px 14px;
-  margin-right: 10px;
-  background: rgba(10,35,42,.92);
-  color: #fff;
-  box-shadow: 0 0 7px rgba(0,255,255,.42),
-              0 0 15px rgba(0,255,255,.24),
-              inset 0 0 8px rgba(0,255,255,.10);
-  text-shadow: 0 0 7px rgba(0,255,255,.45);
+  box-shadow: inset 0 -2px 10px rgba(255,165,0,.38),
+              0 0 7px rgba(41,153,255,.42),
+              0 0 15px rgba(41,153,255,.28),
+              0 2px 9px rgba(255,165,0,.28) !important;
+  text-shadow:0 0 6px rgba(255,255,255,.55);
 }
 </style>
 
@@ -349,7 +304,7 @@ nav button:hover {
 
 <div id="walletPage" class="pageHidden">
 <header><div><h1>👛 საფულე</h1><small>სამუშაოების ფინანსები</small></div></header>
-<button class="settingsBtn settingsBack temo-exit-btn" onclick="showMain()"><span class="homeIcon">⌂</span><span class="homeLabel">მთავარი</span></button>
+
 <div class="grid">
 <div class="card blue"><div class="label">🔨 სულ ნამუშევარი</div><div class="amount" id="total">€0</div><div class="meta" id="days">0 სამუშაო</div></div>
 <div class="card green"><div class="label">💶 მიღებული</div><div class="amount" id="paid">€0</div><div class="meta" id="paidDays">0 გადახდილი</div></div>
@@ -358,18 +313,20 @@ nav button:hover {
 
 <div id="settingsPage" class="pageHidden">
 <header><div><h1>⚙️ სეთინგები</h1><small>მონაცემების მართვა</small></div></header>
-<button class="settingsBtn settingsBack temo-exit-btn" onclick="showMain()"><span class="homeIcon">⌂</span><span class="homeLabel">მთავარი</span></button><div class="section"><h2>👤 მომხმარებელი</h2><div class="meta" id="currentUserLabel"></div></div>
+<div class="section"><h2>👤 მომხმარებელი</h2><div class="meta" id="currentUserLabel"></div></div>
 
 <div class="section" id="websiteUpdateSection">
 <h2>🔄 საიტის განახლება</h2>
 <div class="tools">
-<input id="siteUpdateFile" type="file" accept=".html,text/html">
+<input id="siteUpdateFile" type="file" accept=".html,text/html" onchange="siteFileSelected()" style="display:none">
+<button type="button" class="backupBtn" id="siteFileBtn" onclick="handleSiteFileButton()">📁 აირჩიე ფაილი</button>
 </div>
-<button class="repoTokenOpenBtn" onclick="openCredentials()">🔐 Repository / Token</button>
+<button class="repoTokenOpenBtn" style="margin-top:20px" onclick="openCredentials()">🔐 Repository / Token</button>
 <div class="backup">
-<button class="backupBtn" onclick="updateWebsite()">⬆ ახალი index.html ატვირთვა</button>
+
 </div>
 <div class="meta" style="margin-top:12px">ატვირთული ფაილი უნდა იყოს index.html. Token მხოლოდ ამ ტელეფონში ინახება.</div>
+<button class="temo-exit-btn" onclick="logout()">🔐 გამოსვლა</button>
 </div>
 
 </div>
@@ -378,7 +335,7 @@ nav button:hover {
 </div>
 <div id="userManagementPage" class="pageHidden">
 <header><div><h1>👥 მომხმარებლების მართვა</h1><small>მომხმარებლების დამატება და მართვა</small></div></header>
-<button class="settingsBtn settingsBack temo-exit-btn" onclick="showMain()"><span class="homeIcon">⌂</span><span class="homeLabel">მთავარი</span></button>
+
 <div class="section adminOnly" id="userManagementSection">
 <h2>👥 მომხმარებლების მართვა</h2>
 <div id="userManagementList"></div>
@@ -386,8 +343,8 @@ nav button:hover {
 </div>
 </div>
 
-<button class="temo-exit-btn" onclick="logout()">🔐 გამოსვლა</button>
-<footer>TEMO WORK TRACKER • მონაცემები ამ ტელეფონში ინახება</footer>
+
+
 </div>
 
 <div class="yearPickerModal" id="yearPickerModal" onclick="if(event.target===this)closeYearPicker()"><div class="yearPickerBox"><h2>აირჩიე წელი</h2><div id="yearPickerGrid" class="yearPickerGrid"></div><button class="yearPickerClose" onclick="closeYearPicker()">✕ დახურვა</button></div></div>
@@ -825,6 +782,22 @@ function showUploadSuccess(){
 }
 function hideUploadAnimation(){ $('uploadOverlay').classList.remove('show'); }
 
+function siteFileSelected(){
+  const file=$('siteUpdateFile').files[0];
+  const btn=$('siteFileBtn');
+  if(file && btn){
+    btn.textContent='⬆ ატვირთე';
+  }
+}
+function handleSiteFileButton(){
+  const input=$('siteUpdateFile'), file=input.files[0];
+  if(!file){
+    input.click();
+  }else{
+    updateWebsite();
+  }
+}
+
 async function updateWebsite(){
   const repo=$('ghRepo').value.trim(), token=$('ghToken').value.trim(), file=$('siteUpdateFile').files[0];
 
@@ -868,6 +841,7 @@ async function updateWebsite(){
 
     saveGitHubSettings(false);
     $('siteUpdateFile').value='';
+    $('siteFileBtn').textContent='📁 აირჩიე ფაილი';
     showUploadSuccess();
   }catch(err){
     hideUploadAnimation();
