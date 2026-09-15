@@ -437,9 +437,20 @@ const FIREBASE_DB_URL='https://temo-75-default-rtdb.europe-west1.firebasedatabas
 let currentUser=localStorage.getItem(SESSION_USER_KEY)||'';
 let firebaseSyncBusy=false;
 function firebaseUserKey(name){
-  // Firebase-ში ქართული და სხვა Unicode სახელები პირდაპირ ინახება.
+  // მომხმარებლის სახელი ინახება ზუსტად ისე, როგორც შეიყვანა მომხმარებელმა.
   // მხოლოდ Firebase-ისთვის აკრძალული სიმბოლოები იცვლება.
   return String(name||'').trim().replace(/[.#$\[\]\/]/g,'_');
+}
+function decodeLegacyFirebaseKey(value){
+  // ძველ ვერსიებში ქართული სახელები ინახებოდა ასე: _E1_83_...
+  // ეს ფუნქცია მათ ისევ ნამდვილ ქართულ ტექსტად აბრუნებს.
+  const s=String(value||'');
+  if(!/^_(?:[0-9A-Fa-f]{2}_)+[0-9A-Fa-f]{2}$/.test(s))return s;
+  try{
+    const hex=s.slice(1).split('_');
+    const bytes=new Uint8Array(hex.map(h=>parseInt(h,16)));
+    return new TextDecoder('utf-8',{fatal:true}).decode(bytes);
+  }catch(e){return s}
 }
 async function loadUsersFromFirebase(){
   try{
@@ -447,8 +458,13 @@ async function loadUsersFromFirebase(){
     if(!r.ok)throw new Error('Firebase HTTP '+r.status);
     const data=await r.json();
     if(data===null)return null;
-    if(Array.isArray(data))return data.filter(Boolean);
-    return Object.values(data||{}).filter(Boolean);
+    if(Array.isArray(data))return data.filter(Boolean).map(u=>({...u,name:decodeLegacyFirebaseKey(u.name)}));
+    return Object.entries(data||{}).map(([key,u])=>{
+      if(!u)return null;
+      const copy={...u};
+      copy.name=decodeLegacyFirebaseKey(copy.name||key);
+      return copy;
+    }).filter(Boolean);
   }catch(e){console.warn('Firebase users read failed:',e);return null}
 }
 async function saveUsersToFirebase(users){
