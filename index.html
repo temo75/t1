@@ -383,9 +383,7 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
 
 
 <script>
-function isLatinUsername(name){
-  return /^[A-Za-z]+$/.test(String(name||'').trim());
-}
+function isLatinUsername(name){return /^[A-Za-z]+$/.test(String(name||"").trim());}
 
 const AUTH_KEY='temoWorkTrackerAuthorized';
 const AUTH_PASSWORD='temo2139-590';
@@ -397,7 +395,7 @@ let currentUser=localStorage.getItem(SESSION_USER_KEY)||'';
 let firebaseSyncBusy=false;
 // ქართულ სახელებს Firebase-ში ვინახავთ პირდაპირ, რათა აღარ გამოჩნდეს _E1_83_... კოდები.
 function firebaseUserKey(name){
-  return String(name||'').trim().replaceAll('.','_').replaceAll('#','_').replaceAll('$','_').replaceAll('[','_').replaceAll(']','_').replaceAll('/','_');
+  return String(name||'').trim().replace(/[.#$\\[\\]\\/]/g,'_');
 }
 // ძველი ვერსიის მისამართი — არსებული მონაცემების გადასატანად.
 function legacyFirebaseUserKey(name){
@@ -898,7 +896,6 @@ function registerNewUser(){
  const n=document.getElementById('newUserAuthName').value.trim();
  const p=document.getElementById('newUserAuthPassword').value;
  if(!n||!p){alert('სახელი და ახალი პაროლი ორივე შეავსე');return}
-  if(!/^[A-Za-z]+$/.test(n)){alert('მომხმარებლის სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');return}
  if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return}
  const users=getUsers();
  if(users.some(u=>u.name.toLowerCase()===n.toLowerCase())){alert('ეს მომხმარებელი უკვე არსებობს');return}
@@ -912,7 +909,7 @@ function registerNewUser(){
 </script>
 <div id="newUserAuthModal"><div class="newUserAuthBox">
 <h2>🔐 ახალი მომხმარებლის ავტორიზაცია</h2>
-<label>1. თქვენი სახელი</label><input id="newUserAuthName" maxlength="40" pattern="[A-Za-z]+" inputmode="latin" autocomplete="username" oninput="this.value=this.value.replace(/[^A-Za-z]/g,'')" title="მხოლოდ ლათინური ასოები (A-Z, a-z)">
+<label>1. თქვენი სახელი</label><input id="newUserAuthName" maxlength="40">
 <label>2. თქვენი ახალი პაროლი</label><input id="newUserAuthPassword" type="password" maxlength="80">
 <button onclick="registerNewUser()">შესვლა</button>
 <button type="button" onclick="document.getElementById('newUserAuthModal').classList.remove('show');document.getElementById('loginScreen').classList.remove('hidden')" style="background:#20323b;border-color:#285269">✕ გაუქმება</button>
