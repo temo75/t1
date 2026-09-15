@@ -111,9 +111,21 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
   font-weight:600;
 }
 body{padding-bottom:78px;}
-#bottomNav .walletNav{flex:1;font-size:13px;}
-#bottomNav .logoutNav{color:#ff8c8c;border-color:rgba(255,92,103,.38);text-shadow:0 0 7px rgba(255,92,103,.45);}
-#bottomNav button{min-width:0 !important;white-space:nowrap !important;font-size:13px !important;padding:8px 4px !important;}
+#bottomNav .navLogo{
+  display:flex;align-items:center;justify-content:center;
+  width:34px;height:34px;margin:auto;
+  border-radius:11px;
+  font-size:21px;line-height:1;
+  background:linear-gradient(145deg,rgba(255,255,255,.18),rgba(255,255,255,.04));
+  border:1px solid rgba(255,255,255,.24);
+  box-shadow:0 0 10px rgba(80,180,255,.45), inset 0 0 10px rgba(255,255,255,.08);
+}
+#bottomNav .logoutNav{color:#fff;border-color:rgba(255,92,103,.45);}
+#bottomNav .logoutNav .navLogo{
+  background:linear-gradient(145deg,#ff5b6e,#ff8a3d);
+  box-shadow:0 0 10px rgba(255,80,90,.65),0 0 22px rgba(255,80,90,.3);
+}
+#bottomNav button{min-width:0 !important;white-space:nowrap !important;font-size:13px !important;padding:5px 4px !important;}
 #loginScreen #bottomNav{display:none !important;}
 body:has(#loginScreen:not(.hidden)) #bottomNav{display:none !important;}
 footer{display:none!important;}
@@ -276,11 +288,10 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
 </head>
 <body>
 <nav id="bottomNav">
-  <button type="button" onclick="goHome()">მთავარი</button>
-  <button type="button" onclick="goSettings()">სეთინგები</button>
-  <button type="button" onclick="logout()" class="logoutNav">🚪 გამოსვლა</button>
-  <button type="button" onclick="goUsers()">მომხმარებლები</button>
-  <button type="button" class="walletNav" onclick="goWallet()">საფულე</button>
+  <button type="button" onclick="goHome()" aria-label="მთავარი" title="მთავარი"><span class="navLogo">🏠</span></button>
+  <button type="button" onclick="goSettings()" aria-label="სეთინგები" title="სეთინგები"><span class="navLogo">⚙️</span></button>
+  <button type="button" onclick="goUsers()" aria-label="მომხმარებლები" title="მომხმარებლები"><span class="navLogo">👥</span></button>
+  <button type="button" onclick="logout()" class="logoutNav" aria-label="გამოსვლა" title="გამოსვლა"><span class="navLogo">🚪</span></button>
 </nav>
 
 <div id="uploadOverlay"><div class="uploadBox"><div class="uploadSpinner" id="uploadSpinner"></div><div class="uploadCheck" id="uploadCheck">✓</div><div class="uploadBurst" id="uploadBurst"></div></div></div>
