@@ -582,7 +582,7 @@ function render(){
  $('total').textContent=euro(total);$('paid').textContent=euro(paid);$('unpaid').textContent=euro(unpaid);
  $('days').textContent=jobs.length+' სამუშაო';$('paidDays').textContent=jobs.filter(j=>j.paid).length+' გადახდილი';$('unpaidDays').textContent=jobs.filter(j=>!j.paid).length+' გადასახდელი';
  $('average').textContent=euro(jobs.length?total/jobs.length:0);
- const now=new Date(), key=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');const mj=jobs.filter(j=>(j.date||'').slice(0,7)===key);const monthReceived=mj.filter(j=>j.paid).reduce((a,j)=>a+Number(j.money||0),0);$('monthTotal').textContent=euro(monthReceived);$('monthDays').textContent=mj.length+' დღე';
+ const now=new Date(), key=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');const mj=jobs.filter(j=>(j.date||'').slice(0,7)===key);const monthTotal=mj.reduce((a,j)=>a+Number(j.money||0),0);$('monthTotal').textContent=euro(monthTotal);$('monthDays').textContent=mj.length+' დღე';
  renderCalendar();renderDayJobs();
 }
 function renderList(){
@@ -590,6 +590,10 @@ function renderList(){
  const data=[...jobs].filter(j=>(!q||`${j.place||''} ${j.note||''}`.toLowerCase().includes(q))&&(st==='all'||(st==='paid'?j.paid:!j.paid))&&(mo==='all'||(j.date||'').slice(0,7)===mo)).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
  $('list').innerHTML=data.length?'':'<div class="empty">ამ ძიებით სამუშაო ვერ მოიძებნა</div>';
  data.forEach(j=>{const d=document.createElement('div');d.className='item';d.innerHTML=`<div><b>${esc(j.place||'სამუშაო')} <span class="jobStatusMark ${j.paid?'paid':'unpaid'}">${j.paid?'✓':'+'}</span></b><div class="jobDateLine">${formatDate(j.date)}</div>${j.note?`<div class="meta">${esc(j.note)}</div>`:''}</div><div class="right"><b>${euro(j.money)}</b><div class="actions"><button class="small" onclick="togglePaid('${j.id}')">${j.paid?'გადაუხდელია':'გადახდა მივიღე'}</button><button class="small edit" onclick="editJob('${j.id}')">✎ შეცვლა</button><button class="small danger" onclick="delJob('${j.id}')">✕ წაშლა</button></div></div>`;$('list').appendChild(d)})
+}
+function receivedForWorkMonth(key){
+  return jobs.filter(j=>(j.date||'').slice(0,7)===key && j.paid)
+             .reduce((sum,j)=>sum+Number(j.money||0),0);
 }
 function renderMonths(){
  const map={};jobs.forEach(j=>{const k=(j.date||'').slice(0,7)||'უცნობი';if(!map[k])map[k]={total:0,paid:0,count:0};map[k].total+=Number(j.money||0);if(j.paid)map[k].paid+=Number(j.money||0);map[k].count++});
