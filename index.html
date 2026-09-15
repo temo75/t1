@@ -677,6 +677,17 @@ function openReceivableModal(){
 function closeReceivableModal(){
   $('receivableModal').classList.remove('show');
 }
+function paymentMonthKey(j){
+  const d = new Date(j.date || '');
+  return isNaN(d.getTime()) ? '' : (d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));
+}
+function receivedTotalForMonth(year,month){
+  return jobs.reduce((sum,j)=>{
+    const d=new Date(j.date||'');
+    if(!j.paid || isNaN(d.getTime()) || d.getFullYear()!==year || d.getMonth()!==month) return sum;
+    return sum+Number(j.money||0);
+  },0);
+}
 function renderReceivableModal(){
   const list=$('receivableList'), summary=$('receivableSummary'), all=$('receivableAllCheck');
   if(!list||!summary||!all)return;
