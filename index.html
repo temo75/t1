@@ -590,8 +590,6 @@ function login(){
  else{$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus()}
 }
 window.addEventListener('DOMContentLoaded',async()=>{
- await keepOnlyTemoAndJimi();
- await await removeJimiFromFirebase();
  syncUsersFromFirebase().then(()=>{
   if(typeof renderManagedUsers==='function' && currentUser===ADMIN_USER) renderManagedUsers();
 });
@@ -883,13 +881,15 @@ function updateUserUI(){
 function renderManagedUsers(){
   const box=$('userManagementList'); if(!box)return; box.innerHTML='';
   const users=getUsers();
-  users.filter(u=>!u.admin && String(u.name).trim().toUpperCase()!==ADMIN_USER).forEach(u=>{
+  const list=users.filter(u=>u&&!u.admin&&String(u.name).trim().toUpperCase()!==ADMIN_USER);
+  if(!list.length){box.innerHTML='<div class="empty">მომხმარებლები ჯერ არ არის</div>';return;}
+  list.forEach(u=>{
     const row=document.createElement('div');row.className='userRow';
     const b=document.createElement('button');b.className='backupBtn userNameBtn';b.textContent='👤 '+u.name;b.disabled=true;
     const l=document.createElement('button');l.className='backupBtn lockBtn'+(u.authorized!==true?' locked':'');
     l.textContent=u.authorized===true?'🔒 დაბლოკვა':'🔓 განბლოკვა';
     l.onclick=()=>toggleUserBlock(u.name);
-    const d=document.createElement('button');d.className='backupBtn danger';d.textContent='წაშლა';d.onclick=()=>deleteManagedUser(u.name);
+    const d=document.createElement('button');d.className='backupBtn danger';d.textContent='🗑️ წაშლა';d.onclick=()=>deleteManagedUser(u.name);
     row.append(b,l,d);box.appendChild(row);
   });
 }
