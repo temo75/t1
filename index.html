@@ -6,8 +6,8 @@
 <title>TEMO სამუშაო ანგარიში</title>
 <style>
 :root{--bg:#071117;--panel:#0d1b24;--panel2:#10232f;--text:#eef7f7;--muted:#9fb0b8;--red:#ef5b67;--blue:#2999df;--orange:#e6a24c;--line:#1e3542}
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#061015,#0a1821);color:var(--text)}button,input,select,textarea{font:inherit}.app{max-width:1100px;margin:auto;padding:18px}header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}h1{margin:0;font-size:28px;color:#eef7f7}header small{color:var(--muted)}#today{color:var(--muted);white-space:nowrap}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.card,.section,.toolbox{background:linear-gradient(145deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:18px;padding:18px}.card .label{color:var(--muted);font-size:14px}.amount{font-size:30px;font-weight:bold;margin-top:10px}.blue{border-color:#1b4d6c;position:relative}.green{border-color:#285269}.red{border-color:#6e2931}
-.card .temo-eye-btn{position:absolute;top:9px;right:9px;width:30px;height:30px;font-size:16px;line-height:28px}.add{width:52%;max-width:420px;margin:16px auto;padding:10px 14px;display:block;border:2px solid #2999ff;border-radius:14px;background:#102b3b;color:white;font-size:16px;font-weight:bold;cursor:pointer;box-shadow:0 0 8px #2999ff,0 0 18px #2999ff,0 0 30px rgba(41,153,255,.75);text-shadow:0 0 7px #2999ff}.section{margin-top:14px}.section h2{margin:0 0 14px;font-size:17px}.toolbox{margin-top:14px}.tools{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px}.tools input,.tools select,.form input,.form textarea{width:100%;padding:13px;border-radius:10px;border:1px solid #29404c;background:#071117;color:white;font-size:16px}.tools input[type=file]{border-radius:16px;border-color:#1f75aa;box-shadow:0 0 6px #2999df66,0 0 12px #2999df22;background:#0b1a24;cursor:pointer}.tools input[type=file]::file-selector-button{border:1px solid #2a86bb;border-radius:12px;padding:9px 14px;background:#183445;color:#eef7f7;cursor:pointer;box-shadow:0 0 5px #2999df55}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.mini{background:#09161e;border:1px solid var(--line);border-radius:14px;padding:13px}.mini b{display:block;font-size:20px;margin-top:5px}.mini span{color:var(--muted);font-size:13px}.item{display:grid;grid-template-columns:1fr auto;gap:12px;padding:14px;margin:9px 0;background:#0a151d;border:1px solid #1a2c37;border-radius:14px}.meta{color:var(--muted);font-size:13px;margin-top:5px}.right{text-align:right}.status{font-size:13px;font-weight:bold;margin:7px 0}.paid{color:#62b8ff}.unpaid{color:#ff7c84}.actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:5px}.small,.backupBtn{background:#183445;color:white;border:1px solid #285269;border-radius:9px;padding:8px 10px;cursor:pointer}.edit{background:#26394a}.danger{background:#4a2228;border-color:#74333d}.empty{text-align:center;color:var(--muted);padding:28px}.modal{display:none;position:fixed;inset:0;background:#000a;align-items:center;justify-content:center;padding:16px;z-index:5}.modal.show{display:flex}.form{width:min(520px,100%);max-height:92vh;overflow:auto;background:#0c1a23;border:1px solid #28404d;border-radius:20px;padding:20px}.form h2{margin:0 0 8px}label{display:block;margin:12px 0 5px;color:#c7d4d8}.checkrow{display:flex;align-items:center;gap:9px;margin-top:14px;color:#c7d4d8}.checkrow input{width:auto}.row{display:flex;gap:10px;margin-top:18px}.save{flex:1;background:#2999df;border:0;border-radius:10px;padding:14px;color:white;font-weight:bold;font-size:16px;box-shadow:0 0 7px rgba(41,153,255,.45)}.cancel{background:#20323b;color:white;border:0;border-radius:10px;padding:14px}.backup{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.backupBtn{flex:1;min-width:150px}.adminButtons{display:flex;justify-content:center;gap:10px;align-items:center}.adminButtons .settingsBtn{width:42%;max-width:220px;margin-left:0;margin-right:0}.adminButtons .adminOnly{display:block!important}.adminButtons .adminOnly[style*="display: none"]{display:none!important}.settingsBtn{width:42%;max-width:220px;margin:22px auto 8px;padding:9px 12px;border:2px solid #2999ff;border-radius:12px;background:#102b3b;color:white;font-size:14px;font-weight:bold;cursor:pointer;box-shadow:0 0 7px #2999ff,0 0 16px #2999ff,0 0 28px rgba(41,153,255,.7);text-shadow:0 0 6px #2999ff}.pageHidden{display:none}.settingsBack{margin-bottom:14px}.privacyEyeSlot{display:flex;align-items:flex-start;justify-content:flex-end;padding:9px;min-height:74px}.privacyEyeMain{width:30px;height:30px;font-size:16px;line-height:28px;border-radius:9px;border:1px solid #285269;background:#183445;color:#fff;cursor:pointer}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#061015,#0a1821);color:var(--text)}button,input,select,textarea{font:inherit}.app{max-width:1100px;margin:auto;padding:18px}header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}h1{margin:0;font-size:28px;color:#eef7f7}header small{color:var(--muted)}#today{color:var(--muted);white-space:nowrap}.grid{display:grid;grid-template-columns:1fr;gap:12px}.card,.section,.toolbox{background:linear-gradient(145deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:18px;padding:18px}.card .label{color:var(--muted);font-size:14px}.amount{font-size:30px;font-weight:bold;margin-top:10px}.blue{border-color:#1b4d6c;position:relative}.green{border-color:#285269}.red{border-color:#6e2931}.grid .card.red{grid-column:1/-1;padding:26px 28px}.grid .card.red .label{font-size:18px}.grid .card.red .amount{font-size:42px;margin-top:12px}.grid .card.red .meta{font-size:15px;margin-top:8px}.grid .monthTotalHero{grid-column:1/-1;padding:26px 28px;border-color:#285269}.grid .monthTotalHero .label{font-size:18px}.grid .monthTotalHero .amount{font-size:42px;margin-top:12px}.miniReceivable{padding:13px}.miniReceivable b{font-size:20px}.miniReceivable small{display:block;color:var(--muted);font-size:12px;margin-top:4px}
+.card .temo-eye-btn{position:absolute;top:9px;right:9px;width:30px;height:30px;font-size:16px;line-height:28px}.add{width:52%;max-width:420px;margin:16px auto;padding:10px 14px;display:block;border:2px solid #2999ff;border-radius:14px;background:#102b3b;color:white;font-size:16px;font-weight:bold;cursor:pointer;box-shadow:0 0 8px #2999ff,0 0 18px #2999ff,0 0 30px rgba(41,153,255,.75);text-shadow:0 0 7px #2999ff}.section{margin-top:14px}.section h2{margin:0 0 14px;font-size:17px}.toolbox{margin-top:14px}.tools{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px}.tools input,.tools select,.form input,.form textarea{width:100%;padding:13px;border-radius:10px;border:1px solid #29404c;background:#071117;color:white;font-size:16px}.tools input[type=file]{border-radius:16px;border-color:#1f75aa;box-shadow:0 0 10px #2f7d32,0 8px 20px rgba(46,125,50,.78),0 18px 34px rgba(46,125,50,.44),0 26px 42px rgba(46,125,50,.20);background:#0b1a24;cursor:pointer}.tools input[type=file]::file-selector-button{border:1px solid #2a86bb;border-radius:12px;padding:9px 14px;background:#183445;color:#eef7f7;cursor:pointer;box-shadow:0 0 5px #2999df55}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.mini{background:#09161e;border:1px solid var(--line);border-radius:14px;padding:13px}.mini b{display:block;font-size:20px;margin-top:5px}.mini span{color:var(--muted);font-size:13px}.item{display:grid;grid-template-columns:1fr auto;gap:12px;padding:14px;margin:9px 0;background:#0a151d;border:1px solid #1a2c37;border-radius:14px}.meta{color:var(--muted);font-size:13px;margin-top:5px}.right{text-align:right}.status{font-size:13px;font-weight:bold;margin:7px 0}.paid{color:#62b8ff}.unpaid{color:#ff7c84}.actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:5px}.small,.backupBtn{background:#183445;color:white;border:1px solid #285269;border-radius:9px;padding:8px 10px;cursor:pointer}.edit{background:#26394a}.danger{background:#4a2228;border-color:#74333d}.empty{text-align:center;color:var(--muted);padding:28px}.modal{display:none;position:fixed;inset:0;background:#000a;align-items:center;justify-content:center;padding:16px;z-index:5}.modal.show{display:flex}.form{width:min(520px,100%);max-height:92vh;overflow:auto;background:#0c1a23;border:1px solid #28404d;border-radius:20px;padding:20px}.form h2{margin:0 0 8px}label{display:block;margin:12px 0 5px;color:#c7d4d8}.checkrow{display:flex;align-items:center;gap:9px;margin-top:14px;color:#c7d4d8}.checkrow input{width:auto}.row{display:flex;gap:10px;margin-top:18px}.save{flex:1;background:#2999df;border:0;border-radius:10px;padding:14px;color:white;font-weight:bold;font-size:16px;box-shadow:0 0 7px rgba(41,153,255,.45)}.cancel{background:#20323b;color:white;border:0;border-radius:10px;padding:14px}.backup{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.backupBtn{flex:1;min-width:150px}.adminButtons{display:flex;justify-content:center;gap:10px;align-items:center}.adminButtons .settingsBtn{width:42%;max-width:220px;margin-left:0;margin-right:0}.adminButtons .adminOnly{display:block!important}.adminButtons .adminOnly[style*="display: none"]{display:none!important}.settingsBtn{width:42%;max-width:220px;margin:22px auto 8px;padding:9px 12px;border:2px solid #2999ff;border-radius:12px;background:#102b3b;color:white;font-size:14px;font-weight:bold;cursor:pointer;box-shadow:0 0 7px #2999ff,0 0 16px #2999ff,0 0 28px rgba(41,153,255,.7);text-shadow:0 0 6px #2999ff}.pageHidden{display:none}.settingsBack{margin-bottom:14px}.privacyEyeSlot{display:flex;align-items:flex-start;justify-content:flex-end;padding:9px;min-height:0;position:absolute;right:18px;z-index:2}.privacyEyeMain{width:30px;height:30px;font-size:16px;line-height:28px;border-radius:9px;border:1px solid #285269;background:#183445;color:#fff;cursor:pointer}
 .deleteAuthModal{display:none;position:fixed;inset:0;background:#000a;align-items:center;justify-content:center;padding:16px;z-index:10001}
 .deleteAuthModal.show{display:flex}
 .deleteAuthBox{width:min(430px,100%);background:linear-gradient(145deg,#0c1a23,#10232f);border:1px solid #74333d;border-radius:20px;padding:22px;box-shadow:0 20px 60px #000b;text-align:center}
@@ -44,7 +44,7 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 .userManage{margin-top:14px}.userManage input{margin-bottom:8px!important}.userRow{display:flex;gap:7px;margin:7px 0}.userRow button{padding:9px;font-size:14px}.adminOnly{display:block}
 #loginError{min-height:20px;color:#ff7c84;font-size:14px;margin-top:10px}
 
-.tools input[type=file]{width:100%;max-width:100%;justify-self:stretch;border-color:#ff8a00;box-shadow:0 0 12px #ff8a00,0 0 27px rgba(255,138,0,.90),0 0 38px rgba(255,138,0,.38);background:#0b1a24;cursor:pointer}.tools input[type=file]::file-selector-button{max-width:100%;border:1px solid #ffc04d;border-radius:12px;padding:9px 14px;background:#2a2418;color:#fff;cursor:pointer;box-shadow:0 0 11px #ff8a00,0 0 24px rgba(255,138,0,.92),0 0 34px rgba(255,138,0,.40);text-shadow:0 0 8px #ffc04d;}
+.tools input[type=file]{width:100%;max-width:100%;justify-self:stretch;border-color:#ff8a00;box-shadow:0 0 10px #ff8a00,0 0 23px rgba(255,138,0,.82),0 0 32px rgba(255,138,0,.30);background:#0b1a24}.tools input[type=file]::file-selector-button{max-width:100%;border:1px solid #ff8a00;border-radius:12px;padding:9px 14px;background:#2a2418;color:#fff;cursor:pointer;box-shadow:0 0 9px #ff8a00,0 0 20px rgba(255,138,0,.84),0 0 28px rgba(255,138,0,.32);text-shadow:0 0 6px #ff8a00;}
 
 #uploadOverlay{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.72);align-items:center;justify-content:center}
 #uploadOverlay.show{display:flex}
@@ -115,7 +115,18 @@ body{padding-bottom:78px;}
 #bottomNav button{min-width:0 !important;white-space:nowrap !important;font-size:13px !important;padding:8px 4px !important;}
 #loginScreen #bottomNav{display:none !important;}
 body:has(#loginScreen:not(.hidden)) #bottomNav{display:none !important;}
-footer{display:none!important;}</style>
+footer{display:none!important;}
+/* მხოლოდ „📁 აირჩიე ფაილი“ ღილაკის დამატებითი ნეონი */
+#siteFileBtn{
+  border-color:#49a84d;
+  box-shadow:
+    0 0 8px rgba(73,168,77,.75),
+    0 0 18px rgba(73,168,77,.65),
+    0 0 30px rgba(73,168,77,.48),
+    0 10px 22px rgba(47,125,50,.55) !important;
+  text-shadow:0 0 7px rgba(120,220,120,.85);
+}
+</style>
 </style>
 
 <style id="temo-3d-title">
@@ -157,6 +168,31 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 .noteEntry .notePaid{color:#6ee7a8}
 .noteEntry .noteUnpaid{color:#ff9a9a}
 .noteClose{width:100%;margin-top:8px;padding:12px;border:0;border-radius:11px;background:#183445;color:#fff;cursor:pointer;font-weight:bold}
+</style>
+<style id="temo-receivable-modal-style">
+.miniReceivable{cursor:pointer;transition:transform .15s ease,box-shadow .15s ease}
+.miniReceivable:active{transform:scale(.98)}
+.receivableModal{position:fixed;inset:0;z-index:10004;display:none;align-items:center;justify-content:center;padding:16px;background:#000b}
+.receivableModal.show{display:flex}
+.receivableBox{width:min(620px,100%);max-height:88vh;display:flex;flex-direction:column;background:linear-gradient(145deg,#0c1a23,#10232f);border:1px solid #ef5b67;border-radius:20px;padding:20px;box-shadow:0 0 18px rgba(239,91,103,.45),0 20px 60px #000c}
+.receivableHeader{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.receivableHeader h2{margin:0;color:#fff;font-size:20px}
+.receivableClose{width:38px;height:38px;border-radius:50%;border:1px solid #ff3b3b;background:rgba(70,0,0,.45);color:#ff5b5b;font-size:24px;font-weight:900;cursor:pointer;box-shadow:0 0 7px rgba(255,59,59,.8),0 0 16px rgba(255,59,59,.45)}
+.receivableSummary{margin:12px 0;padding:12px;border-radius:12px;background:#09161e;border:1px solid #1e3542;color:#c7d4d8}
+.receivableAll{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:13px;border-radius:12px;border:1px solid #2f7d32;background:#0c2113;color:#fff;font-weight:bold;box-shadow:0 0 8px rgba(47,125,50,.35)}
+.receivableAll input,.receivableCheck input{width:22px;height:22px;accent-color:#49a84d}
+.receivableList{overflow:auto;min-height:0}
+.receivableRow{display:flex;align-items:center;gap:12px;padding:13px;margin:8px 0;border-radius:12px;background:#09161e;border:1px solid #1e3542}
+.receivableCheck{display:flex;align-items:center;gap:10px;flex:1;cursor:pointer}
+.receivableInfo{flex:1;min-width:0}
+.receivablePlace{font-weight:800;color:#fff}
+.receivableDate{font-size:12px;color:#9fb0b8;margin-top:3px}
+.receivableAmount{font-weight:800;font-size:17px;white-space:nowrap}
+.receivablePaid{border-color:#285f3c}
+.receivablePaid .receivableAmount{color:#63ff9a}
+.receivableUnpaid{border-color:#6e2931}
+.receivableUnpaid .receivableAmount{color:#ff8a8a}
+.receivableEmpty{text-align:center;color:#9fb0b8;padding:25px}
 </style>
 <style id="temo-job-status-style">
 .jobStatusMark{display:inline-block;margin-left:6px;font-weight:900;font-size:20px;line-height:1}
@@ -272,12 +308,12 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
 
 <div class="grid">
 <div class="privacyEyeSlot"><button id="privacyEye" class="privacyEyeMain" onclick="togglePrivacy()" aria-label="თანხების დამალვა" title="თანხების დამალვა">👁</button></div>
-<div class="card red"><div class="label">⏳ მისაღები</div><div class="amount" id="unpaid">€0</div><div class="meta" id="unpaidDays">0 გადასახდელი</div></div>
+<div class="card monthTotalHero"><div class="label">📆 ამ თვის ნამუშევარი</div><div class="amount" id="monthTotal">€0</div></div>
 </div>
 
 <div class="stats">
 <div class="mini"><span>📅 დღიური საშუალო</span><b id="average">€0</b></div>
-<div class="mini"><span>📆 ამ თვის ნამუშევარი</span><b id="monthTotal">€0</b></div>
+<div class="mini miniReceivable" id="receivableCard" onclick="openReceivableModal()" role="button" tabindex="0" title="მისაღები თანხების ნახვა"><span>⏳ მისაღები</span><b id="unpaid">€0</b><small id="unpaidDays">0 გადასახდელი</small></div>
 <div class="mini"><span>📊 ამ თვის სამუშაოები</span><b id="monthDays">0 დღე</b></div>
 </div>
 
@@ -364,6 +400,14 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
 <div id="deleteAuthError" class="deleteAuthError"></div>
 <div class="deleteAuthRow"><button class="deleteCancel" onclick="closeDeleteAuth()">გაუქმება</button><button class="deleteConfirm" onclick="confirmDeleteAll()">წაშლა</button></div>
 </div></div>
+<div class="receivableModal" id="receivableModal" onclick="if(event.target===this)closeReceivableModal()">
+<div class="receivableBox">
+  <div class="receivableHeader"><h2>💶 მისაღები თანხები</h2><button class="receivableClose" onclick="closeReceivableModal()" aria-label="დახურვა">✕</button></div>
+  <div class="receivableSummary" id="receivableSummary"></div>
+  <label class="receivableAll"><input id="receivableAllCheck" type="checkbox" onchange="toggleAllReceivable(this.checked)"> ყველამ მომცა ფული ვისაც ემართა</label>
+  <div class="receivableList" id="receivableList"></div>
+</div>
+</div>
 <div class="noteModal" id="noteModal" onclick="if(event.target===this)closeCalendarNote()">
 <div class="noteBox">
 <div class="noteHeader"><h2>ჩანაწერები</h2><button class="noteClose" onclick="closeCalendarNote()" aria-label="დახურვა" title="დახურვა">✕</button></div>
@@ -383,8 +427,6 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
 
 
 <script>
-function isLatinUsername(name){return /^[A-Za-z]+$/.test(String(name||"").trim());}
-
 const AUTH_KEY='temoWorkTrackerAuthorized';
 const AUTH_PASSWORD='temo2139-590';
 const USERS_KEY='temoWorkTrackerUsers';
@@ -393,14 +435,7 @@ const ADMIN_USER='TEMO';
 const FIREBASE_DB_URL='https://temo-75-default-rtdb.europe-west1.firebasedatabase.app';
 let currentUser=localStorage.getItem(SESSION_USER_KEY)||'';
 let firebaseSyncBusy=false;
-// ქართულ სახელებს Firebase-ში ვინახავთ პირდაპირ, რათა აღარ გამოჩნდეს _E1_83_... კოდები.
-function firebaseUserKey(name){
-  return String(name||'').trim().replace(/[.#$\\[\\]\\/]/g,'_');
-}
-// ძველი ვერსიის მისამართი — არსებული მონაცემების გადასატანად.
-function legacyFirebaseUserKey(name){
-  return encodeURIComponent(String(name||'')).replace(/%/g,'_');
-}
+function firebaseUserKey(name){return encodeURIComponent(name).replace(/%/g,'_');}
 async function loadUsersFromFirebase(){
   try{
     const r=await fetch(FIREBASE_DB_URL+'/users.json',{cache:'no-store'});
@@ -498,18 +533,6 @@ window.addEventListener('DOMContentLoaded',async()=>{
   $('loginScreen').classList.add('hidden');
   jobs=loadUserJobs();updateUserUI();render();
  }
- document.addEventListener('visibilitychange',async()=>{
-   if(document.visibilityState!=='visible')return;
-   await syncUsersFromFirebase();
-   const saved=currentUser;
-   const matched=getUsers().find(u=>u.name.toLowerCase()===String(saved||'').toLowerCase());
-   if(matched){
-     currentUser=matched.name;
-     localStorage.setItem(SESSION_USER_KEY,currentUser);
-     updateUserUI();
-     if(currentUser===ADMIN_USER)renderManagedUsers();
-   }
-  });
  $('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
  updateUserUI();
  setInterval(async()=>{
@@ -523,26 +546,6 @@ window.addEventListener('DOMContentLoaded',async()=>{
 });
 
 let jobs=[];
-async function migrateOldFirebaseJobs(user){
-  const newKey=firebaseUserKey(user), oldKey=legacyFirebaseUserKey(user);
-  if(newKey===oldKey)return;
-  try{
-    const newR=await fetch(FIREBASE_DB_URL+'/jobs/'+newKey+'.json',{cache:'no-store'});
-    if(!newR.ok)return;
-    const current=await newR.json();
-    if(current!==null)return;
-    const oldR=await fetch(FIREBASE_DB_URL+'/jobs/'+oldKey+'.json',{cache:'no-store'});
-    if(!oldR.ok)return;
-    const oldData=await oldR.json();
-    if(oldData===null)return;
-    await fetch(FIREBASE_DB_URL+'/jobs/'+newKey+'.json',{
-      method:'PUT',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(oldData)
-    });
-  }catch(e){console.warn('Firebase old job migration failed:',e)}
-}
-
 function loadUserJobs(){
   try{
     const key='temoJobs_'+(currentUser||ADMIN_USER);
@@ -561,6 +564,34 @@ function loadUserJobs(){
   }catch(e){return []}
 }
 jobs=loadUserJobs();
+
+// 2026 წლის სექტემბრის ნამუშევრები — ჩასმული საბაზისო მონაცემები.
+// გამოიყენება მხოლოდ მაშინ, თუ ამ მომხმარებელს ჯერ შენახული სამუშაოები არ აქვს.
+const SEPTEMBER_2026_JOBS=[
+  {id:'sep-2026-09-01',date:'2026-09-01',place:'ბინის რემონტი - რეთიმნო',money:100,note:'მალიარკა',paid:false},
+  {id:'sep-2026-09-02',date:'2026-09-02',place:'ვილა - სტავრომენოსი',money:100,note:'მალიარკა',paid:false},
+  {id:'sep-2026-09-03',date:'2026-09-03',place:'ბინის რემონტი - რეთიმნო',money:100,note:'მალიარკა',paid:true}
+];
+if(!jobs.length){ jobs=SEPTEMBER_2026_JOBS.map(j=>({...j})); save(); }
+
+// 2026 წლის სექტემბრის 1-დან მიმდინარე თვის ყველა სამუშაო/თანხა რჩება.
+// მხოლოდ 2026-09-01-მდე არსებული ძველი ჩანაწერები იშლება.
+(function(){
+  const START='2026-09-01';
+  const before=jobs.length;
+  jobs=jobs.filter(j=>{
+    const d=String(j.date||'').slice(0,10);
+    return d && d>=START;
+  });
+  if(jobs.length!==before){
+    try{
+      const key='temoJobs_'+(currentUser||ADMIN_USER);
+      localStorage.setItem(key,JSON.stringify(jobs));
+      if(currentUser===ADMIN_USER) localStorage.setItem('temoJobs',JSON.stringify(jobs));
+    }catch(e){}
+  }
+})();
+
 let editingId=null;
 let calendarDate=new Date();
 let selectedDate='';
@@ -579,7 +610,7 @@ function render(){
  $('total').textContent=euro(total);$('paid').textContent=euro(paid);$('unpaid').textContent=euro(unpaid);
  $('days').textContent=jobs.length+' სამუშაო';$('paidDays').textContent=jobs.filter(j=>j.paid).length+' გადახდილი';$('unpaidDays').textContent=jobs.filter(j=>!j.paid).length+' გადასახდელი';
  $('average').textContent=euro(jobs.length?total/jobs.length:0);
- const now=new Date(), key=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');const mj=jobs.filter(j=>(j.date||'').slice(0,7)===key);$('monthTotal').textContent=euro(mj.reduce((a,j)=>a+Number(j.money||0),0));$('monthDays').textContent=mj.length+' დღე';
+ const now=new Date(), key=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');const mj=jobs.filter(j=>(j.date||'').slice(0,7)===key);const monthTotal=mj.filter(j=>j.paid).reduce((a,j)=>a+Number(j.money||0),0);$('monthTotal').textContent=euro(monthTotal);$('monthDays').textContent=mj.length+' დღე';
  renderCalendar();renderDayJobs();
 }
 function renderList(){
@@ -587,6 +618,10 @@ function renderList(){
  const data=[...jobs].filter(j=>(!q||`${j.place||''} ${j.note||''}`.toLowerCase().includes(q))&&(st==='all'||(st==='paid'?j.paid:!j.paid))&&(mo==='all'||(j.date||'').slice(0,7)===mo)).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
  $('list').innerHTML=data.length?'':'<div class="empty">ამ ძიებით სამუშაო ვერ მოიძებნა</div>';
  data.forEach(j=>{const d=document.createElement('div');d.className='item';d.innerHTML=`<div><b>${esc(j.place||'სამუშაო')} <span class="jobStatusMark ${j.paid?'paid':'unpaid'}">${j.paid?'✓':'+'}</span></b><div class="jobDateLine">${formatDate(j.date)}</div>${j.note?`<div class="meta">${esc(j.note)}</div>`:''}</div><div class="right"><b>${euro(j.money)}</b><div class="actions"><button class="small" onclick="togglePaid('${j.id}')">${j.paid?'გადაუხდელია':'გადახდა მივიღე'}</button><button class="small edit" onclick="editJob('${j.id}')">✎ შეცვლა</button><button class="small danger" onclick="delJob('${j.id}')">✕ წაშლა</button></div></div>`;$('list').appendChild(d)})
+}
+function receivedForWorkMonth(key){
+  return jobs.filter(j=>(j.date||'').slice(0,7)===key && j.paid)
+             .reduce((sum,j)=>sum+Number(j.money||0),0);
 }
 function renderMonths(){
  const map={};jobs.forEach(j=>{const k=(j.date||'').slice(0,7)||'უცნობი';if(!map[k])map[k]={total:0,paid:0,count:0};map[k].total+=Number(j.money||0);if(j.paid)map[k].paid+=Number(j.money||0);map[k].count++});
@@ -667,11 +702,59 @@ function openCalendarNote(){
 }
 function closeCalendarNote(){$('noteModal').classList.remove('show')}
 
+function openReceivableModal(){
+  renderReceivableModal();
+  $('receivableModal').classList.add('show');
+}
+function closeReceivableModal(){
+  $('receivableModal').classList.remove('show');
+}
+function renderReceivableModal(){
+  const list=$('receivableList'), summary=$('receivableSummary'), all=$('receivableAllCheck');
+  if(!list||!summary||!all)return;
+  const data=[...jobs].sort((a,b)=>(b.date||'').localeCompare(a.date||'')||String(b.id).localeCompare(String(a.id)));
+  const unpaidData=data.filter(j=>!j.paid);
+  const total=data.reduce((s,j)=>s+Number(j.money||0),0);
+  const paid=data.filter(j=>j.paid).reduce((s,j)=>s+Number(j.money||0),0);
+  const unpaid=total-paid;
+  const unpaidCount=unpaidData.length;
+  summary.innerHTML=`სულ სამუშაოები: <b>${data.length}</b> • მიღებული: <b>${euro(paid)}</b> • ჯერ მისაღები: <b>${euro(unpaid)}</b> • ${unpaidCount} გადაუხდელი`;
+  all.checked=data.length>0 && unpaidCount===0;
+  list.innerHTML='';
+  if(!unpaidData.length){
+    list.innerHTML='<div class="receivableEmpty">ყველასგან მიღებულია თანხა. 🎉</div>';
+    return;
+  }
+  unpaidData.forEach(j=>{
+    const row=document.createElement('div');
+    row.className='receivableRow receivableUnpaid';
+    row.innerHTML=`<label class="receivableCheck"><input type="checkbox" onchange="setReceivablePaid('${j.id}',this.checked)"><div class="receivableInfo"><div class="receivablePlace">${esc(j.place||'სამუშაო')}</div><div class="receivableDate">${formatDate(j.date)}${j.note?' • '+esc(j.note):''}</div></div></label><div class="receivableAmount">${euro(j.money)}</div>`;
+    list.appendChild(row);
+  });
+}
+function setReceivablePaid(id,checked){
+  const j=jobs.find(x=>x.id===id);
+  if(!j)return;
+  j.paid=checked;
+  save();
+  render();
+  renderList();
+  renderMonths();
+  renderReceivableModal();
+}
+function toggleAllReceivable(checked){
+  jobs.forEach(j=>{j.paid=checked});
+  save();
+  render();
+  renderList();
+  renderMonths();
+  renderReceivableModal();
+}
 function openForm(){editingId=null;$('formTitle').textContent='სამუშაოს დამატება';$('date').value=new Date().toISOString().slice(0,10);$('place').value='';$('money').value='';$('note').value='';$('paidCheck').checked=false;$('modal').classList.add('show')}
 function closeForm(){$('modal').classList.remove('show')}
 function editJob(id){const j=jobs.find(x=>x.id===id);if(!j)return;editingId=id;$('formTitle').textContent='სამუშაოს შეცვლა';$('date').value=j.date||'';$('place').value=j.place||'';$('money').value=j.money||'';$('note').value=j.note||'';$('paidCheck').checked=!!j.paid;$('modal').classList.add('show')}
 function saveJob(){const amount=Number($('money').value);if(!amount||amount<=0){alert('თანხა მიუთითე');return}const data={date:$('date').value,place:$('place').value.trim(),money:amount,note:$('note').value.trim(),paid:$('paidCheck').checked};if(!data.date){alert('თარიღი მიუთითე');return}if(editingId){const i=jobs.findIndex(x=>x.id===editingId);jobs[i]={...jobs[i],...data}}else jobs.push({id:Date.now().toString()+Math.random().toString(16).slice(2),...data});save();closeForm();render()}
-function togglePaid(id){const j=jobs.find(x=>x.id===id);if(j){j.paid=!j.paid;save();render()}}
+function togglePaid(id){const j=jobs.find(x=>x.id===id);if(j){j.paid=!j.paid;save();render();renderList();renderMonths();}}
 function delJob(id){if(confirm('წავშალოთ ეს ჩანაწერი?')){jobs=jobs.filter(x=>x.id!==id);save();render()}}
 function temoNavigatePage(pageId){
   const ids=['mainPage','settingsPage','userManagementPage','walletPage'];
@@ -896,6 +979,7 @@ function registerNewUser(){
  const n=document.getElementById('newUserAuthName').value.trim();
  const p=document.getElementById('newUserAuthPassword').value;
  if(!n||!p){alert('სახელი და ახალი პაროლი ორივე შეავსე');return}
+ if(!/^[A-Za-z]+$/.test(n)){alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');document.getElementById('newUserAuthName').value=n.replace(/[^A-Za-z]/g,'');return}
  if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return}
  const users=getUsers();
  if(users.some(u=>u.name.toLowerCase()===n.toLowerCase())){alert('ეს მომხმარებელი უკვე არსებობს');return}
@@ -909,7 +993,7 @@ function registerNewUser(){
 </script>
 <div id="newUserAuthModal"><div class="newUserAuthBox">
 <h2>🔐 ახალი მომხმარებლის ავტორიზაცია</h2>
-<label>1. თქვენი სახელი</label><input id="newUserAuthName" maxlength="40">
+<label>1. თქვენი სახელი</label><input id="newUserAuthName" maxlength="40" pattern="[A-Za-z]+" inputmode="latin" autocomplete="username" oninput="this.value=this.value.replace(/[^A-Za-z]/g,'')" onpaste="setTimeout(()=>this.value=this.value.replace(/[^A-Za-z]/g,''),0)">
 <label>2. თქვენი ახალი პაროლი</label><input id="newUserAuthPassword" type="password" maxlength="80">
 <button onclick="registerNewUser()">შესვლა</button>
 <button type="button" onclick="document.getElementById('newUserAuthModal').classList.remove('show');document.getElementById('loginScreen').classList.remove('hidden')" style="background:#20323b;border-color:#285269">✕ გაუქმება</button>
