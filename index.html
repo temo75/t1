@@ -169,6 +169,31 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 .noteEntry .noteUnpaid{color:#ff9a9a}
 .noteClose{width:100%;margin-top:8px;padding:12px;border:0;border-radius:11px;background:#183445;color:#fff;cursor:pointer;font-weight:bold}
 </style>
+<style id="temo-receivable-modal-style">
+.miniReceivable{cursor:pointer;transition:transform .15s ease,box-shadow .15s ease}
+.miniReceivable:active{transform:scale(.98)}
+.receivableModal{position:fixed;inset:0;z-index:10004;display:none;align-items:center;justify-content:center;padding:16px;background:#000b}
+.receivableModal.show{display:flex}
+.receivableBox{width:min(620px,100%);max-height:88vh;display:flex;flex-direction:column;background:linear-gradient(145deg,#0c1a23,#10232f);border:1px solid #ef5b67;border-radius:20px;padding:20px;box-shadow:0 0 18px rgba(239,91,103,.45),0 20px 60px #000c}
+.receivableHeader{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.receivableHeader h2{margin:0;color:#fff;font-size:20px}
+.receivableClose{width:38px;height:38px;border-radius:50%;border:1px solid #ff3b3b;background:rgba(70,0,0,.45);color:#ff5b5b;font-size:24px;font-weight:900;cursor:pointer;box-shadow:0 0 7px rgba(255,59,59,.8),0 0 16px rgba(255,59,59,.45)}
+.receivableSummary{margin:12px 0;padding:12px;border-radius:12px;background:#09161e;border:1px solid #1e3542;color:#c7d4d8}
+.receivableAll{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:13px;border-radius:12px;border:1px solid #2f7d32;background:#0c2113;color:#fff;font-weight:bold;box-shadow:0 0 8px rgba(47,125,50,.35)}
+.receivableAll input,.receivableCheck input{width:22px;height:22px;accent-color:#49a84d}
+.receivableList{overflow:auto;min-height:0}
+.receivableRow{display:flex;align-items:center;gap:12px;padding:13px;margin:8px 0;border-radius:12px;background:#09161e;border:1px solid #1e3542}
+.receivableCheck{display:flex;align-items:center;gap:10px;flex:1;cursor:pointer}
+.receivableInfo{flex:1;min-width:0}
+.receivablePlace{font-weight:800;color:#fff}
+.receivableDate{font-size:12px;color:#9fb0b8;margin-top:3px}
+.receivableAmount{font-weight:800;font-size:17px;white-space:nowrap}
+.receivablePaid{border-color:#285f3c}
+.receivablePaid .receivableAmount{color:#63ff9a}
+.receivableUnpaid{border-color:#6e2931}
+.receivableUnpaid .receivableAmount{color:#ff8a8a}
+.receivableEmpty{text-align:center;color:#9fb0b8;padding:25px}
+</style>
 <style id="temo-job-status-style">
 .jobStatusMark{display:inline-block;margin-left:6px;font-weight:900;font-size:20px;line-height:1}
 .jobStatusMark.unpaid{color:#f2f2f2}
@@ -288,7 +313,7 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
 
 <div class="stats">
 <div class="mini"><span>📅 დღიური საშუალო</span><b id="average">€0</b></div>
-<div class="mini miniReceivable"><span>⏳ მისაღები</span><b id="unpaid">€0</b><small id="unpaidDays">0 გადასახდელი</small></div>
+<div class="mini miniReceivable" id="receivableCard" onclick="openReceivableModal()" role="button" tabindex="0" title="მისაღები თანხების ნახვა"><span>⏳ მისაღები</span><b id="unpaid">€0</b><small id="unpaidDays">0 გადასახდელი</small></div>
 <div class="mini"><span>📊 ამ თვის სამუშაოები</span><b id="monthDays">0 დღე</b></div>
 </div>
 
@@ -375,6 +400,14 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
 <div id="deleteAuthError" class="deleteAuthError"></div>
 <div class="deleteAuthRow"><button class="deleteCancel" onclick="closeDeleteAuth()">გაუქმება</button><button class="deleteConfirm" onclick="confirmDeleteAll()">წაშლა</button></div>
 </div></div>
+<div class="receivableModal" id="receivableModal" onclick="if(event.target===this)closeReceivableModal()">
+<div class="receivableBox">
+  <div class="receivableHeader"><h2>💶 მისაღები თანხები</h2><button class="receivableClose" onclick="closeReceivableModal()" aria-label="დახურვა">✕</button></div>
+  <div class="receivableSummary" id="receivableSummary"></div>
+  <label class="receivableAll"><input id="receivableAllCheck" type="checkbox" onchange="toggleAllReceivable(this.checked)"> ყველამ მომცა ფული ვისაც ემართა</label>
+  <div class="receivableList" id="receivableList"></div>
+</div>
+</div>
 <div class="noteModal" id="noteModal" onclick="if(event.target===this)closeCalendarNote()">
 <div class="noteBox">
 <div class="noteHeader"><h2>ჩანაწერები</h2><button class="noteClose" onclick="closeCalendarNote()" aria-label="დახურვა" title="დახურვა">✕</button></div>
@@ -637,6 +670,46 @@ function openCalendarNote(){
 }
 function closeCalendarNote(){$('noteModal').classList.remove('show')}
 
+function openReceivableModal(){
+  renderReceivableModal();
+  $('receivableModal').classList.add('show');
+}
+function closeReceivableModal(){
+  $('receivableModal').classList.remove('show');
+}
+function renderReceivableModal(){
+  const list=$('receivableList'), summary=$('receivableSummary'), all=$('receivableAllCheck');
+  if(!list||!summary||!all)return;
+  const data=[...jobs].sort((a,b)=>(b.date||'').localeCompare(a.date||'')||String(b.id).localeCompare(String(a.id)));
+  const total=data.reduce((s,j)=>s+Number(j.money||0),0);
+  const paid=data.filter(j=>j.paid).reduce((s,j)=>s+Number(j.money||0),0);
+  const unpaid=total-paid;
+  const unpaidCount=data.filter(j=>!j.paid).length;
+  summary.innerHTML=`სულ სამუშაოები: <b>${data.length}</b> • მიღებული: <b>${euro(paid)}</b> • ჯერ მისაღები: <b>${euro(unpaid)}</b> • ${unpaidCount} გადაუხდელი`;
+  all.checked=data.length>0 && data.every(j=>j.paid);
+  list.innerHTML='';
+  if(!data.length){list.innerHTML='<div class="receivableEmpty">ჯერ სამუშაოები არ არის.</div>';return}
+  data.forEach(j=>{
+    const row=document.createElement('div');
+    row.className='receivableRow '+(j.paid?'receivablePaid':'receivableUnpaid');
+    row.innerHTML=`<label class="receivableCheck"><input type="checkbox" ${j.paid?'checked':''} onchange="setReceivablePaid('${j.id}',this.checked)"><div class="receivableInfo"><div class="receivablePlace">${esc(j.place||'სამუშაო')}</div><div class="receivableDate">${formatDate(j.date)}${j.note?' • '+esc(j.note):''}</div></div></label><div class="receivableAmount">${euro(j.money)}</div>`;
+    list.appendChild(row);
+  });
+}
+function setReceivablePaid(id,checked){
+  const j=jobs.find(x=>x.id===id);
+  if(!j)return;
+  j.paid=checked;
+  save();
+  render();
+  renderReceivableModal();
+}
+function toggleAllReceivable(checked){
+  jobs.forEach(j=>{j.paid=checked});
+  save();
+  render();
+  renderReceivableModal();
+}
 function openForm(){editingId=null;$('formTitle').textContent='სამუშაოს დამატება';$('date').value=new Date().toISOString().slice(0,10);$('place').value='';$('money').value='';$('note').value='';$('paidCheck').checked=false;$('modal').classList.add('show')}
 function closeForm(){$('modal').classList.remove('show')}
 function editJob(id){const j=jobs.find(x=>x.id===id);if(!j)return;editingId=id;$('formTitle').textContent='სამუშაოს შეცვლა';$('date').value=j.date||'';$('place').value=j.place||'';$('money').value=j.money||'';$('note').value=j.note||'';$('paidCheck').checked=!!j.paid;$('modal').classList.add('show')}
