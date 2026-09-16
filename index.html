@@ -139,12 +139,18 @@ footer{display:none!important;}
     0 10px 22px rgba(47,125,50,.55) !important;
   text-shadow:0 0 7px rgba(120,220,120,.85);
 }
-</style>
-<style id="temo-neon-controller">
-.neonControl{margin-top:14px;padding:16px;border:1px solid #49d86a;border-radius:16px;background:#09161e;box-shadow:0 0 8px rgba(73,216,106,.5),0 0 22px rgba(73,216,106,.25)}
-.neonControl h2{margin:0 0 12px}.neonRow{display:grid;grid-template-columns:1fr 1fr;gap:10px}.neonControl label{margin:0;font-size:13px}.neonControl input[type=color]{width:100%;height:46px;padding:3px;border-radius:10px;background:#071117;border:1px solid #49d86a}.neonControl input[type=range]{width:100%;accent-color:#49d86a}.neonValue{text-align:center;font-weight:bold;margin-top:5px;color:#63ff9a}
-</style>
 
+/* NEON CONTROLLER */
+:root{--neon-control:#49d86a;--neon-control-rgb:73,216,106;--neon-power:0.65}
+.neonControlled{border-color:var(--neon-control)!important;}
+.neonControlled .label,.neonControlled span{color:#dfffe6!important;}
+.neonControlled .amount,.neonControlled b{ }
+.neonControlBox{margin-top:14px;padding:16px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(145deg,var(--panel),var(--panel2))}
+.neonControlRow{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;margin-top:12px}
+.neonControlRow input[type=color]{width:58px;height:42px;padding:2px;border-radius:10px;border:1px solid var(--line);background:#071117;cursor:pointer}
+.neonControlRow input[type=range]{width:100%}
+.neonValue{font-weight:bold;color:var(--neon-control);text-shadow:0 0 8px rgba(var(--neon-control-rgb),.8);min-width:48px;text-align:right}
+</style>
 </style>
 
 <style id="temo-3d-title">
@@ -340,13 +346,13 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
 
 <div class="grid">
 <div class="privacyEyeSlot"><button id="privacyEye" class="privacyEyeMain" onclick="togglePrivacy()" aria-label="თანხების დამალვა" title="თანხების დამალვა">👁</button></div>
-<div class="card monthTotalHero"><div class="label">📆 ამ თვის ნამუშევარი</div><div class="amount" id="monthTotal">€0</div></div>
+<div class="card monthTotalHero neonControlled"><div class="label">📆 ამ თვის ნამუშევარი</div><div class="amount" id="monthTotal">€0</div></div>
 </div>
 
 <div class="stats">
-<div class="mini"><span>📅 დღიური საშუალო</span><b id="average">€0</b></div>
-<div class="mini miniReceivable" id="receivableCard" onclick="openReceivableModal()" role="button" tabindex="0" title="მისაღები თანხების ნახვა"><span>⏳ მისაღები</span><b id="unpaid">€0</b><small id="unpaidDays">0 გადასახდელი</small></div>
-<div class="mini"><span>📊 ამ თვის სამუშაოები</span><b id="monthDays">0 დღე</b></div>
+<div class="mini neonControlled"><span>📅 დღიური საშუალო</span><b id="average">€0</b></div>
+<div class="mini miniReceivable neonControlled" id="receivableCard" onclick="openReceivableModal()" role="button" tabindex="0" title="მისაღები თანხების ნახვა"><span>⏳ მისაღები</span><b id="unpaid">€0</b><small id="unpaidDays">0 გადასახდელი</small></div>
+<div class="mini neonControlled"><span>📊 ამ თვის სამუშაოები</span><b id="monthDays">0 დღე</b></div>
 </div>
 
 <button class="add" onclick="openForm()">＋ სამუშაოს დამატება</button>
@@ -384,11 +390,6 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
 <header><div><h1>⚙️ სეთინგები</h1><small>მონაცემების მართვა</small></div></header>
 
 
-<div class="section neonControl adminOnly" id="neonControlSection">
-<h2>✨ ნეონების მართვა</h2>
-<div class="neonRow"><label>ფერი<input id="neonColor" type="color" value="#49d86a"></label><label>სიმძლავრე<input id="neonStrength" type="range" min="0" max="100" value="65"><div class="neonValue" id="neonStrengthValue">65%</div></label></div>
-</div>
-
 <div class="section" id="websiteUpdateSection">
 <h2>🔄 საიტის განახლება</h2>
 <div class="tools">
@@ -400,6 +401,16 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
 
 </div>
 <div class="meta" style="margin-top:12px">ატვირთული ფაილი უნდა იყოს index.html. Token მხოლოდ ამ ტელეფონში ინახება.</div>
+</div>
+
+<div class="section" id="neonControlSection" style="display:none">
+<h2>✨ ნეონის მართვა</h2>
+<div class="neonControlBox">
+<div>ფერი</div>
+<div class="neonControlRow"><input id="neonColor" type="color" value="#49d86a" aria-label="ნეონის ფერი"></div>
+<div style="margin-top:14px">სიმძლავრე</div>
+<div class="neonControlRow"><input id="neonStrength" type="range" min="0" max="100" value="65" step="1" aria-label="ნეონის სიმძლავრე"><span id="neonStrengthValue" class="neonValue">65%</span></div>
+</div>
 </div>
 
 </div>
@@ -816,13 +827,34 @@ function loadPrivacyState(){
   eye.title=hidden?'თანხების ჩვენება':'თანხების დამალვა';
   eye.setAttribute('aria-label',hidden?'თანხების ჩვენება':'თანხების დამალვა');
 }
-function applyNeonSettings(){const c=document.getElementById('neonColor'),r=document.getElementById('neonStrength');if(!c||!r)return;const color=c.value, power=Number(r.value)/100;const hex=color.replace('#','');const rr=parseInt(hex.slice(0,2),16),gg=parseInt(hex.slice(2,4),16),bb=parseInt(hex.slice(4,6),16);document.documentElement.style.setProperty('--admin-neon',color);document.documentElement.style.setProperty('--admin-neon-a',`rgba(${rr},${gg},${bb},${power})`);document.querySelectorAll('.grid .monthTotalHero,.stats .mini').forEach(el=>el.style.boxShadow=`0 0 ${7+Math.round(power*8)}px rgba(${rr},${gg},${bb},${.45+power*.3}),0 0 ${16+Math.round(power*18)}px rgba(${rr},${gg},${bb},${.25+power*.3}),0 0 ${30+Math.round(power*25)}px rgba(${rr},${gg},${bb},${.12+power*.2}),inset 0 0 12px rgba(${rr},${gg},${bb},.1)`);localStorage.setItem('temoNeonColor',color);localStorage.setItem('temoNeonStrength',String(r.value));document.getElementById('neonStrengthValue').textContent=r.value+'%';}
-function loadNeonSettings(){const c=document.getElementById('neonColor'),r=document.getElementById('neonStrength');if(!c||!r)return;c.value=localStorage.getItem('temoNeonColor')||'#49d86a';r.value=localStorage.getItem('temoNeonStrength')||'65';c.oninput=applyNeonSettings;r.oninput=applyNeonSettings;applyNeonSettings()}
 
+function applyNeonSettings(){
+ const c=document.getElementById('neonColor'),r=document.getElementById('neonStrength');
+ if(!c||!r)return;
+ const color=c.value,p=Number(r.value)/100,hex=color.slice(1);
+ const rr=parseInt(hex.slice(0,2),16)||0,gg=parseInt(hex.slice(2,4),16)||0,bb=parseInt(hex.slice(4,6),16)||0;
+ document.documentElement.style.setProperty('--neon-control',color);
+ document.documentElement.style.setProperty('--neon-control-rgb',`${rr},${gg},${bb}`);
+ document.documentElement.style.setProperty('--neon-power',p);
+ const blur1=6+Math.round(p*10),blur2=14+Math.round(p*20),blur3=24+Math.round(p*28);
+ document.querySelectorAll('.neonControlled').forEach(el=>{
+   el.style.boxShadow=`0 0 ${blur1}px rgba(${rr},${gg},${bb},${(0.28+p*0.55).toFixed(2)}),0 0 ${blur2}px rgba(${rr},${gg},${bb},${(0.18+p*0.45).toFixed(2)}),0 0 ${blur3}px rgba(${rr},${gg},${bb},${(0.08+p*0.30).toFixed(2)}),inset 0 0 12px rgba(${rr},${gg},${bb},${(0.05+p*0.12).toFixed(2)})`;
+   el.querySelectorAll('.label,.amount,span,b').forEach(t=>{t.style.textShadow=`0 0 7px rgba(${rr},${gg},${bb},${(0.45+p*0.5).toFixed(2)}),0 0 16px rgba(${rr},${gg},${bb},${(0.2+p*0.35).toFixed(2)})`;});
+ });
+ const v=document.getElementById('neonStrengthValue');if(v)v.textContent=r.value+'%';
+ localStorage.setItem('temoNeonColor',color);localStorage.setItem('temoNeonStrength',r.value);
+}
+function loadNeonSettings(){
+ const c=document.getElementById('neonColor'),r=document.getElementById('neonStrength');
+ if(!c||!r)return;
+ c.value=localStorage.getItem('temoNeonColor')||'#49d86a';
+ r.value=localStorage.getItem('temoNeonStrength')||'65';
+ c.addEventListener('input',applyNeonSettings);r.addEventListener('input',applyNeonSettings);applyNeonSettings();
+}
 function updateUserUI(){
  const isAdmin=currentUser===ADMIN_USER;
  const site=$('websiteUpdateSection'); if(site)site.style.display=isAdmin?'':'none';
- const users=$('userManagementSection'); if(users)users.style.display=isAdmin?'':'none';
+ const users=$('userManagementSection'); if(users)users.style.display=isAdmin?'':'none'; const neon=$('neonControlSection'); if(neon)neon.style.display=isAdmin?'':'none';
  const manageBtn=$('userManagementOpenBtn'); if(manageBtn)manageBtn.style.display=isAdmin?'block':'none';
  const label=$('currentUserLabel'); if(label){label.textContent=currentUser?'👤 შენ შეხვედი... '+currentUser:'';label.style.display=currentUser?'block':'none';}
  if(isAdmin)renderManagedUsers();
@@ -864,7 +896,6 @@ $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeForm()});
 render();
 loadPrivacyState();
 loadGitHubSettings();
-loadNeonSettings();
 $('ghToken').addEventListener('input',()=>{localStorage.setItem('temoGitHubToken',$('ghToken').value.trim())});
 $('deleteAuthPassword').addEventListener('keydown',e=>{if(e.key==='Enter')confirmDeleteAll()});
 
@@ -980,6 +1011,7 @@ async function updateWebsite(){
 
 function showNewUserAuth(){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('newUserAuthModal').classList.add('show')}
 async function registerNewUser(){const nameEl=document.getElementById('newUserAuthName'),passEl=document.getElementById('newUserAuthPassword'),n=nameEl.value.trim(),p=passEl.value;if(!n||!p){alert('სახელი და ახალი პაროლი ორივე შეავსე');return;}if(!/^[A-Za-z]+$/.test(n)){alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');nameEl.value=n.replace(/[^A-Za-z]/g,'');return;}if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return;}const users=getUsers();if(users.some(u=>u.name.toLowerCase()===n.toLowerCase()&&u.password===p)){alert('ასეთი მომხმარებელი უკვე არსებობს');return;}const user=normalizeUser({id:makeUserId(),name:n,password:p,admin:false,authorized:true,blocked:false});users.push(user);markFreshUser(user.id);localStorage.setItem(USERS_KEY,JSON.stringify(users));await saveUsersToFirebase(users);currentUser=user.name;currentUserId=user.id;localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');nameEl.value='';passEl.value='';document.getElementById('newUserAuthModal').classList.remove('show');$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
+window.addEventListener('DOMContentLoaded',loadNeonSettings);
 </script>
 <div id="newUserAuthModal"><div class="newUserAuthBox">
 <h2>🔐 ახალი მომხმარებლის ავტორიზაცია</h2>
