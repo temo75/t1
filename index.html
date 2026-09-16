@@ -317,18 +317,28 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
 }
 </style>
 <style id="temo-neon-live-fix">
-/* LIVE NEON CONTROLLER — რეალური ბლოკების მართვა */
-.grid .monthTotalHero.neonControlled, .stats .mini.neonControlled {
-  border-color:var(--neon-control) !important;
-  box-shadow:0 0 7px rgba(var(--neon-control-rgb),.65),0 0 16px rgba(var(--neon-control-rgb),.48),0 0 30px rgba(var(--neon-control-rgb),.28),inset 0 0 12px rgba(var(--neon-control-rgb),.10) !important;
+:root{--neon-control:#49d86a;--neon-control-rgb:73,216,106;--neon-power:0.65}
+body.neon-global .neonControlled{
+  border-color:var(--neon-control)!important;
+  box-shadow:0 0 calc(8px + 18px*var(--neon-power)) rgba(var(--neon-control-rgb),calc(.15 + .65*var(--neon-power))),
+             0 0 calc(18px + 32px*var(--neon-power)) rgba(var(--neon-control-rgb),calc(.08 + .52*var(--neon-power))),
+             0 0 calc(32px + 45px*var(--neon-power)) rgba(var(--neon-control-rgb),calc(.04 + .34*var(--neon-power))) !important;
 }
-.grid .monthTotalHero.neonControlled .label, .stats .mini.neonControlled span {
-  text-shadow:0 0 7px rgba(var(--neon-control-rgb),.65) !important;
-  color:var(--neon-control) !important;
+body.neon-global .neonControlled .label,
+body.neon-global .neonControlled span,
+body.neon-global .neonControlled b,
+body.neon-global .neonControlled .amount{
+  color:var(--neon-control)!important;
+  text-shadow:0 0 calc(5px + 8px*var(--neon-power)) rgba(var(--neon-control-rgb),calc(.2 + .7*var(--neon-power)))!important;
 }
-.grid .monthTotalHero.neonControlled .amount, .stats .mini.neonControlled b {
-  text-shadow:0 0 8px rgba(var(--neon-control-rgb),.75),0 0 18px rgba(var(--neon-control-rgb),.42) !important;
-  color:var(--neon-control) !important;
+body.neon-global .neonAll{
+  border-color:var(--neon-control)!important;
+  box-shadow:0 0 calc(6px + 14px*var(--neon-power)) rgba(var(--neon-control-rgb),calc(.12 + .62*var(--neon-power))),
+             0 0 calc(18px + 30px*var(--neon-power)) rgba(var(--neon-control-rgb),calc(.06 + .45*var(--neon-power))),
+             0 0 calc(30px + 42px*var(--neon-power)) rgba(var(--neon-control-rgb),calc(.03 + .28*var(--neon-power))) !important;
+}
+body.neon-global .neonAll{
+  text-shadow:0 0 calc(4px + 8px*var(--neon-power)) rgba(var(--neon-control-rgb),calc(.18 + .62*var(--neon-power)));
 }
 </style>
 </head>
@@ -846,32 +856,25 @@ function loadPrivacyState(){
 function applyNeonSettings(){
  const c=document.getElementById('neonColor'),r=document.getElementById('neonStrength');
  if(!c||!r)return;
- const color=c.value,p=Math.max(0,Math.min(100,Number(r.value)||0))/100,hex=color.slice(1);
- const rr=parseInt(hex.slice(0,2),16)||0,gg=parseInt(hex.slice(2,4),16)||0,bb=parseInt(hex.slice(4,6),16)||0,rgb=`${rr},${gg},${bb}`;
- document.documentElement.style.setProperty('--neon-control',color);document.documentElement.style.setProperty('--neon-control-rgb',rgb);document.documentElement.style.setProperty('--neon-power',p);
- const b1=4+Math.round(p*12),b2=10+Math.round(p*24),b3=20+Math.round(p*36);
- const glow=`0 0 ${b1}px rgba(${rgb},${(0.10+p*.75).toFixed(2)}),0 0 ${b2}px rgba(${rgb},${(0.06+p*.58).toFixed(2)}),0 0 ${b3}px rgba(${rgb},${(0.03+p*.38).toFixed(2)}),inset 0 0 12px rgba(${rgb},${(0.03+p*.14).toFixed(2)})`;
- const textGlow=`0 0 ${Math.max(3,Math.round(4+p*7))}px rgba(${rgb},${(0.18+p*.72).toFixed(2)}),0 0 ${Math.max(8,Math.round(9+p*14))}px rgba(${rgb},${(0.08+p*.42).toFixed(2)})`;
- const neonColors=['rgb(41, 153, 255)','rgb(41, 153, 223)','rgb(41, 169, 255)','rgb(255, 138, 0)','rgb(255, 59, 59)','rgb(99, 255, 154)','rgb(98, 255, 154)','rgb(73, 216, 106)','rgb(110, 255, 135)','rgb(90, 255, 120)'];
- document.querySelectorAll('*').forEach(el=>{
-  if(el===c||el===r||el.id==='neonStrengthValue')return; const cs=getComputedStyle(el),bs=cs.boxShadow||'',ts=cs.textShadow||'',bc=[cs.borderTopColor,cs.borderRightColor,cs.borderBottomColor,cs.borderLeftColor].join(' '),oc=cs.outlineColor||'';
-  const hit=x=>neonColors.some(n=>x.includes(n));
-  if(hit(bs)){el.style.setProperty('box-shadow',glow,'important');}
-  if(hit(ts)){el.style.setProperty('text-shadow',textGlow,'important');}
-  if(hit(bc)){el.style.setProperty('border-color',color,'important');}
-  if(hit(oc)){el.style.setProperty('outline-color',color,'important');}
-  if(neonColors.includes(cs.color)){el.style.setProperty('color',color,'important');}
+ const color=c.value,p=Number(r.value)/100,hex=color.slice(1);
+ const rr=parseInt(hex.slice(0,2),16)||0,gg=parseInt(hex.slice(2,4),16)||0,bb=parseInt(hex.slice(4,6),16)||0;
+ document.documentElement.style.setProperty('--neon-control',color);
+ document.documentElement.style.setProperty('--neon-control-rgb',`${rr},${gg},${bb}`);
+ document.documentElement.style.setProperty('--neon-power',p);
+ const blur1=6+Math.round(p*10),blur2=14+Math.round(p*20),blur3=24+Math.round(p*28);
+ document.querySelectorAll('.neonControlled').forEach(el=>{
+   el.style.boxShadow=`0 0 ${blur1}px rgba(${rr},${gg},${bb},${(0.28+p*0.55).toFixed(2)}),0 0 ${blur2}px rgba(${rr},${gg},${bb},${(0.18+p*0.45).toFixed(2)}),0 0 ${blur3}px rgba(${rr},${gg},${bb},${(0.08+p*0.30).toFixed(2)}),inset 0 0 12px rgba(${rr},${gg},${bb},${(0.05+p*0.12).toFixed(2)})`;
+   el.querySelectorAll('.label,.amount,span,b').forEach(t=>{t.style.textShadow=`0 0 7px rgba(${rr},${gg},${bb},${(0.45+p*0.5).toFixed(2)}),0 0 16px rgba(${rr},${gg},${bb},${(0.2+p*0.35).toFixed(2)})`;});
  });
- const v=document.getElementById('neonStrengthValue');if(v)v.textContent=Math.round(p*100)+'%';
- localStorage.setItem('temoNeonColor',color);localStorage.setItem('temoNeonStrength',String(r.value));
+ const v=document.getElementById('neonStrengthValue');if(v)v.textContent=r.value+'%';
+ localStorage.setItem('temoNeonColor',color);localStorage.setItem('temoNeonStrength',r.value);
 }
-function startNeonLiveObserver(){if(window.__temoNeonObserver)return;window.__temoNeonObserver=new MutationObserver(()=>{clearTimeout(window.__temoNeonTimer);window.__temoNeonTimer=setTimeout(applyNeonSettings,25);});window.__temoNeonObserver.observe(document.body,{subtree:true,childList:true});}
 function loadNeonSettings(){
  const c=document.getElementById('neonColor'),r=document.getElementById('neonStrength');
  if(!c||!r)return;
  c.value=localStorage.getItem('temoNeonColor')||'#49d86a';
  r.value=localStorage.getItem('temoNeonStrength')||'65';
- c.addEventListener('input',applyNeonSettings);r.addEventListener('input',applyNeonSettings);applyNeonSettings();startNeonLiveObserver();
+ c.addEventListener('input',applyNeonSettings);r.addEventListener('input',applyNeonSettings);applyNeonSettings();
 }
 function updateUserUI(){
  const isAdmin=currentUser===ADMIN_USER;
@@ -1034,6 +1037,56 @@ async function updateWebsite(){
 function showNewUserAuth(){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('newUserAuthModal').classList.add('show')}
 async function registerNewUser(){const nameEl=document.getElementById('newUserAuthName'),passEl=document.getElementById('newUserAuthPassword'),n=nameEl.value.trim(),p=passEl.value;if(!n||!p){alert('სახელი და ახალი პაროლი ორივე შეავსე');return;}if(!/^[A-Za-z]+$/.test(n)){alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');nameEl.value=n.replace(/[^A-Za-z]/g,'');return;}if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return;}const users=getUsers();if(users.some(u=>u.name.toLowerCase()===n.toLowerCase()&&u.password===p)){alert('ასეთი მომხმარებელი უკვე არსებობს');return;}const user=normalizeUser({id:makeUserId(),name:n,password:p,admin:false,authorized:true,blocked:false});users.push(user);markFreshUser(user.id);localStorage.setItem(USERS_KEY,JSON.stringify(users));await saveUsersToFirebase(users);currentUser=user.name;currentUserId=user.id;localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');nameEl.value='';passEl.value='';document.getElementById('newUserAuthModal').classList.remove('show');$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
 window.addEventListener('DOMContentLoaded',loadNeonSettings);
+</script>
+
+<script id="temo-global-neon-controller">
+(function(){
+  const BASE_SELECTORS = [
+    '.neonControlled',
+    '.settingsBtn','.add','.loginBox button','.loginModeBtn',
+    '.repoTokenOpenBtn','.backupBtn','.save','.calendarNav','.calendarNoteBtn',
+    '.yearPickerGrid button','.calendarTitle','.temo-eye-btn','.privacyEyeMain',
+    '#siteFileBtn','#bottomNav > button','.receivableClose','.noteClose',
+    '.credentialsBox','.form','.section','.toolbox','.card','.mini',
+    '.dayCell.today','.dayCell.selected','.jobStatusMark.paid'
+  ];
+  function rgb(hex){
+    hex=String(hex||'#49d86a').replace('#','');
+    if(hex.length!==6)return '73,216,106';
+    return [0,2,4].map(i=>parseInt(hex.slice(i,i+2),16)||0).join(',');
+  }
+  function applyGlobalNeon(){
+    const c=document.getElementById('neonColor'), r=document.getElementById('neonStrength');
+    if(!c||!r)return;
+    const color=c.value || '#49d86a';
+    const power=Math.max(0,Math.min(100,Number(r.value)||0))/100;
+    document.documentElement.style.setProperty('--neon-control',color);
+    document.documentElement.style.setProperty('--neon-control-rgb',rgb(color));
+    document.documentElement.style.setProperty('--neon-power',power);
+    document.body.classList.add('neon-global');
+
+    const selectors=BASE_SELECTORS.join(',');
+    document.querySelectorAll(selectors).forEach(el=>{
+      if(el===c||el===r)return;
+      el.classList.add('neonAll');
+    });
+    const v=document.getElementById('neonStrengthValue');
+    if(v)v.textContent=Math.round(power*100)+'%';
+    localStorage.setItem('temoNeonColor',color);
+    localStorage.setItem('temoNeonStrength',String(r.value));
+  }
+  window.applyNeonSettings=applyGlobalNeon;
+  window.loadNeonSettings=function(){
+    const c=document.getElementById('neonColor'),r=document.getElementById('neonStrength');
+    if(!c||!r)return;
+    c.value=localStorage.getItem('temoNeonColor')||'#49d86a';
+    r.value=localStorage.getItem('temoNeonStrength')||'65';
+    c.oninput=applyGlobalNeon;
+    r.oninput=applyGlobalNeon;
+    applyGlobalNeon();
+  };
+  window.addEventListener('DOMContentLoaded',window.loadNeonSettings);
+})();
 </script>
 <div id="newUserAuthModal"><div class="newUserAuthBox">
 <h2>🔐 ახალი მომხმარებლის ავტორიზაცია</h2>
