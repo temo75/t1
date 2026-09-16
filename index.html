@@ -445,6 +445,7 @@ const AUTH_PASSWORD='temo2139-590';
 const USERS_KEY='temoWorkTrackerUsers';
 const SESSION_USER_KEY='temoWorkTrackerUser';
 const SESSION_USER_ID_KEY='temoWorkTrackerUserId';
+const FRESH_USER_IDS_KEY='temoFreshUserIds';
 const ADMIN_USER='TEMO';
 const FIREBASE_DB_URL='https://temo-75-default-rtdb.europe-west1.firebasedatabase.app';
 let currentUser=localStorage.getItem(SESSION_USER_KEY)||'';
@@ -501,16 +502,49 @@ window.addEventListener('DOMContentLoaded',async()=>{
 });
 
 let jobs=[];
+function getFreshUserIds(){
+  try{return JSON.parse(localStorage.getItem(FRESH_USER_IDS_KEY)||'[]').map(String)}catch(e){return []}
+}
+function markFreshUser(id){
+  if(!id)return; const ids=getFreshUserIds(); if(!ids.includes(String(id))){ids.push(String(id));localStorage.setItem(FRESH_USER_IDS_KEY,JSON.stringify(ids));}
+}
+function unmarkFreshUser(id){
+  if(!id)return; localStorage.setItem(FRESH_USER_IDS_KEY,JSON.stringify(getFreshUserIds().filter(x=>x!==String(id))));
+}
+function removeAllLegacyJobKeysForName(name){
+  const target=String(name||'').trim().toLowerCase();
+  if(!target)return;
+  try{
+    Object.keys(localStorage).forEach(k=>{
+      if(k.toLowerCase().startsWith('temojobs_') && k.slice('temoJobs_'.length).toLowerCase()===target){localStorage.removeItem(k);}
+    });
+  }catch(e){}
+}
 function loadUserJobs(){
   try{
-    const key='temoJobs_'+(currentUser||ADMIN_USER);
-    const own=localStorage.getItem(key);
+    // სამუშაოები ინახება მომხმარებლის უნიკალური ID-ით და არა მხოლოდ სახელით.
+    // ამიტომ წაშლილი ანგარიშის ხელახლა შექმნისას ძველი სამუშაოები აღარ ბრუნდება.
+    const idKey='temoJobsId_'+(currentUserId||'');
+    const nameKey='temoJobs_'+(currentUser||ADMIN_USER);
+    let own=idKey&&currentUserId?localStorage.getItem(idKey):null;
+
+    // ძველი ვერსიებიდან არსებული მონაცემების ერთჯერადი მიგრაცია მოქმედ მომხმარებელზე.
+    // ახალი ანგარიშისთვის, რომელსაც ახალი ID აქვს, ძველი სახელის მონაცემები აღარ გამოიყენება.
+    if(own===null && currentUserId && !getFreshUserIds().includes(String(currentUserId))){
+      const legacy=localStorage.getItem(nameKey);
+      if(legacy!==null){
+        localStorage.setItem(idKey,legacy);
+        own=legacy;
+        localStorage.removeItem(nameKey);
+      }
+    }
+
     if(currentUser===ADMIN_USER){
-      const legacy=localStorage.getItem('temoJobs');
-      if((own===null || own==='[]') && legacy){
-        const legacyJobs=JSON.parse(legacy||'[]');
+      const legacyAdmin=localStorage.getItem('temoJobs');
+      if((own===null || own==='[]') && legacyAdmin){
+        const legacyJobs=JSON.parse(legacyAdmin||'[]');
         if(Array.isArray(legacyJobs) && legacyJobs.length){
-          localStorage.setItem(key,JSON.stringify(legacyJobs));
+          localStorage.setItem(idKey,JSON.stringify(legacyJobs));
           return legacyJobs;
         }
       }
@@ -540,7 +574,7 @@ if(!jobs.length){ jobs=SEPTEMBER_2026_JOBS.map(j=>({...j})); save(); }
   });
   if(jobs.length!==before){
     try{
-      const key='temoJobs_'+(currentUser||ADMIN_USER);
+      const key=currentUserId?'temoJobsId_'+currentUserId:'temoJobs_'+(currentUser||ADMIN_USER);
       localStorage.setItem(key,JSON.stringify(jobs));
       if(currentUser===ADMIN_USER) localStorage.setItem('temoJobs',JSON.stringify(jobs));
     }catch(e){}
@@ -554,7 +588,11 @@ const $=id=>document.getElementById(id);
 const euro=n=>'€'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2});
 $('today').textContent=new Date().toLocaleDateString('ka-GE');
 
-function save(){localStorage.setItem('temoJobs_'+(currentUser||ADMIN_USER),JSON.stringify(jobs));if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs))}
+function save(){
+  const key=currentUserId?'temoJobsId_'+currentUserId:'temoJobs_'+(currentUser||ADMIN_USER);
+  localStorage.setItem(key,JSON.stringify(jobs));
+  if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs));
+}
 function formatDate(s){if(!s)return '';const [y,m,d]=s.split('-');const months=['იანვარი','თებერვალი','მარტი','აპრილი','მაისი','ივნისი','ივლისი','აგვისტო','სექტემბერი','ოქტომბერი','ნოემბერი','დეკემბერი'];return Number(d)+' '+months[Number(m)-1]+' '+y}
 function monthName(key){const [y,m]=key.split('-');return new Date(y,Number(m)-1,1).toLocaleDateString('ka-GE',{year:'numeric',month:'long'})}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
@@ -764,9 +802,9 @@ function updateUserUI(){
  if(isAdmin)renderManagedUsers();
 }
 async function renderManagedUsers(){const box=$('userManagementList');if(!box)return;box.innerHTML='<div class="empty">მომხმარებლები იტვირთება...</div>';let users=getUsers();if(currentUser===ADMIN_USER){const remote=await loadUsersFromFirebase();if(Array.isArray(remote)){users=remote.map(normalizeUser).filter(u=>u.name);if(!users.some(u=>u.name.toUpperCase()===ADMIN_USER))users.unshift(normalizeUser({id:'admin-temo',name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true,blocked:false}));localStorage.setItem(USERS_KEY,JSON.stringify(users));}}const list=users.filter(u=>!u.admin&&u.name.toUpperCase()!==ADMIN_USER);if(!list.length){box.innerHTML='<div class="empty">მომხმარებლები ჯერ არ არის</div>';return;}list.forEach(u=>{const row=document.createElement('div');row.className='userRow';const b=document.createElement('button');b.className='backupBtn userNameBtn';b.textContent='👤 '+u.name+' | 🔑 '+u.password;b.disabled=true;const l=document.createElement('button');l.className='backupBtn lockBtn'+(u.blocked===true?' locked':'');l.textContent=u.blocked===true?'🔓 განბლოკვა':'🔒 დაბლოკვა';l.onclick=()=>toggleUserBlock(u.id);const d=document.createElement('button');d.className='backupBtn danger';d.textContent='🗑️ წაშლა';d.onclick=()=>deleteManagedUser(u.id);row.append(b,l,d);box.appendChild(row);});}
-async function addManagedUser(){if(currentUser!==ADMIN_USER)return;const n=$('newUserName')?.value.trim(),p=$('newUserPassword')?.value;if(!n||!p){alert('სახელი და პაროლი ორივე შეავსე');return;}const users=getUsers();if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return;}if(users.some(u=>u.name.toLowerCase()===n.toLowerCase()&&u.password===p)){alert('ასეთი მომხმარებელი უკვე არსებობს');return;}const user=normalizeUser({id:makeUserId(),name:n,password:p,admin:false,authorized:true,blocked:false});users.push(user);localStorage.setItem(USERS_KEY,JSON.stringify(users));await saveUsersToFirebase(users);if($('newUserName'))$('newUserName').value='';if($('newUserPassword'))$('newUserPassword').value='';await renderManagedUsers();}
+async function addManagedUser(){if(currentUser!==ADMIN_USER)return;const n=$('newUserName')?.value.trim(),p=$('newUserPassword')?.value;if(!n||!p){alert('სახელი და პაროლი ორივე შეავსე');return;}const users=getUsers();if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return;}if(users.some(u=>u.name.toLowerCase()===n.toLowerCase()&&u.password===p)){alert('ასეთი მომხმარებელი უკვე არსებობს');return;}const user=normalizeUser({id:makeUserId(),name:n,password:p,admin:false,authorized:true,blocked:false});users.push(user);markFreshUser(user.id);localStorage.setItem(USERS_KEY,JSON.stringify(users));await saveUsersToFirebase(users);if($('newUserName'))$('newUserName').value='';if($('newUserPassword'))$('newUserPassword').value='';await renderManagedUsers();}
 async function toggleUserBlock(id){if(currentUser!==ADMIN_USER)return;const users=getUsers(),u=users.find(x=>String(x.id)===String(id));if(!u||u.admin)return;const willBlock=u.blocked!==true;if(!confirm((willBlock?'დავბლოკოთ ':'განვბლოკოთ ')+u.name+'?'))return;u.blocked=willBlock;u.authorized=!willBlock;localStorage.setItem(USERS_KEY,JSON.stringify(users));renderManagedUsers();renderLoginUsers();saveUsersToFirebase(users).catch(e=>console.warn('Firebase user block update failed:',e));}
-async function deleteManagedUser(id){if(currentUser!==ADMIN_USER)return;const users=getUsers(),u=users.find(x=>String(x.id)===String(id));if(!u||u.admin)return;if(!confirm('წავშალოთ მომხმარებელი '+u.name+'?'))return;const remaining=users.filter(x=>String(x.id)!==String(id));localStorage.setItem(USERS_KEY,JSON.stringify(remaining));renderManagedUsers();renderLoginUsers();saveUsersToFirebase(remaining).catch(e=>console.warn('Firebase user delete failed:',e));localStorage.removeItem('temoJobs_'+u.name);} 
+async function deleteManagedUser(id){if(currentUser!==ADMIN_USER)return;const users=getUsers(),u=users.find(x=>String(x.id)===String(id));if(!u||u.admin)return;if(!confirm('წავშალოთ მომხმარებელი '+u.name+'?'))return;const remaining=users.filter(x=>String(x.id)!==String(id));localStorage.setItem(USERS_KEY,JSON.stringify(remaining));renderManagedUsers();renderLoginUsers();saveUsersToFirebase(remaining).catch(e=>console.warn('Firebase user delete failed:',e));localStorage.removeItem('temoJobsId_'+u.id);removeAllLegacyJobKeysForName(u.name);unmarkFreshUser(u.id);} 
 
 function openCredentials(){
   loadGitHubSettings();
@@ -914,7 +952,7 @@ async function updateWebsite(){
 }
 
 function showNewUserAuth(){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('newUserAuthModal').classList.add('show')}
-async function registerNewUser(){const nameEl=document.getElementById('newUserAuthName'),passEl=document.getElementById('newUserAuthPassword'),n=nameEl.value.trim(),p=passEl.value;if(!n||!p){alert('სახელი და ახალი პაროლი ორივე შეავსე');return;}if(!/^[A-Za-z]+$/.test(n)){alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');nameEl.value=n.replace(/[^A-Za-z]/g,'');return;}if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return;}const users=getUsers();if(users.some(u=>u.name.toLowerCase()===n.toLowerCase()&&u.password===p)){alert('ასეთი მომხმარებელი უკვე არსებობს');return;}const user=normalizeUser({id:makeUserId(),name:n,password:p,admin:false,authorized:true,blocked:false});users.push(user);localStorage.setItem(USERS_KEY,JSON.stringify(users));await saveUsersToFirebase(users);currentUser=user.name;currentUserId=user.id;localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');nameEl.value='';passEl.value='';document.getElementById('newUserAuthModal').classList.remove('show');$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
+async function registerNewUser(){const nameEl=document.getElementById('newUserAuthName'),passEl=document.getElementById('newUserAuthPassword'),n=nameEl.value.trim(),p=passEl.value;if(!n||!p){alert('სახელი და ახალი პაროლი ორივე შეავსე');return;}if(!/^[A-Za-z]+$/.test(n)){alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');nameEl.value=n.replace(/[^A-Za-z]/g,'');return;}if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return;}const users=getUsers();if(users.some(u=>u.name.toLowerCase()===n.toLowerCase()&&u.password===p)){alert('ასეთი მომხმარებელი უკვე არსებობს');return;}const user=normalizeUser({id:makeUserId(),name:n,password:p,admin:false,authorized:true,blocked:false});users.push(user);markFreshUser(user.id);localStorage.setItem(USERS_KEY,JSON.stringify(users));await saveUsersToFirebase(users);currentUser=user.name;currentUserId=user.id;localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');nameEl.value='';passEl.value='';document.getElementById('newUserAuthModal').classList.remove('show');$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
 </script>
 <div id="newUserAuthModal"><div class="newUserAuthBox">
 <h2>🔐 ახალი მომხმარებლის ავტორიზაცია</h2>
