@@ -846,25 +846,32 @@ function loadPrivacyState(){
 function applyNeonSettings(){
  const c=document.getElementById('neonColor'),r=document.getElementById('neonStrength');
  if(!c||!r)return;
- const color=c.value,p=Number(r.value)/100,hex=color.slice(1);
- const rr=parseInt(hex.slice(0,2),16)||0,gg=parseInt(hex.slice(2,4),16)||0,bb=parseInt(hex.slice(4,6),16)||0;
- document.documentElement.style.setProperty('--neon-control',color);
- document.documentElement.style.setProperty('--neon-control-rgb',`${rr},${gg},${bb}`);
- document.documentElement.style.setProperty('--neon-power',p);
- const blur1=6+Math.round(p*10),blur2=14+Math.round(p*20),blur3=24+Math.round(p*28);
- document.querySelectorAll('.neonControlled').forEach(el=>{
-   el.style.boxShadow=`0 0 ${blur1}px rgba(${rr},${gg},${bb},${(0.28+p*0.55).toFixed(2)}),0 0 ${blur2}px rgba(${rr},${gg},${bb},${(0.18+p*0.45).toFixed(2)}),0 0 ${blur3}px rgba(${rr},${gg},${bb},${(0.08+p*0.30).toFixed(2)}),inset 0 0 12px rgba(${rr},${gg},${bb},${(0.05+p*0.12).toFixed(2)})`;
-   el.querySelectorAll('.label,.amount,span,b').forEach(t=>{t.style.textShadow=`0 0 7px rgba(${rr},${gg},${bb},${(0.45+p*0.5).toFixed(2)}),0 0 16px rgba(${rr},${gg},${bb},${(0.2+p*0.35).toFixed(2)})`;});
+ const color=c.value,p=Math.max(0,Math.min(100,Number(r.value)||0))/100,hex=color.slice(1);
+ const rr=parseInt(hex.slice(0,2),16)||0,gg=parseInt(hex.slice(2,4),16)||0,bb=parseInt(hex.slice(4,6),16)||0,rgb=`${rr},${gg},${bb}`;
+ document.documentElement.style.setProperty('--neon-control',color);document.documentElement.style.setProperty('--neon-control-rgb',rgb);document.documentElement.style.setProperty('--neon-power',p);
+ const b1=4+Math.round(p*12),b2=10+Math.round(p*24),b3=20+Math.round(p*36);
+ const glow=`0 0 ${b1}px rgba(${rgb},${(0.10+p*.75).toFixed(2)}),0 0 ${b2}px rgba(${rgb},${(0.06+p*.58).toFixed(2)}),0 0 ${b3}px rgba(${rgb},${(0.03+p*.38).toFixed(2)}),inset 0 0 12px rgba(${rgb},${(0.03+p*.14).toFixed(2)})`;
+ const textGlow=`0 0 ${Math.max(3,Math.round(4+p*7))}px rgba(${rgb},${(0.18+p*.72).toFixed(2)}),0 0 ${Math.max(8,Math.round(9+p*14))}px rgba(${rgb},${(0.08+p*.42).toFixed(2)})`;
+ const neonColors=['rgb(41, 153, 255)','rgb(41, 153, 223)','rgb(41, 169, 255)','rgb(255, 138, 0)','rgb(255, 59, 59)','rgb(99, 255, 154)','rgb(98, 255, 154)','rgb(73, 216, 106)','rgb(110, 255, 135)','rgb(90, 255, 120)'];
+ document.querySelectorAll('*').forEach(el=>{
+  if(el===c||el===r||el.id==='neonStrengthValue')return; const cs=getComputedStyle(el),bs=cs.boxShadow||'',ts=cs.textShadow||'',bc=[cs.borderTopColor,cs.borderRightColor,cs.borderBottomColor,cs.borderLeftColor].join(' '),oc=cs.outlineColor||'';
+  const hit=x=>neonColors.some(n=>x.includes(n));
+  if(hit(bs)){el.style.setProperty('box-shadow',glow,'important');}
+  if(hit(ts)){el.style.setProperty('text-shadow',textGlow,'important');}
+  if(hit(bc)){el.style.setProperty('border-color',color,'important');}
+  if(hit(oc)){el.style.setProperty('outline-color',color,'important');}
+  if(neonColors.includes(cs.color)){el.style.setProperty('color',color,'important');}
  });
- const v=document.getElementById('neonStrengthValue');if(v)v.textContent=r.value+'%';
- localStorage.setItem('temoNeonColor',color);localStorage.setItem('temoNeonStrength',r.value);
+ const v=document.getElementById('neonStrengthValue');if(v)v.textContent=Math.round(p*100)+'%';
+ localStorage.setItem('temoNeonColor',color);localStorage.setItem('temoNeonStrength',String(r.value));
 }
+function startNeonLiveObserver(){if(window.__temoNeonObserver)return;window.__temoNeonObserver=new MutationObserver(()=>{clearTimeout(window.__temoNeonTimer);window.__temoNeonTimer=setTimeout(applyNeonSettings,25);});window.__temoNeonObserver.observe(document.body,{subtree:true,childList:true});}
 function loadNeonSettings(){
  const c=document.getElementById('neonColor'),r=document.getElementById('neonStrength');
  if(!c||!r)return;
  c.value=localStorage.getItem('temoNeonColor')||'#49d86a';
  r.value=localStorage.getItem('temoNeonStrength')||'65';
- c.addEventListener('input',applyNeonSettings);r.addEventListener('input',applyNeonSettings);applyNeonSettings();
+ c.addEventListener('input',applyNeonSettings);r.addEventListener('input',applyNeonSettings);applyNeonSettings();startNeonLiveObserver();
 }
 function updateUserUI(){
  const isAdmin=currentUser===ADMIN_USER;
