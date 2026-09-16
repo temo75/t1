@@ -972,6 +972,14 @@ async function deleteManagedUser(name){
   localStorage.removeItem('temoJobs_'+name);
 }
 
+function openCredentials(){
+  loadGitHubSettings();
+  $('credentialsModal').classList.add('show');
+  setTimeout(()=>{
+    const repo=$('ghRepo');
+    if(repo) repo.focus();
+  },50);
+}
 function closeCredentials(){
   $('credentialsModal').classList.remove('show');
 }
