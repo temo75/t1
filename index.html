@@ -444,142 +444,22 @@ const AUTH_KEY='temoWorkTrackerAuthorized';
 const AUTH_PASSWORD='temo2139-590';
 const USERS_KEY='temoWorkTrackerUsers';
 const SESSION_USER_KEY='temoWorkTrackerUser';
-const DELETED_USERS_KEY='temoWorkTrackerDeletedUsers';
-const PERMANENTLY_DELETED_USERS=['jimi'];
+const SESSION_USER_ID_KEY='temoWorkTrackerUserId';
 const ADMIN_USER='TEMO';
 const FIREBASE_DB_URL='https://temo-75-default-rtdb.europe-west1.firebasedatabase.app';
 let currentUser=localStorage.getItem(SESSION_USER_KEY)||'';
+let currentUserId=localStorage.getItem(SESSION_USER_ID_KEY)||'';
 let firebaseSyncBusy=false;
 let firebaseWriteQueue=Promise.resolve();
-function firebaseUserKey(name){return encodeURIComponent(name).replace(/%/g,'_');}
-async function loadUsersFromFirebase(){
-  try{
-    const r=await fetch(FIREBASE_DB_URL+'/users.json',{cache:'no-store'});
-    if(!r.ok)throw new Error('Firebase HTTP '+r.status);
-    const data=await r.json();
-    if(data===null)return null;
-    if(Array.isArray(data))return data.filter(Boolean);
-    return Object.values(data||{}).filter(Boolean);
-  }catch(e){console.warn('Firebase users read failed:',e);return null}
-}
-function normalizeUser(raw){
-  const u=(raw&&typeof raw==='object')?raw:{};
-  const name=String(u.name||'').trim();
-  const admin=(name.toUpperCase()===ADMIN_USER)||u.admin===true;
-  const blocked=admin ? false : (typeof u.blocked==='boolean' ? u.blocked : u.authorized===false);
-  const authorized=admin ? true : !blocked;
-  return {name,password:String(u.password??''),admin,authorized,blocked};
-}
-
-async function saveUsersToFirebase(users){
-  const snapshot=users.filter(u=>u&&u.name).map(normalizeUser);
-  firebaseWriteQueue=firebaseWriteQueue.then(async()=>{
-    try{
-      for(const u of snapshot){
-        const r=await fetch(FIREBASE_DB_URL+'/users/'+firebaseUserKey(u.name)+'.json',{
-          method:'PATCH',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({name:u.name,password:u.password,admin:u.admin,authorized:u.authorized,blocked:u.blocked})
-        });
-        if(!r.ok)throw new Error('Firebase HTTP '+r.status);
-      }
-      return true;
-    }catch(e){console.warn('Firebase users write failed:',e);return false}
-  });
-  return firebaseWriteQueue;
-}
-
-async function keepOnlyTemoAndJimi(){
-  try{
-    const remote=await loadUsersFromFirebase();
-    if(remote===null)return;
-
-    const kept=remote.filter(u=>{
-      const n=String(u?.name||'').trim().toLowerCase();
-      return n==='temo' || n==='jimi';
-    });
-
-    if(!kept.some(u=>String(u.name).trim().toLowerCase()==='temo')){
-      kept.unshift({name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true});
-    }
-
-    const normalized=kept.map(u=>({
-      name:u.name,
-      password:u.password,
-      admin:String(u.name).trim().toUpperCase()===ADMIN_USER,
-      authorized:u.authorized===true
-    }));
-
-    await saveUsersToFirebase(normalized);
-    localStorage.setItem(USERS_KEY,JSON.stringify(normalized));
-  }catch(e){
-    console.warn('TEMO/JIMI cleanup failed:',e);
-  }
-}
-
-async function removeJimiFromFirebase(){
-  try{
-    await firebaseWriteQueue;
-    const r=await fetch(FIREBASE_DB_URL+'/users/'+firebaseUserKey('jimi')+'.json',{
-      method:'DELETE',
-      headers:{'Content-Type':'application/json'}
-    });
-    if(!r.ok) throw new Error('Firebase DELETE jimi HTTP '+r.status);
-  }catch(e){console.warn('Firebase jimi cleanup failed:',e)}
-}
-
-async function syncUsersFromFirebase(){
-  if(firebaseSyncBusy)return;
-  firebaseSyncBusy=true;
-  try{
-    await firebaseWriteQueue;
-    const remote=await loadUsersFromFirebase();
-    if(remote!==null){
-      const deleted=getDeletedUsers();
-      const clean=remote.map(normalizeUser).filter(u=>u.name&&!deleted.some(d=>String(d).toLowerCase()===u.name.toLowerCase()));
-      if(!clean.some(u=>u.name.toUpperCase()===ADMIN_USER)){
-        clean.unshift({name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true,blocked:false});
-      }
-      localStorage.setItem(USERS_KEY,JSON.stringify(clean));
-      return clean;
-    }
-    const local=getUsers();
-    await saveUsersToFirebase(local);
-    return local;
-  }finally{firebaseSyncBusy=false}
-}
-
-function getDeletedUsers(){
-  try{
-    const a=JSON.parse(localStorage.getItem(DELETED_USERS_KEY)||'[]');
-    const list=Array.isArray(a)?a:[];
-    PERMANENTLY_DELETED_USERS.forEach(name=>{
-      if(!list.some(x=>String(x).toLowerCase()===name.toLowerCase())) list.push(name);
-    });
-    localStorage.setItem(DELETED_USERS_KEY,JSON.stringify(list));
-    return list;
-  }catch(e){return [...PERMANENTLY_DELETED_USERS]}
-}
-function markUserDeleted(name){
-  const a=getDeletedUsers();
-  if(!a.some(x=>String(x).toLowerCase()===String(name).toLowerCase())){
-    a.push(name);
-    localStorage.setItem(DELETED_USERS_KEY,JSON.stringify(a));
-  }
-}
-function getUsers(){
-  let users;
-  try{users=JSON.parse(localStorage.getItem(USERS_KEY)||'null')}catch(e){users=null}
-  if(!Array.isArray(users)||!users.length){
-    users=[{name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true,blocked:false}];
-  }
-  const deleted=getDeletedUsers();
-  const filtered=users.map(normalizeUser).filter(u=>u.name&&!deleted.some(d=>String(d).toLowerCase()===u.name.toLowerCase()));
-  if(!filtered.some(u=>u.name.toUpperCase()===ADMIN_USER)){
-    filtered.unshift({name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true,blocked:false});
-  }
-  localStorage.setItem(USERS_KEY,JSON.stringify(filtered));
-  return filtered;
-}
+function makeUserId(){return window.crypto&&crypto.randomUUID?crypto.randomUUID():'u_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,10);}
+function makeLegacyUserId(name,password){const str=String(name||'').trim().toLowerCase()+'\u0000'+String(password??'');let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return 'legacy_'+(h>>>0).toString(16);}
+function firebaseUserKey(id){return encodeURIComponent(String(id)).replace(/%/g,'_');}
+async function loadUsersFromFirebase(){try{const r=await fetch(FIREBASE_DB_URL+'/users.json',{cache:'no-store'});if(!r.ok)throw new Error('Firebase HTTP '+r.status);const data=await r.json();if(data===null)return null;if(Array.isArray(data))return data.filter(Boolean).map(normalizeUser);return Object.entries(data||{}).filter(([,u])=>u).map(([key,u])=>normalizeUser({...u,_firebaseKey:key}));}catch(e){console.warn('Firebase users read failed:',e);return null}}
+function normalizeUser(raw){const u=(raw&&typeof raw==='object')?raw:{};const name=String(u.name||'').trim(),password=String(u.password??'');const admin=(name.toUpperCase()===ADMIN_USER)||u.admin===true;const blocked=admin?false:(typeof u.blocked==='boolean'?u.blocked:u.authorized===false);const id=String(u.id||'').trim()||makeLegacyUserId(name,password);return {id,name,password,admin,authorized:admin?true:!blocked,blocked,_firebaseKey:u._firebaseKey||''};}
+async function saveUsersToFirebase(users){const snapshot=users.filter(u=>u&&u.name).map(normalizeUser);firebaseWriteQueue=firebaseWriteQueue.then(async()=>{try{const r=await fetch(FIREBASE_DB_URL+'/users.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(snapshot)});if(!r.ok)throw new Error('Firebase HTTP '+r.status);return true;}catch(e){console.warn('Firebase users write failed:',e);return false}});return firebaseWriteQueue;}
+async function syncUsersFromFirebase(){if(firebaseSyncBusy)return;firebaseSyncBusy=true;try{await firebaseWriteQueue;const remote=await loadUsersFromFirebase();if(remote!==null){let clean=remote.map(normalizeUser).filter(u=>u.name);if(!clean.some(u=>u.name.toUpperCase()===ADMIN_USER))clean.unshift(normalizeUser({id:'admin-temo',name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true,blocked:false}));localStorage.setItem(USERS_KEY,JSON.stringify(clean));await saveUsersToFirebase(clean);return clean;}const local=getUsers();await saveUsersToFirebase(local);return local;}finally{firebaseSyncBusy=false}}
+function getUsers(){let users;try{users=JSON.parse(localStorage.getItem(USERS_KEY)||'null')}catch(e){users=null}if(!Array.isArray(users)||!users.length)users=[normalizeUser({id:'admin-temo',name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true,blocked:false})];const normalized=users.map(normalizeUser).filter(u=>u.name);localStorage.setItem(USERS_KEY,JSON.stringify(normalized));return normalized;}
+function findUserById(id){return getUsers().find(u=>String(u.id)===String(id));}
 
 function enablePasswordOnlyLogin(){
   const users=getUsers().filter(u=>u.authorized===true && u.blocked===false);
@@ -590,43 +470,22 @@ function enablePasswordOnlyLogin(){
   $('loginName').focus();
 }
 function enableNameLogin(){enablePasswordOnlyLogin()}
-function completeLogin(u){
-  const user=normalizeUser(u);
-  if(user.blocked===true || user.authorized!==true){
-    $('loginError').textContent='ეს მომხმარებელი დაბლოკილია';
-    $('loginPassword').value='';
-    return;
-  }
-  currentUser=user.name;
-  localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));
-  localStorage.setItem(SESSION_USER_KEY,currentUser);
-  localStorage.setItem(AUTH_KEY,'yes');
-  $('loginScreen').classList.add('hidden');
-  $('loginPassword').value='';$('loginError').textContent='';
-  jobs=loadUserJobs();updateUserUI();render();
-}
-function login(){
-  const name=$('loginName').value.trim();
-  const pass=$('loginPassword').value;
-  const u=getUsers().find(x=>x.name.toLowerCase()===name.toLowerCase());
-  if(!u){$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus();return}
-  if(u.blocked===true || u.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';$('loginPassword').focus();return}
-  if(pass===u.password)completeLogin(u);
-  else{$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus()}
-}
+function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');$('loginScreen').classList.add('hidden');$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
+function login(){const name=$('loginName').value.trim(),pass=$('loginPassword').value,users=getUsers(),u=users.find(x=>x.name.toLowerCase()===name.toLowerCase()&&x.password===pass);if(!u){$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus();return;}if(u.blocked===true||u.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';$('loginPassword').focus();return;}completeLogin(u);}
 function renderLoginUsers(){}
 window.addEventListener('DOMContentLoaded',async()=>{
   await syncUsersFromFirebase();
-  const savedUser=currentUser;
-  const matched=getUsers().find(u=>u.name.toLowerCase()===savedUser.toLowerCase());
-  const sessionValid=localStorage.getItem(AUTH_KEY)==='yes' && !!savedUser && !!matched && matched.authorized===true && matched.blocked===false;
+  const savedUserId=currentUserId;
+  const matched=findUserById(savedUserId);
+  const sessionValid=localStorage.getItem(AUTH_KEY)==='yes' && !!savedUserId && !!matched && matched.authorized===true && matched.blocked===false;
   if(sessionValid){
-    currentUser=matched.name;
+    currentUser=matched.name;currentUserId=matched.id;
     localStorage.setItem(SESSION_USER_KEY,currentUser);
+    localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);
     $('loginScreen').classList.add('hidden');
     jobs=loadUserJobs();updateUserUI();render();
   }else{
-    localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);currentUser='';
+    localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);localStorage.removeItem(SESSION_USER_ID_KEY);currentUser='';currentUserId='';
   }
   $('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
   updateUserUI();
@@ -904,73 +763,10 @@ function updateUserUI(){
  const label=$('currentUserLabel'); if(label)label.textContent=currentUser?'შენ შეხვედი... '+currentUser:'';
  if(isAdmin)renderManagedUsers();
 }
-async function renderManagedUsers(){
-  const box=$('userManagementList'); if(!box)return;
-  box.innerHTML='<div class="empty">მომხმარებლები იტვირთება...</div>';
-  let users=getUsers();
-  if(currentUser===ADMIN_USER){
-    const remote=await loadUsersFromFirebase();
-    if(Array.isArray(remote)){
-      const deleted=getDeletedUsers();
-      users=remote.map(normalizeUser).filter(u=>u.name&&!deleted.some(d=>String(d).toLowerCase()===u.name.toLowerCase()));
-      if(!users.some(u=>u.name.toUpperCase()===ADMIN_USER))users.unshift({name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true,blocked:false});
-      localStorage.setItem(USERS_KEY,JSON.stringify(users));
-    }
-  }
-  const list=users.filter(u=>!u.admin&&u.name.toUpperCase()!==ADMIN_USER);
-  if(!list.length){box.innerHTML='<div class="empty">მომხმარებლები ჯერ არ არის</div>';return;}
-  list.forEach(u=>{
-    const row=document.createElement('div');row.className='userRow';
-    const b=document.createElement('button');b.className='backupBtn userNameBtn';b.textContent='👤 '+u.name;b.disabled=true;
-    const l=document.createElement('button');l.className='backupBtn lockBtn'+(u.blocked===true?' locked':'');
-    l.textContent=u.blocked===true?'🔓 განბლოკვა':'🔒 დაბლოკვა';
-    l.title=u.blocked===true?'მომხმარებლის განბლოკვა':'მომხმარებლის დაბლოკვა';
-    l.onclick=()=>toggleUserBlock(u.name);
-    const d=document.createElement('button');d.className='backupBtn danger';d.textContent='🗑️ წაშლა';d.onclick=()=>deleteManagedUser(u.name);
-    row.append(b,l,d);box.appendChild(row);
-  });
-}
-async function addManagedUser(){
-  if(currentUser!==ADMIN_USER)return;
-  const n=$('newUserName')?.value.trim(),p=$('newUserPassword')?.value;
-  if(!n||!p){alert('სახელი და პაროლი ორივე შეავსე');return}
-  const deleted=getDeletedUsers();
-  if(deleted.some(d=>String(d).toLowerCase()===n.toLowerCase())){alert('ეს მომხმარებელი უკვე წაშლილია და ამავე სახელით ხელახლა რეგისტრაცია შეუძლებელია');return}
-  if(n.toUpperCase()===ADMIN_USER||getUsers().some(u=>u.name.toLowerCase()===n.toLowerCase())){alert('ეს მომხმარებელი უკვე არსებობს');return}
-  const users=getUsers();
-  users.push(normalizeUser({name:n,password:p,admin:false,authorized:true,blocked:false}));
-  localStorage.setItem(USERS_KEY,JSON.stringify(users));
-  await saveUsersToFirebase(users);
-  if($('newUserName'))$('newUserName').value='';if($('newUserPassword'))$('newUserPassword').value='';
-  await renderManagedUsers();
-}
-async function toggleUserBlock(name){
-  if(currentUser!==ADMIN_USER)return;
-  const users=getUsers();
-  const u=users.find(x=>x.name.toLowerCase()===String(name).toLowerCase());
-  if(!u||u.admin)return;
-  const willBlock=u.blocked!==true;
-  if(!confirm((willBlock?'დავბლოკოთ ':'განვბლოკოთ ')+name+'?'))return;
-  u.blocked=willBlock;u.authorized=!willBlock;
-  localStorage.setItem(USERS_KEY,JSON.stringify(users.map(normalizeUser)));
-  renderManagedUsers();renderLoginUsers();
-  await saveUsersToFirebase([normalizeUser(u)]);
-}
-async function deleteManagedUser(name){
-  if(currentUser!==ADMIN_USER)return;
-  if(!confirm('წავშალოთ მომხმარებელი '+name+'?'))return;
-  markUserDeleted(name);
-  const users=getUsers().filter(u=>u.name.toLowerCase()!==String(name).toLowerCase());
-  localStorage.setItem(USERS_KEY,JSON.stringify(users));
-  renderManagedUsers();renderLoginUsers();
-  try{
-    await firebaseWriteQueue;
-    const r=await fetch(FIREBASE_DB_URL+'/users/'+firebaseUserKey(name)+'.json',{method:'DELETE'});
-    if(!r.ok)throw new Error('Firebase DELETE HTTP '+r.status);
-  }catch(e){console.warn('Firebase user delete failed:',e)}
-  await saveUsersToFirebase(getUsers());
-  localStorage.removeItem('temoJobs_'+name);
-}
+async function renderManagedUsers(){const box=$('userManagementList');if(!box)return;box.innerHTML='<div class="empty">მომხმარებლები იტვირთება...</div>';let users=getUsers();if(currentUser===ADMIN_USER){const remote=await loadUsersFromFirebase();if(Array.isArray(remote)){users=remote.map(normalizeUser).filter(u=>u.name);if(!users.some(u=>u.name.toUpperCase()===ADMIN_USER))users.unshift(normalizeUser({id:'admin-temo',name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true,blocked:false}));localStorage.setItem(USERS_KEY,JSON.stringify(users));}}const list=users.filter(u=>!u.admin&&u.name.toUpperCase()!==ADMIN_USER);if(!list.length){box.innerHTML='<div class="empty">მომხმარებლები ჯერ არ არის</div>';return;}list.forEach(u=>{const row=document.createElement('div');row.className='userRow';const b=document.createElement('button');b.className='backupBtn userNameBtn';b.textContent='👤 '+u.name+' | 🔑 '+u.password;b.disabled=true;const l=document.createElement('button');l.className='backupBtn lockBtn'+(u.blocked===true?' locked':'');l.textContent=u.blocked===true?'🔓 განბლოკვა':'🔒 დაბლოკვა';l.onclick=()=>toggleUserBlock(u.id);const d=document.createElement('button');d.className='backupBtn danger';d.textContent='🗑️ წაშლა';d.onclick=()=>deleteManagedUser(u.id);row.append(b,l,d);box.appendChild(row);});}
+async function addManagedUser(){if(currentUser!==ADMIN_USER)return;const n=$('newUserName')?.value.trim(),p=$('newUserPassword')?.value;if(!n||!p){alert('სახელი და პაროლი ორივე შეავსე');return;}const users=getUsers();if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return;}if(users.some(u=>u.name.toLowerCase()===n.toLowerCase()&&u.password===p)){alert('ასეთი მომხმარებელი უკვე არსებობს');return;}const user=normalizeUser({id:makeUserId(),name:n,password:p,admin:false,authorized:true,blocked:false});users.push(user);localStorage.setItem(USERS_KEY,JSON.stringify(users));await saveUsersToFirebase(users);if($('newUserName'))$('newUserName').value='';if($('newUserPassword'))$('newUserPassword').value='';await renderManagedUsers();}
+async function toggleUserBlock(id){if(currentUser!==ADMIN_USER)return;const users=getUsers(),u=users.find(x=>String(x.id)===String(id));if(!u||u.admin)return;const willBlock=u.blocked!==true;if(!confirm((willBlock?'დავბლოკოთ ':'განვბლოკოთ ')+u.name+'?'))return;u.blocked=willBlock;u.authorized=!willBlock;localStorage.setItem(USERS_KEY,JSON.stringify(users));renderManagedUsers();renderLoginUsers();await saveUsersToFirebase(users);}
+async function deleteManagedUser(id){if(currentUser!==ADMIN_USER)return;const users=getUsers(),u=users.find(x=>String(x.id)===String(id));if(!u||u.admin)return;if(!confirm('წავშალოთ მომხმარებელი '+u.name+'?'))return;const remaining=users.filter(x=>String(x.id)!==String(id));localStorage.setItem(USERS_KEY,JSON.stringify(remaining));renderManagedUsers();renderLoginUsers();await saveUsersToFirebase(remaining);localStorage.removeItem('temoJobs_'+u.name);}
 
 function openCredentials(){
   loadGitHubSettings();
@@ -986,7 +782,7 @@ function closeCredentials(){
 function showSettings(){updateUserUI();document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('userManagementPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.remove('pageHidden');window.scrollTo(0,0)}
 function showUserManagement(){if(currentUser!==ADMIN_USER)return;updateUserUI();document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.add('pageHidden');document.getElementById('userManagementPage').classList.remove('pageHidden');window.scrollTo(0,0)}
 function showMain(){document.getElementById('settingsPage').classList.add('pageHidden');document.getElementById('userManagementPage').classList.add('pageHidden');document.getElementById('mainPage').classList.remove('pageHidden');window.scrollTo(0,0)}
-function logout(){localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);window.location.reload()}
+function logout(){localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);localStorage.removeItem(SESSION_USER_ID_KEY);window.location.reload()}
 function exportData(){const blob=new Blob([JSON.stringify({version:1,exported:new Date().toISOString(),jobs},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='TEMO_WORK_TRACKER_BACKUP.json';a.click();URL.revokeObjectURL(a.href)}
 function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result),arr=Array.isArray(d)?d:d.jobs;if(!Array.isArray(arr))throw 0;if(confirm('არსებული მონაცემები შეიცვალოს ამ სარეზერვო ასლით?')){jobs=arr;save();render();alert('მონაცემები აღდგენილია')}}catch(x){alert('ეს სარეზერვო ფაილი არასწორია')}e.target.value=''};r.readAsText(f)}
 function clearAll(){
@@ -1118,33 +914,7 @@ async function updateWebsite(){
 }
 
 function showNewUserAuth(){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('newUserAuthModal').classList.add('show')}
-async function registerNewUser(){
-  const nameEl=document.getElementById('newUserAuthName');
-  const passEl=document.getElementById('newUserAuthPassword');
-  const n=nameEl.value.trim();
-  const p=passEl.value;
-  if(!n||!p){alert('სახელი და ახალი პაროლი ორივე შეავსე');return}
-  if(!/^[A-Za-z]+$/.test(n)){
-    alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');
-    nameEl.value=n.replace(/[^A-Za-z]/g,'');return;
-  }
-  if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return}
-  const users=getUsers();
-  const deleted=getDeletedUsers();
-  if(deleted.some(d=>String(d).toLowerCase()===n.toLowerCase())){
-    alert('ეს მომხმარებელი უკვე წაშლილია და ამავე სახელით ხელახლა რეგისტრაცია შეუძლებელია');return;
-  }
-  const existing=users.find(u=>u.name.toLowerCase()===n.toLowerCase());
-  if(existing){
-    alert(existing.blocked===true?'ეს მომხმარებელი დაბლოკილია. ჯერ განბლოკე ადმინისტრაციიდან.':'ეს მომხმარებელი უკვე არსებობს');return;
-  }
-  const user=normalizeUser({name:n,password:p,admin:false,authorized:true,blocked:false});
-  users.push(user);localStorage.setItem(USERS_KEY,JSON.stringify(users));
-  await saveUsersToFirebase([user]);
-  currentUser=user.name;localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(AUTH_KEY,'yes');
-  nameEl.value='';passEl.value='';document.getElementById('newUserAuthModal').classList.remove('show');
-  $('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();
-}
+async function registerNewUser(){const nameEl=document.getElementById('newUserAuthName'),passEl=document.getElementById('newUserAuthPassword'),n=nameEl.value.trim(),p=passEl.value;if(!n||!p){alert('სახელი და ახალი პაროლი ორივე შეავსე');return;}if(!/^[A-Za-z]+$/.test(n)){alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');nameEl.value=n.replace(/[^A-Za-z]/g,'');return;}if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return;}const users=getUsers();if(users.some(u=>u.name.toLowerCase()===n.toLowerCase()&&u.password===p)){alert('ასეთი მომხმარებელი უკვე არსებობს');return;}const user=normalizeUser({id:makeUserId(),name:n,password:p,admin:false,authorized:true,blocked:false});users.push(user);localStorage.setItem(USERS_KEY,JSON.stringify(users));await saveUsersToFirebase(users);currentUser=user.name;currentUserId=user.id;localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');nameEl.value='';passEl.value='';document.getElementById('newUserAuthModal').classList.remove('show');$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
 </script>
 <div id="newUserAuthModal"><div class="newUserAuthBox">
 <h2>🔐 ახალი მომხმარებლის ავტორიზაცია</h2>
