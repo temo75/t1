@@ -561,7 +561,7 @@ const SEPTEMBER_2026_JOBS=[
   {id:'sep-2026-09-02',date:'2026-09-02',place:'ვილა - სტავრომენოსი',money:100,note:'მალიარკა',paid:false},
   {id:'sep-2026-09-03',date:'2026-09-03',place:'ბინის რემონტი - რეთიმნო',money:100,note:'მალიარკა',paid:true}
 ];
-if(!jobs.length){ jobs=SEPTEMBER_2026_JOBS.map(j=>({...j})); save(); }
+if(!jobs.length && !(currentUserId && getFreshUserIds().includes(String(currentUserId)))){ jobs=SEPTEMBER_2026_JOBS.map(j=>({...j})); save(); }
 
 // 2026 წლის სექტემბრის 1-დან მიმდინარე თვის ყველა სამუშაო/თანხა რჩება.
 // მხოლოდ 2026-09-01-მდე არსებული ძველი ჩანაწერები იშლება.
