@@ -431,12 +431,12 @@ body.neon-global .neonAll{
 <div class="section" id="neonControlSection" style="display:none">
 <h2>✨ ნეონის მართვა</h2>
 <div class="neonControlBox">
-<div>ფერი</div>
+<div>1️⃣ ჩარჩოს ფერი</div>
 <div class="neonControlRow"><input id="neonColor" type="color" value="#49d86a" aria-label="ნეონის ფერი"></div>
-<div style="margin-top:14px">სიმძლავრე</div>
+<div style="margin-top:14px">ჩარჩოს სიმძლავრე</div>
 <div class="neonControlRow"><input id="neonStrength" type="range" min="0" max="100" value="65" step="1" aria-label="ნეონის სიმძლავრე">
 <div class="neonTextController" style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(73,216,106,.28)">
-  <div style="font-weight:700;margin-bottom:7px">✨ ასოებისა და რიცხვების ნეონი</div>
+  <div style="font-weight:700;margin-bottom:7px">2️⃣ ასოების და რიცხვების ნეონი</div>
   <label for="neonTextColor">ფერი</label>
   <input id="neonTextColor" type="color" value="#49d86a" style="width:58px;height:38px;padding:2px">
   <label for="neonTextStrength" style="display:block;margin-top:8px">სიმძლავრე: <span id="neonTextStrengthValue">65%</span></label>
@@ -872,7 +872,6 @@ function applyNeonSettings(){
  const blur1=6+Math.round(p*10),blur2=14+Math.round(p*20),blur3=24+Math.round(p*28);
  document.querySelectorAll('.neonControlled').forEach(el=>{
    el.style.boxShadow=`0 0 ${blur1}px rgba(${rr},${gg},${bb},${(0.28+p*0.55).toFixed(2)}),0 0 ${blur2}px rgba(${rr},${gg},${bb},${(0.18+p*0.45).toFixed(2)}),0 0 ${blur3}px rgba(${rr},${gg},${bb},${(0.08+p*0.30).toFixed(2)}),inset 0 0 12px rgba(${rr},${gg},${bb},${(0.05+p*0.12).toFixed(2)})`;
-   el.querySelectorAll('.label,.amount,span,b').forEach(t=>{t.style.textShadow=`0 0 7px rgba(${rr},${gg},${bb},${(0.45+p*0.5).toFixed(2)}),0 0 16px rgba(${rr},${gg},${bb},${(0.2+p*0.35).toFixed(2)})`;});
  });
  const v=document.getElementById('neonStrengthValue');if(v)v.textContent=r.value+'%';
  localStorage.setItem('temoNeonColor',color);localStorage.setItem('temoNeonStrength',r.value);
@@ -1376,8 +1375,9 @@ body.text-neon-global .neonTextTarget{
 
     // Only text/numeric content inside the four main work blocks.
     document.querySelectorAll(
-      '.neonControlled .label,.neonControlled span,.neonControlled b,.neonControlled strong,'+
-      '.neonControlled .amount,.neonControlled .value,.neonControlled .number'
+      '.neonControlled .label,.neonControlled .amount,.neonControlled span,'+
+      '.neonControlled b,.neonControlled strong,.neonControlled small,'+
+      '.neonControlled .value,.neonControlled .number'
     ).forEach(el=>el.classList.add('neonTextTarget'));
 
     const v=document.getElementById('neonTextStrengthValue');
