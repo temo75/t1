@@ -285,6 +285,26 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
 }
 </style>
 
+<style id="temo-green-neon-stat-blocks">
+/* ოთხი მთავარი სტატისტიკური ბლოკი — მწვანე ნეონის სხივები */
+.grid .monthTotalHero,
+.stats .mini{
+  border-color:#49d86a !important;
+  box-shadow:
+    0 0 7px rgba(73,216,106,.65),
+    0 0 16px rgba(73,216,106,.48),
+    0 0 30px rgba(73,216,106,.28),
+    inset 0 0 12px rgba(73,216,106,.10) !important;
+}
+.grid .monthTotalHero .label,
+.stats .mini span{
+  text-shadow:0 0 7px rgba(110,255,135,.65);
+}
+.grid .monthTotalHero .amount,
+.stats .mini b{
+  text-shadow:0 0 8px rgba(90,255,120,.75),0 0 18px rgba(73,216,106,.42);
+}
+</style>
 </head>
 <body>
 <nav id="bottomNav">
