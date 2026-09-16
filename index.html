@@ -316,6 +316,21 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
   text-shadow:0 0 8px rgba(90,255,120,.75),0 0 18px rgba(73,216,106,.42);
 }
 </style>
+<style id="temo-neon-live-fix">
+/* LIVE NEON CONTROLLER — რეალური ბლოკების მართვა */
+.grid .monthTotalHero.neonControlled, .stats .mini.neonControlled {
+  border-color:var(--neon-control) !important;
+  box-shadow:0 0 7px rgba(var(--neon-control-rgb),.65),0 0 16px rgba(var(--neon-control-rgb),.48),0 0 30px rgba(var(--neon-control-rgb),.28),inset 0 0 12px rgba(var(--neon-control-rgb),.10) !important;
+}
+.grid .monthTotalHero.neonControlled .label, .stats .mini.neonControlled span {
+  text-shadow:0 0 7px rgba(var(--neon-control-rgb),.65) !important;
+  color:var(--neon-control) !important;
+}
+.grid .monthTotalHero.neonControlled .amount, .stats .mini.neonControlled b {
+  text-shadow:0 0 8px rgba(var(--neon-control-rgb),.75),0 0 18px rgba(var(--neon-control-rgb),.42) !important;
+  color:var(--neon-control) !important;
+}
+</style>
 </head>
 <body>
 <nav id="bottomNav">
