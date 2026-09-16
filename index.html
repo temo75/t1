@@ -140,6 +140,11 @@ footer{display:none!important;}
   text-shadow:0 0 7px rgba(120,220,120,.85);
 }
 </style>
+<style id="temo-neon-controller">
+.neonControl{margin-top:14px;padding:16px;border:1px solid #49d86a;border-radius:16px;background:#09161e;box-shadow:0 0 8px rgba(73,216,106,.5),0 0 22px rgba(73,216,106,.25)}
+.neonControl h2{margin:0 0 12px}.neonRow{display:grid;grid-template-columns:1fr 1fr;gap:10px}.neonControl label{margin:0;font-size:13px}.neonControl input[type=color]{width:100%;height:46px;padding:3px;border-radius:10px;background:#071117;border:1px solid #49d86a}.neonControl input[type=range]{width:100%;accent-color:#49d86a}.neonValue{text-align:center;font-weight:bold;margin-top:5px;color:#63ff9a}
+</style>
+
 </style>
 
 <style id="temo-3d-title">
@@ -378,6 +383,11 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
 <div id="settingsPage" class="pageHidden">
 <header><div><h1>⚙️ სეთინგები</h1><small>მონაცემების მართვა</small></div></header>
 
+
+<div class="section neonControl adminOnly" id="neonControlSection">
+<h2>✨ ნეონების მართვა</h2>
+<div class="neonRow"><label>ფერი<input id="neonColor" type="color" value="#49d86a"></label><label>სიმძლავრე<input id="neonStrength" type="range" min="0" max="100" value="65"><div class="neonValue" id="neonStrengthValue">65%</div></label></div>
+</div>
 
 <div class="section" id="websiteUpdateSection">
 <h2>🔄 საიტის განახლება</h2>
@@ -806,6 +816,9 @@ function loadPrivacyState(){
   eye.title=hidden?'თანხების ჩვენება':'თანხების დამალვა';
   eye.setAttribute('aria-label',hidden?'თანხების ჩვენება':'თანხების დამალვა');
 }
+function applyNeonSettings(){const c=document.getElementById('neonColor'),r=document.getElementById('neonStrength');if(!c||!r)return;const color=c.value, power=Number(r.value)/100;const hex=color.replace('#','');const rr=parseInt(hex.slice(0,2),16),gg=parseInt(hex.slice(2,4),16),bb=parseInt(hex.slice(4,6),16);document.documentElement.style.setProperty('--admin-neon',color);document.documentElement.style.setProperty('--admin-neon-a',`rgba(${rr},${gg},${bb},${power})`);document.querySelectorAll('.grid .monthTotalHero,.stats .mini').forEach(el=>el.style.boxShadow=`0 0 ${7+Math.round(power*8)}px rgba(${rr},${gg},${bb},${.45+power*.3}),0 0 ${16+Math.round(power*18)}px rgba(${rr},${gg},${bb},${.25+power*.3}),0 0 ${30+Math.round(power*25)}px rgba(${rr},${gg},${bb},${.12+power*.2}),inset 0 0 12px rgba(${rr},${gg},${bb},.1)`);localStorage.setItem('temoNeonColor',color);localStorage.setItem('temoNeonStrength',String(r.value));document.getElementById('neonStrengthValue').textContent=r.value+'%';}
+function loadNeonSettings(){const c=document.getElementById('neonColor'),r=document.getElementById('neonStrength');if(!c||!r)return;c.value=localStorage.getItem('temoNeonColor')||'#49d86a';r.value=localStorage.getItem('temoNeonStrength')||'65';c.oninput=applyNeonSettings;r.oninput=applyNeonSettings;applyNeonSettings()}
+
 function updateUserUI(){
  const isAdmin=currentUser===ADMIN_USER;
  const site=$('websiteUpdateSection'); if(site)site.style.display=isAdmin?'':'none';
@@ -851,6 +864,7 @@ $('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeForm()});
 render();
 loadPrivacyState();
 loadGitHubSettings();
+loadNeonSettings();
 $('ghToken').addEventListener('input',()=>{localStorage.setItem('temoGitHubToken',$('ghToken').value.trim())});
 $('deleteAuthPassword').addEventListener('keydown',e=>{if(e.key==='Enter')confirmDeleteAll()});
 
