@@ -1219,14 +1219,13 @@ async function registerNewUser(){
     return;
   }
 
-  if(typeof window.temoFirebaseNewUserCreate!=='function'){
-    alert('Firebase Authentication კოდი ვერ ჩაიტვირთა.');
-    return;
-  }
-
   try{
-    // NEW USERS ONLY: create the real Firebase Authentication account first.
-    const authUser=await window.temoFirebaseNewUserCreate(n,p);
+    // NEW USERS ONLY: Firebase Authentication is used when configured.
+    // If it is not configured yet, do not alter the existing users/login system.
+    let authUser=null;
+    if(typeof window.temoFirebaseNewUserCreate==='function' && window.temoFirebaseAuthReady){
+      authUser=await window.temoFirebaseNewUserCreate(n,p);
+    }
 
     const user=normalizeUser({
       id:makeUserId(),
@@ -1234,11 +1233,14 @@ async function registerNewUser(){
       password:p,
       admin:false,
       authorized:true,
-      blocked:false,
-      firebaseAuthUid:authUser.uid,
-      firebaseAuthEmail:authUser.email,
-      authType:'firebase-email-password'
+      blocked:false
     });
+
+    if(authUser){
+      user.firebaseAuthUid=authUser.uid;
+      user.firebaseAuthEmail=authUser.email;
+      user.authType='firebase-email-password';
+    }
 
     users.push(user);
     markFreshUser(user.id);
@@ -1259,7 +1261,7 @@ async function registerNewUser(){
     updateUserUI();
     render();
 
-    alert('✅ ახალი მომხმარებელი შეიქმნა Firebase Authentication-ში.');
+    alert(authUser ? '✅ ახალი მომხმარებელი შეიქმნა Firebase Authentication-ში.' : '✅ ახალი მომხმარებელი შეიქმნა. Firebase Authentication-ის დაკავშირება შემდეგ ეტაპზე ჩაერთვება.');
   }catch(e){
     console.error('New Firebase user creation failed:',e);
     let msg=e?.message||String(e);
@@ -1896,6 +1898,7 @@ async function registerNewUser(){
       window.temoFirebaseAuthReady = true;
     } catch (e) {
       console.warn("Firebase Authentication initialization failed:", e);
+      window.temoFirebaseAuthReady = false;
     }
   }
 
