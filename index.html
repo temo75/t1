@@ -1483,5 +1483,47 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
 })();
 </script>
 
+<script id="temo-fast-admin-users-sync">
+(function(){
+  setInterval(function(){
+    if(typeof currentUser!=='undefined' && currentUser===ADMIN_USER &&
+       typeof syncUsersFromFirebase==='function'){
+      syncUsersFromFirebase().then(function(){
+        if(typeof renderUsers==='function')renderUsers();
+      });
+    }
+  },1000);
+})();
+</script>
+<script id="temo-admin-users-realtime">
+(function(){
+  function startAdminUserRealtime(){
+    if(typeof currentUser==='undefined' || currentUser!==ADMIN_USER)return;
+    if(typeof FIREBASE_DB_URL==='undefined')return;
+
+    const url=FIREBASE_DB_URL+'/users.json?print=silent';
+    let lastHash='';
+    async function check(){
+      try{
+        const r=await fetch(FIREBASE_DB_URL+'/users.json?t='+Date.now(),{cache:'no-store'});
+        if(!r.ok)return;
+        const data=await r.json();
+        const hash=JSON.stringify(data||null);
+        if(lastHash && hash!==lastHash){
+          await syncUsersFromFirebase();
+          if(typeof renderUsers==='function')renderUsers();
+        }
+        lastHash=hash;
+      }catch(e){}
+    }
+    check();
+    setInterval(check,1000);
+  }
+  window.addEventListener('DOMContentLoaded',function(){
+    setTimeout(startAdminUserRealtime,500);
+  });
+})();
+</script>
+
 </body>
 </html>
