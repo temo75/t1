@@ -1321,8 +1321,8 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
   margin:0 0 8px 0 !important;
   padding:0 !important;
   display:grid !important;
-  grid-template-columns:minmax(0,1fr) 60px 46px !important;
-  gap:7px !important;
+  grid-template-columns:minmax(0,64%) minmax(0,22%) minmax(0,14%) !important;
+  gap:4px !important;
   align-items:stretch !important;
   box-sizing:border-box !important;
 }
@@ -1345,30 +1345,34 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
 }
 #userManagementList .userRow .lockBtn,
 #userManagementList .userRow .danger{
-  font-size:9px !important;
-  padding:5px 2px !important;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  font-size:clamp(8px,2.6vw,10px) !important;
+  padding:5px 1px !important;
   white-space:nowrap !important;
+  overflow:hidden !important;
   text-overflow:clip !important;
 }
 @media(max-width:600px){
   #userManagementSection{padding:14px !important}
   #userManagementList .userRow{
-    grid-template-columns:minmax(0,1fr) 52px 40px !important;
-    gap:5px !important;
+    grid-template-columns:minmax(0,64%) minmax(0,22%) minmax(0,14%) !important;
+    gap:3px !important;
   }
   #userManagementList .userRow button{
-    font-size:11px !important;
-    padding:7px 4px !important;
+    font-size:clamp(8px,2.8vw,10px) !important;
+    padding:5px 2px !important;
   }
 }
 @media(max-width:380px){
   #userManagementList .userRow{
-    grid-template-columns:minmax(0,1fr) 56px 44px !important;
-    gap:4px !important;
+    grid-template-columns:minmax(0,64%) minmax(0,22%) minmax(0,14%) !important;
+    gap:2px !important;
   }
   #userManagementList .userRow button{
-    font-size:10px !important;
-    padding:7px 3px !important;
+    font-size:clamp(7.5px,2.7vw,9px) !important;
+    padding:5px 1px !important;
   }
 }
 </style>
