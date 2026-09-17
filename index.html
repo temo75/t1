@@ -951,11 +951,55 @@ function updateUserUI(){
  const label=$('currentUserLabel'); if(label){label.textContent=currentUser?'👤 შენ შეხვედი... '+currentUser:'';label.style.display=currentUser?'block':'none';}
  if(isAdmin)renderManagedUsers();
 }
-async function renderManagedUsers(){const box=$('userManagementList');if(!box)return;box.innerHTML='<div class="empty">მომხმარებლები იტვირთება...</div>';let users=getUsers();if(currentUser===ADMIN_USER){const remote=await loadUsersFromFirebase();if(Array.isArray(remote)){users=remote.map(normalizeUser).filter(u=>u.name);if(!users.some(u=>u.name.toUpperCase()===ADMIN_USER))users.unshift(normalizeUser({id:'admin-temo',name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true,blocked:false}));localStorage.setItem(USERS_KEY,JSON.stringify(users));}}const list=users.filter(u=>!u.admin&&u.name.toUpperCase()!==ADMIN_USER&&!isRemovedUser(u));if(!list.length){box.innerHTML='<div class="empty">მომხმარებლები ჯერ არ არის</div>';return;}list.forEach(u=>{const row=document.createElement('div');row.className='userRow';const b=document.createElement('button');b.className='backupBtn userNameBtn';b.textContent='👤 '+u.name+' | 🔑 '+u.password;b.disabled=true;const l=document.createElement('button');l.className='backupBtn lockBtn'+(u.blocked===true?' locked':'');l.textContent=u.blocked===true?'🔓 განბლოკვა':'🔒 დაბლოკვა';l.onclick=()=>toggleUserBlock(u.id);const d=document.createElement('button');d.className='backupBtn danger';d.textContent='🗑️ წაშლა';d.onclick=()=>deleteManagedUser(u.id);row.append(b,l,d);box.appendChild(row);});}
-async function addManagedUser(){if(currentUser!==ADMIN_USER)return;const n=$('newUserName')?.value.trim(),p=$('newUserPassword')?.value;if(!n||!p){alert('სახელი და პაროლი ორივე შეავსე');return;}const users=getUsers();if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return;}if(users.some(u=>u.name.toLowerCase()===n.toLowerCase()&&u.password===p)){alert('ასეთი მომხმარებელი უკვე არსებობს');return;}const user=normalizeUser({id:makeUserId(),name:n,password:p,admin:false,authorized:true,blocked:false});users.push(user);markFreshUser(user.id);localStorage.setItem(USERS_KEY,JSON.stringify(users));await saveUsersToFirebase(users);if($('newUserName'))$('newUserName').value='';if($('newUserPassword'))$('newUserPassword').value='';await renderManagedUsers();}
-async function toggleUserBlock(id){if(currentUser!==ADMIN_USER)return;const users=getUsers(),u=users.find(x=>String(x.id)===String(id));if(!u||u.admin)return;const willBlock=u.blocked!==true;if(!confirm((willBlock?'დავბლოკოთ ':'განვბლოკოთ ')+u.name+'?'))return;u.blocked=willBlock;u.authorized=!willBlock;localStorage.setItem(USERS_KEY,JSON.stringify(users));renderManagedUsers();renderLoginUsers();saveUsersToFirebase(users).catch(e=>console.warn('Firebase user block update failed:',e));}
-async function deleteManagedUser(id){if(currentUser!==ADMIN_USER)return;const users=getUsers(),u=users.find(x=>String(x.id)===String(id));if(!u||u.admin)return;if(!confirm('წავშალოთ მომხმარებელი '+u.name+'?'))return;const remaining=users.filter(x=>String(x.id)!==String(id));localStorage.setItem(USERS_KEY,JSON.stringify(remaining));renderManagedUsers();renderLoginUsers();saveUsersToFirebase(remaining).catch(e=>console.warn('Firebase user delete failed:',e));localStorage.removeItem('temoJobsId_'+u.id);removeAllLegacyJobKeysForName(u.name);unmarkFreshUser(u.id);} 
+let managedUsersRenderKey='';
+async function renderManagedUsers(){
+  const box=$('userManagementList');
+  if(!box)return;
 
+  let users=getUsers();
+  if(currentUser===ADMIN_USER){
+    const remote=await loadUsersFromFirebase();
+    if(Array.isArray(remote)){
+      users=remote.map(normalizeUser).filter(u=>u.name&&!isRemovedUser(u));
+      if(!users.some(u=>u.name.toUpperCase()===ADMIN_USER)){
+        users.unshift(normalizeUser({id:'admin-temo',name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true,blocked:false}));
+      }
+      localStorage.setItem(USERS_KEY,JSON.stringify(users));
+    }
+  }
+
+  const list=users.filter(u=>!u.admin&&u.name.toUpperCase()!==ADMIN_USER&&!isRemovedUser(u));
+  const key=JSON.stringify(list.map(u=>[u.id,u.name,u.password,u.blocked===true]));
+
+  if(key===managedUsersRenderKey && box.children.length)return;
+  managedUsersRenderKey=key;
+
+  if(!list.length){
+    box.innerHTML='<div class="empty">მომხმარებლები ჯერ არ არის</div>';
+    return;
+  }
+
+  const frag=document.createDocumentFragment();
+  list.forEach(u=>{
+    const row=document.createElement('div');
+    row.className='userRow';
+    const b=document.createElement('button');
+    b.className='backupBtn userNameBtn';
+    b.textContent='👤 '+u.name+' | 🔑 '+u.password;
+    b.disabled=true;
+    const l=document.createElement('button');
+    l.className='backupBtn lockBtn'+(u.blocked===true?' locked':'');
+    l.textContent=u.blocked===true?'🔓 განბლოკვა':'🔒 დაბლოკვა';
+    l.onclick=()=>toggleUserBlock(u.id);
+    const d=document.createElement('button');
+    d.className='backupBtn danger';
+    d.textContent='🗑️ წაშლა';
+    d.onclick=()=>deleteManagedUser(u.id);
+    row.append(b,l,d);
+    frag.appendChild(row);
+  });
+  box.replaceChildren(frag);
+}
 function openCredentials(){
   loadGitHubSettings();
   $('credentialsModal').classList.add('show');
@@ -1183,6 +1227,87 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
 }
 </style>
 
+<style id="temo-user-management-stable-physical">
+#userManagementPage{
+  width:100% !important;
+  min-width:0 !important;
+  box-sizing:border-box !important;
+}
+#userManagementPage header{
+  width:100% !important;
+  min-width:0 !important;
+  box-sizing:border-box !important;
+}
+#userManagementSection{
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+  padding:18px !important;
+}
+#userManagementList{
+  width:100% !important;
+  min-width:0 !important;
+  min-height:56px !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+}
+#userManagementList .empty{
+  min-height:56px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  box-sizing:border-box !important;
+}
+#userManagementList .userRow{
+  width:100% !important;
+  height:50px !important;
+  min-height:50px !important;
+  max-height:50px !important;
+  margin:0 0 8px 0 !important;
+  padding:0 !important;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) 92px 72px !important;
+  gap:7px !important;
+  align-items:stretch !important;
+  box-sizing:border-box !important;
+}
+#userManagementList .userRow:last-child{margin-bottom:0 !important}
+#userManagementList .userRow button{
+  width:100% !important;
+  height:50px !important;
+  min-height:50px !important;
+  max-height:50px !important;
+  min-width:0 !important;
+  margin:0 !important;
+  padding:8px 7px !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+}
+#userManagementList .userRow .userNameBtn{
+  text-align:left !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+}
+@media(max-width:600px){
+  #userManagementSection{padding:14px !important}
+  #userManagementList .userRow{
+    grid-template-columns:minmax(0,1fr) 78px 62px !important;
+    gap:6px !important;
+  }
+  #userManagementList .userRow button{
+    font-size:12px !important;
+    padding:7px 5px !important;
+  }
+}
+@media(max-width:380px){
+  #userManagementList .userRow{
+    grid-template-columns:minmax(0,1fr) 70px 58px !important;
+    gap:5px !important;
+  }
+  #userManagementList .userRow button{font-size:11px !important}
+}
+</style>
 <script id="temo-global-neon-controller">
 (function(){
   const BASE_SELECTORS = [
