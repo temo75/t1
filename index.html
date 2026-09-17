@@ -1963,14 +1963,24 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
 <script id="temo-new-user-passkey-logic">
 (function(){
   const key=id=>'temoPasskey_'+String(id);
-  function supported(){return !!(window.PublicKeyCredential&&navigator.credentials&&navigator.credentials.create&&navigator.credentials.get&&window.crypto&&crypto.getRandomValues)}
+  function supported(){
+  return !!(
+    window.isSecureContext &&
+    navigator.credentials &&
+    typeof navigator.credentials.create==='function' &&
+    typeof navigator.credentials.get==='function' &&
+    window.crypto &&
+    typeof crypto.getRandomValues==='function' &&
+    window.TextEncoder
+  );
+}
   function b64(buf){let bytes=new Uint8Array(buf),out='';bytes.forEach(b=>out+=String.fromCharCode(b));return btoa(out).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
   function unb64(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const bin=atob(s),a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a}
   function get(u){try{return JSON.parse(localStorage.getItem(key(u.id))||'null')}catch(e){return null}}
   function put(u,d){localStorage.setItem(key(u.id),JSON.stringify(d));u.passkey={credentialId:d.credentialId,createdAt:d.createdAt}}
   async function createForUser(u){
     if(!supported())throw new Error('ამ ტელეფონის ბრაუზერს Passkey/ბიომეტრიული ავტორიზაცია არ აქვს მხარდაჭერილი.');
-    const challenge=new Uint8Array(32);crypto.getRandomValues(challenge),uid=new TextEncoder().encode(String(u.id));
+    const challenge=new Uint8Array(32);crypto.getRandomValues(challenge);const uid=new TextEncoder().encode(String(u.id));
     const cred=await navigator.credentials.create({publicKey:{challenge,rp:{name:'TEMO Work Tracker'},user:{id:uid,name:String(u.name),displayName:String(u.name)},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},timeout:60000,attestation:'none'}});
     if(!cred)throw new Error('Passkey ვერ შეიქმნა.');
     const d={credentialId:b64(cred.rawId),createdAt:Date.now(),userId:String(u.id),userName:String(u.name)};put(u,d);return d;
@@ -1994,8 +2004,8 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
     }catch(e){if(e?.name==='NotAllowedError')return;alert('Passkey-ის ჩართვა ვერ მოხერხდა: '+(e?.message||e));}finally{if(btn)btn.disabled=false}
   };
   window.offerPasskeyAfterNewUser=async function(u){if(!u||!supported()||get(u))return;const ok=confirm('გინდა ამ ტელეფონზე შემდეგში თითის ანაბეჭდით შეხვიდე?');if(!ok)return;try{await createForUser(u);const users=getUsers();const i=users.findIndex(x=>String(x.id)===String(u.id));if(i>=0)users[i].passkey=u.passkey;localStorage.setItem(USERS_KEY,JSON.stringify(users));await saveUsersToFirebase(users);alert('🔐 თითის ანაბეჭდით შესვლა ჩაირთო ამ მომხმარებლისთვის.')}catch(e){if(e?.name==='NotAllowedError')return;alert('Passkey-ის ჩართვა ვერ მოხერხდა: '+(e?.message||e))}};
-  window.loginWithPasskey=async function(){if(!supported()){alert('ამ ტელეფონის ბრაუზერს თითის ანაბეჭდი/Passkey არ აქვს მხარდაჭერილი.');return}const users=getUsers().filter(u=>u&&!u.admin&&!u.blocked&&get(u));if(!users.length){alert('ჯერ შექმენი მომხმარებელი და ჩართე თითის ანაბეჭდი.');return}try{const challenge=new Uint8Array(32);crypto.getRandomValues(challenge);const assertion=await navigator.credentials.get({publicKey:{challenge,allowCredentials:users.map(u=>({type:'public-key',id:unb64(get(u).credentialId),transports:['internal']})),userVerification:'required',timeout:60000}});if(!assertion)return;const id=b64(assertion.rawId),u=users.find(x=>get(x)?.credentialId===id);if(!u)throw new Error('ამ მოწყობილობის Passkey ვერ მოიძებნა.');completeLogin(u)}catch(e){if(e?.name==='NotAllowedError')return;alert('თითის ანაბეჭდით შესვლა ვერ შესრულდა: '+(e?.message||e))}};
-  document.addEventListener('DOMContentLoaded',function(){const b=document.getElementById('newUserPasskeyBtn');if(b&&!supported())b.style.display='none'});
+  window.loginWithPasskey=async function(){if(!supported()){alert('ამ ტელეფონის ბრაუზერს თითის ანაბეჭდი/Passkey არ აქვს მხარდაჭერილი.');return}const users=getUsers().filter(u=>u&&!u.admin&&!u.blocked&&get(u));if(!users.length){alert('ჯერ შექმენი მომხმარებელი და ჩართე თითის ანაბეჭდი.');return}try{const challenge=new Uint8Array(32);crypto.getRandomValues(challenge);const assertion=await navigator.credentials.get({publicKey:{challenge,allowCredentials:users.map(u=>({type:'public-key',id:unb64(get(u).credentialId)})),userVerification:'required',timeout:60000}});if(!assertion)return;const id=b64(assertion.rawId),u=users.find(x=>get(x)?.credentialId===id);if(!u)throw new Error('ამ მოწყობილობის Passkey ვერ მოიძებნა.');completeLogin(u)}catch(e){if(e?.name==='NotAllowedError')return;alert('თითის ანაბეჭდით შესვლა ვერ შესრულდა: '+(e?.message||e))}};
+  document.addEventListener('DOMContentLoaded',function(){const b=document.getElementById('newUserPasskeyBtn');if(b)b.style.display='block'});
 })();
 </script>
 
@@ -2100,7 +2110,7 @@ async function registerNewUserWithPasskey(){
     alert('სახელი, ელფოსტა და ახალი პაროლი სამივე შეავსე');
     return;
   }
-  if(!window.PublicKeyCredential || !navigator.credentials?.create){
+  if(!window.isSecureContext || !navigator.credentials?.create){
     alert('ამ ბრაუზერში Passkey/თითის ანაბეჭდის ავტორიზაცია ამ საიტისთვის მიუწვდომელია.');
     return;
   }
