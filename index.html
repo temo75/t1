@@ -447,6 +447,32 @@ body.neon-global .userName{
 #myAuthSection button{width:100%;margin-top:14px}
 </style>
 
+
+<style id="my-auth-fixed-style">
+#myAuthSection .neonControlBox{width:100%;box-sizing:border-box}
+#myAuthSection input{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #29404c;background:#071117;color:#fff}
+#myPasskeyBtn{width:100%;margin-top:14px;padding:13px;border:1px solid #39ff14;border-radius:11px;background:#102b3b;color:#fff;font-weight:bold;font-size:15px;box-shadow:0 0 7px #39ff14,0 0 16px rgba(57,255,20,.75)}
+</style>
+
+
+<style id="both-pages-passkey-style">
+#passkeyLoginBtn,#newUserPasskeyBtn{
+  display:block !important;
+  width:100% !important;
+  margin-top:12px !important;
+  padding:13px 8px !important;
+  border:1px solid #39ff14 !important;
+  border-radius:11px !important;
+  background:#102b3b !important;
+  color:#fff !important;
+  font-weight:bold !important;
+  font-size:15px !important;
+  cursor:pointer !important;
+  box-shadow:0 0 7px #39ff14,0 0 16px rgba(57,255,20,.75) !important;
+}
+#passkeyLoginBtn:disabled,#newUserPasskeyBtn:disabled{opacity:.55 !important;cursor:wait !important}
+</style>
+
 </head>
 <body>
 <nav id="bottomNav">
@@ -1931,6 +1957,113 @@ async function enableMyPasskey(){
     if(btn)btn.disabled=true;
     await window.offerPasskeyAfterNewUser(me);
     updateUserUI();
+  }finally{
+    if(btn)btn.disabled=false;
+  }
+}
+</script>
+
+
+<script id="my-user-passkey-fixed">
+(function(){
+  function currentMe(){
+    try{
+      const list=typeof getUsers==='function'?getUsers():[];
+      return list.find(u=>
+        String(u.id)===String(window.currentUserId||currentUserId) ||
+        String(u.name||'').toLowerCase()===String(window.currentUser||currentUser).toLowerCase()
+      );
+    }catch(e){return null}
+  }
+  function passkeyKey(u){ return 'temoPasskey_'+String(u.id); }
+
+  window.enableMyPasskey=async function(){
+    const u=currentMe();
+    if(!u){alert('მომხმარებელი ვერ მოიძებნა.');return}
+    if(!window.PublicKeyCredential || !navigator.credentials || !navigator.credentials.create){
+      alert('ამ ბრაუზერში თითის ანაბეჭდით / Passkey-ით ავტორიზაცია მიუწვდომელია.');
+      return;
+    }
+    const btn=document.getElementById('myPasskeyBtn');
+    try{
+      if(btn)btn.disabled=true;
+      const challenge=new Uint8Array(32); crypto.getRandomValues(challenge);
+      const uid=new TextEncoder().encode(String(u.id));
+      const credential=await navigator.credentials.create({publicKey:{
+        challenge,
+        rp:{name:'TEMO Work Tracker'},
+        user:{id:uid,name:String(u.email||u.name),displayName:String(u.name)},
+        pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+        authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},
+        timeout:60000,attestation:'none'
+      }});
+      if(!credential)throw new Error('Passkey ვერ შეიქმნა.');
+      const b64=a=>btoa(String.fromCharCode.apply(null,new Uint8Array(a))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+      localStorage.setItem(passkeyKey(u),JSON.stringify({credentialId:b64(credential.rawId),userId:String(u.id),userName:String(u.name),email:String(u.email||''),createdAt:Date.now()}));
+      updateMyAuthPanel();
+      alert('✅ თითის ანაბეჭდით / Passkey-ით შესვლა ჩართულია.');
+    }catch(e){
+      if(!e || e.name!=='NotAllowedError') alert('Passkey-ის ჩართვა ვერ მოხერხდა: '+(e.message||e));
+    }finally{if(btn)btn.disabled=false}
+  };
+
+  window.updateMyAuthPanel=function(){
+    const sec=document.getElementById('myAuthSection'); if(!sec)return;
+    const u=currentMe(); if(!u)return;
+    const admin=!!u.admin;
+    sec.style.display=admin?'none':'block';
+    const n=document.getElementById('myAuthName'), em=document.getElementById('myAuthEmail'), st=document.getElementById('myPasskeyStatus');
+    if(n)n.value=u.name||'';
+    if(em)em.value=u.email||'';
+    const pk=localStorage.getItem(passkeyKey(u));
+    if(st){st.textContent=pk?'🔐 Passkey ჩართულია':'🔓 Passkey ჯერ არ არის ჩართული';st.style.color=pk?'#39ff14':'#ffd24a'}
+  };
+
+  document.addEventListener('DOMContentLoaded',function(){
+    setTimeout(updateMyAuthPanel,300);
+    setTimeout(updateMyAuthPanel,1000);
+  });
+})();
+</script>
+
+
+<script id="both-pages-passkey-logic">
+async function registerNewUserWithPasskey(){
+  const nameEl=document.getElementById('newUserAuthName');
+  const emailEl=document.getElementById('newUserAuthEmail');
+  const passEl=document.getElementById('newUserAuthPassword');
+  const btn=document.getElementById('newUserPasskeyBtn');
+  const n=nameEl?.value.trim()||'';
+  const email=emailEl?.value.trim()||'';
+  const p=passEl?.value||'';
+
+  if(!n||!email||!p){
+    alert('სახელი, ელფოსტა და ახალი პაროლი სამივე შეავსე');
+    return;
+  }
+  if(!window.PublicKeyCredential || !navigator.credentials?.create){
+    alert('ამ ბრაუზერში Passkey/თითის ანაბეჭდის ავტორიზაცია ამ საიტისთვის მიუწვდომელია.');
+    return;
+  }
+  try{
+    if(btn)btn.disabled=true;
+    const challenge=new Uint8Array(32); crypto.getRandomValues(challenge);
+    const uid=new TextEncoder().encode(n.toLowerCase()+'|'+email.toLowerCase());
+    const credential=await navigator.credentials.create({publicKey:{
+      challenge,rp:{name:'TEMO Work Tracker'},
+      user:{id:uid,name:email,displayName:n},
+      pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+      authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},
+      timeout:60000,attestation:'none'
+    }});
+    if(!credential)throw new Error('Passkey ვერ შეიქმნა.');
+    const b64=a=>btoa(String.fromCharCode(...new Uint8Array(a))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    localStorage.setItem('temoPasskey_'+n.toLowerCase(),JSON.stringify({
+      credentialId:b64(credential.rawId),userName:n,email,createdAt:Date.now()
+    }));
+    alert('✅ თითის ანაბეჭდით / Passkey-ით ავტორიზაცია ჩართულია.');
+  }catch(e){
+    if(e?.name!=='NotAllowedError') alert('Passkey-ის შექმნა ვერ მოხერხდა: '+(e.message||e));
   }finally{
     if(btn)btn.disabled=false;
   }
