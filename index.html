@@ -428,6 +428,27 @@ body.neon-global .userName{
 }
 </style>
 
+
+<style id="temo-new-user-passkey-style">
+#newUserPasskeyBtn{
+  width:100% !important;
+  margin-top:8px !important;
+  padding:11px 8px !important;
+  border:1px solid #39ff14 !important;
+  border-radius:11px !important;
+  background:#102b3b !important;
+  color:#fff !important;
+  font-weight:bold !important;
+  font-size:14px !important;
+  cursor:pointer !important;
+  box-shadow:0 0 7px #39ff14,0 0 16px rgba(57,255,20,.72) !important;
+}
+#newUserPasskeyBtn:disabled{
+  opacity:.55 !important;
+  cursor:wait !important;
+}
+</style>
+
 </head>
 <body>
 <nav id="bottomNav">
@@ -1555,6 +1576,9 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
 <label>1. თქვენი სახელი</label><input id="newUserAuthName" maxlength="40" pattern="[A-Za-z]+" inputmode="latin" autocomplete="username" oninput="this.value=this.value.replace(/[^A-Za-z]/g,'')" onpaste="setTimeout(()=>this.value=this.value.replace(/[^A-Za-z]/g,''),0)">
 <label>2. თქვენი ახალი პაროლი</label><input id="newUserAuthPassword" type="password" maxlength="80">
 <button onclick="registerNewUser()">შესვლა</button>
+<button type="button" id="newUserPasskeyBtn" class="newUserPasskeyBtn" onclick="registerNewUserWithPasskey()">
+  🔐 თითის ანაბეჭდით შესვლა
+</button>
 <button type="button" onclick="document.getElementById('newUserAuthModal').classList.remove('show');document.getElementById('loginScreen').classList.remove('hidden')" style="background:#20323b;border-color:#285269">✕ გაუქმება</button>
 </div></div><script>
 // ახალი მომხმარებლის ავტორიზაციისას მთავარი ავტორიზაციის ფანჯარა იმალება, რათა ორი ფანჯარა ერთმანეთს არ დაეფაროს.
@@ -2009,6 +2033,132 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
   setTimeout(hook,500);
   setTimeout(hook,1500);
 })();
+</script>
+
+
+<script id="temo-new-user-passkey-logic">
+async function registerNewUserWithPasskey(){
+  const nameEl=document.getElementById('newUserAuthName');
+  const passEl=document.getElementById('newUserAuthPassword');
+  const btn=document.getElementById('newUserPasskeyBtn');
+  const n=nameEl?.value.trim();
+  const p=passEl?.value;
+
+  if(!n||!p){
+    alert('სახელი და ახალი პაროლი ორივე შეავსე');
+    return;
+  }
+  if(!/^[A-Za-z]+$/.test(n)){
+    alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');
+    if(nameEl) nameEl.value=n.replace(/[^A-Za-z]/g,'');
+    return;
+  }
+  if(n.toUpperCase()===ADMIN_USER){
+    alert('ეს სახელი ადმინისტრატორისთვისაა');
+    return;
+  }
+  if(!window.PublicKeyCredential || !navigator.credentials?.create){
+    alert('ამ ტელეფონის ბრაუზერში თითის ანაბეჭდით/Passkey-ით შესვლა არ არის მხარდაჭერილი.');
+    return;
+  }
+
+  const users=getUsers();
+  if(users.some(u=>u.name.toLowerCase()===n.toLowerCase())){
+    alert('ასეთი მომხმარებელი უკვე არსებობს');
+    return;
+  }
+
+  try{
+    if(btn)btn.disabled=true;
+
+    const user=normalizeUser({
+      id:makeUserId(),
+      name:n,
+      password:p,
+      admin:false,
+      authorized:true,
+      blocked:false
+    });
+
+    users.push(user);
+    markFreshUser(user.id);
+    localStorage.setItem(USERS_KEY,JSON.stringify(users));
+    await saveUsersToFirebase(users);
+
+    if(typeof setupPasskeyAfterPasswordLogin==='function'){
+      const storedBefore=localStorage.getItem('temoPasskey:'+String(user.id));
+      if(!storedBefore){
+        const challenge=new Uint8Array(32);
+        crypto.getRandomValues(challenge);
+        const credential=await navigator.credentials.create({
+          publicKey:{
+            challenge,
+            rp:{name:'TEMO Work Tracker'},
+            user:{
+              id:new TextEncoder().encode(String(user.id)),
+              name:String(user.name),
+              displayName:String(user.name)
+            },
+            pubKeyCredParams:[
+              {type:'public-key',alg:-7},
+              {type:'public-key',alg:-257}
+            ],
+            authenticatorSelection:{
+              authenticatorAttachment:'platform',
+              userVerification:'required',
+              residentKey:'preferred'
+            },
+            timeout:60000,
+            attestation:'none'
+          }
+        });
+
+        if(!credential) throw new Error('Passkey ვერ შეიქმნა.');
+
+        const response=credential.response;
+        const bytes=new Uint8Array(credential.rawId);
+        let sid='';
+        for(let i=0;i<bytes.length;i++)sid+=String.fromCharCode(bytes[i]);
+
+        const pub=response.getPublicKey ? response.getPublicKey() : null;
+        let spk='';
+        if(pub){
+          const pb=new Uint8Array(pub);
+          let s='';
+          for(let i=0;i<pb.length;i++)s+=String.fromCharCode(pb[i]);
+          spk=btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+        }
+
+        localStorage.setItem('temoPasskey:'+String(user.id),JSON.stringify({
+          credentialId:btoa(sid).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''),
+          publicKey:spk,
+          createdAt:Date.now(),
+          userId:String(user.id),
+          userName:String(user.name)
+        }));
+      }
+    }
+
+    currentUser=user.name;
+    currentUserId=user.id;
+    localStorage.setItem(SESSION_USER_KEY,currentUser);
+    localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);
+    localStorage.setItem(AUTH_KEY,'yes');
+    nameEl.value='';
+    passEl.value='';
+    document.getElementById('newUserAuthModal').classList.remove('show');
+    document.getElementById('loginScreen').classList.remove('hidden');
+    $('loginError').textContent='';
+    jobs=loadUserJobs();
+    updateUserUI();
+    render();
+    alert('🔐 მომხმარებელი შეიქმნა და თითის ანაბეჭდით შესვლა ჩართულია ამ ტელეფონზე.');
+  }catch(err){
+    alert('თითის ანაბეჭდის დაყენება ვერ შესრულდა: '+(err.message||err));
+  }finally{
+    if(btn)btn.disabled=false;
+  }
+}
 </script>
 
 </body>
