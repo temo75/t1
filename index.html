@@ -433,6 +433,25 @@ body.neon-global .userName{
 </style>
 
 
+
+<style id="forgot-password-modern-style">
+#forgotPasswordModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:18px;z-index:70000}
+#forgotPasswordModal.show{display:flex}
+.forgotPasswordBox{width:min(410px,100%);box-sizing:border-box;background:linear-gradient(145deg,#0b1821,#102936 72%,#0b1a23);border:1px solid #36b8ff;border-radius:24px;padding:25px 22px 22px;box-shadow:0 0 12px rgba(41,153,255,.45),0 0 35px rgba(41,153,255,.22),0 24px 70px rgba(0,0,0,.7);animation:forgotPop .18s ease-out}
+@keyframes forgotPop{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+.forgotPasswordIcon{width:58px;height:58px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;border:1px solid #39c1ff;border-radius:18px;background:#0a202d;font-size:28px;box-shadow:0 0 10px rgba(41,153,255,.35),inset 0 0 18px rgba(41,153,255,.12)}
+.forgotPasswordBox h2{margin:0;text-align:center;color:#fff;font-size:21px}
+.forgotPasswordBox p{margin:7px 0 20px;text-align:center;color:#9fb5bf;font-size:13px;line-height:1.45}
+.forgotPasswordBox label{display:block;margin:0 0 7px;color:#dce8ec;font-size:13px;font-weight:bold}
+.forgotPasswordBox input{width:100%;box-sizing:border-box;padding:14px 13px;border-radius:12px;border:1px solid #294b5d;background:#061118;color:#fff;font-size:16px;outline:none;margin-bottom:13px}
+.forgotPasswordBox input:focus{border-color:#36b8ff;box-shadow:0 0 0 2px rgba(54,184,255,.12),0 0 13px rgba(54,184,255,.22)}
+.forgotPasswordRow{display:flex;gap:10px;margin-top:5px}
+.forgotPasswordRow button{flex:1;padding:13px;border-radius:12px;font-size:15px;font-weight:bold;cursor:pointer}
+#forgotPasswordSubmit{border:1px solid #36b8ff;background:#123b52;color:#fff;box-shadow:0 0 8px rgba(41,153,255,.35)}
+#forgotPasswordCancel{border:1px solid #314650;background:#172831;color:#b9c7cc}
+.forgotPasswordError{min-height:19px;margin:1px 0 5px;color:#ff7781;text-align:center;font-size:13px;font-weight:bold}
+.forgotPasswordHint{margin-top:2px!important;margin-bottom:0!important}
+</style>
 </head>
 <body>
 <nav id="bottomNav">
@@ -1252,22 +1271,42 @@ async function updateWebsite(){
 }
 
 function forgotPassword(){
-  const email=prompt('შეიყვანე რეგისტრირებული ელფოსტა');
-  if(email===null)return;
-  const e=email.trim().toLowerCase();
-  if(!e){alert('ელფოსტა შეიყვანე');return;}
+  const m=document.getElementById('forgotPasswordModal');
+  const e=document.getElementById('forgotPasswordEmail');
+  const n=document.getElementById('forgotPasswordNew');
+  const er=document.getElementById('forgotPasswordError');
+  e.value=''; n.value=''; er.textContent='';
+  m.classList.add('show');
+  m.setAttribute('aria-hidden','false');
+  setTimeout(()=>e.focus(),80);
+}
+function closeForgotPassword(){
+  const m=document.getElementById('forgotPasswordModal');
+  m.classList.remove('show');
+  m.setAttribute('aria-hidden','true');
+}
+function submitForgotPassword(){
+  const email=document.getElementById('forgotPasswordEmail').value.trim().toLowerCase();
+  const newPassword=document.getElementById('forgotPasswordNew').value;
+  const er=document.getElementById('forgotPasswordError');
+  er.textContent='';
+  if(!email){er.textContent='შეიყვანე ელფოსტა';return;}
+  if(!newPassword){er.textContent='შეიყვანე ახალი პაროლი';return;}
   const users=getUsers();
-  const u=users.find(x=>x.email&&String(x.email).toLowerCase()===e);
-  if(!u){alert('ამ ელფოსტით მომხმარებელი ვერ მოიძებნა');return;}
-  const newPassword=prompt('შეიყვანე ახალი პაროლი');
-  if(newPassword===null)return;
-  if(!newPassword){alert('ახალი პაროლი ცარიელი არ უნდა იყოს');return;}
+  const u=users.find(x=>x.email&&String(x.email).toLowerCase()===email);
+  if(!u){er.textContent='ამ ელფოსტით მომხმარებელი ვერ მოიძებნა';return;}
   u.password=newPassword;
   localStorage.setItem(USERS_KEY,JSON.stringify(users));
+  const btn=document.getElementById('forgotPasswordSubmit');
+  btn.disabled=true; btn.textContent='ინახება...';
   saveUsersToFirebase(users).then(()=>{
+    closeForgotPassword();
     alert('პაროლი წარმატებით შეიცვალა');
   }).catch(()=>{
+    closeForgotPassword();
     alert('პაროლი შეიცვალა ამ მოწყობილობაზე, მაგრამ Firebase-ში შენახვა ვერ მოხერხდა');
+  }).finally(()=>{
+    btn.disabled=false; btn.textContent='შეცვლა';
   });
 }
 
@@ -1663,6 +1702,23 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
   window.addEventListener('DOMContentLoaded',window.loadNeonSettings);
 })();
 </script>
+<div id="forgotPasswordModal" aria-hidden="true">
+  <div class="forgotPasswordBox" role="dialog" aria-modal="true" aria-labelledby="forgotPasswordTitle">
+    <div class="forgotPasswordIcon">🔑</div>
+    <h2 id="forgotPasswordTitle">პაროლის აღდგენა</h2>
+    <p>შეიყვანე რეგისტრირებული ელფოსტა და დააყენე ახალი პაროლი.</p>
+    <label for="forgotPasswordEmail">რეგისტრირებული ელფოსტა</label>
+    <input id="forgotPasswordEmail" type="email" placeholder="მაგ: temo@gmail.com" autocomplete="email">
+    <label for="forgotPasswordNew">ახალი პაროლი</label>
+    <input id="forgotPasswordNew" type="password" maxlength="80" placeholder="შეიყვანე ახალი პაროლი" autocomplete="new-password">
+    <div id="forgotPasswordError" class="forgotPasswordError"></div>
+    <div class="forgotPasswordRow">
+      <button type="button" id="forgotPasswordCancel" onclick="closeForgotPassword()">გაუქმება</button>
+      <button type="button" id="forgotPasswordSubmit" onclick="submitForgotPassword()">შეცვლა</button>
+    </div>
+    <p class="forgotPasswordHint">პაროლი შეინახება ამ მოწყობილობასა და Firebase-ში.</p>
+  </div>
+</div>
 <div id="newUserAuthModal"><div class="newUserAuthBox">
 <h2>🔐 ახალი მომხმარებლის ავტორიზაცია</h2>
 <label>1. თქვენი სახელი</label><input id="newUserAuthName" maxlength="40" pattern="[A-Za-z]+" inputmode="latin" autocomplete="username" oninput="this.value=this.value.replace(/[^A-Za-z]/g,'')" onpaste="setTimeout(()=>this.value=this.value.replace(/[^A-Za-z]/g,''),0)">
