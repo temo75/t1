@@ -412,6 +412,24 @@ body.neon-global .userName{
 }
 </style>
 
+
+<style id="new-user-passkey-style">
+#newUserPasskeyBtn{
+  width:100% !important;
+  margin-top:12px !important;
+  padding:12px 8px !important;
+  border:1px solid #39ff14 !important;
+  border-radius:11px !important;
+  background:#102b3b !important;
+  color:#fff !important;
+  font-weight:bold !important;
+  font-size:15px !important;
+  cursor:pointer !important;
+  box-shadow:0 0 7px #39ff14,0 0 16px rgba(57,255,20,.75) !important;
+}
+#newUserPasskeyBtn:disabled{opacity:.55 !important;cursor:wait !important;}
+</style>
+
 </head>
 <body>
 <nav id="bottomNav">
@@ -1835,6 +1853,101 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
   window.loginWithPasskey=async function(){if(!supported()){alert('ამ ტელეფონის ბრაუზერს თითის ანაბეჭდი/Passkey არ აქვს მხარდაჭერილი.');return}const users=getUsers().filter(u=>u&&!u.admin&&!u.blocked&&get(u));if(!users.length){alert('ჯერ შექმენი მომხმარებელი და ჩართე თითის ანაბეჭდი.');return}try{const challenge=new Uint8Array(32);crypto.getRandomValues(challenge);const assertion=await navigator.credentials.get({publicKey:{challenge,allowCredentials:users.map(u=>({type:'public-key',id:unb64(get(u).credentialId),transports:['internal']})),userVerification:'required',timeout:60000}});if(!assertion)return;const id=b64(assertion.rawId),u=users.find(x=>get(x)?.credentialId===id);if(!u)throw new Error('ამ მოწყობილობის Passkey ვერ მოიძებნა.');completeLogin(u)}catch(e){if(e?.name==='NotAllowedError')return;alert('თითის ანაბეჭდით შესვლა ვერ შესრულდა: '+(e?.message||e))}};
   document.addEventListener('DOMContentLoaded',function(){const b=document.getElementById('newUserPasskeyBtn');if(b&&!supported())b.style.display='none'});
 })();
+</script>
+
+
+<script id="new-user-passkey-logic">
+async function registerNewUserWithPasskey(){
+  const nameEl=document.getElementById('newUserAuthName');
+  const emailEl=document.getElementById('newUserAuthEmail');
+  const passEl=document.getElementById('newUserAuthPassword');
+  const btn=document.getElementById('newUserPasskeyBtn');
+  const n=nameEl?.value.trim();
+  const email=emailEl?.value.trim();
+  const p=passEl?.value || '';
+
+  if(!n || !email || !p){
+    alert('სახელი, ელფოსტა და ახალი პაროლი სამივე შეავსე');
+    return;
+  }
+  if(!/^[A-Za-z]+$/.test(n)){
+    alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');
+    return;
+  }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    alert('შეიყვანე სწორი ელფოსტა');
+    return;
+  }
+  if(p.length < 6){
+    alert('პაროლი უნდა იყოს მინიმუმ 6 სიმბოლო');
+    return;
+  }
+
+  if(!window.PublicKeyCredential || !navigator.credentials || !navigator.credentials.create){
+    alert('ამ ბრაუზერში Passkey/თითის ანაბეჭდის ავტორიზაცია ამ საიტისთვის მიუწვდომელია.');
+    return;
+  }
+
+  try{
+    if(btn) btn.disabled=true;
+
+    const challenge=new Uint8Array(32);
+    crypto.getRandomValues(challenge);
+
+    const userId=new TextEncoder().encode(
+      (n.toLowerCase()+'|'+email.toLowerCase())
+    );
+
+    const credential=await navigator.credentials.create({
+      publicKey:{
+        challenge,
+        rp:{name:'TEMO Work Tracker'},
+        user:{
+          id:userId,
+          name:email,
+          displayName:n
+        },
+        pubKeyCredParams:[
+          {type:'public-key',alg:-7},
+          {type:'public-key',alg:-257}
+        ],
+        authenticatorSelection:{
+          authenticatorAttachment:'platform',
+          userVerification:'required',
+          residentKey:'preferred'
+        },
+        timeout:60000,
+        attestation:'none'
+      }
+    });
+
+    if(!credential) throw new Error('Passkey ვერ შეიქმნა.');
+
+    const response=credential.response;
+    const data={
+      credentialId:btoa(String.fromCharCode(...new Uint8Array(credential.rawId)))
+        .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''),
+      createdAt:Date.now(),
+      userName:n,
+      email:email
+    };
+
+    localStorage.setItem('temo_passkey_new_'+n.toLowerCase(),JSON.stringify(data));
+
+    // If the existing normal new-user creator exists, finish account creation
+    // through it so the existing Firebase/data logic remains in control.
+    if(typeof registerNewUser==='function'){
+      await registerNewUser();
+    }else{
+      alert('🔐 Passkey შეიქმნა.');
+    }
+  }catch(err){
+    if(err && err.name==='NotAllowedError') return;
+    alert('Passkey-ის შექმნა ვერ მოხერხდა: '+(err.message||err));
+  }finally{
+    if(btn) btn.disabled=false;
+  }
+}
 </script>
 
 </body>
