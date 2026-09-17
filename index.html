@@ -1200,82 +1200,17 @@ async function updateWebsite(){
 }
 
 function showNewUserAuth(){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('newUserAuthModal').classList.add('show')}
-async function registerNewUser(){
-  const nameEl=document.getElementById('newUserAuthName');
-  const passEl=document.getElementById('newUserAuthPassword');
-  const n=nameEl.value.trim(),p=passEl.value;
+async function registerNewUser(){const nameEl=document.getElementById('newUserAuthName'),passEl=document.getElementById('newUserAuthPassword'),n=nameEl.value.trim(),p=passEl.value;if(!n||!p){alert('სახელი და ახალი პაროლი ორივე შეავსე');return;}if(!/^[A-Za-z]+$/.test(n)){alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');nameEl.value=n.replace(/[^A-Za-z]/g,'');return;}if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return;}const users=getUsers();if(users.some(u=>u.name.toLowerCase()===n.toLowerCase()&&u.password===p)){alert('ასეთი მომხმარებელი უკვე არსებობს');return;}const user=normalizeUser({id:makeUserId(),name:n,password:p,admin:false,authorized:true,blocked:false});users.push(user);markFreshUser(user.id);localStorage.setItem(USERS_KEY,JSON.stringify(users));await saveUsersToFirebase(users);currentUser=user.name;currentUserId=user.id;localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');nameEl.value='';passEl.value='';document.getElementById('newUserAuthModal').classList.remove('show');$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
+window.addEventListener('DOMContentLoaded',loadNeonSettings);
+</script>
 
-  if(!n||!p){alert('სახელი და ახალი პაროლი ორივე შეავსე');return;}
-  if(!/^[A-Za-z]+$/.test(n)){
-    alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');
-    nameEl.value=n.replace(/[^A-Za-z]/g,'');
-    return;
-  }
-  if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return;}
 
-  const users=getUsers();
-  if(users.some(u=>u.name.toLowerCase()===n.toLowerCase())){
-    alert('ასეთი მომხმარებელი უკვე არსებობს');
-    return;
-  }
-
-  try{
-    // NEW USERS ONLY: Firebase Authentication is used when configured.
-    // If it is not configured yet, do not alter the existing users/login system.
-    let authUser=null;
-    if(typeof window.temoFirebaseNewUserCreate==='function' && window.temoFirebaseAuthReady){
-      authUser=await window.temoFirebaseNewUserCreate(n,p);
-    }
-
-    const user=normalizeUser({
-      id:makeUserId(),
-      name:n,
-      password:p,
-      admin:false,
-      authorized:true,
-      blocked:false
-    });
-
-    if(authUser){
-      user.firebaseAuthUid=authUser.uid;
-      user.firebaseAuthEmail=authUser.email;
-      user.authType='firebase-email-password';
-    }
-
-    users.push(user);
-    markFreshUser(user.id);
-    localStorage.setItem(USERS_KEY,JSON.stringify(users));
-    await saveUsersToFirebase(users);
-
-    currentUser=user.name;
-    currentUserId=user.id;
-    localStorage.setItem(SESSION_USER_KEY,currentUser);
-    localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);
-    localStorage.setItem(AUTH_KEY,'yes');
-
-    nameEl.value='';
-    passEl.value='';
-    document.getElementById('newUserAuthModal').classList.remove('show');
-    $('loginError').textContent='';
-    jobs=loadUserJobs();
-    updateUserUI();
-    render();
-
-    alert(authUser ? '✅ ახალი მომხმარებელი შეიქმნა Firebase Authentication-ში.' : '✅ ახალი მომხმარებელი შეიქმნა. Firebase Authentication-ის დაკავშირება შემდეგ ეტაპზე ჩაერთვება.');
-  }catch(e){
-    console.error('New Firebase user creation failed:',e);
-    let msg=e?.message||String(e);
-
-    if(e?.code==='auth/email-already-in-use'){
-      msg='ამ სახელისთვის Firebase Authentication ანგარიში უკვე არსებობს.';
-    }else if(e?.code==='auth/weak-password'){
-      msg='პაროლი ძალიან სუსტია. გამოიყენე მინიმუმ 6 სიმბოლო.';
-    }else if(e?.code==='auth/operation-not-allowed'){
-      msg='Firebase-ში Email/Password ჯერ ჩართული არ არის.';
-    }
-
-    alert('ახალი მომხმარებელი ვერ შეიქმნა:\\n'+msg);
-  }
+<style id="temo-user-management-layout-fix">
+/* User Management — stable mobile layout */
+#userManagementSection{
+  width:100% !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
 }
 #userManagementSection .userManagementInner,
 #userManagementSection .userManagementBox,
@@ -1857,91 +1792,6 @@ async function registerNewUser(){
     subtree:true,childList:true
   });
 })();
-</script>
-
-
-<script type="module" id="temo-firebase-new-user-auth">
-  import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-  import {
-    getAuth,
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-    updateProfile
-  } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-
-  /*
-    IMPORTANT:
-    Paste your Firebase Web App configuration here.
-    Firebase Console → Project settings → Your apps → Web app → SDK setup/config.
-    This config is not a password/secret.
-  */
-  const TEMO_FIREBASE_CONFIG = {
-    apiKey: "PASTE_YOUR_FIREBASE_API_KEY",
-    authDomain: "temo-75.firebaseapp.com",
-    projectId: "temo-75",
-    databaseURL: "https://temo-75-default-rtdb.europe-west1.firebasedatabase.app",
-    appId: "PASTE_YOUR_FIREBASE_APP_ID"
-  };
-
-  const CONFIG_READY =
-    TEMO_FIREBASE_CONFIG.apiKey &&
-    TEMO_FIREBASE_CONFIG.apiKey !== "PASTE_YOUR_FIREBASE_API_KEY" &&
-    TEMO_FIREBASE_CONFIG.appId &&
-    TEMO_FIREBASE_CONFIG.appId !== "PASTE_YOUR_FIREBASE_APP_ID";
-
-  let auth = null;
-
-  if (CONFIG_READY) {
-    try {
-      const app = getApps().length ? getApps()[0] : initializeApp(TEMO_FIREBASE_CONFIG);
-      auth = getAuth(app);
-      window.temoFirebaseAuthReady = true;
-    } catch (e) {
-      console.warn("Firebase Authentication initialization failed:", e);
-      window.temoFirebaseAuthReady = false;
-    }
-  }
-
-  // Internal email is generated from the existing username so the visible UI
-  // remains exactly "name + password". Existing users are not migrated.
-  window.temoAuthEmailForName = function(name) {
-    return String(name).trim().toLowerCase() + "@temo75-auth.local";
-  };
-
-  window.temoFirebaseNewUserCreate = async function(name, password) {
-    if (!auth) {
-      throw new Error("Firebase Authentication ჯერ არ არის დაკავშირებული. საჭიროა Web App config.");
-    }
-
-    const email = window.temoAuthEmailForName(name);
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-
-    try {
-      await updateProfile(cred.user, { displayName: String(name) });
-    } catch (e) {
-      console.warn("Firebase displayName update failed:", e);
-    }
-
-    return {
-      uid: cred.user.uid,
-      email: cred.user.email,
-      name: String(name)
-    };
-  };
-
-  window.temoFirebaseNewUserLogin = async function(name, password) {
-    if (!auth) {
-      throw new Error("Firebase Authentication ჯერ არ არის დაკავშირებული. საჭიროა Web App config.");
-    }
-
-    const email = window.temoAuthEmailForName(name);
-    const cred = await signInWithEmailAndPassword(auth, email, password);
-    return {
-      uid: cred.user.uid,
-      email: cred.user.email,
-      name: String(name)
-    };
-  };
 </script>
 
 </body>
