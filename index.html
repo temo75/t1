@@ -408,6 +408,31 @@ body.neon-global .userName{
 }
 </style>
 
+
+<style id="all-users-auth-style">
+#loginEmail{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #29404c;background:#071117;color:#fff;margin-top:10px}
+</style>
+
+<style id="my-user-auth-style">
+#myAuthSection input{
+  width:100%;
+  box-sizing:border-box;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid #29404c;
+  background:#071117;
+  color:#fff;
+}
+#myAuthSection button{width:100%;margin-top:14px}
+</style>
+
+
+<style id="my-auth-fixed-style">
+#myAuthSection .neonControlBox{width:100%;box-sizing:border-box}
+#myAuthSection input{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #29404c;background:#071117;color:#fff}
+</style>
+
+
 </head>
 <body>
 <nav id="bottomNav">
@@ -493,6 +518,16 @@ body.neon-global .userName{
 
 </div>
 <div class="meta" style="margin-top:12px">ატვირთული ფაილი უნდა იყოს index.html. Token მხოლოდ ამ ტელეფონში ინახება.</div>
+</div>
+
+<div class="section" id="myAuthSection" style="display:none">
+<h2>🔐 ჩემი ავტორიზაცია</h2>
+<div class="neonControlBox">
+<label style="display:block;margin-bottom:6px">👤 მომხმარებელი</label>
+<input id="myAuthName" type="text" readonly>
+<label style="display:block;margin:12px 0 6px">📧 ელფოსტა</label>
+<input id="myAuthEmail" type="email" readonly>
+</div>
 </div>
 
 <div class="section" id="neonControlSection" style="display:none">
@@ -583,7 +618,7 @@ function makeUserId(){return window.crypto&&crypto.randomUUID?crypto.randomUUID(
 function makeLegacyUserId(name,password){const str=String(name||'').trim().toLowerCase()+'\u0000'+String(password??'');let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return 'legacy_'+(h>>>0).toString(16);}
 function firebaseUserKey(id){return encodeURIComponent(String(id)).replace(/%/g,'_');}
 async function loadUsersFromFirebase(){try{const r=await fetch(FIREBASE_DB_URL+'/users.json',{cache:'no-store'});if(!r.ok)throw new Error('Firebase HTTP '+r.status);const data=await r.json();if(data===null)return null;if(Array.isArray(data))return data.filter(Boolean).map(normalizeUser).filter(u=>!isRemovedUser(u));return Object.entries(data||{}).filter(([,u])=>u).map(([key,u])=>normalizeUser({...u,_firebaseKey:key})).filter(u=>!isRemovedUser(u));}catch(e){console.warn('Firebase users read failed:',e);return null}}
-function normalizeUser(raw){const u=(raw&&typeof raw==='object')?raw:{};const name=String(u.name||'').trim(),password=String(u.password??'');const admin=(name.toUpperCase()===ADMIN_USER)||u.admin===true;const blocked=admin?false:(typeof u.blocked==='boolean'?u.blocked:u.authorized===false);const id=String(u.id||'').trim()||makeLegacyUserId(name,password);return {id,name,password,admin,authorized:admin?true:!blocked,blocked,_firebaseKey:u._firebaseKey||''};}
+function normalizeUser(raw){const u=(raw&&typeof raw==='object')?raw:{};const rawName=String(u.name||'').trim(),password=String(u.password??''),email=String(u.email??u.firebaseAuthEmail??'').trim();const admin=(rawName.toUpperCase()===ADMIN_USER)||u.admin===true;const name=rawName.toUpperCase()===ADMIN_USER?ADMIN_USER:rawName;const blocked=admin?false:(typeof u.blocked==='boolean'?u.blocked:u.authorized===false);const rawId=String(u.id||'').trim();const id=admin?'admin-temo':(rawId||makeLegacyUserId(name,password));return {id,name,password,email,admin,authorized:admin?true:!blocked,blocked,_firebaseKey:u._firebaseKey||''};}
 function isRemovedUser(u){return REMOVED_USER_NAMES.includes(String(u?.name||'').trim().toUpperCase());}
 async function saveUsersToFirebase(users){const snapshot=users.filter(u=>u&&u.name&&!isRemovedUser(u)).map(normalizeUser);firebaseWriteQueue=firebaseWriteQueue.then(async()=>{try{const r=await fetch(FIREBASE_DB_URL+'/users.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(snapshot)});if(!r.ok)throw new Error('Firebase HTTP '+r.status);return true;}catch(e){console.warn('Firebase users write failed:',e);return false}});return firebaseWriteQueue;}
 async function syncUsersFromFirebase(){if(firebaseSyncBusy)return;firebaseSyncBusy=true;try{await firebaseWriteQueue;const remote=await loadUsersFromFirebase();if(remote!==null){let clean=remote.map(normalizeUser).filter(u=>u.name&&!isRemovedUser(u));if(!clean.some(u=>u.name.toUpperCase()===ADMIN_USER))clean.unshift(normalizeUser({id:'admin-temo',name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true,blocked:false}));localStorage.setItem(USERS_KEY,JSON.stringify(clean));return clean;}const local=getUsers().filter(u=>!isRemovedUser(u));await saveUsersToFirebase(local);return local;}finally{firebaseSyncBusy=false}}
@@ -600,7 +635,25 @@ function enablePasswordOnlyLogin(){
 }
 function enableNameLogin(){enablePasswordOnlyLogin()}
 function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');$('loginScreen').classList.add('hidden');$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
-function login(){const name=$('loginName').value.trim(),pass=$('loginPassword').value,users=getUsers(),u=users.find(x=>x.name.toLowerCase()===name.toLowerCase()&&x.password===pass);if(!u){$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus();return;}if(u.blocked===true||u.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';$('loginPassword').focus();return;}completeLogin(u);}
+function login(){
+  const name=$('loginName').value.trim();
+  const pass=$('loginPassword').value;
+  const users=getUsers();
+  const u=users.find(x=>x.name && x.name.toLowerCase()===name.toLowerCase()&&x.password===pass);
+  if(!u){
+    $('loginError').textContent='სახელი ან პაროლი არასწორია';
+    $('loginPassword').value='';
+    $('loginPassword').focus();
+    return;
+  }
+  if(u.blocked===true||u.authorized!==true){
+    $('loginError').textContent='ეს მომხმარებელი დაბლოკილია';
+    $('loginPassword').value='';
+    $('loginPassword').focus();
+    return;
+  }
+  completeLogin(u);
+}
 function renderLoginUsers(){}
 window.addEventListener('DOMContentLoaded',async()=>{
   await syncUsersFromFirebase();
@@ -648,15 +701,22 @@ function removeAllLegacyJobKeysForName(name){
 }
 function loadUserJobs(){
   try{
-    // სამუშაოები ინახება მომხმარებლის უნიკალური ID-ით და არა მხოლოდ სახელით.
-    // ამიტომ წაშლილი ანგარიშის ხელახლა შექმნისას ძველი სამუშაოები აღარ ბრუნდება.
+    // სამუშაოები ინახება მომხმარებლის უნიკალური ID-ით.
+    // TEMO-სთვის კი ძველი canonical key — temoJobs — რჩება მთავარ წყაროდ,
+    // რათა ადმინისტრატორის ძველი სამუშაოები ახალი account ID-ის გამო არ დაიკარგოს.
     const idKey='temoJobsId_'+(currentUserId||'');
     const nameKey='temoJobs_'+(currentUser||ADMIN_USER);
     let own=idKey&&currentUserId?localStorage.getItem(idKey):null;
 
-    // ძველი ვერსიებიდან არსებული მონაცემების ერთჯერადი მიგრაცია მოქმედ მომხმარებელზე.
-    // ახალი ანგარიშისთვის, რომელსაც ახალი ID აქვს, ძველი სახელის მონაცემები აღარ გამოიყენება.
-    if(own===null && currentUserId && !getFreshUserIds().includes(String(currentUserId))){
+    if(currentUser===ADMIN_USER){
+      const legacyAdmin=localStorage.getItem('temoJobs');
+      if(legacyAdmin!==null){
+        own=legacyAdmin;
+        if(currentUserId) localStorage.setItem(idKey,legacyAdmin);
+      }
+    }else if(own===null && currentUserId && !getFreshUserIds().includes(String(currentUserId))){
+      // ძველი ვერსიებიდან არსებული მონაცემების ერთჯერადი მიგრაცია მოქმედ მომხმარებელზე.
+      // ახალი ანგარიშისთვის, რომელსაც ახალი ID აქვს, ძველი სახელის მონაცემები აღარ გამოიყენება.
       const legacy=localStorage.getItem(nameKey);
       if(legacy!==null){
         localStorage.setItem(idKey,legacy);
@@ -665,16 +725,6 @@ function loadUserJobs(){
       }
     }
 
-    if(currentUser===ADMIN_USER){
-      const legacyAdmin=localStorage.getItem('temoJobs');
-      if((own===null || own==='[]') && legacyAdmin){
-        const legacyJobs=JSON.parse(legacyAdmin||'[]');
-        if(Array.isArray(legacyJobs) && legacyJobs.length){
-          localStorage.setItem(idKey,JSON.stringify(legacyJobs));
-          return legacyJobs;
-        }
-      }
-    }
     return JSON.parse(own||'[]');
   }catch(e){return []}
 }
@@ -947,6 +997,7 @@ function updateUserUI(){
  const isAdmin=currentUser===ADMIN_USER;
  const site=$('websiteUpdateSection'); if(site)site.style.display=isAdmin?'':'none';
  const users=$('userManagementSection'); if(users)users.style.display=isAdmin?'':'none'; const neon=$('neonControlSection'); if(neon)neon.style.display=isAdmin?'':'none';
+ const myAuth=$('myAuthSection'); if(myAuth){myAuth.style.display=isAdmin?'none':'block'; const me=getUsers().find(x=>String(x.id)===String(currentUserId)||String(x.name).toLowerCase()===String(currentUser).toLowerCase()); if(me){$('myAuthName').value=me.name||'';$('myAuthEmail').value=me.email||'';}}
  const manageBtn=$('userManagementOpenBtn'); if(manageBtn)manageBtn.style.display=isAdmin?'block':'none';
  const label=$('currentUserLabel'); if(label){label.textContent=currentUser?'👤 შენ შეხვედი... '+currentUser:'';label.style.display=currentUser?'block':'none';}
  if(isAdmin)renderManagedUsers();
@@ -969,7 +1020,7 @@ async function renderManagedUsers(){
   }
 
   const list=users.filter(u=>!u.admin&&u.name.toUpperCase()!==ADMIN_USER&&!isRemovedUser(u));
-  const key=JSON.stringify(list.map(u=>[u.id,u.name,u.password,u.blocked===true]));
+  const key=JSON.stringify(list.map(u=>[u.id,u.name,u.email,u.password,u.blocked===true]));
 
   if(key===managedUsersRenderKey && box.children.length)return;
   managedUsersRenderKey=key;
@@ -985,7 +1036,7 @@ async function renderManagedUsers(){
     row.className='userRow';
     const b=document.createElement('button');
     b.className='backupBtn userNameBtn';
-    b.textContent='👤 '+u.name+' | 🔑 '+u.password;
+    b.textContent='👤 '+u.name+' | 📧 '+(u.email||'ელფოსტა არ არის')+' | 🔑 '+u.password;
     b.disabled=true;
     const l=document.createElement('button');
     l.className='backupBtn lockBtn'+(u.blocked===true?' locked':'');
@@ -1200,7 +1251,72 @@ async function updateWebsite(){
 }
 
 function showNewUserAuth(){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('newUserAuthModal').classList.add('show')}
-async function registerNewUser(){const nameEl=document.getElementById('newUserAuthName'),passEl=document.getElementById('newUserAuthPassword'),n=nameEl.value.trim(),p=passEl.value;if(!n||!p){alert('სახელი და ახალი პაროლი ორივე შეავსე');return;}if(!/^[A-Za-z]+$/.test(n)){alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');nameEl.value=n.replace(/[^A-Za-z]/g,'');return;}if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return;}const users=getUsers();if(users.some(u=>u.name.toLowerCase()===n.toLowerCase()&&u.password===p)){alert('ასეთი მომხმარებელი უკვე არსებობს');return;}const user=normalizeUser({id:makeUserId(),name:n,password:p,admin:false,authorized:true,blocked:false});users.push(user);markFreshUser(user.id);localStorage.setItem(USERS_KEY,JSON.stringify(users));await saveUsersToFirebase(users);currentUser=user.name;currentUserId=user.id;localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');nameEl.value='';passEl.value='';document.getElementById('newUserAuthModal').classList.remove('show');$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
+async function registerNewUser(){
+  const nameEl=document.getElementById('newUserAuthName');
+  const emailEl=document.getElementById('newUserAuthEmail');
+  const passEl=document.getElementById('newUserAuthPassword');
+  const n=nameEl.value.trim();
+  const email=emailEl?emailEl.value.trim().toLowerCase():'';
+  const p=passEl.value;
+
+  if(!n||!email||!p){
+    alert('სახელი, ელფოსტა და ახალი პაროლი სამივე შეავსე');
+    return;
+  }
+  if(!/^[A-Za-z]+$/.test(n)){
+    alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');
+    nameEl.value=n.replace(/[^A-Za-z]/g,'');
+    return;
+  }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    alert('შეიყვანე სწორი ელფოსტა');
+    return;
+  }
+  if(n.toUpperCase()===ADMIN_USER){
+    alert('ეს სახელი ადმინისტრატორისთვისაა');
+    return;
+  }
+
+  const users=getUsers();
+  if(users.some(u=>u.name&&u.name.toLowerCase()===n.toLowerCase())){
+    alert('ასეთი მომხმარებელი უკვე არსებობს');
+    return;
+  }
+  if(users.some(u=>u.email&&u.email.toLowerCase()===email)){
+    alert('ეს ელფოსტა უკვე გამოყენებულია');
+    return;
+  }
+
+  const user=normalizeUser({
+    id:makeUserId(),
+    name:n,
+    email:email,
+    password:p,
+    admin:false,
+    authorized:true,
+    blocked:false
+  });
+
+  users.push(user);
+  markFreshUser(user.id);
+  localStorage.setItem(USERS_KEY,JSON.stringify(users));
+  await saveUsersToFirebase(users);
+
+  currentUser=user.name;
+  currentUserId=user.id;
+  localStorage.setItem(SESSION_USER_KEY,currentUser);
+  localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);
+  localStorage.setItem(AUTH_KEY,'yes');
+
+  nameEl.value='';
+  if(emailEl)emailEl.value='';
+  passEl.value='';
+  document.getElementById('newUserAuthModal').classList.remove('show');
+  $('loginError').textContent='';
+  jobs=loadUserJobs();
+  updateUserUI();
+  render();
+}
 window.addEventListener('DOMContentLoaded',loadNeonSettings);
 </script>
 
@@ -1529,12 +1645,11 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
 <div id="newUserAuthModal"><div class="newUserAuthBox">
 <h2>🔐 ახალი მომხმარებლის ავტორიზაცია</h2>
 <label>1. თქვენი სახელი</label><input id="newUserAuthName" maxlength="40" pattern="[A-Za-z]+" inputmode="latin" autocomplete="username" oninput="this.value=this.value.replace(/[^A-Za-z]/g,'')" onpaste="setTimeout(()=>this.value=this.value.replace(/[^A-Za-z]/g,''),0)">
-<label>2. თქვენი ახალი პაროლი</label><input id="newUserAuthPassword" type="password" maxlength="80">
-<button onclick="registerNewUser()">შესვლა</button>
+<label>2. თქვენი ელფოსტა</label><input id="newUserAuthEmail" type="email" maxlength="120" placeholder="მაგ: temo@gmail.com" autocomplete="email">
+<label>3. თქვენი ახალი პაროლი</label><input id="newUserAuthPassword" type="password" maxlength="80" autocomplete="new-password">
+<button onclick="registerNewUser()">👤 ანგარიშის შექმნა</button>
 <button type="button" onclick="document.getElementById('newUserAuthModal').classList.remove('show');document.getElementById('loginScreen').classList.remove('hidden')" style="background:#20323b;border-color:#285269">✕ გაუქმება</button>
 </div></div><script>
-// ახალი მომხმარებლის ავტორიზაციისას მთავარი ავტორიზაციის ფანჯარა იმალება, რათა ორი ფანჯარა ერთმანეთს არ დაეფაროს.
-// გაუქმებისას მთავარი ავტორიზაციის ფანჯარა ისევ გამოჩნდება.
 </script>
 <style id="temo-swipe-navigation-style">
 /*
@@ -1793,6 +1908,7 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
   });
 })();
 </script>
+
 
 </body>
 </html>
