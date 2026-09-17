@@ -655,17 +655,32 @@ const FIREBASE_DB_URL='https://temo-75-default-rtdb.europe-west1.firebasedatabas
 let currentUser=localStorage.getItem(SESSION_USER_KEY)||'';
 let currentUserId=localStorage.getItem(SESSION_USER_ID_KEY)||'';
 function markSessionActive(){
-  if(currentUser && localStorage.getItem(AUTH_KEY)==='yes'){
+  if(currentUser && localStorage.getItem(AUTH_KEY)==='yes' && document.visibilityState==='visible'){
     localStorage.setItem(SESSION_LAST_ACTIVE_KEY,String(Date.now()));
   }
 }
-window.addEventListener('pagehide',()=>{
+function markSessionClosed(){
   if(currentUser && localStorage.getItem(AUTH_KEY)==='yes'){
-    localStorage.setItem(SESSION_CLOSED_AT_KEY,String(Date.now()));
-    localStorage.setItem(SESSION_LAST_ACTIVE_KEY,String(Date.now()));
+    const now=Date.now();
+    localStorage.setItem(SESSION_CLOSED_AT_KEY,String(now));
+    localStorage.setItem(SESSION_EXPIRES_KEY,String(now+SESSION_DURATION_MS));
+    localStorage.setItem(SESSION_LAST_ACTIVE_KEY,String(now));
+  }
+}
+window.addEventListener('pagehide',markSessionClosed);
+window.addEventListener('beforeunload',markSessionClosed);
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden') markSessionClosed();
+  else if(document.visibilityState==='visible' && localStorage.getItem(AUTH_KEY)==='yes'){
+    const expires=Number(localStorage.getItem(SESSION_EXPIRES_KEY)||0);
+    if(expires && Date.now()>expires){
+      localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);localStorage.removeItem(SESSION_USER_ID_KEY);localStorage.removeItem(SESSION_EXPIRES_KEY);localStorage.removeItem(SESSION_CLOSED_AT_KEY);localStorage.removeItem(SESSION_LAST_ACTIVE_KEY);currentUser='';currentUserId='';
+      $('loginScreen').classList.remove('hidden');
+    }else{
+      localStorage.removeItem(SESSION_CLOSED_AT_KEY);localStorage.removeItem(SESSION_EXPIRES_KEY);markSessionActive();
+    }
   }
 });
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')markSessionActive();});
 setInterval(()=>{if(document.visibilityState==='visible')markSessionActive();},30000);
 let firebaseSyncBusy=false;
 let firebaseWriteQueue=Promise.resolve();
