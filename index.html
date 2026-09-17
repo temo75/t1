@@ -342,25 +342,39 @@ body.neon-global .neonAll{
 }
 </style>
 
-<style id="temo-user-neon-color-sync">
-/* მომხმარებლის გვერდი — ადმინისტრატორის მიერ არჩეული ნეონის ფერი */
+<style id="temo-user-four-blocks-inner-sensor">
+/* მომხმარებლის მთავარი 4 ბლოკი — სენსორული ნეონი მხოლოდ შიგნით */
 .grid .monthTotalHero,
 .stats .mini{
-  --user-neon-color: var(--neon-control, #49d86a);
-  border-color: var(--user-neon-color) !important;
+  position:relative !important;
+  overflow:hidden !important;
+  border-color:#49d86a !important;
   box-shadow:
-    0 0 4px color-mix(in srgb, var(--user-neon-color) 22%, transparent),
-    0 0 9px color-mix(in srgb, var(--user-neon-color) 12%, transparent),
-    inset 0 0 9px color-mix(in srgb, var(--user-neon-color) 95%, transparent),
-    inset 0 0 22px color-mix(in srgb, var(--user-neon-color) 72%, transparent),
-    inset 0 0 38px color-mix(in srgb, var(--user-neon-color) 48%, transparent) !important;
+      0 0 4px rgba(73,216,106,.22),
+      0 0 9px rgba(73,216,106,.12),
+      inset 0 0 9px rgba(73,216,106,.95),
+      inset 0 0 22px rgba(73,216,106,.72),
+      inset 0 0 38px rgba(73,216,106,.48) !important;
 }
 
+/* შიდა ჩარჩოდან გავრცელებული რბილი მწვანე ნათება */
 .grid .monthTotalHero::after,
 .stats .mini::after{
+  content:"";
+  position:absolute;
+  inset:1px;
+  border-radius:inherit;
+  pointer-events:none;
   box-shadow:
-    inset 0 0 13px color-mix(in srgb, var(--user-neon-color) 52%, transparent),
-    inset 0 0 29px color-mix(in srgb, var(--user-neon-color) 30%, transparent);
+    inset 0 0 11px rgba(73,216,106,.42),
+    inset 0 0 25px rgba(73,216,106,.22);
+}
+
+/* ტექსტი ზემოდან დარჩეს */
+.grid .monthTotalHero > *,
+.stats .mini > *{
+  position:relative;
+  z-index:1;
 }
 </style>
 
@@ -530,6 +544,44 @@ const SESSION_USER_ID_KEY='temoWorkTrackerUserId';
 const FRESH_USER_IDS_KEY='temoFreshUserIds';
 const ADMIN_USER='TEMO';
 const FIREBASE_DB_URL='https://temo-75-default-rtdb.europe-west1.firebasedatabase.app';
+const FIREBASE_NEON_URL=FIREBASE_DB_URL+'/settings/neon.json';
+let neonRemoteTimer=null;
+async function saveNeonSettingsToFirebase(color,strength){
+  try{
+    await fetch(FIREBASE_NEON_URL,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({color:String(color||'#49d86a'),strength:String(strength??65)})
+    });
+  }catch(e){console.warn('Firebase neon write failed:',e);}
+}
+async function loadNeonSettingsFromFirebase(){
+  try{
+    const r=await fetch(FIREBASE_NEON_URL,{cache:'no-store'});
+    if(!r.ok)throw new Error('Firebase HTTP '+r.status);
+    const d=await r.json();
+    return d&&d.color?d:null;
+  }catch(e){console.warn('Firebase neon read failed:',e);return null;}
+}
+async function syncNeonSettingsFromFirebase(){
+  const d=await loadNeonSettingsFromFirebase();
+  if(!d)return;
+  const c=document.getElementById('neonColor'),r=document.getElementById('neonStrength');
+  if(!c||!r)return;
+  const color=String(d.color||'#49d86a');
+  const strength=String(d.strength??65);
+  if(c.value!==color)c.value=color;
+  if(String(r.value)!==strength)r.value=strength;
+  applyGlobalNeon(false);
+}
+function startNeonRemoteSync(){
+  if(neonRemoteTimer)clearInterval(neonRemoteTimer);
+  syncNeonSettingsFromFirebase();
+  neonRemoteTimer=setInterval(()=>{
+    if(currentUser!==ADMIN_USER)syncNeonSettingsFromFirebase();
+  },2000);
+}
+
 let currentUser=localStorage.getItem(SESSION_USER_KEY)||'';
 let currentUserId=localStorage.getItem(SESSION_USER_ID_KEY)||'';
 let firebaseSyncBusy=false;
@@ -876,29 +928,8 @@ function loadPrivacyState(){
   eye.setAttribute('aria-label',hidden?'თანხების ჩვენება':'თანხების დამალვა');
 }
 
-function applyNeonSettings(){
- const c=document.getElementById('neonColor'),r=document.getElementById('neonStrength');
- if(!c||!r)return;
- const color=c.value,p=Number(r.value)/100,hex=color.slice(1);
- const rr=parseInt(hex.slice(0,2),16)||0,gg=parseInt(hex.slice(2,4),16)||0,bb=parseInt(hex.slice(4,6),16)||0;
- document.documentElement.style.setProperty('--neon-control',color);
- document.documentElement.style.setProperty('--neon-control-rgb',`${rr},${gg},${bb}`);
- document.documentElement.style.setProperty('--neon-power',p);
- const blur1=6+Math.round(p*10),blur2=14+Math.round(p*20),blur3=24+Math.round(p*28);
- document.querySelectorAll('.neonControlled').forEach(el=>{
-   el.style.boxShadow=`0 0 ${blur1}px rgba(${rr},${gg},${bb},${(0.28+p*0.55).toFixed(2)}),0 0 ${blur2}px rgba(${rr},${gg},${bb},${(0.18+p*0.45).toFixed(2)}),0 0 ${blur3}px rgba(${rr},${gg},${bb},${(0.08+p*0.30).toFixed(2)}),inset 0 0 12px rgba(${rr},${gg},${bb},${(0.05+p*0.12).toFixed(2)})`;
-   el.querySelectorAll('.label,.amount,span,b').forEach(t=>{t.style.textShadow=`0 0 7px rgba(${rr},${gg},${bb},${(0.45+p*0.5).toFixed(2)}),0 0 16px rgba(${rr},${gg},${bb},${(0.2+p*0.35).toFixed(2)})`;});
- });
- const v=document.getElementById('neonStrengthValue');if(v)v.textContent=r.value+'%';
- localStorage.setItem('temoNeonColor',color);localStorage.setItem('temoNeonStrength',r.value);
-}
-function loadNeonSettings(){
- const c=document.getElementById('neonColor'),r=document.getElementById('neonStrength');
- if(!c||!r)return;
- c.value=localStorage.getItem('temoNeonColor')||'#49d86a';
- r.value=localStorage.getItem('temoNeonStrength')||'65';
- c.addEventListener('input',applyNeonSettings);r.addEventListener('input',applyNeonSettings);applyNeonSettings();
-}
+function applyNeonSettings(){ if(window.applyNeonSettings)window.applyNeonSettings(true); }
+function loadNeonSettings(){ if(window.loadNeonSettings)window.loadNeonSettings(); }
 function updateUserUI(){
  const isAdmin=currentUser===ADMIN_USER;
  const site=$('websiteUpdateSection'); if(site)site.style.display=isAdmin?'':'none';
@@ -1078,7 +1109,7 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
     if(hex.length!==6)return '73,216,106';
     return [0,2,4].map(i=>parseInt(hex.slice(i,i+2),16)||0).join(',');
   }
-  function applyGlobalNeon(){
+  function applyGlobalNeon(saveRemote=true){
     const c=document.getElementById('neonColor'), r=document.getElementById('neonStrength');
     if(!c||!r)return;
     const color=c.value || '#49d86a';
@@ -1097,6 +1128,7 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
     if(v)v.textContent=Math.round(power*100)+'%';
     localStorage.setItem('temoNeonColor',color);
     localStorage.setItem('temoNeonStrength',String(r.value));
+    if(saveRemote && currentUser===ADMIN_USER)saveNeonSettingsToFirebase(color,r.value);
   }
   window.applyNeonSettings=applyGlobalNeon;
   window.loadNeonSettings=function(){
@@ -1104,9 +1136,15 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
     if(!c||!r)return;
     c.value=localStorage.getItem('temoNeonColor')||'#49d86a';
     r.value=localStorage.getItem('temoNeonStrength')||'65';
-    c.oninput=applyGlobalNeon;
-    r.oninput=applyGlobalNeon;
-    applyGlobalNeon();
+    c.oninput=()=>applyGlobalNeon(true);
+    r.oninput=()=>applyGlobalNeon(true);
+    applyGlobalNeon(false);
+    if(currentUser===ADMIN_USER){
+      saveNeonSettingsToFirebase(c.value,r.value);
+    }else{
+      syncNeonSettingsFromFirebase();
+    }
+    startNeonRemoteSync();
   };
   window.addEventListener('DOMContentLoaded',window.loadNeonSettings);
 })();
