@@ -1965,13 +1965,11 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
   const key=id=>'temoPasskey_'+String(id);
   function supported(){
   return !!(
-    window.isSecureContext &&
     navigator.credentials &&
     typeof navigator.credentials.create==='function' &&
     typeof navigator.credentials.get==='function' &&
     window.crypto &&
-    typeof crypto.getRandomValues==='function' &&
-    window.TextEncoder
+    typeof crypto.getRandomValues==='function'
   );
 }
   function b64(buf){let bytes=new Uint8Array(buf),out='';bytes.forEach(b=>out+=String.fromCharCode(b));return btoa(out).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
@@ -2096,48 +2094,7 @@ async function enableMyPasskey(){
 </script>
 
 
-<script id="both-pages-passkey-logic">
-async function registerNewUserWithPasskey(){
-  const nameEl=document.getElementById('newUserAuthName');
-  const emailEl=document.getElementById('newUserAuthEmail');
-  const passEl=document.getElementById('newUserAuthPassword');
-  const btn=document.getElementById('newUserPasskeyBtn');
-  const n=nameEl?.value.trim()||'';
-  const email=emailEl?.value.trim()||'';
-  const p=passEl?.value||'';
 
-  if(!n||!email||!p){
-    alert('სახელი, ელფოსტა და ახალი პაროლი სამივე შეავსე');
-    return;
-  }
-  if(!window.isSecureContext || !navigator.credentials?.create){
-    alert('ამ ბრაუზერში Passkey/თითის ანაბეჭდის ავტორიზაცია ამ საიტისთვის მიუწვდომელია.');
-    return;
-  }
-  try{
-    if(btn)btn.disabled=true;
-    const challenge=new Uint8Array(32); crypto.getRandomValues(challenge);
-    const uid=new TextEncoder().encode(n.toLowerCase()+'|'+email.toLowerCase());
-    const credential=await navigator.credentials.create({publicKey:{
-      challenge,rp:{name:'TEMO Work Tracker'},
-      user:{id:uid,name:email,displayName:n},
-      pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
-      authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},
-      timeout:60000,attestation:'none'
-    }});
-    if(!credential)throw new Error('Passkey ვერ შეიქმნა.');
-    const b64=a=>btoa(String.fromCharCode(...new Uint8Array(a))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-    localStorage.setItem('temoPasskey_'+n.toLowerCase(),JSON.stringify({
-      credentialId:b64(credential.rawId),userName:n,email,createdAt:Date.now()
-    }));
-    alert('✅ თითის ანაბეჭდით / Passkey-ით ავტორიზაცია ჩართულია.');
-  }catch(e){
-    if(e?.name!=='NotAllowedError') alert('Passkey-ის შექმნა ვერ მოხერხდა: '+(e.message||e));
-  }finally{
-    if(btn)btn.disabled=false;
-  }
-}
-</script>
 
 </body>
 </html>
