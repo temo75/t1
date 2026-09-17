@@ -1106,6 +1106,83 @@ async function registerNewUser(){const nameEl=document.getElementById('newUserAu
 window.addEventListener('DOMContentLoaded',loadNeonSettings);
 </script>
 
+
+<style id="temo-user-management-layout-fix">
+/* User Management — stable mobile layout */
+#userManagementSection{
+  width:100% !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+}
+#userManagementSection .userManagementInner,
+#userManagementSection .userManagementBox,
+#userManagementSection .userManagementListWrap{
+  width:100% !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+}
+#userManagementList{
+  width:100% !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:10px !important;
+  overflow-x:hidden !important;
+}
+#userManagementList .userRow{
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  box-sizing:border-box !important;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) auto auto !important;
+  align-items:center !important;
+  gap:8px !important;
+  margin:0 !important;
+}
+#userManagementList .userRow .userNameBtn{
+  min-width:0 !important;
+  width:100% !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+}
+#userManagementList .userRow .lockBtn,
+#userManagementList .userRow .danger{
+  width:auto !important;
+  min-width:max-content !important;
+  white-space:nowrap !important;
+  flex:none !important;
+}
+@media (max-width:600px){
+  #userManagementList{
+    gap:8px !important;
+  }
+  #userManagementList .userRow{
+    grid-template-columns:minmax(0,1fr) 74px 58px !important;
+    gap:6px !important;
+  }
+  #userManagementList .userRow button{
+    min-height:42px !important;
+    padding:8px 7px !important;
+    font-size:12px !important;
+    line-height:1.15 !important;
+    box-sizing:border-box !important;
+  }
+}
+@media (max-width:380px){
+  #userManagementList .userRow{
+    grid-template-columns:minmax(0,1fr) 68px 54px !important;
+    gap:5px !important;
+  }
+  #userManagementList .userRow button{
+    padding:7px 5px !important;
+    font-size:11px !important;
+  }
+}
+</style>
+
 <script id="temo-global-neon-controller">
 (function(){
   const BASE_SELECTORS = [
