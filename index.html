@@ -659,8 +659,24 @@ function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||us
 async function login(){
   const name=$('loginName').value.trim();
   const pass=$('loginPassword').value;
-  const users=getUsers();
-  const u=users.find(x=>x.name&&x.name.toLowerCase()===name.toLowerCase());
+  let users=getUsers();
+  let u=users.find(x=>x.name&&x.name.toLowerCase()===name.toLowerCase());
+
+  // თუ ტელეფონში/ბრაუზერში მომხმარებლის ჩანაწერი აღარ არის, პირდაპირ Firebase-იდან აღვადგინოთ.
+  if(!u){
+    try{
+      const remote=await loadUsersFromFirebase();
+      if(remote&&remote.length){
+        const ru=remote.find(x=>x.name&&x.name.toLowerCase()===name.toLowerCase());
+        if(ru){
+          u=ru;
+          users=[...users.filter(x=>x.name.toLowerCase()!==name.toLowerCase()),ru];
+          localStorage.setItem(USERS_KEY,JSON.stringify(users));
+        }
+      }
+    }catch(e){}
+  }
+
   if(!u){
     $('loginError').textContent='სახელი ან პაროლი არასწორია';
     $('loginPassword').value='';
@@ -681,6 +697,7 @@ async function login(){
     await firebaseAuth.signInWithEmailAndPassword(u.email,pass);
     completeLogin(u);
   }catch(e){
+    console.error('LOGIN ERROR:',e);
     $('loginError').textContent='სახელი ან პაროლი არასწორია';
     $('loginPassword').value='';
   }
