@@ -333,9 +333,7 @@ body.neon-global .neonControlled .amount{
 }
 body.neon-global .neonAll{
   border-color:var(--neon-control)!important;
-  box-shadow:0 0 calc(6px + 14px*var(--neon-power)) rgba(var(--neon-control-rgb),calc(.12 + .62*var(--neon-power))),
-             0 0 calc(18px + 30px*var(--neon-power)) rgba(var(--neon-control-rgb),calc(.06 + .45*var(--neon-power))),
-             0 0 calc(30px + 42px*var(--neon-power)) rgba(var(--neon-control-rgb),calc(.03 + .28*var(--neon-power))) !important;
+  box-shadow: inset 0 0 10px rgba(var(--neon-control-rgb,73,216,106),.90), inset 0 0 24px rgba(var(--neon-control-rgb,73,216,106),.55), inset 0 0 40px rgba(var(--neon-control-rgb,73,216,106),.32);
 }
 body.neon-global .neonAll{
   text-shadow:0 0 calc(4px + 8px*var(--neon-power)) rgba(var(--neon-control-rgb),calc(.18 + .62*var(--neon-power)));
@@ -384,13 +382,10 @@ body.neon-global .neonAll{
 .stats .mini{
   border-color:var(--neon-control,#49d86a) !important;
   box-shadow:
-    0 0 4px rgba(var(--neon-control-rgb,73,216,106),.20),
-    0 0 8px rgba(var(--neon-control-rgb,73,216,106),.10),
     inset 0 0 9px rgba(var(--neon-control-rgb,73,216,106),var(--neon-inner-a,.95)),
     inset 0 0 22px rgba(var(--neon-control-rgb,73,216,106),var(--neon-inner-b,.72)),
     inset 0 0 38px rgba(var(--neon-control-rgb,73,216,106),var(--neon-inner-c,.48)) !important;
 }
-
 .grid .monthTotalHero::after,
 .stats .mini::after{
   box-shadow:
