@@ -378,6 +378,27 @@ body.neon-global .neonAll{
 }
 </style>
 
+
+<style id="temo-neon-power-inner-only">
+.grid .monthTotalHero,
+.stats .mini{
+  border-color:var(--neon-control,#49d86a) !important;
+  box-shadow:
+    0 0 4px rgba(var(--neon-control-rgb,73,216,106),.20),
+    0 0 8px rgba(var(--neon-control-rgb,73,216,106),.10),
+    inset 0 0 9px rgba(var(--neon-control-rgb,73,216,106),var(--neon-inner-a,.95)),
+    inset 0 0 22px rgba(var(--neon-control-rgb,73,216,106),var(--neon-inner-b,.72)),
+    inset 0 0 38px rgba(var(--neon-control-rgb,73,216,106),var(--neon-inner-c,.48)) !important;
+}
+
+.grid .monthTotalHero::after,
+.stats .mini::after{
+  box-shadow:
+    inset 0 0 13px rgba(var(--neon-control-rgb,73,216,106),calc(var(--neon-inner-a,.95) * .55)),
+    inset 0 0 29px rgba(var(--neon-control-rgb,73,216,106),calc(var(--neon-inner-b,.72) * .42));
+}
+</style>
+
 </head>
 <body>
 <nav id="bottomNav">
@@ -1079,8 +1100,7 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
 <script id="temo-global-neon-controller">
 (function(){
   const BASE_SELECTORS = [
-    '.neonControlled',
-    '.settingsBtn','.add','.loginBox button','.loginModeBtn',
+    '.neonControlled','.settingsBtn','.add','.loginBox button','.loginModeBtn',
     '.repoTokenOpenBtn','.backupBtn','.save','.calendarNav','.calendarNoteBtn',
     '.yearPickerGrid button','.calendarTitle','.temo-eye-btn','.privacyEyeMain',
     '#siteFileBtn','#bottomNav > button','.receivableClose','.noteClose',
@@ -1091,48 +1111,44 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
   const FIREBASE_NEON_URL='https://temo-75-default-rtdb.europe-west1.firebasedatabase.app/settings/neon.json';
   let remoteSyncTimer=null;
 
-  function rgb(hex){
+  function hexToRgb(hex){
     hex=String(hex||'#49d86a').replace('#','');
     if(hex.length!==6)return '73,216,106';
     return [0,2,4].map(i=>parseInt(hex.slice(i,i+2),16)||0).join(',');
   }
 
-  function setNeonUI(color,strength){
-    const c=document.getElementById('neonColor'),r=document.getElementById('neonStrength');
-    if(c)c.value=color;
-    if(r)r.value=String(strength);
-  }
-
   function applyGlobalNeon(saveRemote){
-    const c=document.getElementById('neonColor'), r=document.getElementById('neonStrength');
+    const c=document.getElementById('neonColor');
+    const r=document.getElementById('neonStrength');
     if(!c||!r)return;
 
-    const color=c.value || '#49d86a';
-    const power=Math.max(0,Math.min(100,Number(r.value)||0))/100;
+    const color=c.value||'#49d86a';
+    const strength=Math.max(0,Math.min(100,Number(r.value)||0));
+    const p=strength/100;
 
     document.documentElement.style.setProperty('--neon-control',color);
-    document.documentElement.style.setProperty('--neon-control-rgb',rgb(color));
-    document.documentElement.style.setProperty('--neon-power',power);
+    document.documentElement.style.setProperty('--neon-control-rgb',hexToRgb(color));
+    document.documentElement.style.setProperty('--neon-power',String(p));
+    document.documentElement.style.setProperty('--neon-inner-a',String(.28+.67*p));
+    document.documentElement.style.setProperty('--neon-inner-b',String(.12+.60*p));
+    document.documentElement.style.setProperty('--neon-inner-c',String(.08+.42*p));
+    document.documentElement.style.setProperty('--neon-outer-a',String(.04+.12*p));
+    document.documentElement.style.setProperty('--neon-outer-b',String(.02+.06*p));
     document.body.classList.add('neon-global');
 
-    const selectors=BASE_SELECTORS.join(',');
-    document.querySelectorAll(selectors).forEach(el=>{
-      if(el===c||el===r)return;
-      el.classList.add('neonAll');
-    });
+    document.querySelectorAll(BASE_SELECTORS.join(',')).forEach(el=>el.classList.add('neonAll'));
 
     const v=document.getElementById('neonStrengthValue');
-    if(v)v.textContent=Math.round(power*100)+'%';
+    if(v)v.textContent=Math.round(strength)+'%';
 
     localStorage.setItem('temoNeonColor',color);
-    localStorage.setItem('temoNeonStrength',String(r.value));
+    localStorage.setItem('temoNeonStrength',String(strength));
 
-    /* მხოლოდ ადმინისტრატორი აქვეყნებს ცვლილებას Firebase-ში */
     if(saveRemote && typeof currentUser!=='undefined' && currentUser===ADMIN_USER){
       fetch(FIREBASE_NEON_URL,{
         method:'PUT',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({color:color,strength:String(r.value)})
+        body:JSON.stringify({color:color,strength:String(strength)})
       }).catch(e=>console.warn('Neon Firebase write failed:',e));
     }
   }
@@ -1142,36 +1158,23 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
       const response=await fetch(FIREBASE_NEON_URL+'?t='+Date.now(),{cache:'no-store'});
       if(!response.ok)throw new Error('HTTP '+response.status);
       const data=await response.json();
-      if(!data || !data.color)return false;
+      if(!data||!data.color)return;
 
-      const color=String(data.color);
-      const strength=String(data.strength??65);
-
-      /* მხოლოდ მომხმარებლის გვერდზე ვიღებთ ადმინისტრატორის ფერს */
       if(typeof currentUser!=='undefined' && currentUser!==ADMIN_USER){
-        setNeonUI(color,strength);
+        const c=document.getElementById('neonColor');
+        const r=document.getElementById('neonStrength');
+        if(c)c.value=String(data.color);
+        if(r)r.value=String(data.strength??65);
         applyGlobalNeon(false);
       }
-      return true;
-    }catch(e){
-      console.warn('Neon Firebase read failed:',e);
-      return false;
-    }
-  }
-
-  function startRemoteNeonSync(){
-    if(remoteSyncTimer)clearInterval(remoteSyncTimer);
-    remoteSyncTimer=setInterval(()=>{
-      if(typeof currentUser!=='undefined' && currentUser && currentUser!==ADMIN_USER){
-        loadRemoteNeon();
-      }
-    },1000);
+    }catch(e){console.warn('Neon Firebase read failed:',e);}
   }
 
   window.applyNeonSettings=applyGlobalNeon;
 
   window.loadNeonSettings=function(){
-    const c=document.getElementById('neonColor'),r=document.getElementById('neonStrength');
+    const c=document.getElementById('neonColor');
+    const r=document.getElementById('neonStrength');
     if(!c||!r)return;
 
     c.value=localStorage.getItem('temoNeonColor')||'#49d86a';
@@ -1180,25 +1183,24 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
     c.oninput=()=>applyGlobalNeon(true);
     r.oninput=()=>applyGlobalNeon(true);
 
-    /* ჯერ არსებული ნეონი */
     applyGlobalNeon(false);
 
-    /* მომხმარებელი იღებს ადმინისტრატორის რეალურ პარამეტრს Firebase-დან */
-    if(typeof currentUser!=='undefined' && currentUser!==ADMIN_USER){
-      loadRemoteNeon();
-    }else if(typeof currentUser!=='undefined' && currentUser===ADMIN_USER){
-      /* ადმინისტრატორის მიმდინარე არჩევანი გახდეს საერთო */
+    if(typeof currentUser!=='undefined' && currentUser===ADMIN_USER){
       fetch(FIREBASE_NEON_URL,{
         method:'PUT',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          color:c.value||'#49d86a',
-          strength:String(r.value||65)
-        })
+        body:JSON.stringify({color:c.value,strength:String(r.value)})
       }).catch(e=>console.warn('Neon Firebase initial write failed:',e));
+    }else{
+      loadRemoteNeon();
     }
 
-    startRemoteNeonSync();
+    if(remoteSyncTimer)clearInterval(remoteSyncTimer);
+    remoteSyncTimer=setInterval(()=>{
+      if(typeof currentUser!=='undefined' && currentUser && currentUser!==ADMIN_USER){
+        loadRemoteNeon();
+      }
+    },1000);
   };
 
   window.addEventListener('DOMContentLoaded',window.loadNeonSettings);
