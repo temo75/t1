@@ -300,11 +300,11 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
 /* მწვანე ნეონი — მხოლოდ ბლოკების შიგნით */
 .grid .monthTotalHero,
 .stats .mini{
-  border-color:#49d86a !important;
+  border-color:var(--neon-control,#49d86a) !important;
   box-shadow:
-    inset 0 0 8px rgba(73,216,106,.72),
-    inset 0 0 18px rgba(73,216,106,.52),
-    inset 0 0 32px rgba(73,216,106,.30) !important;
+    inset 0 0 8px rgba(var(--neon-control-rgb,73,216,106),.72),
+    inset 0 0 18px rgba(var(--neon-control-rgb,73,216,106),.52),
+    inset 0 0 32px rgba(var(--neon-control-rgb,73,216,106),.30) !important;
 }
 .grid .monthTotalHero .label,
 .stats .mini span{
@@ -350,11 +350,11 @@ body.neon-global .neonAll{
   overflow:hidden !important;
   border-color:#49d86a !important;
   box-shadow:
-      0 0 4px rgba(73,216,106,.22),
-      0 0 9px rgba(73,216,106,.12),
-      inset 0 0 9px rgba(73,216,106,.95),
+      0 0 4px rgba(var(--neon-control-rgb,73,216,106),.22),
+      0 0 9px rgba(var(--neon-control-rgb,73,216,106),.12),
+      inset 0 0 9px rgba(var(--neon-control-rgb,73,216,106),.95),
       inset 0 0 22px rgba(73,216,106,.72),
-      inset 0 0 38px rgba(73,216,106,.48) !important;
+      inset 0 0 38px rgba(var(--neon-control-rgb,73,216,106),.48) !important;
 }
 
 /* შიდა ჩარჩოდან გავრცელებული რბილი მწვანე ნათება */
@@ -544,44 +544,6 @@ const SESSION_USER_ID_KEY='temoWorkTrackerUserId';
 const FRESH_USER_IDS_KEY='temoFreshUserIds';
 const ADMIN_USER='TEMO';
 const FIREBASE_DB_URL='https://temo-75-default-rtdb.europe-west1.firebasedatabase.app';
-const FIREBASE_NEON_URL=FIREBASE_DB_URL+'/settings/neon.json';
-let neonRemoteTimer=null;
-async function saveNeonSettingsToFirebase(color,strength){
-  try{
-    await fetch(FIREBASE_NEON_URL,{
-      method:'PUT',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({color:String(color||'#49d86a'),strength:String(strength??65)})
-    });
-  }catch(e){console.warn('Firebase neon write failed:',e);}
-}
-async function loadNeonSettingsFromFirebase(){
-  try{
-    const r=await fetch(FIREBASE_NEON_URL,{cache:'no-store'});
-    if(!r.ok)throw new Error('Firebase HTTP '+r.status);
-    const d=await r.json();
-    return d&&d.color?d:null;
-  }catch(e){console.warn('Firebase neon read failed:',e);return null;}
-}
-async function syncNeonSettingsFromFirebase(){
-  const d=await loadNeonSettingsFromFirebase();
-  if(!d)return;
-  const c=document.getElementById('neonColor'),r=document.getElementById('neonStrength');
-  if(!c||!r)return;
-  const color=String(d.color||'#49d86a');
-  const strength=String(d.strength??65);
-  if(c.value!==color)c.value=color;
-  if(String(r.value)!==strength)r.value=strength;
-  applyGlobalNeon(false);
-}
-function startNeonRemoteSync(){
-  if(neonRemoteTimer)clearInterval(neonRemoteTimer);
-  syncNeonSettingsFromFirebase();
-  neonRemoteTimer=setInterval(()=>{
-    if(currentUser!==ADMIN_USER)syncNeonSettingsFromFirebase();
-  },2000);
-}
-
 let currentUser=localStorage.getItem(SESSION_USER_KEY)||'';
 let currentUserId=localStorage.getItem(SESSION_USER_ID_KEY)||'';
 let firebaseSyncBusy=false;
@@ -928,8 +890,29 @@ function loadPrivacyState(){
   eye.setAttribute('aria-label',hidden?'თანხების ჩვენება':'თანხების დამალვა');
 }
 
-function applyNeonSettings(){ if(window.applyNeonSettings)window.applyNeonSettings(true); }
-function loadNeonSettings(){ if(window.loadNeonSettings)window.loadNeonSettings(); }
+function applyNeonSettings(){
+ const c=document.getElementById('neonColor'),r=document.getElementById('neonStrength');
+ if(!c||!r)return;
+ const color=c.value,p=Number(r.value)/100,hex=color.slice(1);
+ const rr=parseInt(hex.slice(0,2),16)||0,gg=parseInt(hex.slice(2,4),16)||0,bb=parseInt(hex.slice(4,6),16)||0;
+ document.documentElement.style.setProperty('--neon-control',color);
+ document.documentElement.style.setProperty('--neon-control-rgb',`${rr},${gg},${bb}`);
+ document.documentElement.style.setProperty('--neon-power',p);
+ const blur1=6+Math.round(p*10),blur2=14+Math.round(p*20),blur3=24+Math.round(p*28);
+ document.querySelectorAll('.neonControlled').forEach(el=>{
+   el.style.boxShadow=`0 0 ${blur1}px rgba(${rr},${gg},${bb},${(0.28+p*0.55).toFixed(2)}),0 0 ${blur2}px rgba(${rr},${gg},${bb},${(0.18+p*0.45).toFixed(2)}),0 0 ${blur3}px rgba(${rr},${gg},${bb},${(0.08+p*0.30).toFixed(2)}),inset 0 0 12px rgba(${rr},${gg},${bb},${(0.05+p*0.12).toFixed(2)})`;
+   el.querySelectorAll('.label,.amount,span,b').forEach(t=>{t.style.textShadow=`0 0 7px rgba(${rr},${gg},${bb},${(0.45+p*0.5).toFixed(2)}),0 0 16px rgba(${rr},${gg},${bb},${(0.2+p*0.35).toFixed(2)})`;});
+ });
+ const v=document.getElementById('neonStrengthValue');if(v)v.textContent=r.value+'%';
+ localStorage.setItem('temoNeonColor',color);localStorage.setItem('temoNeonStrength',r.value);
+}
+function loadNeonSettings(){
+ const c=document.getElementById('neonColor'),r=document.getElementById('neonStrength');
+ if(!c||!r)return;
+ c.value=localStorage.getItem('temoNeonColor')||'#49d86a';
+ r.value=localStorage.getItem('temoNeonStrength')||'65';
+ c.addEventListener('input',applyNeonSettings);r.addEventListener('input',applyNeonSettings);applyNeonSettings();
+}
 function updateUserUI(){
  const isAdmin=currentUser===ADMIN_USER;
  const site=$('websiteUpdateSection'); if(site)site.style.display=isAdmin?'':'none';
@@ -1104,16 +1087,29 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
     '.credentialsBox','.form','.section','.toolbox','.card','.mini',
     '.dayCell.today','.dayCell.selected','.jobStatusMark.paid'
   ];
+
+  const FIREBASE_NEON_URL='https://temo-75-default-rtdb.europe-west1.firebasedatabase.app/settings/neon.json';
+  let remoteSyncTimer=null;
+
   function rgb(hex){
     hex=String(hex||'#49d86a').replace('#','');
     if(hex.length!==6)return '73,216,106';
     return [0,2,4].map(i=>parseInt(hex.slice(i,i+2),16)||0).join(',');
   }
-  function applyGlobalNeon(saveRemote=true){
+
+  function setNeonUI(color,strength){
+    const c=document.getElementById('neonColor'),r=document.getElementById('neonStrength');
+    if(c)c.value=color;
+    if(r)r.value=String(strength);
+  }
+
+  function applyGlobalNeon(saveRemote){
     const c=document.getElementById('neonColor'), r=document.getElementById('neonStrength');
     if(!c||!r)return;
+
     const color=c.value || '#49d86a';
     const power=Math.max(0,Math.min(100,Number(r.value)||0))/100;
+
     document.documentElement.style.setProperty('--neon-control',color);
     document.documentElement.style.setProperty('--neon-control-rgb',rgb(color));
     document.documentElement.style.setProperty('--neon-power',power);
@@ -1124,28 +1120,87 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
       if(el===c||el===r)return;
       el.classList.add('neonAll');
     });
+
     const v=document.getElementById('neonStrengthValue');
     if(v)v.textContent=Math.round(power*100)+'%';
+
     localStorage.setItem('temoNeonColor',color);
     localStorage.setItem('temoNeonStrength',String(r.value));
-    if(saveRemote && currentUser===ADMIN_USER)saveNeonSettingsToFirebase(color,r.value);
+
+    /* მხოლოდ ადმინისტრატორი აქვეყნებს ცვლილებას Firebase-ში */
+    if(saveRemote && typeof currentUser!=='undefined' && currentUser===ADMIN_USER){
+      fetch(FIREBASE_NEON_URL,{
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({color:color,strength:String(r.value)})
+      }).catch(e=>console.warn('Neon Firebase write failed:',e));
+    }
   }
+
+  async function loadRemoteNeon(){
+    try{
+      const response=await fetch(FIREBASE_NEON_URL+'?t='+Date.now(),{cache:'no-store'});
+      if(!response.ok)throw new Error('HTTP '+response.status);
+      const data=await response.json();
+      if(!data || !data.color)return false;
+
+      const color=String(data.color);
+      const strength=String(data.strength??65);
+
+      /* მხოლოდ მომხმარებლის გვერდზე ვიღებთ ადმინისტრატორის ფერს */
+      if(typeof currentUser!=='undefined' && currentUser!==ADMIN_USER){
+        setNeonUI(color,strength);
+        applyGlobalNeon(false);
+      }
+      return true;
+    }catch(e){
+      console.warn('Neon Firebase read failed:',e);
+      return false;
+    }
+  }
+
+  function startRemoteNeonSync(){
+    if(remoteSyncTimer)clearInterval(remoteSyncTimer);
+    remoteSyncTimer=setInterval(()=>{
+      if(typeof currentUser!=='undefined' && currentUser && currentUser!==ADMIN_USER){
+        loadRemoteNeon();
+      }
+    },1000);
+  }
+
   window.applyNeonSettings=applyGlobalNeon;
+
   window.loadNeonSettings=function(){
     const c=document.getElementById('neonColor'),r=document.getElementById('neonStrength');
     if(!c||!r)return;
+
     c.value=localStorage.getItem('temoNeonColor')||'#49d86a';
     r.value=localStorage.getItem('temoNeonStrength')||'65';
+
     c.oninput=()=>applyGlobalNeon(true);
     r.oninput=()=>applyGlobalNeon(true);
+
+    /* ჯერ არსებული ნეონი */
     applyGlobalNeon(false);
-    if(currentUser===ADMIN_USER){
-      saveNeonSettingsToFirebase(c.value,r.value);
-    }else{
-      syncNeonSettingsFromFirebase();
+
+    /* მომხმარებელი იღებს ადმინისტრატორის რეალურ პარამეტრს Firebase-დან */
+    if(typeof currentUser!=='undefined' && currentUser!==ADMIN_USER){
+      loadRemoteNeon();
+    }else if(typeof currentUser!=='undefined' && currentUser===ADMIN_USER){
+      /* ადმინისტრატორის მიმდინარე არჩევანი გახდეს საერთო */
+      fetch(FIREBASE_NEON_URL,{
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          color:c.value||'#49d86a',
+          strength:String(r.value||65)
+        })
+      }).catch(e=>console.warn('Neon Firebase initial write failed:',e));
     }
-    startNeonRemoteSync();
+
+    startRemoteNeonSync();
   };
+
   window.addEventListener('DOMContentLoaded',window.loadNeonSettings);
 })();
 </script>
