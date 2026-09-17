@@ -408,47 +408,6 @@ body.neon-global .userName{
 }
 </style>
 
-
-<style id="temo-passkey-style">
-#passkeyLoginBtn{
-  width:100% !important;
-  padding:12px 8px !important;
-  border:1px solid #39ff14 !important;
-  border-radius:11px !important;
-  background:#102b3b !important;
-  color:#fff !important;
-  font-weight:bold !important;
-  font-size:15px !important;
-  cursor:pointer !important;
-  box-shadow:0 0 7px #39ff14,0 0 16px rgba(57,255,20,.75) !important;
-}
-#passkeyLoginBtn:disabled{
-  opacity:.55 !important;
-  cursor:wait !important;
-}
-</style>
-
-
-<style id="temo-new-user-passkey-style">
-#newUserPasskeyBtn{
-  width:100% !important;
-  margin-top:8px !important;
-  padding:11px 8px !important;
-  border:1px solid #39ff14 !important;
-  border-radius:11px !important;
-  background:#102b3b !important;
-  color:#fff !important;
-  font-weight:bold !important;
-  font-size:14px !important;
-  cursor:pointer !important;
-  box-shadow:0 0 7px #39ff14,0 0 16px rgba(57,255,20,.72) !important;
-}
-#newUserPasskeyBtn:disabled{
-  opacity:.55 !important;
-  cursor:wait !important;
-}
-</style>
-
 </head>
 <body>
 <nav id="bottomNav">
@@ -469,10 +428,6 @@ body.neon-global .userName{
 <input id="loginName" class="loginSelect" type="text" placeholder="სახელი" autocomplete="username">
 <input id="loginPassword" type="password" placeholder="პაროლი" autocomplete="current-password">
 <button onclick="login()">შესვლა</button>
-<button type="button" id="passkeyLoginBtn" class="passkeyLoginBtn" onclick="loginWithPasskey()" style="margin-top:8px;">
-  🔐 თითის ანაბეჭდით შესვლა
-</button>
-
 <button class="loginModeBtn" onclick="showNewUserAuth()">➕ ახალი მომხმარებელი</button>
 <div id="loginError"></div>
 </div></div>
@@ -1245,17 +1200,80 @@ async function updateWebsite(){
 }
 
 function showNewUserAuth(){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('newUserAuthModal').classList.add('show')}
-async function registerNewUser(){const nameEl=document.getElementById('newUserAuthName'),passEl=document.getElementById('newUserAuthPassword'),n=nameEl.value.trim(),p=passEl.value;if(!n||!p){alert('სახელი და ახალი პაროლი ორივე შეავსე');return;}if(!/^[A-Za-z]+$/.test(n)){alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');nameEl.value=n.replace(/[^A-Za-z]/g,'');return;}if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return;}const users=getUsers();if(users.some(u=>u.name.toLowerCase()===n.toLowerCase()&&u.password===p)){alert('ასეთი მომხმარებელი უკვე არსებობს');return;}const user=normalizeUser({id:makeUserId(),name:n,password:p,admin:false,authorized:true,blocked:false});users.push(user);markFreshUser(user.id);localStorage.setItem(USERS_KEY,JSON.stringify(users));await saveUsersToFirebase(users);currentUser=user.name;currentUserId=user.id;localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');nameEl.value='';passEl.value='';document.getElementById('newUserAuthModal').classList.remove('show');$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
-window.addEventListener('DOMContentLoaded',loadNeonSettings);
-</script>
+async function registerNewUser(){
+  const nameEl=document.getElementById('newUserAuthName');
+  const passEl=document.getElementById('newUserAuthPassword');
+  const n=nameEl.value.trim(),p=passEl.value;
 
+  if(!n||!p){alert('სახელი და ახალი პაროლი ორივე შეავსე');return;}
+  if(!/^[A-Za-z]+$/.test(n)){
+    alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');
+    nameEl.value=n.replace(/[^A-Za-z]/g,'');
+    return;
+  }
+  if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return;}
 
-<style id="temo-user-management-layout-fix">
-/* User Management — stable mobile layout */
-#userManagementSection{
-  width:100% !important;
-  box-sizing:border-box !important;
-  overflow:hidden !important;
+  const users=getUsers();
+  if(users.some(u=>u.name.toLowerCase()===n.toLowerCase())){
+    alert('ასეთი მომხმარებელი უკვე არსებობს');
+    return;
+  }
+
+  if(typeof window.temoFirebaseNewUserCreate!=='function'){
+    alert('Firebase Authentication კოდი ვერ ჩაიტვირთა.');
+    return;
+  }
+
+  try{
+    // NEW USERS ONLY: create the real Firebase Authentication account first.
+    const authUser=await window.temoFirebaseNewUserCreate(n,p);
+
+    const user=normalizeUser({
+      id:makeUserId(),
+      name:n,
+      password:p,
+      admin:false,
+      authorized:true,
+      blocked:false,
+      firebaseAuthUid:authUser.uid,
+      firebaseAuthEmail:authUser.email,
+      authType:'firebase-email-password'
+    });
+
+    users.push(user);
+    markFreshUser(user.id);
+    localStorage.setItem(USERS_KEY,JSON.stringify(users));
+    await saveUsersToFirebase(users);
+
+    currentUser=user.name;
+    currentUserId=user.id;
+    localStorage.setItem(SESSION_USER_KEY,currentUser);
+    localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);
+    localStorage.setItem(AUTH_KEY,'yes');
+
+    nameEl.value='';
+    passEl.value='';
+    document.getElementById('newUserAuthModal').classList.remove('show');
+    $('loginError').textContent='';
+    jobs=loadUserJobs();
+    updateUserUI();
+    render();
+
+    alert('✅ ახალი მომხმარებელი შეიქმნა Firebase Authentication-ში.');
+  }catch(e){
+    console.error('New Firebase user creation failed:',e);
+    let msg=e?.message||String(e);
+
+    if(e?.code==='auth/email-already-in-use'){
+      msg='ამ სახელისთვის Firebase Authentication ანგარიში უკვე არსებობს.';
+    }else if(e?.code==='auth/weak-password'){
+      msg='პაროლი ძალიან სუსტია. გამოიყენე მინიმუმ 6 სიმბოლო.';
+    }else if(e?.code==='auth/operation-not-allowed'){
+      msg='Firebase-ში Email/Password ჯერ ჩართული არ არის.';
+    }
+
+    alert('ახალი მომხმარებელი ვერ შეიქმნა:\\n'+msg);
+  }
 }
 #userManagementSection .userManagementInner,
 #userManagementSection .userManagementBox,
@@ -1576,9 +1594,6 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
 <label>1. თქვენი სახელი</label><input id="newUserAuthName" maxlength="40" pattern="[A-Za-z]+" inputmode="latin" autocomplete="username" oninput="this.value=this.value.replace(/[^A-Za-z]/g,'')" onpaste="setTimeout(()=>this.value=this.value.replace(/[^A-Za-z]/g,''),0)">
 <label>2. თქვენი ახალი პაროლი</label><input id="newUserAuthPassword" type="password" maxlength="80">
 <button onclick="registerNewUser()">შესვლა</button>
-<button type="button" id="newUserPasskeyBtn" class="newUserPasskeyBtn" onclick="registerNewUserWithPasskey()">
-  🔐 თითის ანაბეჭდით შესვლა
-</button>
 <button type="button" onclick="document.getElementById('newUserAuthModal').classList.remove('show');document.getElementById('loginScreen').classList.remove('hidden')" style="background:#20323b;border-color:#285269">✕ გაუქმება</button>
 </div></div><script>
 // ახალი მომხმარებლის ავტორიზაციისას მთავარი ავტორიზაციის ფანჯარა იმალება, რათა ორი ფანჯარა ერთმანეთს არ დაეფაროს.
@@ -1843,322 +1858,87 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
 </script>
 
 
-<script id="temo-passkey-logic">
-(function(){
-  const PASSKEY_PREFIX='temoPasskey:';
+<script type="module" id="temo-firebase-new-user-auth">
+  import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+  import {
+    getAuth,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    updateProfile
+  } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 
-  function passkeySupported(){
-    return !!(window.PublicKeyCredential &&
-      navigator.credentials &&
-      navigator.credentials.create &&
-      navigator.credentials.get);
-  }
+  /*
+    IMPORTANT:
+    Paste your Firebase Web App configuration here.
+    Firebase Console → Project settings → Your apps → Web app → SDK setup/config.
+    This config is not a password/secret.
+  */
+  const TEMO_FIREBASE_CONFIG = {
+    apiKey: "PASTE_YOUR_FIREBASE_API_KEY",
+    authDomain: "temo-75.firebaseapp.com",
+    projectId: "temo-75",
+    databaseURL: "https://temo-75-default-rtdb.europe-west1.firebasedatabase.app",
+    appId: "PASTE_YOUR_FIREBASE_APP_ID"
+  };
 
-  function b64urlEncode(buf){
-    const bytes=new Uint8Array(buf);
-    let s='';
-    for(let i=0;i<bytes.length;i++) s+=String.fromCharCode(bytes[i]);
-    return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-  }
+  const CONFIG_READY =
+    TEMO_FIREBASE_CONFIG.apiKey &&
+    TEMO_FIREBASE_CONFIG.apiKey !== "PASTE_YOUR_FIREBASE_API_KEY" &&
+    TEMO_FIREBASE_CONFIG.appId &&
+    TEMO_FIREBASE_CONFIG.appId !== "PASTE_YOUR_FIREBASE_APP_ID";
 
-  function b64urlDecode(str){
-    str=str.replace(/-/g,'+').replace(/_/g,'/');
-    while(str.length%4) str+='=';
-    const bin=atob(str);
-    const out=new Uint8Array(bin.length);
-    for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
-    return out.buffer;
-  }
+  let auth = null;
 
-  function passkeyKey(userId){
-    return PASSKEY_PREFIX+String(userId);
-  }
-
-  function getStoredPasskey(userId){
-    try{return JSON.parse(localStorage.getItem(passkeyKey(userId))||'null');}
-    catch(e){return null;}
-  }
-
-  function setStoredPasskey(userId, data){
-    localStorage.setItem(passkeyKey(userId), JSON.stringify(data));
-  }
-
-  async function registerPasskeyForUser(u){
-    if(!passkeySupported()) throw new Error('ამ ტელეფონის ბრაუზერი Passkey-ს არ უჭერს მხარს.');
-
-    const challenge=new Uint8Array(32);
-    crypto.getRandomValues(challenge);
-
-    const userIdBytes=new TextEncoder().encode(String(u.id));
-    const credential=await navigator.credentials.create({
-      publicKey:{
-        challenge,
-        rp:{name:'TEMO Work Tracker'},
-        user:{
-          id:userIdBytes,
-          name:String(u.name),
-          displayName:String(u.name)
-        },
-        pubKeyCredParams:[
-          {type:'public-key',alg:-7},
-          {type:'public-key',alg:-257}
-        ],
-        authenticatorSelection:{
-          authenticatorAttachment:'platform',
-          userVerification:'required',
-          residentKey:'preferred'
-        },
-        timeout:60000,
-        attestation:'none'
-      }
-    });
-
-    if(!credential) throw new Error('Passkey ვერ შეიქმნა.');
-
-    const response=credential.response;
-    setStoredPasskey(u.id,{
-      credentialId:b64urlEncode(credential.rawId),
-      publicKey:b64urlEncode(response.getPublicKey ? (response.getPublicKey()||new ArrayBuffer(0)) : new ArrayBuffer(0)),
-      createdAt:Date.now(),
-      userId:String(u.id),
-      userName:String(u.name)
-    });
-    return credential;
-  }
-
-  async function loginWithPasskey(){
-    const btn=document.getElementById('passkeyLoginBtn');
-    if(!passkeySupported()){
-      alert('ამ ტელეფონის ბრაუზერში თითის ანაბეჭდით/Passkey-ით შესვლა არ არის მხარდაჭერილი.');
-      return;
-    }
-
-    const users=typeof getUsers==='function' ? getUsers() : [];
-    const candidates=users.filter(u=>u && !u.blocked && !u.admin && getStoredPasskey(u.id));
-
-    if(!candidates.length){
-      alert('ჯერ ერთხელ შედი სახელით და პაროლით და შემდეგ ჩართე თითის ანაბეჭდით შესვლა.');
-      return;
-    }
-
-    try{
-      if(btn)btn.disabled=true;
-
-      const challenge=new Uint8Array(32);
-      crypto.getRandomValues(challenge);
-
-      const allowCredentials=candidates.map(u=>({
-        type:'public-key',
-        id:b64urlDecode(getStoredPasskey(u.id).credentialId),
-        transports:['internal']
-      }));
-
-      const assertion=await navigator.credentials.get({
-        publicKey:{
-          challenge,
-          allowCredentials,
-          userVerification:'required',
-          timeout:60000
-        }
-      });
-
-      if(!assertion) throw new Error('დადასტურება ვერ შესრულდა.');
-
-      const id=b64urlEncode(assertion.rawId);
-      const matched=candidates.find(u=>{
-        const p=getStoredPasskey(u.id);
-        return p && p.credentialId===id;
-      });
-
-      if(!matched) throw new Error('ამ მოწყობილობის Passkey ვერ მოიძებნა.');
-
-      if(matched.blocked){
-        alert('ეს მომხმარებელი დაბლოკილია.');
-        return;
-      }
-
-      if(typeof completeLogin==='function'){
-        completeLogin(matched);
-      }else{
-        throw new Error('შესვლის ფუნქცია ვერ მოიძებნა.');
-      }
-    }catch(err){
-      if(err && err.name==='NotAllowedError') return;
-      alert('თითის ანაბეჭდით შესვლა ვერ შესრულდა: '+(err.message||err));
-    }finally{
-      if(btn)btn.disabled=false;
+  if (CONFIG_READY) {
+    try {
+      const app = getApps().length ? getApps()[0] : initializeApp(TEMO_FIREBASE_CONFIG);
+      auth = getAuth(app);
+      window.temoFirebaseAuthReady = true;
+    } catch (e) {
+      console.warn("Firebase Authentication initialization failed:", e);
     }
   }
 
-  async function setupPasskeyAfterPasswordLogin(u){
-    if(!u || !passkeySupported() || getStoredPasskey(u.id)) return;
+  // Internal email is generated from the existing username so the visible UI
+  // remains exactly "name + password". Existing users are not migrated.
+  window.temoAuthEmailForName = function(name) {
+    return String(name).trim().toLowerCase() + "@temo75-auth.local";
+  };
 
-    const ok=confirm('გინდა ამ ტელეფონზე შემდეგში თითის ანაბეჭდით შეხვიდე?');
-    if(!ok)return;
-
-    try{
-      await registerPasskeyForUser(u);
-      alert('🔐 თითის ანაბეჭდით შესვლა ჩართულია ამ ტელეფონზე.');
-    }catch(err){
-      if(err && err.name==='NotAllowedError') return;
-      alert('Passkey-ის ჩართვა ვერ მოხერხდა: '+(err.message||err));
+  window.temoFirebaseNewUserCreate = async function(name, password) {
+    if (!auth) {
+      throw new Error("Firebase Authentication ჯერ არ არის დაკავშირებული. საჭიროა Web App config.");
     }
-  }
 
-  window.loginWithPasskey=loginWithPasskey;
-  window.setupPasskeyAfterPasswordLogin=setupPasskeyAfterPasswordLogin;
+    const email = window.temoAuthEmailForName(name);
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
 
-  document.addEventListener('DOMContentLoaded',function(){
-    const btn=document.getElementById('passkeyLoginBtn');
-    if(btn && !passkeySupported()) btn.style.display='none';
-  });
-})();
-</script>
+    try {
+      await updateProfile(cred.user, { displayName: String(name) });
+    } catch (e) {
+      console.warn("Firebase displayName update failed:", e);
+    }
 
-
-<script id="temo-passkey-login-hook">
-(function(){
-  function hook(){
-    if(typeof window.completeLogin!=='function' || window.__temoPasskeyHooked)return;
-    const original=window.completeLogin;
-    window.completeLogin=function(u){
-      original(u);
-      setTimeout(function(){
-        if(window.setupPasskeyAfterPasswordLogin) window.setupPasskeyAfterPasswordLogin(u);
-      },250);
+    return {
+      uid: cred.user.uid,
+      email: cred.user.email,
+      name: String(name)
     };
-    window.__temoPasskeyHooked=true;
-  }
-  hook();
-  setTimeout(hook,500);
-  setTimeout(hook,1500);
-})();
-</script>
+  };
 
-
-<script id="temo-new-user-passkey-logic">
-async function registerNewUserWithPasskey(){
-  const nameEl=document.getElementById('newUserAuthName');
-  const passEl=document.getElementById('newUserAuthPassword');
-  const btn=document.getElementById('newUserPasskeyBtn');
-  const n=nameEl?.value.trim();
-  const p=passEl?.value;
-
-  if(!n||!p){
-    alert('სახელი და ახალი პაროლი ორივე შეავსე');
-    return;
-  }
-  if(!/^[A-Za-z]+$/.test(n)){
-    alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');
-    if(nameEl) nameEl.value=n.replace(/[^A-Za-z]/g,'');
-    return;
-  }
-  if(n.toUpperCase()===ADMIN_USER){
-    alert('ეს სახელი ადმინისტრატორისთვისაა');
-    return;
-  }
-  if(!window.PublicKeyCredential || !navigator.credentials?.create){
-    alert('ამ ტელეფონის ბრაუზერში თითის ანაბეჭდით/Passkey-ით შესვლა არ არის მხარდაჭერილი.');
-    return;
-  }
-
-  const users=getUsers();
-  if(users.some(u=>u.name.toLowerCase()===n.toLowerCase())){
-    alert('ასეთი მომხმარებელი უკვე არსებობს');
-    return;
-  }
-
-  try{
-    if(btn)btn.disabled=true;
-
-    const user=normalizeUser({
-      id:makeUserId(),
-      name:n,
-      password:p,
-      admin:false,
-      authorized:true,
-      blocked:false
-    });
-
-    users.push(user);
-    markFreshUser(user.id);
-    localStorage.setItem(USERS_KEY,JSON.stringify(users));
-    await saveUsersToFirebase(users);
-
-    if(typeof setupPasskeyAfterPasswordLogin==='function'){
-      const storedBefore=localStorage.getItem('temoPasskey:'+String(user.id));
-      if(!storedBefore){
-        const challenge=new Uint8Array(32);
-        crypto.getRandomValues(challenge);
-        const credential=await navigator.credentials.create({
-          publicKey:{
-            challenge,
-            rp:{name:'TEMO Work Tracker'},
-            user:{
-              id:new TextEncoder().encode(String(user.id)),
-              name:String(user.name),
-              displayName:String(user.name)
-            },
-            pubKeyCredParams:[
-              {type:'public-key',alg:-7},
-              {type:'public-key',alg:-257}
-            ],
-            authenticatorSelection:{
-              authenticatorAttachment:'platform',
-              userVerification:'required',
-              residentKey:'preferred'
-            },
-            timeout:60000,
-            attestation:'none'
-          }
-        });
-
-        if(!credential) throw new Error('Passkey ვერ შეიქმნა.');
-
-        const response=credential.response;
-        const bytes=new Uint8Array(credential.rawId);
-        let sid='';
-        for(let i=0;i<bytes.length;i++)sid+=String.fromCharCode(bytes[i]);
-
-        const pub=response.getPublicKey ? response.getPublicKey() : null;
-        let spk='';
-        if(pub){
-          const pb=new Uint8Array(pub);
-          let s='';
-          for(let i=0;i<pb.length;i++)s+=String.fromCharCode(pb[i]);
-          spk=btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-        }
-
-        localStorage.setItem('temoPasskey:'+String(user.id),JSON.stringify({
-          credentialId:btoa(sid).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''),
-          publicKey:spk,
-          createdAt:Date.now(),
-          userId:String(user.id),
-          userName:String(user.name)
-        }));
-      }
+  window.temoFirebaseNewUserLogin = async function(name, password) {
+    if (!auth) {
+      throw new Error("Firebase Authentication ჯერ არ არის დაკავშირებული. საჭიროა Web App config.");
     }
 
-    currentUser=user.name;
-    currentUserId=user.id;
-    localStorage.setItem(SESSION_USER_KEY,currentUser);
-    localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);
-    localStorage.setItem(AUTH_KEY,'yes');
-    nameEl.value='';
-    passEl.value='';
-    document.getElementById('newUserAuthModal').classList.remove('show');
-    document.getElementById('loginScreen').classList.remove('hidden');
-    $('loginError').textContent='';
-    jobs=loadUserJobs();
-    updateUserUI();
-    render();
-    alert('🔐 მომხმარებელი შეიქმნა და თითის ანაბეჭდით შესვლა ჩართულია ამ ტელეფონზე.');
-  }catch(err){
-    alert('თითის ანაბეჭდის დაყენება ვერ შესრულდა: '+(err.message||err));
-  }finally{
-    if(btn)btn.disabled=false;
-  }
-}
+    const email = window.temoAuthEmailForName(name);
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    return {
+      uid: cred.user.uid,
+      email: cred.user.email,
+      name: String(name)
+    };
+  };
 </script>
 
 </body>
