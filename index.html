@@ -488,10 +488,9 @@ body.neon-global .userName{
 
 <div id="loginScreen"><div class="loginBox">
 <h2>🔐 </h2>
-<p id="loginHint">შეიყვანე სახელი ან ელფოსტა და პაროლი</p>
+<p id="loginHint">შეიყვანე პაროლი</p>
 
 <input id="loginName" class="loginSelect" type="text" placeholder="სახელი" autocomplete="username">
-<input id="loginEmail" class="loginSelect" type="email" placeholder="ელფოსტა" autocomplete="email">
 <input id="loginPassword" type="password" placeholder="პაროლი" autocomplete="current-password">
 <button onclick="login()">შესვლა</button>
 <button type="button" id="passkeyLoginBtn" class="loginModeBtn" onclick="loginWithPasskey()">🔐 თითის ანაბეჭდით შესვლა</button>
@@ -683,16 +682,11 @@ function enableNameLogin(){enablePasswordOnlyLogin()}
 function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');$('loginScreen').classList.add('hidden');$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
 function login(){
   const name=$('loginName').value.trim();
-  const email=($('loginEmail')?.value||'').trim().toLowerCase();
   const pass=$('loginPassword').value;
   const users=getUsers();
-  const u=users.find(x=>{
-    const nameMatch=name && x.name && x.name.toLowerCase()===name.toLowerCase();
-    const emailMatch=email && x.email && x.email.toLowerCase()===email;
-    return (nameMatch||emailMatch)&&x.password===pass;
-  });
+  const u=users.find(x=>x.name && x.name.toLowerCase()===name.toLowerCase()&&x.password===pass);
   if(!u){
-    $('loginError').textContent='სახელი/ელფოსტა ან პაროლი არასწორია';
+    $('loginError').textContent='სახელი ან პაროლი არასწორია';
     $('loginPassword').value='';
     $('loginPassword').focus();
     return;
@@ -1305,7 +1299,72 @@ async function updateWebsite(){
 }
 
 function showNewUserAuth(){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('newUserAuthModal').classList.add('show')}
-async function registerNewUser(){const nameEl=document.getElementById('newUserAuthName'),emailEl=document.getElementById('newUserAuthEmail'),passEl=document.getElementById('newUserAuthPassword'),n=nameEl.value.trim(),email=emailEl.value.trim(),p=passEl.value;if(!n||!email||!p){alert('სახელი, ელფოსტა და ახალი პაროლი სამივე შეავსე');return;}if(!/^[A-Za-z]+$/.test(n)){alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');nameEl.value=n.replace(/[^A-Za-z]/g,'');return;}if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('ელფოსტის მისამართი სწორად ჩაწერე');emailEl.focus();return;}if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return;}const users=getUsers();if(users.some(u=>u.name.toLowerCase()===n.toLowerCase()&&u.password===p)){alert('ასეთი მომხმარებელი უკვე არსებობს');return;}if(users.some(u=>u.email&&u.email.toLowerCase()===email.toLowerCase())){alert('ეს ელფოსტა უკვე გამოყენებულია');return;}const user=normalizeUser({id:makeUserId(),name:n,email:email,password:p,admin:false,authorized:true,blocked:false});users.push(user);markFreshUser(user.id);localStorage.setItem(USERS_KEY,JSON.stringify(users));await saveUsersToFirebase(users);currentUser=user.name;currentUserId=user.id;localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');nameEl.value='';emailEl.value='';passEl.value='';document.getElementById('newUserAuthModal').classList.remove('show');$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();if(window.offerPasskeyAfterNewUser)window.offerPasskeyAfterNewUser(user);}
+async function registerNewUser(){
+  const nameEl=document.getElementById('newUserAuthName');
+  const emailEl=document.getElementById('newUserAuthEmail');
+  const passEl=document.getElementById('newUserAuthPassword');
+  const n=nameEl.value.trim();
+  const email=emailEl?emailEl.value.trim().toLowerCase():'';
+  const p=passEl.value;
+
+  if(!n||!email||!p){
+    alert('სახელი, ელფოსტა და ახალი პაროლი სამივე შეავსე');
+    return;
+  }
+  if(!/^[A-Za-z]+$/.test(n)){
+    alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');
+    nameEl.value=n.replace(/[^A-Za-z]/g,'');
+    return;
+  }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    alert('შეიყვანე სწორი ელფოსტა');
+    return;
+  }
+  if(n.toUpperCase()===ADMIN_USER){
+    alert('ეს სახელი ადმინისტრატორისთვისაა');
+    return;
+  }
+
+  const users=getUsers();
+  if(users.some(u=>u.name&&u.name.toLowerCase()===n.toLowerCase())){
+    alert('ასეთი მომხმარებელი უკვე არსებობს');
+    return;
+  }
+  if(users.some(u=>u.email&&u.email.toLowerCase()===email)){
+    alert('ეს ელფოსტა უკვე გამოყენებულია');
+    return;
+  }
+
+  const user=normalizeUser({
+    id:makeUserId(),
+    name:n,
+    email:email,
+    password:p,
+    admin:false,
+    authorized:true,
+    blocked:false
+  });
+
+  users.push(user);
+  markFreshUser(user.id);
+  localStorage.setItem(USERS_KEY,JSON.stringify(users));
+  await saveUsersToFirebase(users);
+
+  currentUser=user.name;
+  currentUserId=user.id;
+  localStorage.setItem(SESSION_USER_KEY,currentUser);
+  localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);
+  localStorage.setItem(AUTH_KEY,'yes');
+
+  nameEl.value='';
+  if(emailEl)emailEl.value='';
+  passEl.value='';
+  document.getElementById('newUserAuthModal').classList.remove('show');
+  $('loginError').textContent='';
+  jobs=loadUserJobs();
+  updateUserUI();
+  render();
+}
 window.addEventListener('DOMContentLoaded',loadNeonSettings);
 </script>
 
