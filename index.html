@@ -434,6 +434,19 @@ body.neon-global .userName{
 #loginEmail{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #29404c;background:#071117;color:#fff;margin-top:10px}
 </style>
 
+<style id="my-user-auth-style">
+#myAuthSection input{
+  width:100%;
+  box-sizing:border-box;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid #29404c;
+  background:#071117;
+  color:#fff;
+}
+#myAuthSection button{width:100%;margin-top:14px}
+</style>
+
 </head>
 <body>
 <nav id="bottomNav">
@@ -521,6 +534,20 @@ body.neon-global .userName{
 
 </div>
 <div class="meta" style="margin-top:12px">ატვირთული ფაილი უნდა იყოს index.html. Token მხოლოდ ამ ტელეფონში ინახება.</div>
+</div>
+
+<div class="section" id="myAuthSection" style="display:none">
+<h2>🔐 ჩემი ავტორიზაცია</h2>
+<div class="neonControlBox">
+<label style="display:block;margin-bottom:6px">👤 მომხმარებელი</label>
+<input id="myAuthName" type="text" readonly>
+<label style="display:block;margin:12px 0 6px">📧 ელფოსტა</label>
+<input id="myAuthEmail" type="email" readonly>
+<div id="myPasskeyStatus" style="margin-top:14px;font-weight:bold"></div>
+<button type="button" id="myPasskeyBtn" class="newUserPasskeyBtn" onclick="enableMyPasskey()">
+🔐 თითის ანაბეჭდის / Passkey-ის ჩართვა
+</button>
+</div>
 </div>
 
 <div class="section" id="neonControlSection" style="display:none">
@@ -995,6 +1022,7 @@ function updateUserUI(){
  const isAdmin=currentUser===ADMIN_USER;
  const site=$('websiteUpdateSection'); if(site)site.style.display=isAdmin?'':'none';
  const users=$('userManagementSection'); if(users)users.style.display=isAdmin?'':'none'; const neon=$('neonControlSection'); if(neon)neon.style.display=isAdmin?'':'none';
+ const myAuth=$('myAuthSection'); if(myAuth){myAuth.style.display=isAdmin?'none':'block'; const me=getUsers().find(x=>String(x.id)===String(currentUserId)||String(x.name).toLowerCase()===String(currentUser).toLowerCase()); if(me){$('myAuthName').value=me.name||'';$('myAuthEmail').value=me.email||''; const pk=localStorage.getItem('temoPasskey_'+String(me.id)); $('myPasskeyStatus').textContent=pk?'🔐 Passkey ჩართულია ამ მომხმარებელზე':'🔓 Passkey ჯერ არ არის ჩართული'; $('myPasskeyStatus').style.color=pk?'#39ff14':'#ffd24a';}}
  const manageBtn=$('userManagementOpenBtn'); if(manageBtn)manageBtn.style.display=isAdmin?'block':'none';
  const label=$('currentUserLabel'); if(label){label.textContent=currentUser?'👤 შენ შეხვედი... '+currentUser:'';label.style.display=currentUser?'block':'none';}
  if(isAdmin)renderManagedUsers();
@@ -1888,6 +1916,26 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
 
 
 
+
+
+<script id="my-user-auth-logic">
+async function enableMyPasskey(){
+  const me=getUsers().find(x=>String(x.id)===String(currentUserId)||String(x.name).toLowerCase()===String(currentUser).toLowerCase());
+  if(!me){alert('მომხმარებელი ვერ მოიძებნა.');return}
+  const btn=document.getElementById('myPasskeyBtn');
+  if(typeof window.offerPasskeyAfterNewUser!=='function'){
+    alert('Passkey-ის მოდული ვერ ჩაიტვირთა.');
+    return;
+  }
+  try{
+    if(btn)btn.disabled=true;
+    await window.offerPasskeyAfterNewUser(me);
+    updateUserUI();
+  }finally{
+    if(btn)btn.disabled=false;
+  }
+}
+</script>
 
 </body>
 </html>
