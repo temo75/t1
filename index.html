@@ -394,6 +394,20 @@ body.neon-global .neonAll{
 }
 </style>
 
+
+<style id="temo-white-text-numbers-only">
+/* მხოლოდ ტექსტები და რიცხვები — თეთრი; სხვა ნეონები უცვლელი */
+body.neon-global .stats .mini *,
+body.neon-global .grid .monthTotalHero *,
+body.neon-global .calendar *,
+body.neon-global .workText,
+body.neon-global .amount,
+body.neon-global .username,
+body.neon-global .userName{
+  color:#fff !important;
+}
+</style>
+
 </head>
 <body>
 <nav id="bottomNav">
@@ -1451,5 +1465,23 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
 </script>
 
 <!-- index 4: authentication true/false logic normalized -->
+
+<script id="temo-white-text-numbers-only-js">
+(function(){
+  function keepTextWhite(){
+    document.querySelectorAll(
+      '.stats .mini *, .grid .monthTotalHero *, .calendar *, ' +
+      '.workText, .amount, .username, .userName'
+    ).forEach(function(el){
+      el.style.color='#fff';
+    });
+  }
+  window.addEventListener('DOMContentLoaded',keepTextWhite);
+  new MutationObserver(keepTextWhite).observe(document.documentElement,{
+    subtree:true,childList:true
+  });
+})();
+</script>
+
 </body>
 </html>
