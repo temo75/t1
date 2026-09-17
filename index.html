@@ -704,7 +704,7 @@ function enablePasswordOnlyLogin(){
   $('loginName').focus();
 }
 function enableNameLogin(){enablePasswordOnlyLogin()}
-function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');localStorage.removeItem(SESSION_CLOSED_AT_KEY);localStorage.removeItem(SESSION_EXPIRES_KEY);localStorage.setItem(SESSION_LAST_ACTIVE_KEY,String(Date.now()));$('loginScreen').classList.add('hidden');$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();syncCurrentUserJobs();}
+async function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');localStorage.removeItem(SESSION_CLOSED_AT_KEY);localStorage.removeItem(SESSION_EXPIRES_KEY);localStorage.setItem(SESSION_LAST_ACTIVE_KEY,String(Date.now()));$('loginScreen').classList.add('hidden');$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();await syncCurrentUserJobs();}
 function login(){
   const name=$('loginName').value.trim();
   const pass=$('loginPassword').value;
@@ -740,7 +740,8 @@ window.addEventListener('DOMContentLoaded',async()=>{
     localStorage.removeItem(SESSION_CLOSED_AT_KEY);
     localStorage.removeItem(SESSION_EXPIRES_KEY);
     $('loginScreen').classList.add('hidden');
-    jobs=loadUserJobs();updateUserUI();render();syncCurrentUserJobs();
+    jobs=loadUserJobs();updateUserUI();render();
+    await syncCurrentUserJobs();
   }else{
     localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);localStorage.removeItem(SESSION_USER_ID_KEY);localStorage.removeItem(SESSION_EXPIRES_KEY);localStorage.removeItem(SESSION_CLOSED_AT_KEY);localStorage.removeItem(SESSION_LAST_ACTIVE_KEY);currentUser='';currentUserId='';
   }
@@ -844,36 +845,61 @@ async function save(){
   const snapshot=JSON.stringify(jobs);
   localStorage.setItem(key,snapshot);
   if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',snapshot);
-  if(currentUserId){try{const r=await fetch(FIREBASE_DB_URL+'/jobs/'+encodeURIComponent(String(currentUserId))+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:snapshot});if(!r.ok)throw new Error('Firebase HTTP '+r.status);}catch(e){console.warn('Firebase jobs write failed:',e)}}
+  if(currentUserId){
+    try{
+      const r=await fetch(FIREBASE_DB_URL+'/jobs/'+firebaseUserKey(currentUserId)+'.json?ts='+Date.now(),{
+        method:'PUT',headers:{'Content-Type':'application/json'},body:snapshot,cache:'no-store'
+      });
+      if(!r.ok)throw new Error('Firebase HTTP '+r.status);
+    }catch(e){console.warn('Firebase jobs write failed:',e)}
+  }
 }
-async function loadUserJobsFromFirebase(){
+
+async function loadJobsFromFirebase(){
   if(!currentUserId)return null;
-  try{const r=await fetch(FIREBASE_DB_URL+'/jobs/'+encodeURIComponent(String(currentUserId))+'.json?ts='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('Firebase HTTP '+r.status);const data=await r.json();return Array.isArray(data)?data:null;}catch(e){console.warn('Firebase jobs read failed:',e);return null}
+  try{
+    const r=await fetch(FIREBASE_DB_URL+'/jobs/'+firebaseUserKey(currentUserId)+'.json?ts='+Date.now(),{cache:'no-store'});
+    if(!r.ok)throw new Error('Firebase HTTP '+r.status);
+    const data=await r.json();
+    if(data===null)return null;
+    if(Array.isArray(data))return data.filter(Boolean);
+    if(data&&typeof data==='object')return Object.values(data).filter(Boolean);
+    return [];
+  }catch(e){console.warn('Firebase jobs read failed:',e);return null}
 }
+
+function mergeJobs(localJobs,remoteJobs){
+  const merged=[];const byId=new Map();
+  (Array.isArray(remoteJobs)?remoteJobs:[]).forEach(j=>{if(j&&j.id!=null){byId.set(String(j.id),{...j});}else if(j){merged.push({...j});}});
+  (Array.isArray(localJobs)?localJobs:[]).forEach(j=>{if(j&&j.id!=null)byId.set(String(j.id),{...j});else if(j){merged.push({...j});}});
+  return [...byId.values(),...merged];
+}
+
 async function syncCurrentUserJobs(){
   if(!currentUserId)return;
-  const remote=await loadUserJobsFromFirebase();
-  const localSnapshot=Array.isArray(jobs)?jobs:[];
-  if(currentUser===ADMIN_USER){
-    // TEMO-ს მონაცემებისთვის ერთი საერთო Firebase წყარო გამოიყენება ყველა მოწყობილობაზე.
-    // თუ ამ მოწყობილობაზე უკვე არის შენახული სამუშაოები, ჯერ ისინი ვინარჩუნოთ და Firebase-ში
-    // ავტორიტეტულ მონაცემებად ჩავწეროთ; შემდეგ სხვა მოწყობილობები ზუსტად მათ ჩამოტვირთავენ.
-    if(localSnapshot.length){
-      await save();
-      jobs=localSnapshot;
-      render();
-      return;
-    }
-  }
-  if(Array.isArray(remote)){
-    jobs=remote;
-    const key='temoJobsId_'+currentUserId;
-    localStorage.setItem(key,JSON.stringify(jobs));
-    if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs));
+  const local=loadUserJobs();
+  const remote=await loadJobsFromFirebase();
+  if(remote===null){
+    jobs=local;
+    if(local.length)await save();
     render();
-  }else{
-    await save();
+    return;
   }
+  const merged=mergeJobs(local,remote);
+  jobs=merged;
+  const key='temoJobsId_'+currentUserId;
+  const snapshot=JSON.stringify(merged);
+  localStorage.setItem(key,snapshot);
+  if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',snapshot);
+  if(JSON.stringify(remote)!==snapshot){
+    try{
+      const r=await fetch(FIREBASE_DB_URL+'/jobs/'+firebaseUserKey(currentUserId)+'.json?ts='+Date.now(),{
+        method:'PUT',headers:{'Content-Type':'application/json'},body:snapshot,cache:'no-store'
+      });
+      if(!r.ok)throw new Error('Firebase HTTP '+r.status);
+    }catch(e){console.warn('Firebase jobs sync write failed:',e)}
+  }
+  render();renderList();
 }
 function formatDate(s){if(!s)return '';const [y,m,d]=s.split('-');const months=['იანვარი','თებერვალი','მარტი','აპრილი','მაისი','ივნისი','ივლისი','აგვისტო','სექტემბერი','ოქტომბერი','ნოემბერი','დეკემბერი'];return Number(d)+' '+months[Number(m)-1]+' '+y}
 function monthName(key){const [y,m]=key.split('-');return new Date(y,Number(m)-1,1).toLocaleDateString('ka-GE',{year:'numeric',month:'long'})}
