@@ -1000,6 +1000,60 @@ async function renderManagedUsers(){
   });
   box.replaceChildren(frag);
 }
+async function toggleUserBlock(id){
+  if(currentUser!==ADMIN_USER)return;
+  const users=getUsers();
+  const u=users.find(x=>String(x.id)===String(id));
+  if(!u||u.admin)return;
+
+  const willBlock=u.blocked!==true;
+  if(!confirm((willBlock?'დავბლოკოთ ':'განვბლოკოთ ')+u.name+'?'))return;
+
+  u.blocked=willBlock;
+  u.authorized=!willBlock;
+  localStorage.setItem(USERS_KEY,JSON.stringify(users));
+
+  managedUsersRenderKey='';
+  await renderManagedUsers();
+  renderLoginUsers();
+
+  try{
+    await saveUsersToFirebase(users);
+  }catch(e){
+    console.warn('Firebase user block update failed:',e);
+  }
+  managedUsersRenderKey='';
+  await renderManagedUsers();
+}
+
+async function deleteManagedUser(id){
+  if(currentUser!==ADMIN_USER)return;
+  const users=getUsers();
+  const u=users.find(x=>String(x.id)===String(id));
+  if(!u||u.admin)return;
+  if(!confirm('წავშალოთ მომხმარებელი '+u.name+'?'))return;
+
+  const remaining=users.filter(x=>String(x.id)!==String(id));
+  localStorage.setItem(USERS_KEY,JSON.stringify(remaining));
+
+  managedUsersRenderKey='';
+  await renderManagedUsers();
+  renderLoginUsers();
+
+  try{
+    await saveUsersToFirebase(remaining);
+  }catch(e){
+    console.warn('Firebase user delete failed:',e);
+  }
+
+  localStorage.removeItem('temoJobsId_'+u.id);
+  removeAllLegacyJobKeysForName(u.name);
+  unmarkFreshUser(u.id);
+
+  managedUsersRenderKey='';
+  await renderManagedUsers();
+}
+
 function openCredentials(){
   loadGitHubSettings();
   $('credentialsModal').classList.add('show');
@@ -1267,7 +1321,7 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
   margin:0 0 8px 0 !important;
   padding:0 !important;
   display:grid !important;
-  grid-template-columns:minmax(0,1fr) 92px 72px !important;
+  grid-template-columns:minmax(0,1fr) 68px 50px !important;
   gap:7px !important;
   align-items:stretch !important;
   box-sizing:border-box !important;
@@ -1289,10 +1343,17 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
   text-overflow:ellipsis !important;
   white-space:nowrap !important;
 }
+#userManagementList .userRow .lockBtn,
+#userManagementList .userRow .danger{
+  font-size:10px !important;
+  padding:6px 2px !important;
+  white-space:nowrap !important;
+  text-overflow:clip !important;
+}
 @media(max-width:600px){
   #userManagementSection{padding:14px !important}
   #userManagementList .userRow{
-    grid-template-columns:minmax(0,1fr) 70px 54px !important;
+    grid-template-columns:minmax(0,1fr) 62px 48px !important;
     gap:5px !important;
   }
   #userManagementList .userRow button{
@@ -1302,7 +1363,7 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
 }
 @media(max-width:380px){
   #userManagementList .userRow{
-    grid-template-columns:minmax(0,1fr) 62px 50px !important;
+    grid-template-columns:minmax(0,1fr) 56px 44px !important;
     gap:4px !important;
   }
   #userManagementList .userRow button{
