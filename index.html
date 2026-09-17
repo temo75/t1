@@ -408,6 +408,26 @@ body.neon-global .userName{
 }
 </style>
 
+
+<style id="temo-passkey-style">
+#passkeyLoginBtn{
+  width:100% !important;
+  padding:12px 8px !important;
+  border:1px solid #39ff14 !important;
+  border-radius:11px !important;
+  background:#102b3b !important;
+  color:#fff !important;
+  font-weight:bold !important;
+  font-size:15px !important;
+  cursor:pointer !important;
+  box-shadow:0 0 7px #39ff14,0 0 16px rgba(57,255,20,.75) !important;
+}
+#passkeyLoginBtn:disabled{
+  opacity:.55 !important;
+  cursor:wait !important;
+}
+</style>
+
 </head>
 <body>
 <nav id="bottomNav">
@@ -428,6 +448,10 @@ body.neon-global .userName{
 <input id="loginName" class="loginSelect" type="text" placeholder="სახელი" autocomplete="username">
 <input id="loginPassword" type="password" placeholder="პაროლი" autocomplete="current-password">
 <button onclick="login()">შესვლა</button>
+<button type="button" id="passkeyLoginBtn" class="passkeyLoginBtn" onclick="loginWithPasskey()" style="margin-top:8px;">
+  🔐 თითის ანაბეჭდით შესვლა
+</button>
+
 <button class="loginModeBtn" onclick="showNewUserAuth()">➕ ახალი მომხმარებელი</button>
 <div id="loginError"></div>
 </div></div>
@@ -1791,6 +1815,199 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
   new MutationObserver(keepTextWhite).observe(document.documentElement,{
     subtree:true,childList:true
   });
+})();
+</script>
+
+
+<script id="temo-passkey-logic">
+(function(){
+  const PASSKEY_PREFIX='temoPasskey:';
+
+  function passkeySupported(){
+    return !!(window.PublicKeyCredential &&
+      navigator.credentials &&
+      navigator.credentials.create &&
+      navigator.credentials.get);
+  }
+
+  function b64urlEncode(buf){
+    const bytes=new Uint8Array(buf);
+    let s='';
+    for(let i=0;i<bytes.length;i++) s+=String.fromCharCode(bytes[i]);
+    return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  }
+
+  function b64urlDecode(str){
+    str=str.replace(/-/g,'+').replace(/_/g,'/');
+    while(str.length%4) str+='=';
+    const bin=atob(str);
+    const out=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
+    return out.buffer;
+  }
+
+  function passkeyKey(userId){
+    return PASSKEY_PREFIX+String(userId);
+  }
+
+  function getStoredPasskey(userId){
+    try{return JSON.parse(localStorage.getItem(passkeyKey(userId))||'null');}
+    catch(e){return null;}
+  }
+
+  function setStoredPasskey(userId, data){
+    localStorage.setItem(passkeyKey(userId), JSON.stringify(data));
+  }
+
+  async function registerPasskeyForUser(u){
+    if(!passkeySupported()) throw new Error('ამ ტელეფონის ბრაუზერი Passkey-ს არ უჭერს მხარს.');
+
+    const challenge=new Uint8Array(32);
+    crypto.getRandomValues(challenge);
+
+    const userIdBytes=new TextEncoder().encode(String(u.id));
+    const credential=await navigator.credentials.create({
+      publicKey:{
+        challenge,
+        rp:{name:'TEMO Work Tracker'},
+        user:{
+          id:userIdBytes,
+          name:String(u.name),
+          displayName:String(u.name)
+        },
+        pubKeyCredParams:[
+          {type:'public-key',alg:-7},
+          {type:'public-key',alg:-257}
+        ],
+        authenticatorSelection:{
+          authenticatorAttachment:'platform',
+          userVerification:'required',
+          residentKey:'preferred'
+        },
+        timeout:60000,
+        attestation:'none'
+      }
+    });
+
+    if(!credential) throw new Error('Passkey ვერ შეიქმნა.');
+
+    const response=credential.response;
+    setStoredPasskey(u.id,{
+      credentialId:b64urlEncode(credential.rawId),
+      publicKey:b64urlEncode(response.getPublicKey ? (response.getPublicKey()||new ArrayBuffer(0)) : new ArrayBuffer(0)),
+      createdAt:Date.now(),
+      userId:String(u.id),
+      userName:String(u.name)
+    });
+    return credential;
+  }
+
+  async function loginWithPasskey(){
+    const btn=document.getElementById('passkeyLoginBtn');
+    if(!passkeySupported()){
+      alert('ამ ტელეფონის ბრაუზერში თითის ანაბეჭდით/Passkey-ით შესვლა არ არის მხარდაჭერილი.');
+      return;
+    }
+
+    const users=typeof getUsers==='function' ? getUsers() : [];
+    const candidates=users.filter(u=>u && !u.blocked && !u.admin && getStoredPasskey(u.id));
+
+    if(!candidates.length){
+      alert('ჯერ ერთხელ შედი სახელით და პაროლით და შემდეგ ჩართე თითის ანაბეჭდით შესვლა.');
+      return;
+    }
+
+    try{
+      if(btn)btn.disabled=true;
+
+      const challenge=new Uint8Array(32);
+      crypto.getRandomValues(challenge);
+
+      const allowCredentials=candidates.map(u=>({
+        type:'public-key',
+        id:b64urlDecode(getStoredPasskey(u.id).credentialId),
+        transports:['internal']
+      }));
+
+      const assertion=await navigator.credentials.get({
+        publicKey:{
+          challenge,
+          allowCredentials,
+          userVerification:'required',
+          timeout:60000
+        }
+      });
+
+      if(!assertion) throw new Error('დადასტურება ვერ შესრულდა.');
+
+      const id=b64urlEncode(assertion.rawId);
+      const matched=candidates.find(u=>{
+        const p=getStoredPasskey(u.id);
+        return p && p.credentialId===id;
+      });
+
+      if(!matched) throw new Error('ამ მოწყობილობის Passkey ვერ მოიძებნა.');
+
+      if(matched.blocked){
+        alert('ეს მომხმარებელი დაბლოკილია.');
+        return;
+      }
+
+      if(typeof completeLogin==='function'){
+        completeLogin(matched);
+      }else{
+        throw new Error('შესვლის ფუნქცია ვერ მოიძებნა.');
+      }
+    }catch(err){
+      if(err && err.name==='NotAllowedError') return;
+      alert('თითის ანაბეჭდით შესვლა ვერ შესრულდა: '+(err.message||err));
+    }finally{
+      if(btn)btn.disabled=false;
+    }
+  }
+
+  async function setupPasskeyAfterPasswordLogin(u){
+    if(!u || !passkeySupported() || getStoredPasskey(u.id)) return;
+
+    const ok=confirm('გინდა ამ ტელეფონზე შემდეგში თითის ანაბეჭდით შეხვიდე?');
+    if(!ok)return;
+
+    try{
+      await registerPasskeyForUser(u);
+      alert('🔐 თითის ანაბეჭდით შესვლა ჩართულია ამ ტელეფონზე.');
+    }catch(err){
+      if(err && err.name==='NotAllowedError') return;
+      alert('Passkey-ის ჩართვა ვერ მოხერხდა: '+(err.message||err));
+    }
+  }
+
+  window.loginWithPasskey=loginWithPasskey;
+  window.setupPasskeyAfterPasswordLogin=setupPasskeyAfterPasswordLogin;
+
+  document.addEventListener('DOMContentLoaded',function(){
+    const btn=document.getElementById('passkeyLoginBtn');
+    if(btn && !passkeySupported()) btn.style.display='none';
+  });
+})();
+</script>
+
+
+<script id="temo-passkey-login-hook">
+(function(){
+  function hook(){
+    if(typeof window.completeLogin!=='function' || window.__temoPasskeyHooked)return;
+    const original=window.completeLogin;
+    window.completeLogin=function(u){
+      original(u);
+      setTimeout(function(){
+        if(window.setupPasskeyAfterPasswordLogin) window.setupPasskeyAfterPasswordLogin(u);
+      },250);
+    };
+    window.__temoPasskeyHooked=true;
+  }
+  hook();
+  setTimeout(hook,500);
+  setTimeout(hook,1500);
 })();
 </script>
 
