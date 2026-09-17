@@ -430,6 +430,10 @@ body.neon-global .userName{
 #newUserPasskeyBtn:disabled{opacity:.55 !important;cursor:wait !important;}
 </style>
 
+<style id="all-users-auth-style">
+#loginEmail{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #29404c;background:#071117;color:#fff;margin-top:10px}
+</style>
+
 </head>
 <body>
 <nav id="bottomNav">
@@ -445,9 +449,10 @@ body.neon-global .userName{
 
 <div id="loginScreen"><div class="loginBox">
 <h2>🔐 </h2>
-<p id="loginHint">შეიყვანე პაროლი</p>
+<p id="loginHint">შეიყვანე სახელი ან ელფოსტა და პაროლი</p>
 
 <input id="loginName" class="loginSelect" type="text" placeholder="სახელი" autocomplete="username">
+<input id="loginEmail" class="loginSelect" type="email" placeholder="ელფოსტა" autocomplete="email">
 <input id="loginPassword" type="password" placeholder="პაროლი" autocomplete="current-password">
 <button onclick="login()">შესვლა</button>
 <button type="button" id="passkeyLoginBtn" class="loginModeBtn" onclick="loginWithPasskey()">🔐 თითის ანაბეჭდით შესვლა</button>
@@ -623,7 +628,30 @@ function enablePasswordOnlyLogin(){
 }
 function enableNameLogin(){enablePasswordOnlyLogin()}
 function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');$('loginScreen').classList.add('hidden');$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
-function login(){const name=$('loginName').value.trim(),pass=$('loginPassword').value,users=getUsers(),u=users.find(x=>x.name.toLowerCase()===name.toLowerCase()&&x.password===pass);if(!u){$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus();return;}if(u.blocked===true||u.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';$('loginPassword').focus();return;}completeLogin(u);}
+function login(){
+  const name=$('loginName').value.trim();
+  const email=($('loginEmail')?.value||'').trim().toLowerCase();
+  const pass=$('loginPassword').value;
+  const users=getUsers();
+  const u=users.find(x=>{
+    const nameMatch=name && x.name && x.name.toLowerCase()===name.toLowerCase();
+    const emailMatch=email && x.email && x.email.toLowerCase()===email;
+    return (nameMatch||emailMatch)&&x.password===pass;
+  });
+  if(!u){
+    $('loginError').textContent='სახელი/ელფოსტა ან პაროლი არასწორია';
+    $('loginPassword').value='';
+    $('loginPassword').focus();
+    return;
+  }
+  if(u.blocked===true||u.authorized!==true){
+    $('loginError').textContent='ეს მომხმარებელი დაბლოკილია';
+    $('loginPassword').value='';
+    $('loginPassword').focus();
+    return;
+  }
+  completeLogin(u);
+}
 function renderLoginUsers(){}
 window.addEventListener('DOMContentLoaded',async()=>{
   await syncUsersFromFirebase();
@@ -972,6 +1000,9 @@ function updateUserUI(){
  if(isAdmin)renderManagedUsers();
 }
 let managedUsersRenderKey='';
+function getStoredPasskeyForManagedUser(u){
+  try{return localStorage.getItem('temoPasskey_'+String(u.id))?true:false}catch(e){return false}
+}
 async function renderManagedUsers(){
   const box=$('userManagementList');
   if(!box)return;
@@ -989,7 +1020,7 @@ async function renderManagedUsers(){
   }
 
   const list=users.filter(u=>!u.admin&&u.name.toUpperCase()!==ADMIN_USER&&!isRemovedUser(u));
-  const key=JSON.stringify(list.map(u=>[u.id,u.name,u.password,u.blocked===true]));
+  const key=JSON.stringify(list.map(u=>[u.id,u.name,u.email,u.password,u.blocked===true,u.passkey||getStoredPasskeyForManagedUser(u)]));
 
   if(key===managedUsersRenderKey && box.children.length)return;
   managedUsersRenderKey=key;
@@ -1005,7 +1036,7 @@ async function renderManagedUsers(){
     row.className='userRow';
     const b=document.createElement('button');
     b.className='backupBtn userNameBtn';
-    b.textContent='👤 '+u.name+' | 🔑 '+u.password;
+    b.textContent='👤 '+u.name+' | 📧 '+(u.email||'ელფოსტა არ არის')+' | 🔑 '+u.password+' | '+(u.passkey||getStoredPasskeyForManagedUser(u)?'🔐 Passkey':'🔓 Passkey არაა');
     b.disabled=true;
     const l=document.createElement('button');
     l.className='backupBtn lockBtn'+(u.blocked===true?' locked':'');
@@ -1856,99 +1887,7 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
 </script>
 
 
-<script id="new-user-passkey-logic">
-async function registerNewUserWithPasskey(){
-  const nameEl=document.getElementById('newUserAuthName');
-  const emailEl=document.getElementById('newUserAuthEmail');
-  const passEl=document.getElementById('newUserAuthPassword');
-  const btn=document.getElementById('newUserPasskeyBtn');
-  const n=nameEl?.value.trim();
-  const email=emailEl?.value.trim();
-  const p=passEl?.value || '';
 
-  if(!n || !email || !p){
-    alert('სახელი, ელფოსტა და ახალი პაროლი სამივე შეავსე');
-    return;
-  }
-  if(!/^[A-Za-z]+$/.test(n)){
-    alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');
-    return;
-  }
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
-    alert('შეიყვანე სწორი ელფოსტა');
-    return;
-  }
-  if(p.length < 6){
-    alert('პაროლი უნდა იყოს მინიმუმ 6 სიმბოლო');
-    return;
-  }
-
-  if(!window.PublicKeyCredential || !navigator.credentials || !navigator.credentials.create){
-    alert('ამ ბრაუზერში Passkey/თითის ანაბეჭდის ავტორიზაცია ამ საიტისთვის მიუწვდომელია.');
-    return;
-  }
-
-  try{
-    if(btn) btn.disabled=true;
-
-    const challenge=new Uint8Array(32);
-    crypto.getRandomValues(challenge);
-
-    const userId=new TextEncoder().encode(
-      (n.toLowerCase()+'|'+email.toLowerCase())
-    );
-
-    const credential=await navigator.credentials.create({
-      publicKey:{
-        challenge,
-        rp:{name:'TEMO Work Tracker'},
-        user:{
-          id:userId,
-          name:email,
-          displayName:n
-        },
-        pubKeyCredParams:[
-          {type:'public-key',alg:-7},
-          {type:'public-key',alg:-257}
-        ],
-        authenticatorSelection:{
-          authenticatorAttachment:'platform',
-          userVerification:'required',
-          residentKey:'preferred'
-        },
-        timeout:60000,
-        attestation:'none'
-      }
-    });
-
-    if(!credential) throw new Error('Passkey ვერ შეიქმნა.');
-
-    const response=credential.response;
-    const data={
-      credentialId:btoa(String.fromCharCode(...new Uint8Array(credential.rawId)))
-        .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''),
-      createdAt:Date.now(),
-      userName:n,
-      email:email
-    };
-
-    localStorage.setItem('temo_passkey_new_'+n.toLowerCase(),JSON.stringify(data));
-
-    // If the existing normal new-user creator exists, finish account creation
-    // through it so the existing Firebase/data logic remains in control.
-    if(typeof registerNewUser==='function'){
-      await registerNewUser();
-    }else{
-      alert('🔐 Passkey შეიქმნა.');
-    }
-  }catch(err){
-    if(err && err.name==='NotAllowedError') return;
-    alert('Passkey-ის შექმნა ვერ მოხერხდა: '+(err.message||err));
-  }finally{
-    if(btn) btn.disabled=false;
-  }
-}
-</script>
 
 </body>
 </html>
