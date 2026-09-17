@@ -452,7 +452,7 @@ body.neon-global .userName{
 
 <input id="loginName" class="loginSelect" type="text" placeholder="სახელი" autocomplete="username">
 <input id="loginPassword" type="password" placeholder="პაროლი" autocomplete="current-password">
-<button type="button" class="loginModeBtn secondary">დაგავიწყდა პაროლი?</button>
+<button type="button" class="loginModeBtn secondary" onclick="forgotPassword()">დაგავიწყდა პაროლი?</button>
 <button onclick="login()">შესვლა</button>
 <button class="loginModeBtn" onclick="showNewUserAuth()">➕ ახალი მომხმარებელი</button>
 <div id="loginError"></div>
@@ -1249,6 +1249,26 @@ async function updateWebsite(){
     hideUploadAnimation();
     alert('შეცდომა: '+err.message);
   }
+}
+
+function forgotPassword(){
+  const email=prompt('შეიყვანე რეგისტრირებული ელფოსტა');
+  if(email===null)return;
+  const e=email.trim().toLowerCase();
+  if(!e){alert('ელფოსტა შეიყვანე');return;}
+  const users=getUsers();
+  const u=users.find(x=>x.email&&String(x.email).toLowerCase()===e);
+  if(!u){alert('ამ ელფოსტით მომხმარებელი ვერ მოიძებნა');return;}
+  const newPassword=prompt('შეიყვანე ახალი პაროლი');
+  if(newPassword===null)return;
+  if(!newPassword){alert('ახალი პაროლი ცარიელი არ უნდა იყოს');return;}
+  u.password=newPassword;
+  localStorage.setItem(USERS_KEY,JSON.stringify(users));
+  saveUsersToFirebase(users).then(()=>{
+    alert('პაროლი წარმატებით შეიცვალა');
+  }).catch(()=>{
+    alert('პაროლი შეიცვალა ამ მოწყობილობაზე, მაგრამ Firebase-ში შენახვა ვერ მოხერხდა');
+  });
 }
 
 function showNewUserAuth(){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('newUserAuthModal').classList.add('show')}
