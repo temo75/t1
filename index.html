@@ -1339,6 +1339,12 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
   overflow:hidden !important;
 }
 #userManagementList .userRow .userNameBtn{
+  width:88% !important;
+  height:40px !important;
+  min-height:40px !important;
+  max-height:40px !important;
+  justify-self:start !important;
+  align-self:center !important;
   text-align:left !important;
   text-overflow:ellipsis !important;
   white-space:nowrap !important;
@@ -1357,8 +1363,14 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
 @media(max-width:600px){
   #userManagementSection{padding:14px !important}
   #userManagementList .userRow{
-    grid-template-columns:minmax(0,64%) minmax(0,22%) minmax(0,14%) !important;
+    grid-template-columns:minmax(0,60%) minmax(0,25%) minmax(0,15%) !important;
     gap:3px !important;
+  }
+  #userManagementList .userRow .userNameBtn{
+    width:88% !important;
+    height:38px !important;
+    min-height:38px !important;
+    max-height:38px !important;
   }
   #userManagementList .userRow button{
     font-size:clamp(8px,2.8vw,10px) !important;
@@ -1367,8 +1379,14 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
 }
 @media(max-width:380px){
   #userManagementList .userRow{
-    grid-template-columns:minmax(0,64%) minmax(0,22%) minmax(0,14%) !important;
+    grid-template-columns:minmax(0,60%) minmax(0,25%) minmax(0,15%) !important;
     gap:2px !important;
+  }
+  #userManagementList .userRow .userNameBtn{
+    width:88% !important;
+    height:36px !important;
+    min-height:36px !important;
+    max-height:36px !important;
   }
   #userManagementList .userRow button{
     font-size:clamp(7.5px,2.7vw,9px) !important;
