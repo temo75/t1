@@ -646,6 +646,7 @@ const SESSION_USER_KEY='temoWorkTrackerUser';
 const SESSION_USER_ID_KEY='temoWorkTrackerUserId';
 const SESSION_EXPIRES_KEY='temoWorkTrackerSessionExpires';
 const SESSION_CLOSED_AT_KEY='temoWorkTrackerSessionClosedAt';
+const SESSION_LAST_ACTIVE_KEY='temoWorkTrackerLastActiveAt';
 const SESSION_DURATION_MS=5*60*1000;
 const FRESH_USER_IDS_KEY='temoFreshUserIds';
 const ADMIN_USER='TEMO';
@@ -653,11 +654,19 @@ const REMOVED_USER_NAMES=['TEMOADMIN'];
 const FIREBASE_DB_URL='https://temo-75-default-rtdb.europe-west1.firebasedatabase.app';
 let currentUser=localStorage.getItem(SESSION_USER_KEY)||'';
 let currentUserId=localStorage.getItem(SESSION_USER_ID_KEY)||'';
+function markSessionActive(){
+  if(currentUser && localStorage.getItem(AUTH_KEY)==='yes'){
+    localStorage.setItem(SESSION_LAST_ACTIVE_KEY,String(Date.now()));
+  }
+}
 window.addEventListener('pagehide',()=>{
   if(currentUser && localStorage.getItem(AUTH_KEY)==='yes'){
     localStorage.setItem(SESSION_CLOSED_AT_KEY,String(Date.now()));
+    localStorage.setItem(SESSION_LAST_ACTIVE_KEY,String(Date.now()));
   }
 });
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')markSessionActive();});
+setInterval(()=>{if(document.visibilityState==='visible')markSessionActive();},30000);
 let firebaseSyncBusy=false;
 let firebaseWriteQueue=Promise.resolve();
 function makeUserId(){return window.crypto&&crypto.randomUUID?crypto.randomUUID():'u_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,10);}
@@ -680,7 +689,7 @@ function enablePasswordOnlyLogin(){
   $('loginName').focus();
 }
 function enableNameLogin(){enablePasswordOnlyLogin()}
-function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');localStorage.removeItem(SESSION_CLOSED_AT_KEY);localStorage.removeItem(SESSION_EXPIRES_KEY);$('loginScreen').classList.add('hidden');$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
+function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');localStorage.removeItem(SESSION_CLOSED_AT_KEY);localStorage.removeItem(SESSION_EXPIRES_KEY);localStorage.setItem(SESSION_LAST_ACTIVE_KEY,String(Date.now()));$('loginScreen').classList.add('hidden');$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
 function login(){
   const name=$('loginName').value.trim();
   const pass=$('loginPassword').value;
@@ -706,7 +715,9 @@ window.addEventListener('DOMContentLoaded',async()=>{
   const savedUserId=currentUserId;
   const matched=findUserById(savedUserId);
   const sessionClosedAt=Number(localStorage.getItem(SESSION_CLOSED_AT_KEY)||0);
-  const sessionValid=localStorage.getItem(AUTH_KEY)==='yes' && (!sessionClosedAt || (Date.now()-sessionClosedAt)<=SESSION_DURATION_MS) && !!savedUserId && !!matched && matched.authorized===true && matched.blocked===false;
+  const sessionLastActive=Number(localStorage.getItem(SESSION_LAST_ACTIVE_KEY)||0);
+  const referenceTime=sessionClosedAt||sessionLastActive;
+  const sessionValid=localStorage.getItem(AUTH_KEY)==='yes' && !!referenceTime && (Date.now()-referenceTime)<=SESSION_DURATION_MS && !!savedUserId && !!matched && matched.authorized===true && matched.blocked===false;
   if(sessionValid){
     currentUser=matched.name;currentUserId=matched.id;
     localStorage.setItem(SESSION_USER_KEY,currentUser);
@@ -716,7 +727,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
     $('loginScreen').classList.add('hidden');
     jobs=loadUserJobs();updateUserUI();render();
   }else{
-    localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);localStorage.removeItem(SESSION_USER_ID_KEY);localStorage.removeItem(SESSION_EXPIRES_KEY);localStorage.removeItem(SESSION_CLOSED_AT_KEY);currentUser='';currentUserId='';
+    localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);localStorage.removeItem(SESSION_USER_ID_KEY);localStorage.removeItem(SESSION_EXPIRES_KEY);localStorage.removeItem(SESSION_CLOSED_AT_KEY);localStorage.removeItem(SESSION_LAST_ACTIVE_KEY);currentUser='';currentUserId='';
   }
   $('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
   updateUserUI();
@@ -1168,7 +1179,7 @@ function closeCredentials(){
 function showSettings(){updateUserUI();document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('userManagementPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.remove('pageHidden');window.scrollTo(0,0)}
 function showUserManagement(){if(currentUser!==ADMIN_USER)return;updateUserUI();document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.add('pageHidden');document.getElementById('userManagementPage').classList.remove('pageHidden');window.scrollTo(0,0)}
 function showMain(){document.getElementById('settingsPage').classList.add('pageHidden');document.getElementById('userManagementPage').classList.add('pageHidden');document.getElementById('mainPage').classList.remove('pageHidden');window.scrollTo(0,0)}
-function logout(){localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);localStorage.removeItem(SESSION_USER_ID_KEY);localStorage.removeItem(SESSION_EXPIRES_KEY);localStorage.removeItem(SESSION_CLOSED_AT_KEY);window.location.reload()}
+function logout(){localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);localStorage.removeItem(SESSION_USER_ID_KEY);localStorage.removeItem(SESSION_EXPIRES_KEY);localStorage.removeItem(SESSION_CLOSED_AT_KEY);localStorage.removeItem(SESSION_LAST_ACTIVE_KEY);window.location.reload()}
 function exportData(){const blob=new Blob([JSON.stringify({version:1,exported:new Date().toISOString(),jobs},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='TEMO_WORK_TRACKER_BACKUP.json';a.click();URL.revokeObjectURL(a.href)}
 function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result),arr=Array.isArray(d)?d:d.jobs;if(!Array.isArray(arr))throw 0;if(confirm('არსებული მონაცემები შეიცვალოს ამ სარეზერვო ასლით?')){jobs=arr;save();render();alert('მონაცემები აღდგენილია')}}catch(x){alert('ეს სარეზერვო ფაილი არასწორია')}e.target.value=''};r.readAsText(f)}
 function clearAll(){
