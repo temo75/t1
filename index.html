@@ -433,6 +433,26 @@ body.neon-global .userName{
 </style>
 
 
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script>
+const TEMO_FIREBASE_CONFIG={apiKey:"AIzaSyAQqkrE6BweLfFEI179irLpkc6OVmIHArc",authDomain:"temo-75.firebaseapp.com",databaseURL:"https://temo-75-default-rtdb.europe-west1.firebasedatabase.app",projectId:"temo-75",storageBucket:"temo-75.firebasestorage.app",messagingSenderId:"966586658574",appId:"1:966586658574:web:4532c8b2b3e13b5615b15f",measurementId:"G-G7J1FBF18Y"};
+firebase.initializeApp(TEMO_FIREBASE_CONFIG);
+const firebaseAuth=firebase.auth();
+</script>
+
+<style id="forgot-password-style">
+#forgotPasswordBtn{width:100%;margin-top:10px;padding:11px;border:0;background:transparent;color:#65c9ff;font-size:14px;text-decoration:underline;cursor:pointer;box-shadow:none}
+#forgotPasswordModal{display:none;position:fixed;inset:0;background:#000d;align-items:center;justify-content:center;z-index:70000;padding:18px}
+#forgotPasswordModal.show{display:flex}
+.forgotPasswordBox{width:min(390px,100%);background:#10232f;border:1px solid #2999df;border-radius:20px;padding:22px;box-shadow:0 0 30px #2999df55}
+.forgotPasswordBox h2{text-align:center;color:#fff;margin:0 0 12px}
+.forgotPasswordBox p{color:#b9c8cf;text-align:center;line-height:1.45}
+.forgotPasswordBox input{width:100%;box-sizing:border-box;padding:13px;border-radius:10px;border:1px solid #29404c;background:#071117;color:#fff;margin-top:10px}
+.forgotPasswordBox button{width:100%;margin-top:12px;padding:12px;border:1px solid #2999df;border-radius:10px;background:#12354a;color:#fff;font-weight:bold}
+.forgotPasswordBox .cancel{background:#20323b;border-color:#285269}
+#forgotPasswordMsg{text-align:center;min-height:22px;margin-top:10px;color:#7de3a1}
+</style>
 </head>
 <body>
 <nav id="bottomNav">
@@ -453,6 +473,7 @@ body.neon-global .userName{
 <input id="loginName" class="loginSelect" type="text" placeholder="სახელი" autocomplete="username">
 <input id="loginPassword" type="password" placeholder="პაროლი" autocomplete="current-password">
 <button onclick="login()">შესვლა</button>
+<button id="forgotPasswordBtn" type="button" onclick="openForgotPassword()">დაგავიწყდა პაროლი?</button>
 <button class="loginModeBtn" onclick="showNewUserAuth()">➕ ახალი მომხმარებელი</button>
 <div id="loginError"></div>
 </div></div>
@@ -635,40 +656,59 @@ function enablePasswordOnlyLogin(){
 }
 function enableNameLogin(){enablePasswordOnlyLogin()}
 function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');$('loginScreen').classList.add('hidden');$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
-function login(){
+async function login(){
   const name=$('loginName').value.trim();
   const pass=$('loginPassword').value;
   const users=getUsers();
-  const u=users.find(x=>x.name && x.name.toLowerCase()===name.toLowerCase()&&x.password===pass);
+  const u=users.find(x=>x.name&&x.name.toLowerCase()===name.toLowerCase());
   if(!u){
     $('loginError').textContent='სახელი ან პაროლი არასწორია';
     $('loginPassword').value='';
-    $('loginPassword').focus();
     return;
   }
   if(u.blocked===true||u.authorized!==true){
     $('loginError').textContent='ეს მომხმარებელი დაბლოკილია';
     $('loginPassword').value='';
-    $('loginPassword').focus();
     return;
   }
-  completeLogin(u);
-}
-function renderLoginUsers(){}
-window.addEventListener('DOMContentLoaded',async()=>{
-  await syncUsersFromFirebase();
-  const savedUserId=currentUserId;
-  const matched=findUserById(savedUserId);
-  const sessionValid=localStorage.getItem(AUTH_KEY)==='yes' && !!savedUserId && !!matched && matched.authorized===true && matched.blocked===false;
-  if(sessionValid){
-    currentUser=matched.name;currentUserId=matched.id;
-    localStorage.setItem(SESSION_USER_KEY,currentUser);
-    localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);
-    $('loginScreen').classList.add('hidden');
-    jobs=loadUserJobs();updateUserUI();render();
-  }else{
-    localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);localStorage.removeItem(SESSION_USER_ID_KEY);currentUser='';currentUserId='';
+  if(u.admin){
+    if(u.password!==pass){$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';return;}
+    completeLogin(u);
+    return;
   }
+  if(!u.email){$('loginError').textContent='ამ მომხმარებელს ელფოსტა არ აქვს';return;}
+  try{
+    await firebaseAuth.signInWithEmailAndPassword(u.email,pass);
+    completeLogin(u);
+  }catch(e){
+    $('loginError').textContent='სახელი ან პაროლი არასწორია';
+    $('loginPassword').value='';
+  }
+}
+
+function openForgotPassword(){
+  $('forgotPasswordEmail').value='';
+  $('forgotPasswordMsg').textContent='';
+  $('forgotPasswordModal').classList.add('show');
+  setTimeout(()=>$('forgotPasswordEmail').focus(),50);
+}
+function closeForgotPassword(){$('forgotPasswordModal').classList.remove('show');}
+async function sendForgotPassword(){
+  const email=$('forgotPasswordEmail').value.trim().toLowerCase();
+  const msg=$('forgotPasswordMsg');
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){msg.style.color='#ff7c84';msg.textContent='შეიყვანე სწორი ელფოსტა';return;}
+  const user=getUsers().find(u=>u.email&&u.email.toLowerCase()===email&&!u.admin);
+  if(!user){msg.style.color='#ff7c84';msg.textContent='ეს ელფოსტა რეგისტრირებული არ არის';return;}
+  try{
+    await firebaseAuth.sendPasswordResetEmail(email);
+    msg.style.color='#7de3a1';
+    msg.textContent='წერილი გაიგზავნა. ელფოსტაში დააჭირე ბმულს და დააყენე ახალი პაროლი.';
+  }catch(e){
+    console.error(e);
+    msg.style.color='#ff7c84';
+    msg.textContent=e.code==='auth/operation-not-allowed'?'Firebase-ში Email/Password ავტორიზაცია ჩართე.':'ელფოსტის გაგზავნა ვერ მოხერხდა';
+  }
+}
   $('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
   updateUserUI();
   if(currentUser===ADMIN_USER)renderManagedUsers();
@@ -1258,64 +1298,36 @@ async function registerNewUser(){
   const n=nameEl.value.trim();
   const email=emailEl?emailEl.value.trim().toLowerCase():'';
   const p=passEl.value;
-
-  if(!n||!email||!p){
-    alert('სახელი, ელფოსტა და ახალი პაროლი სამივე შეავსე');
-    return;
-  }
-  if(!/^[A-Za-z]+$/.test(n)){
-    alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');
-    nameEl.value=n.replace(/[^A-Za-z]/g,'');
-    return;
-  }
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
-    alert('შეიყვანე სწორი ელფოსტა');
-    return;
-  }
-  if(n.toUpperCase()===ADMIN_USER){
-    alert('ეს სახელი ადმინისტრატორისთვისაა');
-    return;
-  }
-
+  if(!n||!email||!p){alert('სახელი, ელფოსტა და ახალი პაროლი სამივე შეავსე');return;}
+  if(!/^[A-Za-z]+$/.test(n)){alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');nameEl.value=n.replace(/[^A-Za-z]/g,'');return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('შეიყვანე სწორი ელფოსტა');return;}
+  if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return;}
+  if(p.length<6){alert('პაროლი მინიმუმ 6 სიმბოლო უნდა იყოს');return;}
   const users=getUsers();
-  if(users.some(u=>u.name&&u.name.toLowerCase()===n.toLowerCase())){
-    alert('ასეთი მომხმარებელი უკვე არსებობს');
-    return;
+  if(users.some(u=>u.name&&u.name.toLowerCase()===n.toLowerCase())){alert('ასეთი მომხმარებელი უკვე არსებობს');return;}
+  if(users.some(u=>u.email&&u.email.toLowerCase()===email)){alert('ეს ელფოსტა უკვე გამოყენებულია');return;}
+  try{
+    const cred=await firebaseAuth.createUserWithEmailAndPassword(email,p);
+    await cred.user.updateProfile({displayName:n}).catch(()=>{});
+    const user=normalizeUser({id:makeUserId(),name:n,email:email,password:p,admin:false,authorized:true,blocked:false,firebaseUid:cred.user.uid});
+    users.push(user);
+    markFreshUser(user.id);
+    localStorage.setItem(USERS_KEY,JSON.stringify(users));
+    await saveUsersToFirebase(users);
+    currentUser=user.name;currentUserId=user.id;
+    localStorage.setItem(SESSION_USER_KEY,currentUser);
+    localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);
+    localStorage.setItem(AUTH_KEY,'yes');
+    nameEl.value='';if(emailEl)emailEl.value='';passEl.value='';
+    document.getElementById('newUserAuthModal').classList.remove('show');
+    $('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();
+  }catch(e){
+    console.error(e);
+    if(e.code==='auth/email-already-in-use')alert('ეს ელფოსტა უკვე გამოყენებულია Firebase-ში');
+    else if(e.code==='auth/invalid-email')alert('ელფოსტა არასწორია');
+    else if(e.code==='auth/weak-password')alert('პაროლი ძალიან სუსტია — მინიმუმ 6 სიმბოლო');
+    else alert('მომხმარებლის შექმნა ვერ მოხერხდა: '+(e.message||''));
   }
-  if(users.some(u=>u.email&&u.email.toLowerCase()===email)){
-    alert('ეს ელფოსტა უკვე გამოყენებულია');
-    return;
-  }
-
-  const user=normalizeUser({
-    id:makeUserId(),
-    name:n,
-    email:email,
-    password:p,
-    admin:false,
-    authorized:true,
-    blocked:false
-  });
-
-  users.push(user);
-  markFreshUser(user.id);
-  localStorage.setItem(USERS_KEY,JSON.stringify(users));
-  await saveUsersToFirebase(users);
-
-  currentUser=user.name;
-  currentUserId=user.id;
-  localStorage.setItem(SESSION_USER_KEY,currentUser);
-  localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);
-  localStorage.setItem(AUTH_KEY,'yes');
-
-  nameEl.value='';
-  if(emailEl)emailEl.value='';
-  passEl.value='';
-  document.getElementById('newUserAuthModal').classList.remove('show');
-  $('loginError').textContent='';
-  jobs=loadUserJobs();
-  updateUserUI();
-  render();
 }
 window.addEventListener('DOMContentLoaded',loadNeonSettings);
 </script>
@@ -1642,6 +1654,15 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
   window.addEventListener('DOMContentLoaded',window.loadNeonSettings);
 })();
 </script>
+<div id="forgotPasswordModal" onclick="if(event.target===this)closeForgotPassword()">
+<div class="forgotPasswordBox">
+<h2>🔑 პაროლის აღდგენა</h2>
+<p>შეიყვანე რეგისტრაციისას გამოყენებული ელფოსტა. ელფოსტაზე მოგივა ბმული, სადაც ახალ პაროლს თავად დააყენებ.</p>
+<input id="forgotPasswordEmail" type="email" placeholder="ელფოსტა" autocomplete="email">
+<button type="button" onclick="sendForgotPassword()">📧 ელფოსტაზე გაგზავნა</button>
+<button type="button" class="cancel" onclick="closeForgotPassword()">✕ გაუქმება</button>
+<div id="forgotPasswordMsg"></div>
+</div></div>
 <div id="newUserAuthModal"><div class="newUserAuthBox">
 <h2>🔐 ახალი მომხმარებლის ავტორიზაცია</h2>
 <label>1. თქვენი სახელი</label><input id="newUserAuthName" maxlength="40" pattern="[A-Za-z]+" inputmode="latin" autocomplete="username" oninput="this.value=this.value.replace(/[^A-Za-z]/g,'')" onpaste="setTimeout(()=>this.value=this.value.replace(/[^A-Za-z]/g,''),0)">
