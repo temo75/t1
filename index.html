@@ -453,6 +453,23 @@ body.neon-global .userName{
 .forgotPasswordError{min-height:19px;margin:1px 0 5px;color:#ff7781;text-align:center;font-size:13px;font-weight:bold}
 .forgotPasswordHint{margin-top:2px!important;margin-bottom:0!important}
 </style>
+
+<style id="forgot-password-success-style">
+#forgotPasswordSuccess{display:none;position:fixed;inset:0;z-index:70001;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.78);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);overflow:hidden}
+#forgotPasswordSuccess.show{display:flex}
+.forgotSuccessBox{position:relative;width:min(390px,100%);padding:34px 24px 28px;text-align:center;border:1px solid #36b8ff;border-radius:25px;background:linear-gradient(145deg,#08151e,#102b38);box-shadow:0 0 14px rgba(54,184,255,.55),0 0 45px rgba(54,184,255,.25),0 24px 70px rgba(0,0,0,.75);animation:successBoxPop .35s ease-out}
+@keyframes successBoxPop{0%{opacity:0;transform:scale(.72)}70%{transform:scale(1.05)}100%{opacity:1;transform:scale(1)}}
+.forgotSuccessCheck{position:relative;width:92px;height:92px;margin:0 auto 18px;border-radius:50%;border:2px solid #62ff9a;display:flex;align-items:center;justify-content:center;color:#62ff9a;font-size:55px;font-weight:900;text-shadow:0 0 10px #62ff9a,0 0 25px #62ff9a;box-shadow:0 0 12px #62ff9a,0 0 35px rgba(98,255,154,.55);animation:successCheck .75s cubic-bezier(.2,.9,.2,1) both}
+@keyframes successCheck{0%{transform:scale(.1) rotate(-30deg);opacity:0;box-shadow:0 0 0 transparent}55%{transform:scale(1.3) rotate(8deg);opacity:1}75%{transform:scale(.92) rotate(0)}100%{transform:scale(1)}}
+.forgotSuccessCheck:before,.forgotSuccessCheck:after{content:"";position:absolute;left:50%;top:50%;width:10px;height:10px;border-radius:50%;background:#62ff9a;box-shadow:0 0 9px #62ff9a;animation:successBurst .8s ease-out .12s forwards;opacity:0}
+.forgotSuccessCheck:before{--bx:-62px;--by:-58px}
+.forgotSuccessCheck:after{--bx:62px;--by:58px}
+@keyframes successBurst{0%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(calc(-50% + var(--bx)),calc(-50% + var(--by))) scale(.2)}}
+.successStar{position:absolute;top:-12px;font-size:22px;opacity:0;animation:starFall 1.9s ease-in forwards;filter:drop-shadow(0 0 6px #62ff9a)}
+.successStar.s1{left:10%;animation-delay:.15s}.successStar.s2{left:25%;animation-delay:.35s;font-size:16px}.successStar.s3{left:43%;animation-delay:.05s;font-size:26px}.successStar.s4{left:62%;animation-delay:.45s;font-size:18px}.successStar.s5{left:78%;animation-delay:.25s;font-size:24px}.successStar.s6{left:90%;animation-delay:.6s;font-size:15px}
+@keyframes starFall{0%{top:-12px;opacity:0;transform:rotate(0) scale(.5)}12%{opacity:1}100%{top:105%;opacity:0;transform:rotate(280deg) translateX(18px) scale(1.05)}}
+.forgotSuccessBox h2{margin:0 0 8px;color:#fff;font-size:23px}.forgotSuccessBox p{margin:0 0 20px;color:#a9bdc5;font-size:14px}.forgotSuccessClose{width:100%;padding:13px;border:1px solid #36b8ff;border-radius:12px;background:#123b52;color:#fff;font-size:15px;font-weight:bold;cursor:pointer;box-shadow:0 0 9px rgba(54,184,255,.4)}
+</style>
 </head>
 <body>
 <nav id="bottomNav">
@@ -1302,13 +1319,25 @@ function submitForgotPassword(){
   btn.disabled=true; btn.textContent='ინახება...';
   saveUsersToFirebase(users).then(()=>{
     closeForgotPassword();
-    alert('პაროლი წარმატებით შეიცვალა');
+    showForgotPasswordSuccess();
   }).catch(()=>{
     closeForgotPassword();
     alert('პაროლი შეიცვალა ამ მოწყობილობაზე, მაგრამ Firebase-ში შენახვა ვერ მოხერხდა');
   }).finally(()=>{
     btn.disabled=false; btn.textContent='შეცვლა';
   });
+}
+
+function showForgotPasswordSuccess(){
+  const m=document.getElementById('forgotPasswordSuccess');
+  document.querySelectorAll('#forgotPasswordSuccess .successStar').forEach((x,i)=>{x.style.animation='none';void x.offsetWidth;x.style.animation='';});
+  m.classList.add('show');
+  m.setAttribute('aria-hidden','false');
+}
+function closeForgotPasswordSuccess(){
+  const m=document.getElementById('forgotPasswordSuccess');
+  m.classList.remove('show');
+  m.setAttribute('aria-hidden','true');
 }
 
 function showNewUserAuth(){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('newUserAuthModal').classList.add('show')}
@@ -1718,6 +1747,16 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
       <button type="button" id="forgotPasswordSubmit" onclick="submitForgotPassword()">შეცვლა</button>
     </div>
     <p class="forgotPasswordHint">პაროლი შეინახება ამ მოწყობილობასა და Firebase-ში.</p>
+  </div>
+</div>
+
+<div id="forgotPasswordSuccess" aria-hidden="true">
+  <div class="forgotSuccessBox" role="dialog" aria-modal="true" aria-labelledby="forgotSuccessTitle">
+    <span class="successStar s1">✦</span><span class="successStar s2">★</span><span class="successStar s3">✦</span><span class="successStar s4">★</span><span class="successStar s5">✦</span><span class="successStar s6">★</span>
+    <div class="forgotSuccessCheck">✓</div>
+    <h2 id="forgotSuccessTitle">პაროლი წარმატებით შეიცვალა!</h2>
+    <p>ახალი პაროლი შენახულია.</p>
+    <button type="button" class="forgotSuccessClose" onclick="closeForgotPasswordSuccess()">კარგი</button>
   </div>
 </div>
 <div id="newUserAuthModal"><div class="newUserAuthBox">
