@@ -853,7 +853,27 @@ async function loadUserJobsFromFirebase(){
 async function syncCurrentUserJobs(){
   if(!currentUserId)return;
   const remote=await loadUserJobsFromFirebase();
-  if(Array.isArray(remote)){jobs=remote;const key='temoJobsId_'+currentUserId;localStorage.setItem(key,JSON.stringify(jobs));if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs));render();}else await save();
+  const localSnapshot=Array.isArray(jobs)?jobs:[];
+  if(currentUser===ADMIN_USER){
+    // TEMO-ს მონაცემებისთვის ერთი საერთო Firebase წყარო გამოიყენება ყველა მოწყობილობაზე.
+    // თუ ამ მოწყობილობაზე უკვე არის შენახული სამუშაოები, ჯერ ისინი ვინარჩუნოთ და Firebase-ში
+    // ავტორიტეტულ მონაცემებად ჩავწეროთ; შემდეგ სხვა მოწყობილობები ზუსტად მათ ჩამოტვირთავენ.
+    if(localSnapshot.length){
+      await save();
+      jobs=localSnapshot;
+      render();
+      return;
+    }
+  }
+  if(Array.isArray(remote)){
+    jobs=remote;
+    const key='temoJobsId_'+currentUserId;
+    localStorage.setItem(key,JSON.stringify(jobs));
+    if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs));
+    render();
+  }else{
+    await save();
+  }
 }
 function formatDate(s){if(!s)return '';const [y,m,d]=s.split('-');const months=['იანვარი','თებერვალი','მარტი','აპრილი','მაისი','ივნისი','ივლისი','აგვისტო','სექტემბერი','ოქტომბერი','ნოემბერი','დეკემბერი'];return Number(d)+' '+months[Number(m)-1]+' '+y}
 function monthName(key){const [y,m]=key.split('-');return new Date(y,Number(m)-1,1).toLocaleDateString('ka-GE',{year:'numeric',month:'long'})}
