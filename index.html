@@ -1,8 +1,10 @@
 <!DOCTYPE html>
+<!DOCTYPE html>
+
 <html lang="ka">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>TEMO სამუშაო ანგარიში</title>
 <style>
 :root{--bg:#071117;--panel:#0d1b24;--panel2:#10232f;--text:#eef7f7;--muted:#9fb0b8;--red:#ef5b67;--blue:#2999df;--orange:#e6a24c;--line:#1e3542}
@@ -151,12 +153,10 @@ footer{display:none!important;}
 .neonControlRow input[type=range]{width:100%}
 .neonValue{font-weight:bold;color:var(--neon-control);text-shadow:0 0 8px rgba(var(--neon-control-rgb),.8);min-width:48px;text-align:right}
 </style>
-</style>
 
 <style id="temo-3d-title">
 .temo-3d{font-size:32px !important;font-weight:900;letter-spacing:3px;color:#eef7f7;text-shadow:1px 1px 0 #b9c7cc,2px 2px 0 #8fa1a8,3px 3px 0 #667980,4px 4px 0 #43545b,0 0 8px #2999ff,0 0 18px rgba(41,153,255,.8);transform:perspective(220px) rotateX(4deg);display:inline-block;}
 </style>
-
 <style id="temo-calendar-neon-fix">
 .calendar .today, .calendar .today-cell, .calendar td.today {
   border-color:#29a9ff !important;
@@ -164,7 +164,6 @@ footer{display:none!important;}
   text-shadow:0 0 6px #29a9ff !important;
 }
 </style>
-
 <style id="temo-settings-exit-fix">
 .temo-exit-btn{display:block;margin:28px auto 4px;padding:6px 10px;border-radius:12px;
 font-size:11px;cursor:pointer;border:1px solid #29a9ff;background:rgba(0,20,40,.55);
@@ -172,7 +171,6 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 .temo-exit-btn .homeIcon{display:block;font-size:22px;line-height:22px;color:#fff;margin-bottom:1px}
 .temo-exit-btn .homeLabel{display:block;color:#ff8c00;font-size:11px;font-weight:bold}
 </style>
-
 <style id="temo-logo-inline">
 .temo-logo{width:72px;height:72px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;overflow:hidden;border-radius:50%}.temo-logo img{width:72px;height:72px;display:block;object-fit:contain}
 .temo-logo svg{width:72px;height:72px;display:block;filter:drop-shadow(0 0 6px rgba(41,153,255,.55))}
@@ -239,10 +237,7 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 .newUserAuthBox input{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #29404c;background:#071117;color:#fff}
 .newUserAuthBox button{width:100%;margin-top:15px;padding:11px;border:1px solid #2999df;border-radius:10px;background:#12354a;color:#fff;font-weight:bold}
 </style>
-<style id="temo-new-user-passkey-style">
-#newUserPasskeyBtn{width:100%!important;margin-top:10px!important;padding:12px 8px!important;border:1px solid #39ff14!important;border-radius:11px!important;background:#102b3b!important;color:#fff!important;font-weight:bold!important;font-size:15px!important;cursor:pointer!important;box-shadow:0 0 7px #39ff14,0 0 16px rgba(57,255,20,.72)!important;text-shadow:0 0 6px #39ff14!important}
-#newUserPasskeyBtn:disabled{opacity:.55!important;cursor:wait!important}
-</style>
+
 <style>
 #bottomNav > button{
   flex:0 0 calc((100% - 12px) / 4) !important;
@@ -256,7 +251,6 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
   text-overflow:clip !important;
 }
 </style>
-
 <style id="temo-bottom-nav-final">
 #bottomNav{
   position:fixed !important;
@@ -288,7 +282,6 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
   display:none !important;
 }
 </style>
-
 <style id="temo-orange-bottom-glow">
 #bottomNav > button{
   box-shadow: inset 0 -2px 12px rgba(255,165,0,.46),
@@ -299,7 +292,6 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
   text-shadow:0 0 8px rgba(255,255,255,.68);
 }
 </style>
-
 <style id="temo-green-neon-stat-blocks">
 /* მწვანე ნეონი — მხოლოდ ბლოკების შიგნით */
 .grid .monthTotalHero,
@@ -343,7 +335,6 @@ body.neon-global .neonAll{
   text-shadow:0 0 calc(4px + 8px*var(--neon-power)) rgba(var(--neon-control-rgb),calc(.18 + .62*var(--neon-power)));
 }
 </style>
-
 <style id="temo-user-four-blocks-inner-sensor">
 /* მომხმარებლის მთავარი 4 ბლოკი — სენსორული ნეონი მხოლოდ შიგნით */
 .grid .monthTotalHero,
@@ -379,8 +370,6 @@ body.neon-global .neonAll{
   z-index:1;
 }
 </style>
-
-
 <style id="temo-neon-power-inner-only">
 .grid .monthTotalHero,
 .stats .mini{
@@ -397,8 +386,6 @@ body.neon-global .neonAll{
     inset 0 0 29px rgba(var(--neon-control-rgb,73,216,106),calc(var(--neon-inner-b,.72) * .42));
 }
 </style>
-
-
 <style id="temo-white-text-numbers-only">
 /* მხოლოდ ტექსტები და რიცხვები — თეთრი; სხვა ნეონები უცვლელი */
 body.neon-global .stats .mini *,
@@ -412,239 +399,139 @@ body.neon-global .userName{
 }
 </style>
 
-
-<style id="new-user-passkey-style">
-#newUserPasskeyBtn{
-  width:100% !important;
-  margin-top:12px !important;
-  padding:12px 8px !important;
-  border:1px solid #39ff14 !important;
-  border-radius:11px !important;
-  background:#102b3b !important;
-  color:#fff !important;
-  font-weight:bold !important;
-  font-size:15px !important;
-  cursor:pointer !important;
-  box-shadow:0 0 7px #39ff14,0 0 16px rgba(57,255,20,.75) !important;
-}
-#newUserPasskeyBtn:disabled{opacity:.55 !important;cursor:wait !important;}
-</style>
-
 <style id="all-users-auth-style">
 #loginEmail{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #29404c;background:#071117;color:#fff;margin-top:10px}
 </style>
-
-<style id="my-user-auth-style">
-#myAuthSection input{
-  width:100%;
-  box-sizing:border-box;
-  padding:12px;
-  border-radius:10px;
-  border:1px solid #29404c;
-  background:#071117;
-  color:#fff;
-}
-#myAuthSection button{width:100%;margin-top:14px}
-</style>
-
-
-<style id="my-auth-fixed-style">
-#myAuthSection .neonControlBox{width:100%;box-sizing:border-box}
-#myAuthSection input{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #29404c;background:#071117;color:#fff}
-#myPasskeyBtn{width:100%;margin-top:14px;padding:13px;border:1px solid #39ff14;border-radius:11px;background:#102b3b;color:#fff;font-weight:bold;font-size:15px;box-shadow:0 0 7px #39ff14,0 0 16px rgba(57,255,20,.75)}
-</style>
-
-
-<style id="both-pages-passkey-style">
-#passkeyLoginBtn,#newUserPasskeyBtn{
-  display:block !important;
-  width:100% !important;
-  margin-top:12px !important;
-  padding:13px 8px !important;
-  border:1px solid #39ff14 !important;
-  border-radius:11px !important;
-  background:#102b3b !important;
-  color:#fff !important;
-  font-weight:bold !important;
-  font-size:15px !important;
-  cursor:pointer !important;
-  box-shadow:0 0 7px #39ff14,0 0 16px rgba(57,255,20,.75) !important;
-}
-#passkeyLoginBtn:disabled,#newUserPasskeyBtn:disabled{opacity:.55 !important;cursor:wait !important}
-</style>
-
 </head>
 <body>
 <nav id="bottomNav">
-  <button type="button" onclick="goHome()" aria-label="მთავარი" title="მთავარი"><span class="navLogo">🏠</span></button>
-  <button type="button" onclick="goSettings()" aria-label="სეთინგები" title="სეთინგები"><span class="navLogo">⚙️</span></button>
-  <button type="button" onclick="goUsers()" aria-label="მომხმარებლები" title="მომხმარებლები"><span class="navLogo">👥</span></button>
-  <button type="button" onclick="goWallet()" aria-label="საფულე" title="საფულე"><span class="navLogo">💰</span></button>
-  <button type="button" onclick="logout()" class="logoutNav" aria-label="გამოსვლა" title="გამოსვლა"><span class="navLogo">🚪</span></button>
+<button aria-label="მთავარი" onclick="goHome()" title="მთავარი" type="button"><span class="navLogo">🏠</span></button>
+<button aria-label="სეთინგები" onclick="goSettings()" title="სეთინგები" type="button"><span class="navLogo">⚙️</span></button>
+<button aria-label="მომხმარებლები" onclick="goUsers()" title="მომხმარებლები" type="button"><span class="navLogo">👥</span></button>
+<button aria-label="საფულე" onclick="goWallet()" title="საფულე" type="button"><span class="navLogo">💰</span></button>
+<button aria-label="გამოსვლა" class="logoutNav" onclick="logout()" title="გამოსვლა" type="button"><span class="navLogo">🚪</span></button>
 </nav>
-
 <div id="uploadOverlay"><div class="uploadBox"><div class="uploadSpinner" id="uploadSpinner"></div><div class="uploadCheck" id="uploadCheck">✓</div><div class="uploadBurst" id="uploadBurst"></div></div></div>
-
-
 <div id="loginScreen"><div class="loginBox">
 <h2>🔐 </h2>
 <p id="loginHint">შეიყვანე პაროლი</p>
-
-<input id="loginName" class="loginSelect" type="text" placeholder="სახელი" autocomplete="username">
-<input id="loginPassword" type="password" placeholder="პაროლი" autocomplete="current-password">
+<input autocomplete="username" class="loginSelect" id="loginName" placeholder="სახელი" type="text"/>
+<input autocomplete="current-password" id="loginPassword" placeholder="პაროლი" type="password"/>
 <button onclick="login()">შესვლა</button>
-<button type="button" id="passkeyLoginBtn" class="loginModeBtn" onclick="loginWithPasskey()">🔐 თითის ანაბეჭდით შესვლა</button>
+
 <button class="loginModeBtn" onclick="showNewUserAuth()">➕ ახალი მომხმარებელი</button>
 <div id="loginError"></div>
 </div></div>
-
 <div class="app">
 <div id="mainPage">
-<header><div><div class="temo-logo" aria-label="TEMO"><img src="data:image/webp;base64,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" alt="TEMO logo"></div><small>ჩემი სამუშაო</small><div class="userWelcomeUnderLogo" id="currentUserLabel" aria-live="polite"></div></div><div id="today"></div></header>
-
+<header><div><div aria-label="TEMO" class="temo-logo"><img alt="TEMO logo" src="data:image/webp;base64,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"/></div><small>ჩემი სამუშაო</small><div aria-live="polite" class="userWelcomeUnderLogo" id="currentUserLabel"></div></div><div id="today"></div></header>
 <div class="grid">
-<div class="privacyEyeSlot"><button id="privacyEye" class="privacyEyeMain" onclick="togglePrivacy()" aria-label="თანხების დამალვა" title="თანხების დამალვა">👁</button></div>
+<div class="privacyEyeSlot"><button aria-label="თანხების დამალვა" class="privacyEyeMain" id="privacyEye" onclick="togglePrivacy()" title="თანხების დამალვა">👁</button></div>
 <div class="card monthTotalHero neonControlled"><div class="label">📆 ამ თვის ნამუშევარი</div><div class="amount" id="monthTotal">€0</div></div>
 </div>
-
 <div class="stats">
 <div class="mini neonControlled"><span>📅 დღიური საშუალო</span><b id="average">€0</b></div>
 <div class="mini miniReceivable neonControlled" id="receivableCard" onclick="openReceivableModal()" role="button" tabindex="0" title="მისაღები თანხების ნახვა"><span>⏳ მისაღები</span><b id="unpaid">€0</b><small id="unpaidDays">0 გადასახდელი</small></div>
 <div class="mini neonControlled"><span>📊 ამ თვის სამუშაოები</span><b id="monthDays">0 დღე</b></div>
 </div>
-
 <button class="add" onclick="openForm()">＋ სამუშაოს დამატება</button>
 <div class="section">
 <h2>📅 კალენდარი</h2>
 <div class="calendarHead">
-  <button class="calendarNav" onclick="prevCalendarMonth()">‹</button>
-  <button id="calendarTitle" class="calendarTitle yearPickerBtn" onclick="openYearPicker()"></button>
-  <button class="calendarNav" onclick="nextCalendarMonth()">›</button>
+<button class="calendarNav" onclick="prevCalendarMonth()">‹</button>
+<button class="calendarTitle yearPickerBtn" id="calendarTitle" onclick="openYearPicker()"></button>
+<button class="calendarNav" onclick="nextCalendarMonth()">›</button>
 </div>
 <div class="calendarWeek">
-  <div>ორშ</div><div>სამ</div><div>ოთხ</div><div>ხუთ</div><div>პარ</div><div>შაბ</div><div>კვი</div>
+<div>ორშ</div><div>სამ</div><div>ოთხ</div><div>ხუთ</div><div>პარ</div><div>შაბ</div><div>კვი</div>
 </div>
-<div id="calendarGrid" class="calendarGrid"></div>
+<div class="calendarGrid" id="calendarGrid"></div>
 <div class="calendarNoteRow"><button class="calendarNoteBtn" onclick="openCalendarNote()">📝 ნოუთი</button></div>
 </div>
-
 <div class="section" id="dayJobsSection" style="display:none">
 <div class="dayJobsTitle"><h2 id="dayJobsTitle">აირჩიე თარიღი</h2><span id="dayJobsCount"></span></div>
 <div id="dayJobs"></div>
 </div>
-
 </div>
-
-<div id="walletPage" class="pageHidden">
+<div class="pageHidden" id="walletPage">
 <header><div><h1>👛 საფულე</h1><small>სამუშაოების ფინანსები</small></div></header>
-
 <div class="grid">
 <div class="card blue"><div class="label">🔨 სულ ნამუშევარი</div><div class="amount" id="total">€0</div><div class="meta" id="days">0 სამუშაო</div></div>
 <div class="card green"><div class="label">💶 მიღებული</div><div class="amount" id="paid">€0</div><div class="meta" id="paidDays">0 გადახდილი</div></div>
 </div>
 </div>
-
-<div id="settingsPage" class="pageHidden">
+<div class="pageHidden" id="settingsPage">
 <header><div><h1>⚙️ სეთინგები</h1><small>მონაცემების მართვა</small></div></header>
-
-
 <div class="section" id="websiteUpdateSection">
 <h2>🔄 საიტის განახლება</h2>
 <div class="tools">
-<input id="siteUpdateFile" type="file" accept=".html,text/html" onchange="siteFileSelected()" style="display:none">
-<button type="button" class="backupBtn" id="siteFileBtn" onclick="handleSiteFileButton()">📁 აირჩიე ფაილი</button>
+<input accept=".html,text/html" id="siteUpdateFile" onchange="siteFileSelected()" style="display:none" type="file"/>
+<button class="backupBtn" id="siteFileBtn" onclick="handleSiteFileButton()" type="button">📁 აირჩიე ფაილი</button>
 </div>
-<button class="repoTokenOpenBtn" style="margin-top:20px" onclick="openCredentials()">🔐 Repository / Token</button>
+<button class="repoTokenOpenBtn" onclick="openCredentials()" style="margin-top:20px">🔐 Repository / Token</button>
 <div class="backup">
-
 </div>
 <div class="meta" style="margin-top:12px">ატვირთული ფაილი უნდა იყოს index.html. Token მხოლოდ ამ ტელეფონში ინახება.</div>
-</div>
-
-<div class="section" id="myAuthSection" style="display:none">
-<h2>🔐 ჩემი ავტორიზაცია</h2>
-<div class="neonControlBox">
-<label style="display:block;margin-bottom:6px">👤 მომხმარებელი</label>
-<input id="myAuthName" type="text" readonly>
-<label style="display:block;margin:12px 0 6px">📧 ელფოსტა</label>
-<input id="myAuthEmail" type="email" readonly>
-<div id="myPasskeyStatus" style="margin-top:14px;font-weight:bold"></div>
-<button type="button" id="myPasskeyBtn" class="newUserPasskeyBtn" onclick="enableMyPasskey()">
-🔐 თითის ანაბეჭდის / Passkey-ის ჩართვა
-</button>
-</div>
 </div>
 
 <div class="section" id="neonControlSection" style="display:none">
 <h2>✨ ნეონის მართვა</h2>
 <div class="neonControlBox">
 <div>ფერი</div>
-<div class="neonControlRow"><input id="neonColor" type="color" value="#49d86a" aria-label="ნეონის ფერი"></div>
+<div class="neonControlRow"><input aria-label="ნეონის ფერი" id="neonColor" type="color" value="#49d86a"/></div>
 <div style="margin-top:14px">სიმძლავრე</div>
-<div class="neonControlRow"><input id="neonStrength" type="range" min="0" max="100" value="65" step="1" aria-label="ნეონის სიმძლავრე"><span id="neonStrengthValue" class="neonValue">65%</span></div>
+<div class="neonControlRow"><input aria-label="ნეონის სიმძლავრე" id="neonStrength" max="100" min="0" step="1" type="range" value="65"/><span class="neonValue" id="neonStrengthValue">65%</span></div>
 </div>
 </div>
-
 </div>
-
-
 </div>
-<div id="userManagementPage" class="pageHidden">
+<div class="pageHidden" id="userManagementPage">
 <header><div><h1>👥 მომხმარებლების მართვა</h1><small>მომხმარებლების დამატება და მართვა</small></div></header>
-
 <div class="section adminOnly" id="userManagementSection">
 <h2>👥 მომხმარებლების მართვა</h2>
 <div id="userManagementList"></div>
-
 </div>
 </div>
 
-
-
-</div>
-
-<div class="yearPickerModal" id="yearPickerModal" onclick="if(event.target===this)closeYearPicker()"><div class="yearPickerBox"><h2>აირჩიე წელი</h2><div id="yearPickerGrid" class="yearPickerGrid"></div><button class="yearPickerClose" onclick="closeYearPicker()">✕ დახურვა</button></div></div>
+<div class="yearPickerModal" id="yearPickerModal" onclick="if(event.target===this)closeYearPicker()"><div class="yearPickerBox"><h2>აირჩიე წელი</h2><div class="yearPickerGrid" id="yearPickerGrid"></div><button class="yearPickerClose" onclick="closeYearPicker()">✕ დახურვა</button></div></div>
 <div class="credentialsModal" id="credentialsModal" onclick="if(event.target===this)closeCredentials()">
 <div class="credentialsBox">
 <h2>🔐 Repository / Token</h2>
 <label>Repository</label>
-<input id="ghRepo" value="temo75/t1" autocomplete="off">
+<input autocomplete="off" id="ghRepo" value="temo75/t1"/>
 <label>GitHub Token</label>
-<input id="ghToken" type="password" placeholder="GitHub Token" autocomplete="off">
+<input autocomplete="off" id="ghToken" placeholder="GitHub Token" type="password"/>
 <button class="credentialsClose" onclick="closeCredentials()">✕ დახურვა</button>
 </div></div>
 <div class="deleteAuthModal" id="deleteAuthModal"><div class="deleteAuthBox">
 <h2>🔐 დადასტურება</h2><p>ყველა სამუშაოს წასაშლელად შეიყვანე საიტზე შესასვლელი პაროლი.</p>
-<input id="deleteAuthPassword" type="password" placeholder="პაროლი" autocomplete="current-password">
-<div id="deleteAuthError" class="deleteAuthError"></div>
+<input autocomplete="current-password" id="deleteAuthPassword" placeholder="პაროლი" type="password"/>
+<div class="deleteAuthError" id="deleteAuthError"></div>
 <div class="deleteAuthRow"><button class="deleteCancel" onclick="closeDeleteAuth()">გაუქმება</button><button class="deleteConfirm" onclick="confirmDeleteAll()">წაშლა</button></div>
 </div></div>
 <div class="receivableModal" id="receivableModal" onclick="if(event.target===this)closeReceivableModal()">
 <div class="receivableBox">
-  <div class="receivableHeader"><h2>💶 მისაღები თანხები</h2><button class="receivableClose" onclick="closeReceivableModal()" aria-label="დახურვა">✕</button></div>
-  <div class="receivableSummary" id="receivableSummary"></div>
-  <label class="receivableAll"><input id="receivableAllCheck" type="checkbox" onchange="toggleAllReceivable(this.checked)"> ყველამ მომცა ფული ვისაც ემართა</label>
-  <div class="receivableList" id="receivableList"></div>
+<div class="receivableHeader"><h2>💶 მისაღები თანხები</h2><button aria-label="დახურვა" class="receivableClose" onclick="closeReceivableModal()">✕</button></div>
+<div class="receivableSummary" id="receivableSummary"></div>
+<label class="receivableAll"><input id="receivableAllCheck" onchange="toggleAllReceivable(this.checked)" type="checkbox"/> ყველამ მომცა ფული ვისაც ემართა</label>
+<div class="receivableList" id="receivableList"></div>
 </div>
 </div>
 <div class="noteModal" id="noteModal" onclick="if(event.target===this)closeCalendarNote()">
 <div class="noteBox">
-<div class="noteHeader"><h2>ჩანაწერები</h2><button class="noteClose" onclick="closeCalendarNote()" aria-label="დახურვა" title="დახურვა">✕</button></div>
+<div class="noteHeader"><h2>ჩანაწერები</h2><button aria-label="დახურვა" class="noteClose" onclick="closeCalendarNote()" title="დახურვა">✕</button></div>
 <div class="noteEntriesScroll"><div id="noteEntries"></div></div>
 </div>
 </div>
-
 <div class="modal" id="modal"><div class="form">
 <h2 id="formTitle">სამუშაოს დამატება</h2>
-<label>თარიღი</label><input id="date" type="date">
-<label>სამუშაო ადგილი / დამსაქმებელი</label><input id="place" placeholder="მაგ: გიორგი - ვილა">
-<label>თანხა (€)</label><input id="money" type="number" inputmode="decimal" step="0.01" placeholder="მაგ: 100">
-<label>შენიშვნა</label><textarea id="note" rows="3" placeholder="სურვილის შემთხვევაში"></textarea>
-<label class="checkrow"><input id="paidCheck" type="checkbox"> უკვე გადახდილია</label>
+<label>თარიღი</label><input id="date" type="date"/>
+<label>სამუშაო ადგილი / დამსაქმებელი</label><input id="place" placeholder="მაგ: გიორგი - ვილა"/>
+<label>თანხა (€)</label><input id="money" inputmode="decimal" placeholder="მაგ: 100" step="0.01" type="number"/>
+<label>შენიშვნა</label><textarea id="note" placeholder="სურვილის შემთხვევაში" rows="3"></textarea>
+<label class="checkrow"><input id="paidCheck" type="checkbox"/> უკვე გადახდილია</label>
 <div class="row"><button class="cancel" onclick="closeForm()">გაუქმება</button><button class="save" onclick="saveJob()">შენახვა</button></div>
 </div></div>
-
-
 <script>
 const AUTH_KEY='temoWorkTrackerAuthorized';
 const AUTH_PASSWORD='temo2139-590';
@@ -663,7 +550,7 @@ function makeUserId(){return window.crypto&&crypto.randomUUID?crypto.randomUUID(
 function makeLegacyUserId(name,password){const str=String(name||'').trim().toLowerCase()+'\u0000'+String(password??'');let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return 'legacy_'+(h>>>0).toString(16);}
 function firebaseUserKey(id){return encodeURIComponent(String(id)).replace(/%/g,'_');}
 async function loadUsersFromFirebase(){try{const r=await fetch(FIREBASE_DB_URL+'/users.json',{cache:'no-store'});if(!r.ok)throw new Error('Firebase HTTP '+r.status);const data=await r.json();if(data===null)return null;if(Array.isArray(data))return data.filter(Boolean).map(normalizeUser).filter(u=>!isRemovedUser(u));return Object.entries(data||{}).filter(([,u])=>u).map(([key,u])=>normalizeUser({...u,_firebaseKey:key})).filter(u=>!isRemovedUser(u));}catch(e){console.warn('Firebase users read failed:',e);return null}}
-function normalizeUser(raw){const u=(raw&&typeof raw==='object')?raw:{};const rawName=String(u.name||'').trim(),password=String(u.password??''),email=String(u.email??u.firebaseAuthEmail??'').trim();const admin=(rawName.toUpperCase()===ADMIN_USER)||u.admin===true;const name=rawName.toUpperCase()===ADMIN_USER?ADMIN_USER:rawName;const blocked=admin?false:(typeof u.blocked==='boolean'?u.blocked:u.authorized===false);const rawId=String(u.id||'').trim();const id=admin?'admin-temo':(rawId||makeLegacyUserId(name,password));return {id,name,password,email,admin,authorized:admin?true:!blocked,blocked,passkey:u.passkey||null,_firebaseKey:u._firebaseKey||''};}
+function normalizeUser(raw){const u=(raw&&typeof raw==='object')?raw:{};const rawName=String(u.name||'').trim(),password=String(u.password??''),email=String(u.email??u.firebaseAuthEmail??'').trim();const admin=(rawName.toUpperCase()===ADMIN_USER)||u.admin===true;const name=rawName.toUpperCase()===ADMIN_USER?ADMIN_USER:rawName;const blocked=admin?false:(typeof u.blocked==='boolean'?u.blocked:u.authorized===false);const rawId=String(u.id||'').trim();const id=admin?'admin-temo':(rawId||makeLegacyUserId(name,password));return {id,name,password,email,admin,authorized:admin?true:!blocked,blocked,_firebaseKey:u._firebaseKey||''};}
 function isRemovedUser(u){return REMOVED_USER_NAMES.includes(String(u?.name||'').trim().toUpperCase());}
 async function saveUsersToFirebase(users){const snapshot=users.filter(u=>u&&u.name&&!isRemovedUser(u)).map(normalizeUser);firebaseWriteQueue=firebaseWriteQueue.then(async()=>{try{const r=await fetch(FIREBASE_DB_URL+'/users.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(snapshot)});if(!r.ok)throw new Error('Firebase HTTP '+r.status);return true;}catch(e){console.warn('Firebase users write failed:',e);return false}});return firebaseWriteQueue;}
 async function syncUsersFromFirebase(){if(firebaseSyncBusy)return;firebaseSyncBusy=true;try{await firebaseWriteQueue;const remote=await loadUsersFromFirebase();if(remote!==null){let clean=remote.map(normalizeUser).filter(u=>u.name&&!isRemovedUser(u));if(!clean.some(u=>u.name.toUpperCase()===ADMIN_USER))clean.unshift(normalizeUser({id:'admin-temo',name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true,blocked:false}));localStorage.setItem(USERS_KEY,JSON.stringify(clean));return clean;}const local=getUsers().filter(u=>!isRemovedUser(u));await saveUsersToFirebase(local);return local;}finally{firebaseSyncBusy=false}}
@@ -1042,14 +929,11 @@ function updateUserUI(){
  const isAdmin=currentUser===ADMIN_USER;
  const site=$('websiteUpdateSection'); if(site)site.style.display=isAdmin?'':'none';
  const users=$('userManagementSection'); if(users)users.style.display=isAdmin?'':'none'; const neon=$('neonControlSection'); if(neon)neon.style.display=isAdmin?'':'none';
- const myAuth=$('myAuthSection'); if(myAuth){myAuth.style.display=isAdmin?'none':'block'; const me=getUsers().find(x=>String(x.id)===String(currentUserId)||String(x.name).toLowerCase()===String(currentUser).toLowerCase()); if(me){$('myAuthName').value=me.name||'';$('myAuthEmail').value=me.email||''; const pk=localStorage.getItem('temoPasskey_'+String(me.id)); $('myPasskeyStatus').textContent=pk?'🔐 Passkey ჩართულია ამ მომხმარებელზე':'🔓 Passkey ჯერ არ არის ჩართული'; $('myPasskeyStatus').style.color=pk?'#39ff14':'#ffd24a';}}
  const manageBtn=$('userManagementOpenBtn'); if(manageBtn)manageBtn.style.display=isAdmin?'block':'none';
  const label=$('currentUserLabel'); if(label){label.textContent=currentUser?'👤 შენ შეხვედი... '+currentUser:'';label.style.display=currentUser?'block':'none';}
  if(isAdmin)renderManagedUsers();
 }
 let managedUsersRenderKey='';
-function getStoredPasskeyForManagedUser(u){
-  try{return localStorage.getItem('temoPasskey_'+String(u.id))?true:false}catch(e){return false}
 }
 async function renderManagedUsers(){
   const box=$('userManagementList');
@@ -1068,7 +952,7 @@ async function renderManagedUsers(){
   }
 
   const list=users.filter(u=>!u.admin&&u.name.toUpperCase()!==ADMIN_USER&&!isRemovedUser(u));
-  const key=JSON.stringify(list.map(u=>[u.id,u.name,u.email,u.password,u.blocked===true,u.passkey||getStoredPasskeyForManagedUser(u)]));
+  const key=JSON.stringify(list.map(u=>[u.id,u.name,u.email,u.password,u.blocked===true]));
 
   if(key===managedUsersRenderKey && box.children.length)return;
   managedUsersRenderKey=key;
@@ -1084,7 +968,7 @@ async function renderManagedUsers(){
     row.className='userRow';
     const b=document.createElement('button');
     b.className='backupBtn userNameBtn';
-    b.textContent='👤 '+u.name+' | 📧 '+(u.email||'ელფოსტა არ არის')+' | 🔑 '+u.password+' | '+(u.passkey||getStoredPasskeyForManagedUser(u)?'🔐 Passkey':'🔓 Passkey არაა');
+    b.textContent='👤 '+u.name+' | 📧 '+(u.email||'ელფოსტა არ არის')+' | 🔑 '+u.password;
     b.disabled=true;
     const l=document.createElement('button');
     l.className='backupBtn lockBtn'+(u.blocked===true?' locked':'');
@@ -1367,8 +1251,6 @@ async function registerNewUser(){
 }
 window.addEventListener('DOMContentLoaded',loadNeonSettings);
 </script>
-
-
 <style id="temo-user-management-layout-fix">
 /* User Management — stable mobile layout */
 #userManagementSection{
@@ -1444,7 +1326,6 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
   }
 }
 </style>
-
 <style id="temo-user-management-stable-physical">
 #userManagementPage{
   width:100% !important;
@@ -1692,16 +1573,13 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
 </script>
 <div id="newUserAuthModal"><div class="newUserAuthBox">
 <h2>🔐 ახალი მომხმარებლის ავტორიზაცია</h2>
-<label>1. თქვენი სახელი</label><input id="newUserAuthName" maxlength="40" pattern="[A-Za-z]+" inputmode="latin" autocomplete="username" oninput="this.value=this.value.replace(/[^A-Za-z]/g,'')" onpaste="setTimeout(()=>this.value=this.value.replace(/[^A-Za-z]/g,''),0)">
-<label>2. თქვენი ელფოსტა</label><input id="newUserAuthEmail" type="email" maxlength="120" placeholder="მაგ: temo@gmail.com" autocomplete="email">
-<label>3. თქვენი ახალი პაროლი</label><input id="newUserAuthPassword" type="password" maxlength="80" autocomplete="new-password">
+<label>1. თქვენი სახელი</label><input autocomplete="username" id="newUserAuthName" inputmode="latin" maxlength="40" oninput="this.value=this.value.replace(/[^A-Za-z]/g,'')" onpaste="setTimeout(()=&gt;this.value=this.value.replace(/[^A-Za-z]/g,''),0)" pattern="[A-Za-z]+"/>
+<label>2. თქვენი ელფოსტა</label><input autocomplete="email" id="newUserAuthEmail" maxlength="120" placeholder="მაგ: temo@gmail.com" type="email"/>
+<label>3. თქვენი ახალი პაროლი</label><input autocomplete="new-password" id="newUserAuthPassword" maxlength="80" type="password"/>
 <button onclick="registerNewUser()">👤 ანგარიშის შექმნა</button>
-<button type="button" id="newUserPasskeyBtn" class="newUserPasskeyBtn" onclick="registerNewUserWithPasskey()">🔐 თითის ანაბეჭდის / Passkey ავტორიზაცია</button>
-<button type="button" onclick="document.getElementById('newUserAuthModal').classList.remove('show');document.getElementById('loginScreen').classList.remove('hidden')" style="background:#20323b;border-color:#285269">✕ გაუქმება</button>
-</div></div><script>
-// ახალი მომხმარებლის ფანჯარაში არის სახელი, ელფოსტა, პაროლი და ტელეფონის Passkey/ბიომეტრიული ავტორიზაცია.
-</script>
-<style id="temo-swipe-navigation-style">
+
+<button onclick="document.getElementById('newUserAuthModal').classList.remove('show');document.getElementById('loginScreen').classList.remove('hidden')" style="background:#20323b;border-color:#285269" type="button">✕ გაუქმება</button>
+</div></div><style id="temo-swipe-navigation-style">
 /*
   Stable swipe stage:
   all four pages use the same fixed viewport layer.
@@ -1939,9 +1817,7 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
   document.addEventListener('touchcancel',cancel,{passive:true});
 })();
 </script>
-
 <!-- index 4: authentication true/false logic normalized -->
-
 <script id="temo-white-text-numbers-only-js">
 (function(){
   function keepTextWhite(){
@@ -1955,140 +1831,6 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
   window.addEventListener('DOMContentLoaded',keepTextWhite);
   new MutationObserver(keepTextWhite).observe(document.documentElement,{
     subtree:true,childList:true
-  });
-})();
-</script>
-
-
-<script id="temo-new-user-passkey-logic">
-(function(){
-  const key=id=>'temoPasskey_'+String(id);
-  function supported(){
-  return !!(
-    navigator.credentials &&
-    typeof navigator.credentials.create==='function' &&
-    typeof navigator.credentials.get==='function' &&
-    window.crypto &&
-    typeof crypto.getRandomValues==='function'
-  );
-}
-  function b64(buf){let bytes=new Uint8Array(buf),out='';bytes.forEach(b=>out+=String.fromCharCode(b));return btoa(out).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
-  function unb64(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const bin=atob(s),a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a}
-  function get(u){try{return JSON.parse(localStorage.getItem(key(u.id))||'null')}catch(e){return null}}
-  function put(u,d){localStorage.setItem(key(u.id),JSON.stringify(d));u.passkey={credentialId:d.credentialId,createdAt:d.createdAt}}
-  async function createForUser(u){
-    if(!(navigator.credentials && typeof navigator.credentials.create==='function'))throw new Error('ამ ბრაუზერში WebAuthn/Passkey API საერთოდ არ არის ხელმისაწვდომი.');
-    const challenge=new Uint8Array(32);crypto.getRandomValues(challenge);const uid=new TextEncoder().encode(String(u.id));
-    const cred=await navigator.credentials.create({publicKey:{challenge,rp:{name:'TEMO Work Tracker'},user:{id:uid,name:String(u.name),displayName:String(u.name)},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},timeout:60000,attestation:'none'}});
-    if(!cred)throw new Error('Passkey ვერ შეიქმნა.');
-    const d={credentialId:b64(cred.rawId),createdAt:Date.now(),userId:String(u.id),userName:String(u.name)};put(u,d);return d;
-  }
-  window.registerNewUserWithPasskey=async function(){
-    const nameEl=document.getElementById('newUserAuthName'),emailEl=document.getElementById('newUserAuthEmail'),passEl=document.getElementById('newUserAuthPassword'),btn=document.getElementById('newUserPasskeyBtn');
-    const n=nameEl?.value.trim(),email=emailEl?.value.trim(),p=passEl?.value;
-    if(!n||!email||!p){alert('ჯერ შეავსე სახელი, ელფოსტა და ახალი პაროლი');return}
-    if(!/^[A-Za-z]+$/.test(n)){alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');return}
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('ელფოსტის მისამართი სწორად ჩაწერე');return}
-    if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return}
-    if(!(navigator.credentials && typeof navigator.credentials.create==='function')){alert('ამ ბრაუზერში WebAuthn/Passkey API საერთოდ არ არის ხელმისაწვდომი.');return}
-    const users=getUsers();
-    if(users.some(u=>u.name.toLowerCase()===n.toLowerCase()&&u.password===p)){alert('ასეთი მომხმარებელი უკვე არსებობს');return}
-    if(users.some(u=>u.email&&u.email.toLowerCase()===email.toLowerCase())){alert('ეს ელფოსტა უკვე გამოყენებულია');return}
-    try{
-      if(btn)btn.disabled=true;
-      const user=normalizeUser({id:makeUserId(),name:n,email:email,password:p,admin:false,authorized:true,blocked:false});
-      await createForUser(user);users.push(user);markFreshUser(user.id);localStorage.setItem(USERS_KEY,JSON.stringify(users));await saveUsersToFirebase(users);
-      currentUser=user.name;currentUserId=user.id;localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');nameEl.value='';emailEl.value='';passEl.value='';document.getElementById('newUserAuthModal').classList.remove('show');$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();alert('✅ ანგარიში შეიქმნა და თითის ანაბეჭდის/Passkey ავტორიზაცია ჩაირთო.');
-    }catch(e){if(e?.name==='NotAllowedError')return;alert('Passkey-ის ჩართვა ვერ მოხერხდა: '+(e?.message||e));}finally{if(btn)btn.disabled=false}
-  };
-  window.offerPasskeyAfterNewUser=async function(u){if(!u||!supported()||get(u))return;const ok=confirm('გინდა ამ ტელეფონზე შემდეგში თითის ანაბეჭდით შეხვიდე?');if(!ok)return;try{await createForUser(u);const users=getUsers();const i=users.findIndex(x=>String(x.id)===String(u.id));if(i>=0)users[i].passkey=u.passkey;localStorage.setItem(USERS_KEY,JSON.stringify(users));await saveUsersToFirebase(users);alert('🔐 თითის ანაბეჭდით შესვლა ჩაირთო ამ მომხმარებლისთვის.')}catch(e){if(e?.name==='NotAllowedError')return;alert('Passkey-ის ჩართვა ვერ მოხერხდა: '+(e?.message||e))}};
-  window.loginWithPasskey=async function(){if(!(navigator.credentials && typeof navigator.credentials.get==='function')){alert('ამ ბრაუზერში WebAuthn/Passkey API საერთოდ არ არის ხელმისაწვდომი.');return}const users=getUsers().filter(u=>u&&!u.admin&&!u.blocked&&get(u));if(!users.length){alert('ჯერ შექმენი მომხმარებელი და ჩართე თითის ანაბეჭდი.');return}try{const challenge=new Uint8Array(32);crypto.getRandomValues(challenge);const assertion=await navigator.credentials.get({publicKey:{challenge,allowCredentials:users.map(u=>({type:'public-key',id:unb64(get(u).credentialId)})),userVerification:'required',timeout:60000}});if(!assertion)return;const id=b64(assertion.rawId),u=users.find(x=>get(x)?.credentialId===id);if(!u)throw new Error('ამ მოწყობილობის Passkey ვერ მოიძებნა.');completeLogin(u)}catch(e){if(e?.name==='NotAllowedError')return;alert('თითის ანაბეჭდით შესვლა ვერ შესრულდა: '+(e?.message||e))}};
-  document.addEventListener('DOMContentLoaded',function(){const b=document.getElementById('newUserPasskeyBtn');if(b)b.style.display='block'});
-})();
-</script>
-
-
-
-
-
-<script id="my-user-auth-logic">
-async function enableMyPasskey(){
-  const me=getUsers().find(x=>String(x.id)===String(currentUserId)||String(x.name).toLowerCase()===String(currentUser).toLowerCase());
-  if(!me){alert('მომხმარებელი ვერ მოიძებნა.');return}
-  const btn=document.getElementById('myPasskeyBtn');
-  if(typeof window.offerPasskeyAfterNewUser!=='function'){
-    alert('Passkey-ის მოდული ვერ ჩაიტვირთა.');
-    return;
-  }
-  try{
-    if(btn)btn.disabled=true;
-    await window.offerPasskeyAfterNewUser(me);
-    updateUserUI();
-  }finally{
-    if(btn)btn.disabled=false;
-  }
-}
-</script>
-
-
-<script id="my-user-passkey-fixed">
-(function(){
-  function currentMe(){
-    try{
-      const list=typeof getUsers==='function'?getUsers():[];
-      return list.find(u=>
-        String(u.id)===String(window.currentUserId||currentUserId) ||
-        String(u.name||'').toLowerCase()===String(window.currentUser||currentUser).toLowerCase()
-      );
-    }catch(e){return null}
-  }
-  function passkeyKey(u){ return 'temoPasskey_'+String(u.id); }
-
-  window.enableMyPasskey=async function(){
-    const u=currentMe();
-    if(!u){alert('მომხმარებელი ვერ მოიძებნა.');return}
-    if(!window.PublicKeyCredential || !navigator.credentials || !navigator.credentials.create){
-      alert('ამ ბრაუზერში თითის ანაბეჭდით / Passkey-ით ავტორიზაცია მიუწვდომელია.');
-      return;
-    }
-    const btn=document.getElementById('myPasskeyBtn');
-    try{
-      if(btn)btn.disabled=true;
-      const challenge=new Uint8Array(32); crypto.getRandomValues(challenge);
-      const uid=new TextEncoder().encode(String(u.id));
-      const credential=await navigator.credentials.create({publicKey:{
-        challenge,
-        rp:{name:'TEMO Work Tracker'},
-        user:{id:uid,name:String(u.email||u.name),displayName:String(u.name)},
-        pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
-        authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},
-        timeout:60000,attestation:'none'
-      }});
-      if(!credential)throw new Error('Passkey ვერ შეიქმნა.');
-      const b64=a=>btoa(String.fromCharCode.apply(null,new Uint8Array(a))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-      localStorage.setItem(passkeyKey(u),JSON.stringify({credentialId:b64(credential.rawId),userId:String(u.id),userName:String(u.name),email:String(u.email||''),createdAt:Date.now()}));
-      updateMyAuthPanel();
-      alert('✅ თითის ანაბეჭდით / Passkey-ით შესვლა ჩართულია.');
-    }catch(e){
-      if(!e || e.name!=='NotAllowedError') alert('Passkey-ის ჩართვა ვერ მოხერხდა: '+(e.message||e));
-    }finally{if(btn)btn.disabled=false}
-  };
-
-  window.updateMyAuthPanel=function(){
-    const sec=document.getElementById('myAuthSection'); if(!sec)return;
-    const u=currentMe(); if(!u)return;
-    const admin=!!u.admin;
-    sec.style.display=admin?'none':'block';
-    const n=document.getElementById('myAuthName'), em=document.getElementById('myAuthEmail'), st=document.getElementById('myPasskeyStatus');
-    if(n)n.value=u.name||'';
-    if(em)em.value=u.email||'';
-    const pk=localStorage.getItem(passkeyKey(u));
-    if(st){st.textContent=pk?'🔐 Passkey ჩართულია':'🔓 Passkey ჯერ არ არის ჩართული';st.style.color=pk?'#39ff14':'#ffd24a'}
-  };
-
-  document.addEventListener('DOMContentLoaded',function(){
-    setTimeout(updateMyAuthPanel,300);
-    setTimeout(updateMyAuthPanel,1000);
   });
 })();
 </script>
