@@ -36,7 +36,8 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 #loginScreen.hidden{display:none}
 .loginModeBtn{width:100%;margin-top:10px;padding:13px;border:1px solid #2999df;border-radius:11px;background:#183445;color:#fff;font-weight:bold;font-size:15px;cursor:pointer;box-shadow:0 0 6px rgba(41,153,223,.35)}
 .loginModeBtn.secondary{border-color:#285269;background:#10232f;color:#9fb0b8;box-shadow:none}
-.loginBox{width:min(400px,100%);background:linear-gradient(145deg,#0d1b24,#10232f);border:1px solid #1e3542;border-radius:22px;padding:28px;text-align:center;box-shadow:0 20px 60px #0008}
+.loginBox .forgotPasswordBtn{position:absolute;top:10px;right:12px;width:auto;margin:0;padding:5px 9px;border:1px solid #285269;border-radius:8px;background:#10232f;color:#9fb0b8;font-size:11px;line-height:1.2;box-shadow:none}
+.loginBox{position:relative;width:min(400px,100%);background:linear-gradient(145deg,#0d1b24,#10232f);border:1px solid #1e3542;border-radius:22px;padding:28px;text-align:center;box-shadow:0 20px 60px #0008}
 .loginBox h2{margin:0 0 10px;color:#eef7f7}.loginBox p{color:#9fb0b8;margin:0 0 20px}
 .loginBox input{width:100%;padding:15px;border-radius:11px;border:1px solid #29404c;background:#071117;color:#fff;font-size:17px;text-align:center;margin-bottom:12px}
 .loginBox button{width:100%;padding:15px;border:1px solid #2999ff;border-radius:11px;background:#102b3b;color:#fff;font-weight:bold;font-size:17px;cursor:pointer;box-shadow:0 0 7px #2999ff,0 0 16px #2999ff}
@@ -471,7 +472,7 @@ body.neon-global .userName{
 
 <input id="loginName" class="loginSelect" type="text" placeholder="სახელი" autocomplete="username">
 <input id="loginPassword" type="password" placeholder="პაროლი" autocomplete="current-password">
-<button type="button" class="loginModeBtn secondary" onclick="forgotPassword()">დაგავიწყდა პაროლი?</button>
+<button type="button" class="loginModeBtn secondary forgotPasswordBtn" onclick="forgotPassword()">დაგავიწყდა პაროლი?</button>
 <button onclick="login()">შესვლა</button>
 <button class="loginModeBtn" onclick="showNewUserAuth()">➕ ახალი მომხმარებელი</button>
 <div id="loginError"></div>
