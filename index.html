@@ -690,7 +690,22 @@ function firebaseUserKey(id){return encodeURIComponent(String(id)).replace(/%/g,
 async function loadUsersFromFirebase(){try{const r=await fetch(FIREBASE_DB_URL+'/users.json',{cache:'no-store'});if(!r.ok)throw new Error('Firebase HTTP '+r.status);const data=await r.json();if(data===null)return null;if(Array.isArray(data))return data.filter(Boolean).map(normalizeUser).filter(u=>!isRemovedUser(u));return Object.entries(data||{}).filter(([,u])=>u).map(([key,u])=>normalizeUser({...u,_firebaseKey:key})).filter(u=>!isRemovedUser(u));}catch(e){console.warn('Firebase users read failed:',e);return null}}
 function normalizeUser(raw){const u=(raw&&typeof raw==='object')?raw:{};const rawName=String(u.name||'').trim(),password=String(u.password??''),email=String(u.email??u.firebaseAuthEmail??'').trim();const admin=(rawName.toUpperCase()===ADMIN_USER)||u.admin===true;const name=rawName.toUpperCase()===ADMIN_USER?ADMIN_USER:rawName;const blocked=admin?false:(typeof u.blocked==='boolean'?u.blocked:u.authorized===false);const rawId=String(u.id||'').trim();const id=admin?'admin-temo':(rawId||makeLegacyUserId(name,password));return {id,name,password,email,admin,authorized:admin?true:!blocked,blocked,_firebaseKey:u._firebaseKey||''};}
 function isRemovedUser(u){return REMOVED_USER_NAMES.includes(String(u?.name||'').trim().toUpperCase());}
-async function saveUsersToFirebase(users){const snapshot=users.filter(u=>u&&u.name&&!isRemovedUser(u)).map(normalizeUser);firebaseWriteQueue=firebaseWriteQueue.then(async()=>{try{const r=await fetch(FIREBASE_DB_URL+'/users.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(snapshot)});if(!r.ok)throw new Error('Firebase HTTP '+r.status);return true;}catch(e){console.warn('Firebase users write failed:',e);return false}});return firebaseWriteQueue;}
+async function saveUsersToFirebase(users){
+  const snapshot=users.filter(u=>u&&u.name&&!isRemovedUser(u)).map(normalizeUser);
+  firebaseWriteQueue=firebaseWriteQueue.then(async()=>{
+    const r=await fetch(FIREBASE_DB_URL+'/users.json',{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(snapshot)
+    });
+    if(!r.ok)throw new Error('Firebase HTTP '+r.status);
+    return true;
+  });
+  return firebaseWriteQueue.catch(e=>{
+    console.warn('Firebase users write failed:',e);
+    throw e;
+  });
+}
 async function syncUsersFromFirebase(){if(firebaseSyncBusy)return;firebaseSyncBusy=true;try{await firebaseWriteQueue;const remote=await loadUsersFromFirebase();if(remote!==null){let clean=remote.map(normalizeUser).filter(u=>u.name&&!isRemovedUser(u));if(!clean.some(u=>u.name.toUpperCase()===ADMIN_USER))clean.unshift(normalizeUser({id:'admin-temo',name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true,blocked:false}));localStorage.setItem(USERS_KEY,JSON.stringify(clean));return clean;}const local=getUsers().filter(u=>!isRemovedUser(u));await saveUsersToFirebase(local);return local;}finally{firebaseSyncBusy=false}}
 function getUsers(){let users;try{users=JSON.parse(localStorage.getItem(USERS_KEY)||'null')}catch(e){users=null}if(!Array.isArray(users)||!users.length)users=[normalizeUser({id:'admin-temo',name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true,blocked:false})];const normalized=users.map(normalizeUser).filter(u=>u.name&&!isRemovedUser(u));localStorage.setItem(USERS_KEY,JSON.stringify(normalized));return normalized;}
 function findUserById(id){return getUsers().find(u=>String(u.id)===String(id));}
@@ -704,7 +719,7 @@ function enablePasswordOnlyLogin(){
   $('loginName').focus();
 }
 function enableNameLogin(){enablePasswordOnlyLogin()}
-async function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');localStorage.removeItem(SESSION_CLOSED_AT_KEY);localStorage.removeItem(SESSION_EXPIRES_KEY);localStorage.setItem(SESSION_LAST_ACTIVE_KEY,String(Date.now()));$('loginScreen').classList.add('hidden');$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();await syncCurrentUserJobs();}
+function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');localStorage.removeItem(SESSION_CLOSED_AT_KEY);localStorage.removeItem(SESSION_EXPIRES_KEY);localStorage.setItem(SESSION_LAST_ACTIVE_KEY,String(Date.now()));$('loginScreen').classList.add('hidden');$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
 function login(){
   const name=$('loginName').value.trim();
   const pass=$('loginPassword').value;
@@ -741,7 +756,6 @@ window.addEventListener('DOMContentLoaded',async()=>{
     localStorage.removeItem(SESSION_EXPIRES_KEY);
     $('loginScreen').classList.add('hidden');
     jobs=loadUserJobs();updateUserUI();render();
-    await syncCurrentUserJobs();
   }else{
     localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);localStorage.removeItem(SESSION_USER_ID_KEY);localStorage.removeItem(SESSION_EXPIRES_KEY);localStorage.removeItem(SESSION_CLOSED_AT_KEY);localStorage.removeItem(SESSION_LAST_ACTIVE_KEY);currentUser='';currentUserId='';
   }
@@ -840,66 +854,10 @@ const $=id=>document.getElementById(id);
 const euro=n=>'€'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2});
 $('today').textContent=new Date().toLocaleDateString('ka-GE');
 
-async function save(){
+function save(){
   const key=currentUserId?'temoJobsId_'+currentUserId:'temoJobs_'+(currentUser||ADMIN_USER);
-  const snapshot=JSON.stringify(jobs);
-  localStorage.setItem(key,snapshot);
-  if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',snapshot);
-  if(currentUserId){
-    try{
-      const r=await fetch(FIREBASE_DB_URL+'/jobs/'+firebaseUserKey(currentUserId)+'.json?ts='+Date.now(),{
-        method:'PUT',headers:{'Content-Type':'application/json'},body:snapshot,cache:'no-store'
-      });
-      if(!r.ok)throw new Error('Firebase HTTP '+r.status);
-    }catch(e){console.warn('Firebase jobs write failed:',e)}
-  }
-}
-
-async function loadJobsFromFirebase(){
-  if(!currentUserId)return null;
-  try{
-    const r=await fetch(FIREBASE_DB_URL+'/jobs/'+firebaseUserKey(currentUserId)+'.json?ts='+Date.now(),{cache:'no-store'});
-    if(!r.ok)throw new Error('Firebase HTTP '+r.status);
-    const data=await r.json();
-    if(data===null)return null;
-    if(Array.isArray(data))return data.filter(Boolean);
-    if(data&&typeof data==='object')return Object.values(data).filter(Boolean);
-    return [];
-  }catch(e){console.warn('Firebase jobs read failed:',e);return null}
-}
-
-function mergeJobs(localJobs,remoteJobs){
-  const merged=[];const byId=new Map();
-  (Array.isArray(remoteJobs)?remoteJobs:[]).forEach(j=>{if(j&&j.id!=null){byId.set(String(j.id),{...j});}else if(j){merged.push({...j});}});
-  (Array.isArray(localJobs)?localJobs:[]).forEach(j=>{if(j&&j.id!=null)byId.set(String(j.id),{...j});else if(j){merged.push({...j});}});
-  return [...byId.values(),...merged];
-}
-
-async function syncCurrentUserJobs(){
-  if(!currentUserId)return;
-  const local=loadUserJobs();
-  const remote=await loadJobsFromFirebase();
-  if(remote===null){
-    jobs=local;
-    if(local.length)await save();
-    render();
-    return;
-  }
-  const merged=mergeJobs(local,remote);
-  jobs=merged;
-  const key='temoJobsId_'+currentUserId;
-  const snapshot=JSON.stringify(merged);
-  localStorage.setItem(key,snapshot);
-  if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',snapshot);
-  if(JSON.stringify(remote)!==snapshot){
-    try{
-      const r=await fetch(FIREBASE_DB_URL+'/jobs/'+firebaseUserKey(currentUserId)+'.json?ts='+Date.now(),{
-        method:'PUT',headers:{'Content-Type':'application/json'},body:snapshot,cache:'no-store'
-      });
-      if(!r.ok)throw new Error('Firebase HTTP '+r.status);
-    }catch(e){console.warn('Firebase jobs sync write failed:',e)}
-  }
-  render();renderList();
+  localStorage.setItem(key,JSON.stringify(jobs));
+  if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs));
 }
 function formatDate(s){if(!s)return '';const [y,m,d]=s.split('-');const months=['იანვარი','თებერვალი','მარტი','აპრილი','მაისი','ივნისი','ივლისი','აგვისტო','სექტემბერი','ოქტომბერი','ნოემბერი','დეკემბერი'];return Number(d)+' '+months[Number(m)-1]+' '+y}
 function monthName(key){const [y,m]=key.split('-');return new Date(y,Number(m)-1,1).toLocaleDateString('ka-GE',{year:'numeric',month:'long'})}
@@ -1482,9 +1440,14 @@ async function registerNewUser(){
   });
 
   users.push(user);
+  try{
+    await saveUsersToFirebase(users);
+  }catch(e){
+    alert('მომხმარებელი ვერ შეინახა Firebase-ში. შეამოწმე ინტერნეტი ან Firebase-ის წვდომა.');
+    return;
+  }
   markFreshUser(user.id);
   localStorage.setItem(USERS_KEY,JSON.stringify(users));
-  await saveUsersToFirebase(users);
 
   currentUser=user.name;
   currentUserId=user.id;
