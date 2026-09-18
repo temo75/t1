@@ -741,7 +741,7 @@ function enablePasswordOnlyLogin(){
   $('loginName').focus();
 }
 function enableNameLogin(){enablePasswordOnlyLogin()}
-async function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));if(typeof window.setCurrentLanguage==='function')window.setCurrentLanguage(user.language||'ka');localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');localStorage.removeItem(SESSION_CLOSED_AT_KEY);localStorage.removeItem(SESSION_EXPIRES_KEY);localStorage.setItem(SESSION_LAST_ACTIVE_KEY,String(Date.now()));$('loginScreen').classList.add('hidden');$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();jobsFirebaseReady=false;await syncJobsFromFirebase();jobsFirebaseReady=true;updateUserUI();render();}
+async function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));if(typeof window.restoreCurrentUserLanguage==='function')window.restoreCurrentUserLanguage(user.language||'ka');localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');localStorage.removeItem(SESSION_CLOSED_AT_KEY);localStorage.removeItem(SESSION_EXPIRES_KEY);localStorage.setItem(SESSION_LAST_ACTIVE_KEY,String(Date.now()));$('loginScreen').classList.add('hidden');$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();jobsFirebaseReady=false;await syncJobsFromFirebase();jobsFirebaseReady=true;updateUserUI();render();}
 async function login(){
   const name=$('loginName').value.trim();
   const pass=$('loginPassword').value;
@@ -771,7 +771,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
   const referenceTime=sessionClosedAt||sessionLastActive;
   const sessionValid=localStorage.getItem(AUTH_KEY)==='yes' && !!referenceTime && (Date.now()-referenceTime)<=SESSION_DURATION_MS && !!savedUserId && !!matched && matched.authorized===true && matched.blocked===false;
   if(sessionValid){
-    currentUser=matched.name;currentUserId=matched.id;if(typeof window.setCurrentLanguage==='function')window.setCurrentLanguage(matched.language||'ka');
+    currentUser=matched.name;currentUserId=matched.id;if(typeof window.restoreCurrentUserLanguage==='function')window.restoreCurrentUserLanguage(matched.language||'ka');
     localStorage.setItem(SESSION_USER_KEY,currentUser);
     localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);
     localStorage.removeItem(SESSION_CLOSED_AT_KEY);
@@ -2226,6 +2226,7 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
   window.t=k=>all[lang]?.[k]??k;
   window.getCurrentLanguage=()=>lang;
   window.setCurrentLanguage=(next)=>{if(!LANGS[next])next='ka';lang=next;const key=userLanguageKey();localStorage.setItem(key,lang);apply();};
+  window.restoreCurrentUserLanguage=(fallback)=>{const key=userLanguageKey();const saved=localStorage.getItem(key);const next=(saved&&LANGS[saved])?saved:((fallback&&LANGS[fallback])?fallback:'ka');lang=next;localStorage.setItem(key,lang);apply();};
   async function persistLanguageForCurrentUser(next){
     const id=String(window.currentUserId||'').trim();
     if(!id)return;
