@@ -693,13 +693,21 @@ function isRemovedUser(u){return REMOVED_USER_NAMES.includes(String(u?.name||'')
 async function saveUsersToFirebase(users){
   const snapshot=users.filter(u=>u&&u.name&&!isRemovedUser(u)).map(normalizeUser);
   firebaseWriteQueue=firebaseWriteQueue.then(async()=>{
-    const r=await fetch(FIREBASE_DB_URL+'/users.json',{
-      method:'PUT',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(snapshot)
-    });
-    if(!r.ok)throw new Error('Firebase HTTP '+r.status);
-    return true;
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),10000);
+    try{
+      const r=await fetch(FIREBASE_DB_URL+'/users.json',{
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(snapshot),
+        signal:controller.signal
+      });
+      if(!r.ok)throw new Error('Firebase HTTP '+r.status);
+      return true;
+    }catch(e){
+      if(e&&e.name==='AbortError')throw new Error('Firebase პასუხს 10 წამში არ უპასუხა');
+      throw e;
+    }finally{clearTimeout(timer)}
   });
   return firebaseWriteQueue.catch(e=>{
     console.warn('Firebase users write failed:',e);
@@ -1443,7 +1451,7 @@ async function registerNewUser(){
   try{
     await saveUsersToFirebase(users);
   }catch(e){
-    alert('მომხმარებელი ვერ შეინახა Firebase-ში. შეამოწმე ინტერნეტი ან Firebase-ის წვდომა.');
+    alert('მომხმარებელი ვერ შეინახა Firebase-ში. შეამოწმე ინტერნეტი ან Firebase-ის წვდომა.\n\n'+(e?.message||''));
     return;
   }
   markFreshUser(user.id);
@@ -2084,5 +2092,26 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
 </script>
 
 
+
+<script id="temo-webview-button-tap-fix">
+(function(){
+  /* Android WebView safety: if a tap does not become a native click,
+     dispatch one once. Native clicks are detected and are never duplicated. */
+  const interactive='button,[role="button"],input[type="checkbox"],input[type="range"],input[type="color"],.calendarNav,.calendarTitle';
+  let nativeClick=false;
+  document.addEventListener('click',function(e){
+    if(e.target.closest(interactive)) nativeClick=true;
+  },true);
+  document.addEventListener('touchend',function(e){
+    const el=e.target.closest(interactive);
+    if(!el || el.disabled) return;
+    nativeClick=false;
+    setTimeout(function(){
+      if(nativeClick) return;
+      try{el.click();}catch(err){console.warn('WebView tap fallback failed',err)}
+    },280);
+  },{passive:true});
+})();
+</script>
 </body>
 </html>
