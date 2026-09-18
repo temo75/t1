@@ -702,7 +702,7 @@ function makeUserId(){return window.crypto&&crypto.randomUUID?crypto.randomUUID(
 function makeLegacyUserId(name,password){const str=String(name||'').trim().toLowerCase()+'\u0000'+String(password??'');let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return 'legacy_'+(h>>>0).toString(16);}
 function firebaseUserKey(id){return encodeURIComponent(String(id)).replace(/%/g,'_');}
 async function loadUsersFromFirebase(){try{const r=await fetch(FIREBASE_DB_URL+'/users.json',{cache:'no-store'});if(!r.ok)throw new Error('Firebase HTTP '+r.status);const data=await r.json();if(data===null)return null;if(Array.isArray(data))return data.filter(Boolean).map(normalizeUser).filter(u=>!isRemovedUser(u));return Object.entries(data||{}).filter(([,u])=>u).map(([key,u])=>normalizeUser({...u,_firebaseKey:key})).filter(u=>!isRemovedUser(u));}catch(e){console.warn('Firebase users read failed:',e);return null}}
-function normalizeUser(raw){const u=(raw&&typeof raw==='object')?raw:{};const rawName=String(u.name||'').trim(),password=String(u.password??''),email=String(u.email??u.firebaseAuthEmail??'').trim();const admin=(rawName.toUpperCase()===ADMIN_USER)||u.admin===true;const name=rawName.toUpperCase()===ADMIN_USER?ADMIN_USER:rawName;const blocked=admin?false:(typeof u.blocked==='boolean'?u.blocked:u.authorized===false);const rawId=String(u.id||'').trim();const id=admin?'admin-temo':(rawId||makeLegacyUserId(name,password));return {id,name,password,email,admin,authorized:admin?true:!blocked,blocked,_firebaseKey:u._firebaseKey||''};}
+function normalizeUser(raw){const u=(raw&&typeof raw==='object')?raw:{};const rawName=String(u.name||'').trim(),password=String(u.password??''),email=String(u.email??u.firebaseAuthEmail??'').trim(),language=(u.language==='en'||u.language==='el'||u.language==='ka')?u.language:'ka';const admin=(rawName.toUpperCase()===ADMIN_USER)||u.admin===true;const name=rawName.toUpperCase()===ADMIN_USER?ADMIN_USER:rawName;const blocked=admin?false:(typeof u.blocked==='boolean'?u.blocked:u.authorized===false);const rawId=String(u.id||'').trim();const id=admin?'admin-temo':(rawId||makeLegacyUserId(name,password));return {id,name,password,email,language,admin,authorized:admin?true:!blocked,blocked,_firebaseKey:u._firebaseKey||''};}
 function isRemovedUser(u){return REMOVED_USER_NAMES.includes(String(u?.name||'').trim().toUpperCase());}
 async function saveUsersToFirebase(users){
   const snapshot=users.filter(u=>u&&u.name&&!isRemovedUser(u)).map(normalizeUser);
@@ -741,7 +741,7 @@ function enablePasswordOnlyLogin(){
   $('loginName').focus();
 }
 function enableNameLogin(){enablePasswordOnlyLogin()}
-async function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');localStorage.removeItem(SESSION_CLOSED_AT_KEY);localStorage.removeItem(SESSION_EXPIRES_KEY);localStorage.setItem(SESSION_LAST_ACTIVE_KEY,String(Date.now()));$('loginScreen').classList.add('hidden');$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();jobsFirebaseReady=false;await syncJobsFromFirebase();jobsFirebaseReady=true;updateUserUI();render();}
+async function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));if(typeof window.setCurrentLanguage==='function')window.setCurrentLanguage(user.language||'ka');localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');localStorage.removeItem(SESSION_CLOSED_AT_KEY);localStorage.removeItem(SESSION_EXPIRES_KEY);localStorage.setItem(SESSION_LAST_ACTIVE_KEY,String(Date.now()));$('loginScreen').classList.add('hidden');$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();jobsFirebaseReady=false;await syncJobsFromFirebase();jobsFirebaseReady=true;updateUserUI();render();}
 async function login(){
   const name=$('loginName').value.trim();
   const pass=$('loginPassword').value;
@@ -771,7 +771,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
   const referenceTime=sessionClosedAt||sessionLastActive;
   const sessionValid=localStorage.getItem(AUTH_KEY)==='yes' && !!referenceTime && (Date.now()-referenceTime)<=SESSION_DURATION_MS && !!savedUserId && !!matched && matched.authorized===true && matched.blocked===false;
   if(sessionValid){
-    currentUser=matched.name;currentUserId=matched.id;
+    currentUser=matched.name;currentUserId=matched.id;if(typeof window.setCurrentLanguage==='function')window.setCurrentLanguage(matched.language||'ka');
     localStorage.setItem(SESSION_USER_KEY,currentUser);
     localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);
     localStorage.removeItem(SESSION_CLOSED_AT_KEY);
@@ -2188,7 +2188,8 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
 </body>
 <script id="temo-language-system">
 (function(){
-  const KEY='temoLanguage';
+  const GLOBAL_KEY='temoLanguage';
+  const userLanguageKey=()=>{const id=String(window.currentUserId||'').trim();return id?'temoLanguage_'+id:GLOBAL_KEY;};
   const LANGS={ka:{name:'ქართული',short:'KA',locale:'ka-GE'},en:{name:'English',short:'EN',locale:'en-US'},el:{name:'Ελληνικά',short:'EL',locale:'el-GR'}};
   /* სრული UI ლექსიკონი: მხოლოდ პროგრამის ტექსტები, არა მომხმარებლის მიერ შეყვანილი სამუშაოების სახელები. */
   const D={
@@ -2218,10 +2219,29 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
   };
   const all={ka:{},en:{},el:{}};
   Object.keys(D).forEach(k=>{all.ka[k]=k;all.en[k]=D[k][0];all.el[k]=D[k][1]});
-  let lang=localStorage.getItem(KEY)||'ka'; if(!LANGS[lang])lang='ka';
+  let lang='ka';
+  function readStoredLanguage(){const key=userLanguageKey();const saved=localStorage.getItem(key);if(saved&&LANGS[saved])return saved;const global=localStorage.getItem(GLOBAL_KEY);return LANGS[global]?global:'ka';}
+  lang=readStoredLanguage();
   window.getLangLocale=()=>LANGS[lang].locale;
   window.t=k=>all[lang]?.[k]??k;
   window.getCurrentLanguage=()=>lang;
+  window.setCurrentLanguage=(next)=>{if(!LANGS[next])next='ka';lang=next;const key=userLanguageKey();localStorage.setItem(key,lang);apply();};
+  async function persistLanguageForCurrentUser(next){
+    const id=String(window.currentUserId||'').trim();
+    if(!id)return;
+    try{
+      const r=await fetch(FIREBASE_DB_URL+'/users.json',{cache:'no-store'});
+      if(!r.ok)return;
+      const data=await r.json();
+      let users=Array.isArray(data)?data.filter(Boolean):Object.values(data||{}).filter(Boolean);
+      const target=users.find(u=>String(u?.id||'')===id);
+      if(!target)return;
+      target.language=next;
+      const put=await fetch(FIREBASE_DB_URL+'/users.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(users)});
+      if(!put.ok)throw new Error('Firebase HTTP '+put.status);
+      const local=getUsers();const me=local.find(u=>String(u.id)===id);if(me){me.language=next;localStorage.setItem(USERS_KEY,JSON.stringify(local));}
+    }catch(e){console.warn('Firebase language save failed:',e);}
+  }
 
   /* ყოველთვის ეძებს ყველაზე გრძელ ფრაზას ჯერ, ამიტომ emoji/რიცხვები/შერეული ტექსტიც ითარგმნება. */
   const keys=Object.keys(D).sort((a,b)=>b.length-a.length);
@@ -2277,7 +2297,7 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
     if(btn&&menu){
       btn.addEventListener('click',e=>{e.stopPropagation();menu.classList.toggle('show')});
       document.addEventListener('click',()=>menu.classList.remove('show'));
-      document.querySelectorAll('.languageOption').forEach(b=>b.addEventListener('click',()=>{lang=b.dataset.lang;localStorage.setItem(KEY,lang);menu.classList.remove('show');apply()}));
+      document.querySelectorAll('.languageOption').forEach(b=>b.addEventListener('click',()=>{lang=b.dataset.lang;localStorage.setItem(userLanguageKey(),lang);menu.classList.remove('show');apply();persistLanguageForCurrentUser(lang)}));
     }
     apply();
   }
