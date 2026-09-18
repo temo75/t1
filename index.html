@@ -65,6 +65,9 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 
 .yearPickerBtn{border:0;background:none;color:inherit;font:inherit;font-weight:bold;cursor:pointer;padding:4px 8px;border-radius:9px}.yearPickerModal{display:none;position:fixed;inset:0;background:#000a;align-items:center;justify-content:center;padding:16px;z-index:10003}.yearPickerModal.show{display:flex}.yearPickerBox{width:min(340px,100%);max-height:75vh;overflow:auto;background:linear-gradient(145deg,#0c1a23,#10232f);border:1px solid #2999df;border-radius:20px;padding:18px;box-shadow:0 20px 60px #000b}.yearPickerBox h2{margin:0 0 14px;text-align:center;color:#fff;font-size:20px}.yearPickerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.yearPickerGrid button{padding:11px 6px;border-radius:10px;border:1px solid #285269;background:#183445;color:#fff;cursor:pointer}.yearPickerGrid button.active{border-color:#2999df;box-shadow:0 0 8px #2999df;color:#62b8ff}.yearPickerClose{width:100%;margin-top:14px;padding:11px;border:1px solid #74333d;border-radius:10px;background:#4a2228;color:#ff6b6b;font-weight:bold;cursor:pointer}
 <style>
+.siteUpdateTools{position:relative;z-index:3;}
+#siteFileBtn{position:relative;z-index:4;pointer-events:auto;}
+.repoTokenRow{position:relative;z-index:2;display:flex;justify-content:center;width:100%;margin-top:8px;}
 .repoTokenOpenBtn{display:inline-block;width:auto;padding:6px 10px;margin:8px auto;border:1px solid #2999df;border-radius:9px;background:#102b3b;color:#fff;font-size:12px;font-weight:bold;cursor:pointer;box-shadow:0 0 5px rgba(41,153,223,.35)}
 .credentialsModal{display:none;position:fixed;inset:0;background:#000b;align-items:center;justify-content:center;padding:16px;z-index:10005}
 .credentialsModal.show{display:flex}
@@ -558,11 +561,13 @@ body.neon-global .userName{
 
 <div class="section" id="websiteUpdateSection">
 <h2>🔄 საიტის განახლება</h2>
-<div class="tools">
+<div class="tools siteUpdateTools">
 <input id="siteUpdateFile" type="file" accept=".html,text/html" onchange="siteFileSelected()" style="display:none">
-<button type="button" class="backupBtn" id="siteFileBtn" onclick="handleSiteFileButton()">📁 აირჩიე ფაილი</button>
+<button type="button" class="backupBtn" id="siteFileBtn" onclick="handleSiteFileButton(event)">📁 აირჩიე ფაილი</button>
 </div>
-<button class="repoTokenOpenBtn" style="margin-top:20px" onclick="openCredentials()">🔐 Repository / Token</button>
+<div class="repoTokenRow">
+<button type="button" class="repoTokenOpenBtn" onclick="openCredentials(event)">🔐 Repository / Token</button>
+</div>
 <div class="backup">
 
 </div>
@@ -1270,7 +1275,8 @@ async function deleteManagedUser(id){
   await renderManagedUsers();
 }
 
-function openCredentials(){
+function openCredentials(event){
+  if(event){event.preventDefault();event.stopPropagation();}
   loadGitHubSettings();
   $('credentialsModal').classList.add('show');
   setTimeout(()=>{
@@ -1355,7 +1361,8 @@ function siteFileSelected(){
     btn.textContent='⬆ ატვირთე';
   }
 }
-function handleSiteFileButton(){
+function handleSiteFileButton(event){
+  if(event){event.preventDefault();event.stopPropagation();}
   const input=$('siteUpdateFile'), file=input.files[0];
   if(!file){
     input.click();
