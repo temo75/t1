@@ -947,7 +947,6 @@ function formatDate(s){if(!s)return '';const [y,m,d]=s.split('-');const months=[
 function monthName(key){const [y,m]=key.split('-');return new Date(y,Number(m)-1,1).toLocaleDateString('ka-GE',{year:'numeric',month:'long'})}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 
-function updateMonthFilter(){const old=$('monthFilter').value;const months=[...new Set(jobs.map(j=>(j.date||'').slice(0,7)).filter(Boolean))].sort().reverse();$('monthFilter').innerHTML='<option value="all">ყველა თვე</option>'+months.map(m=>`<option value="${m}">${monthName(m)}</option>`).join('');if(months.includes(old))$('monthFilter').value=old}
 function render(){
  const total=jobs.reduce((a,j)=>a+Number(j.money||0),0), paid=jobs.filter(j=>j.paid).reduce((a,j)=>a+Number(j.money||0),0), unpaid=total-paid;
  $('total').textContent=euro(total);$('paid').textContent=euro(paid);$('unpaid').textContent=euro(unpaid);
@@ -956,21 +955,6 @@ function render(){
  const now=new Date(), key=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');const mj=jobs.filter(j=>(j.date||'').slice(0,7)===key);const monthTotal=mj.filter(j=>j.paid).reduce((a,j)=>a+Number(j.money||0),0);$('monthTotal').textContent=euro(monthTotal);$('monthDays').textContent=mj.length+' დღე';
  renderCalendar();renderDayJobs();
 }
-function renderList(){
- const q=$('search').value.trim().toLowerCase(), st=$('statusFilter').value, mo=$('monthFilter').value;
- const data=[...jobs].filter(j=>(!q||`${j.place||''} ${j.note||''}`.toLowerCase().includes(q))&&(st==='all'||(st==='paid'?j.paid:!j.paid))&&(mo==='all'||(j.date||'').slice(0,7)===mo)).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
- $('list').innerHTML=data.length?'':'<div class="empty">ამ ძიებით სამუშაო ვერ მოიძებნა</div>';
- data.forEach(j=>{const d=document.createElement('div');d.className='item';d.innerHTML=`<div><b>${esc(j.place||'სამუშაო')} <span class="jobStatusMark ${j.paid?'paid':'unpaid'}">${j.paid?'✓':'+'}</span></b><div class="jobDateLine">${formatDate(j.date)}</div>${j.note?`<div class="meta">${esc(j.note)}</div>`:''}</div><div class="right"><b>${euro(j.money)}</b><div class="actions"><button class="small" onclick="togglePaid('${j.id}')">${j.paid?'გადაუხდელია':'გადახდა მივიღე'}</button><button class="small edit" onclick="editJob('${j.id}')">✎ შეცვლა</button><button class="small danger" onclick="delJob('${j.id}')">✕ წაშლა</button></div></div>`;$('list').appendChild(d)})
-}
-function receivedForWorkMonth(key){
-  return jobs.filter(j=>(j.date||'').slice(0,7)===key && j.paid)
-             .reduce((sum,j)=>sum+Number(j.money||0),0);
-}
-function renderMonths(){
- const map={};jobs.forEach(j=>{const k=(j.date||'').slice(0,7)||'უცნობი';if(!map[k])map[k]={total:0,paid:0,count:0};map[k].total+=Number(j.money||0);if(j.paid)map[k].paid+=Number(j.money||0);map[k].count++});
- const keys=Object.keys(map).sort().reverse();$('monthList').innerHTML=keys.length?'':'<div class="empty">ჯერ მონაცემები არ არის</div>';keys.forEach(k=>{$('monthList').innerHTML+=`<div class="monthRow"><div><b>${k==='უცნობი'?k:monthName(k)}</b><br><span>${map[k].count} სამუშაო • მიღებული ${euro(map[k].paid)}</span></div><b>${euro(map[k].total)}</b><span>მისაღები ${euro(map[k].total-map[k].paid)}</span></div>`})
-}
-
 function dateKey(y,m,d){
   return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
 }
@@ -1081,23 +1065,19 @@ function setReceivablePaid(id,checked){
   j.paid=checked;
   save();
   render();
-  renderList();
-  renderMonths();
   renderReceivableModal();
 }
 function toggleAllReceivable(checked){
   jobs.forEach(j=>{j.paid=checked});
   save();
   render();
-  renderList();
-  renderMonths();
   renderReceivableModal();
 }
 function openForm(){editingId=null;$('formTitle').textContent='სამუშაოს დამატება';$('date').value=new Date().toISOString().slice(0,10);$('place').value='';$('money').value='';$('note').value='';$('paidCheck').checked=false;$('modal').classList.add('show')}
 function closeForm(){$('modal').classList.remove('show')}
 function editJob(id){const j=jobs.find(x=>x.id===id);if(!j)return;editingId=id;$('formTitle').textContent='სამუშაოს შეცვლა';$('date').value=j.date||'';$('place').value=j.place||'';$('money').value=j.money||'';$('note').value=j.note||'';$('paidCheck').checked=!!j.paid;$('modal').classList.add('show')}
 function saveJob(){const amount=Number($('money').value);if(!amount||amount<=0){alert('თანხა მიუთითე');return}const data={date:$('date').value,place:$('place').value.trim(),money:amount,note:$('note').value.trim(),paid:$('paidCheck').checked};if(!data.date){alert('თარიღი მიუთითე');return}if(editingId){const i=jobs.findIndex(x=>x.id===editingId);jobs[i]={...jobs[i],...data}}else jobs.push({id:Date.now().toString()+Math.random().toString(16).slice(2),...data});save();closeForm();render()}
-function togglePaid(id){const j=jobs.find(x=>x.id===id);if(j){j.paid=!j.paid;save();render();renderList();renderMonths();}}
+function togglePaid(id){const j=jobs.find(x=>x.id===id);if(j){j.paid=!j.paid;save();render();}}
 function delJob(id){if(confirm('წავშალოთ ეს ჩანაწერი?')){jobs=jobs.filter(x=>x.id!==id);save();render()}}
 function temoNavigatePage(pageId){
   const ids=['mainPage','settingsPage','userManagementPage','walletPage'];
