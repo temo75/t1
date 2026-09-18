@@ -1372,6 +1372,9 @@ function handleSiteFileButton(event){
 }
 
 async function updateWebsite(){
+  // ყოველთვის თავიდან ჩავტვირთოთ შენახული Repository/Token,
+  // რათა პირველი ატვირთვისას Repository/Token ფანჯრის გახსნა აღარ იყოს საჭირო.
+  loadGitHubSettings();
   const repo=$('ghRepo').value.trim(), token=$('ghToken').value.trim(), file=$('siteUpdateFile').files[0];
 
   if(!repo || !repo.includes('/')){alert('რეპოზიტორია ჩაწერე ასე: მომხმარებელი/რეპოზიტორია');return}
