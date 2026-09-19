@@ -36,8 +36,7 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 #loginScreen.hidden{display:none}
 .loginModeBtn{width:100%;margin-top:10px;padding:13px;border:1px solid #2999df;border-radius:11px;background:#183445;color:#fff;font-weight:bold;font-size:15px;cursor:pointer;box-shadow:0 0 6px rgba(41,153,223,.35)}
 .loginModeBtn.secondary{border-color:#285269;background:#10232f;color:#9fb0b8;box-shadow:none}
-.loginBox .forgotPasswordBtn{position:absolute;top:10px;right:12px;width:auto;margin:0;padding:5px 9px;border:1px solid #285269;border-radius:8px;background:#10232f;color:#9fb0b8;font-size:11px;line-height:1.2;box-shadow:none}
-.loginBox{position:relative;width:min(400px,100%);background:linear-gradient(145deg,#0d1b24,#10232f);border:1px solid #1e3542;border-radius:22px;padding:28px;text-align:center;box-shadow:0 20px 60px #0008}
+.loginBox{width:min(400px,100%);background:linear-gradient(145deg,#0d1b24,#10232f);border:1px solid #1e3542;border-radius:22px;padding:28px;text-align:center;box-shadow:0 20px 60px #0008}
 .loginBox h2{margin:0 0 10px;color:#eef7f7}.loginBox p{color:#9fb0b8;margin:0 0 20px}
 .loginBox input{width:100%;padding:15px;border-radius:11px;border:1px solid #29404c;background:#071117;color:#fff;font-size:17px;text-align:center;margin-bottom:12px}
 .loginBox button{width:100%;padding:15px;border:1px solid #2999ff;border-radius:11px;background:#102b3b;color:#fff;font-weight:bold;font-size:17px;cursor:pointer;box-shadow:0 0 7px #2999ff,0 0 16px #2999ff}
@@ -65,9 +64,6 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 
 .yearPickerBtn{border:0;background:none;color:inherit;font:inherit;font-weight:bold;cursor:pointer;padding:4px 8px;border-radius:9px}.yearPickerModal{display:none;position:fixed;inset:0;background:#000a;align-items:center;justify-content:center;padding:16px;z-index:10003}.yearPickerModal.show{display:flex}.yearPickerBox{width:min(340px,100%);max-height:75vh;overflow:auto;background:linear-gradient(145deg,#0c1a23,#10232f);border:1px solid #2999df;border-radius:20px;padding:18px;box-shadow:0 20px 60px #000b}.yearPickerBox h2{margin:0 0 14px;text-align:center;color:#fff;font-size:20px}.yearPickerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.yearPickerGrid button{padding:11px 6px;border-radius:10px;border:1px solid #285269;background:#183445;color:#fff;cursor:pointer}.yearPickerGrid button.active{border-color:#2999df;box-shadow:0 0 8px #2999df;color:#62b8ff}.yearPickerClose{width:100%;margin-top:14px;padding:11px;border:1px solid #74333d;border-radius:10px;background:#4a2228;color:#ff6b6b;font-weight:bold;cursor:pointer}
 <style>
-.siteUpdateTools{position:relative;z-index:3;}
-#siteFileBtn{position:relative;z-index:4;pointer-events:auto;}
-.repoTokenRow{position:relative;z-index:2;display:flex;justify-content:center;width:100%;margin-top:8px;}
 .repoTokenOpenBtn{display:inline-block;width:auto;padding:6px 10px;margin:8px auto;border:1px solid #2999df;border-radius:9px;background:#102b3b;color:#fff;font-size:12px;font-weight:bold;cursor:pointer;box-shadow:0 0 5px rgba(41,153,223,.35)}
 .credentialsModal{display:none;position:fixed;inset:0;background:#000b;align-items:center;justify-content:center;padding:16px;z-index:10005}
 .credentialsModal.show{display:flex}
@@ -413,77 +409,38 @@ body.neon-global .userName{
 </style>
 
 
-<style id="all-users-auth-style">
-#loginEmail{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #29404c;background:#071117;color:#fff;margin-top:10px}
+<style id="temo-notes-style">
+#notesPage .notesHeader{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+#notesPage .notesTitle{margin:0;font-size:26px}
+#notesPage .notesSub{color:var(--muted);margin-top:4px}
+#notesPage .notesAddBtn{border:1px solid rgba(73,216,106,.65);background:#10271b;color:#9cffb0;border-radius:12px;padding:12px 16px;font-weight:800;cursor:pointer;box-shadow:0 0 12px rgba(73,216,106,.16)}
+#notesPage .notesList{display:grid;gap:12px}
+#notesPage .noteCard{background:linear-gradient(145deg,#0d1b24,#0a151d);border:1px solid #29404c;border-radius:14px;padding:14px;box-shadow:0 4px 18px rgba(0,0,0,.18)}
+#notesPage .noteCard.done{opacity:.65}
+#notesPage .noteTop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+#notesPage .noteText{white-space:pre-wrap;overflow-wrap:anywhere;font-size:17px;line-height:1.45}
+#notesPage .noteTime{color:#b9dfff;font-weight:700;margin-top:8px;font-size:14px}
+#notesPage .noteReminder{color:#9cffb0;font-size:13px;margin-top:6px}
+#notesPage .noteActions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+#notesPage .noteActions button{min-height:40px;padding:8px 11px;border-radius:9px;border:1px solid #29404c;background:#111f29;color:#fff;cursor:pointer}
+#notesPage .noteActions .danger{border-color:#74333d;background:#321b20;color:#ff8c95}
+#notesPage .noteEmpty{text-align:center;color:var(--muted);padding:42px 12px;border:1px dashed #29404c;border-radius:14px}
+#notesPage .notesModal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;padding:16px;z-index:2147483646}
+#notesPage .notesModal.show{display:flex}
+#notesPage .notesModalBox{width:min(520px,100%);max-height:90vh;overflow:auto;background:#0d1b24;border:1px solid #315061;border-radius:16px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.45)}
+#notesPage .notesModalBox h2{margin:0 0 14px}
+#notesPage .notesField{margin-bottom:12px}
+#notesPage .notesField label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+#notesPage .notesField input,#notesPage .notesField textarea{width:100%;padding:12px;border-radius:10px;border:1px solid #29404c;background:#071117;color:#fff;font-size:16px;box-sizing:border-box}
+#notesPage .notesField textarea{min-height:120px;resize:vertical}
+#notesPage .notesCheck{display:flex;align-items:center;gap:9px;margin:10px 0 16px}
+#notesPage .notesCheck input{width:20px;height:20px}
+#notesPage .notesModalActions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+#notesPage .notesModalActions button{min-height:44px;padding:10px 15px;border-radius:10px;border:1px solid #29404c;background:#172631;color:#fff;font-weight:700}
+#notesPage .notesModalActions .primary{background:#123a21;border-color:#49d86a;color:#a8ffb8}
+@media(max-width:520px){#notesPage .notesHeader{align-items:stretch}.notesAddBtn{width:100%}#notesPage .notesTitle{font-size:23px}}
 </style>
 
-<style id="my-user-auth-style">
-#myAuthSection input{
-  width:100%;
-  box-sizing:border-box;
-  padding:12px;
-  border-radius:10px;
-  border:1px solid #29404c;
-  background:#071117;
-  color:#fff;
-}
-#myAuthSection button{width:100%;margin-top:14px}
-</style>
-
-
-<style id="my-auth-fixed-style">
-#myAuthSection .neonControlBox{width:100%;box-sizing:border-box}
-#myAuthSection input{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #29404c;background:#071117;color:#fff}
-</style>
-
-
-
-<style id="forgot-password-modern-style">
-#forgotPasswordModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:18px;z-index:70000}
-#forgotPasswordModal.show{display:flex}
-.forgotPasswordBox{width:min(410px,100%);box-sizing:border-box;background:linear-gradient(145deg,#0b1821,#102936 72%,#0b1a23);border:1px solid #36b8ff;border-radius:24px;padding:25px 22px 22px;box-shadow:0 0 12px rgba(41,153,255,.45),0 0 35px rgba(41,153,255,.22),0 24px 70px rgba(0,0,0,.7);animation:forgotPop .18s ease-out}
-@keyframes forgotPop{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
-.forgotPasswordIcon{width:58px;height:58px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;border:1px solid #39c1ff;border-radius:18px;background:#0a202d;font-size:28px;box-shadow:0 0 10px rgba(41,153,255,.35),inset 0 0 18px rgba(41,153,255,.12)}
-.forgotPasswordBox h2{margin:0;text-align:center;color:#fff;font-size:21px}
-.forgotPasswordBox p{margin:7px 0 20px;text-align:center;color:#9fb5bf;font-size:13px;line-height:1.45}
-.forgotPasswordBox label{display:block;margin:0 0 7px;color:#dce8ec;font-size:13px;font-weight:bold}
-.forgotPasswordBox input{width:100%;box-sizing:border-box;padding:14px 13px;border-radius:12px;border:1px solid #294b5d;background:#061118;color:#fff;font-size:16px;outline:none;margin-bottom:13px}
-.forgotPasswordBox input:focus{border-color:#36b8ff;box-shadow:0 0 0 2px rgba(54,184,255,.12),0 0 13px rgba(54,184,255,.22)}
-.forgotPasswordRow{display:flex;gap:10px;margin-top:5px}
-.forgotPasswordRow button{flex:1;padding:13px;border-radius:12px;font-size:15px;font-weight:bold;cursor:pointer}
-#forgotPasswordSubmit{border:1px solid #36b8ff;background:#123b52;color:#fff;box-shadow:0 0 8px rgba(41,153,255,.35)}
-#forgotPasswordCancel{border:1px solid #314650;background:#172831;color:#b9c7cc}
-.forgotPasswordError{min-height:19px;margin:1px 0 5px;color:#ff7781;text-align:center;font-size:13px;font-weight:bold}
-.forgotPasswordHint{margin-top:2px!important;margin-bottom:0!important}
-</style>
-
-<style id="forgot-password-success-style">
-#forgotPasswordSuccess{display:none;position:fixed;inset:0;z-index:70001;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.78);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);overflow:hidden}
-#forgotPasswordSuccess.show{display:flex}
-.forgotSuccessBox{position:relative;width:min(390px,100%);padding:34px 24px 28px;text-align:center;border:1px solid #36b8ff;border-radius:25px;background:linear-gradient(145deg,#08151e,#102b38);box-shadow:0 0 14px rgba(54,184,255,.55),0 0 45px rgba(54,184,255,.25),0 24px 70px rgba(0,0,0,.75);animation:successBoxPop .35s ease-out}
-@keyframes successBoxPop{0%{opacity:0;transform:scale(.72)}70%{transform:scale(1.05)}100%{opacity:1;transform:scale(1)}}
-.forgotSuccessCheck{position:relative;width:92px;height:92px;margin:0 auto 18px;border-radius:50%;border:2px solid #62ff9a;display:flex;align-items:center;justify-content:center;color:#62ff9a;font-size:55px;font-weight:900;text-shadow:0 0 10px #62ff9a,0 0 25px #62ff9a;box-shadow:0 0 12px #62ff9a,0 0 35px rgba(98,255,154,.55);animation:successCheck .75s cubic-bezier(.2,.9,.2,1) both}
-@keyframes successCheck{0%{transform:scale(.1) rotate(-30deg);opacity:0;box-shadow:0 0 0 transparent}55%{transform:scale(1.3) rotate(8deg);opacity:1}75%{transform:scale(.92) rotate(0)}100%{transform:scale(1)}}
-.forgotSuccessCheck:before,.forgotSuccessCheck:after{content:"";position:absolute;left:50%;top:50%;width:10px;height:10px;border-radius:50%;background:#62ff9a;box-shadow:0 0 9px #62ff9a;animation:successBurst .8s ease-out .12s forwards;opacity:0}
-.forgotSuccessCheck:before{--bx:-62px;--by:-58px}
-.forgotSuccessCheck:after{--bx:62px;--by:58px}
-@keyframes successBurst{0%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(calc(-50% + var(--bx)),calc(-50% + var(--by))) scale(.2)}}
-.successStar{position:absolute;top:-12px;font-size:22px;opacity:0;animation:starFall 1.9s ease-in forwards;filter:drop-shadow(0 0 6px #62ff9a)}
-.successStar.s1{left:10%;animation-delay:.15s}.successStar.s2{left:25%;animation-delay:.35s;font-size:16px}.successStar.s3{left:43%;animation-delay:.05s;font-size:26px}.successStar.s4{left:62%;animation-delay:.45s;font-size:18px}.successStar.s5{left:78%;animation-delay:.25s;font-size:24px}.successStar.s6{left:90%;animation-delay:.6s;font-size:15px}
-@keyframes starFall{0%{top:-12px;opacity:0;transform:rotate(0) scale(.5)}12%{opacity:1}100%{top:105%;opacity:0;transform:rotate(280deg) translateX(18px) scale(1.05)}}
-.forgotSuccessBox h2{margin:0 0 8px;color:#fff;font-size:23px}.forgotSuccessBox p{margin:0 0 20px;color:#a9bdc5;font-size:14px}.forgotSuccessClose{width:100%;padding:13px;border:1px solid #36b8ff;border-radius:12px;background:#123b52;color:#fff;font-size:15px;font-weight:bold;cursor:pointer;box-shadow:0 0 9px rgba(54,184,255,.4)}
-</style>
-
-<style id="temo-language-style">
-.languageBox{position:relative;display:flex;align-items:center;gap:5px;margin-left:10px}
-.languageBtn{appearance:none;border:1px solid #36b8ff;background:rgba(5,18,28,.82);color:#fff;border-radius:9px;padding:6px 8px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 0 8px rgba(54,184,255,.35);outline:none}
-.languageBtn:focus{box-shadow:0 0 10px rgba(54,184,255,.7)}
-.languageMenu{position:absolute;right:0;top:calc(100% + 6px);display:none;min-width:118px;padding:5px;background:#07141c;border:1px solid #36b8ff;border-radius:10px;box-shadow:0 0 14px rgba(54,184,255,.45);z-index:9999}
-.languageMenu.show{display:block}
-.languageOption{display:block;width:100%;border:0;background:transparent;color:#fff;text-align:left;padding:8px 9px;border-radius:7px;font-size:12px;cursor:pointer}
-.languageOption:hover,.languageOption.active{background:rgba(54,184,255,.16);color:#fff}
-@media(max-width:520px){.languageBtn{padding:5px 7px;font-size:11px}.languageMenu{min-width:110px}}
-</style>
 </head>
 <body>
 <nav id="bottomNav">
@@ -491,6 +448,7 @@ body.neon-global .userName{
   <button type="button" onclick="goSettings()" aria-label="სეთინგები" title="სეთინგები"><span class="navLogo">⚙️</span></button>
   <button type="button" onclick="goUsers()" aria-label="მომხმარებლები" title="მომხმარებლები"><span class="navLogo">👥</span></button>
   <button type="button" onclick="goWallet()" aria-label="საფულე" title="საფულე"><span class="navLogo">💰</span></button>
+  <button type="button" onclick="goNotes()" aria-label="ჩანაწერების წიგნი" title="ჩანაწერების წიგნი"><span class="navLogo">📖</span></button>
   <button type="button" onclick="logout()" class="logoutNav" aria-label="გამოსვლა" title="გამოსვლა"><span class="navLogo">🚪</span></button>
 </nav>
 
@@ -503,7 +461,6 @@ body.neon-global .userName{
 
 <input id="loginName" class="loginSelect" type="text" placeholder="სახელი" autocomplete="username">
 <input id="loginPassword" type="password" placeholder="პაროლი" autocomplete="current-password">
-<button type="button" class="loginModeBtn secondary forgotPasswordBtn" onclick="forgotPassword()">დაგავიწყდა პაროლი?</button>
 <button onclick="login()">შესვლა</button>
 <button class="loginModeBtn" onclick="showNewUserAuth()">➕ ახალი მომხმარებელი</button>
 <div id="loginError"></div>
@@ -511,7 +468,7 @@ body.neon-global .userName{
 
 <div class="app">
 <div id="mainPage">
-<header><div><div class="temo-logo" aria-label="TEMO"><img src="data:image/webp;base64,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" alt="TEMO logo"></div><small>ჩემი სამუშაო</small><div class="userWelcomeUnderLogo" id="currentUserLabel" aria-live="polite"></div></div><div class="headerRight"><div id="today"></div><div class="languageBox"><button type="button" id="languageBtn" class="languageBtn" aria-label="ენები" title="ენები">🌐 KA</button><div id="languageMenu" class="languageMenu"><button type="button" class="languageOption" data-lang="en">🇬🇧 English</button><button type="button" class="languageOption" data-lang="el">🇬🇷 Ελληνικά</button><button type="button" class="languageOption" data-lang="ka">🇬🇪 ქართული</button></div></div></div></header>
+<header><div><div class="temo-logo" aria-label="TEMO"><img src="data:image/webp;base64,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" alt="TEMO logo"></div><small>ჩემი სამუშაო</small><div class="userWelcomeUnderLogo" id="currentUserLabel" aria-live="polite"></div></div><div id="today"></div></header>
 
 <div class="grid">
 <div class="privacyEyeSlot"><button id="privacyEye" class="privacyEyeMain" onclick="togglePrivacy()" aria-label="თანხების დამალვა" title="თანხების დამალვა">👁</button></div>
@@ -555,33 +512,57 @@ body.neon-global .userName{
 </div>
 </div>
 
+
+<div id="notesPage" class="pageHidden">
+  <div class="notesHeader">
+    <div>
+      <h1 class="notesTitle">📖 ჩანაწერების წიგნი</h1>
+      <div class="notesSub">შენი პირადი ჩანაწერები და შეხსენებები</div>
+    </div>
+    <button type="button" class="notesAddBtn" onclick="openNoteModal()">➕ ახალი ჩანაწერი</button>
+  </div>
+  <div id="notesList" class="notesList"></div>
+
+  <div id="noteModal" class="notesModal" onclick="if(event.target===this)closeNoteModal()">
+    <div class="notesModalBox">
+      <h2 id="noteModalTitle">➕ ახალი ჩანაწერი</h2>
+      <div class="notesField">
+        <label for="noteText">📝 ჩანაწერი</label>
+        <textarea id="noteText" placeholder="ჩაწერე რაც გინდა..." maxlength="5000"></textarea>
+      </div>
+      <div class="notesField">
+        <label for="noteDate">📅 თარიღი</label>
+        <input id="noteDate" type="date">
+      </div>
+      <div class="notesField">
+        <label for="noteTime">⏰ საათი</label>
+        <input id="noteTime" type="time">
+      </div>
+      <label class="notesCheck"><input id="noteReminder" type="checkbox" onchange="toggleNoteReminderFields()"><span>🔔 შეხსენება</span></label>
+      <div id="noteReminderHint" class="notesSub" style="margin:-5px 0 14px">შეხსენება ჩაირთვება მითითებულ თარიღსა და დროს.</div>
+      <div class="notesModalActions">
+        <button type="button" onclick="closeNoteModal()">✕ გაუქმება</button>
+        <button type="button" class="primary" onclick="saveNote()">💾 შენახვა</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="settingsPage" class="pageHidden">
 <header><div><h1>⚙️ სეთინგები</h1><small>მონაცემების მართვა</small></div></header>
 
 
 <div class="section" id="websiteUpdateSection">
 <h2>🔄 საიტის განახლება</h2>
-<div class="tools siteUpdateTools">
+<div class="tools">
 <input id="siteUpdateFile" type="file" accept=".html,text/html" onchange="siteFileSelected()" style="display:none">
-<button type="button" class="backupBtn" id="siteFileBtn" onclick="handleSiteFileButton(event)">📁 აირჩიე ფაილი</button>
+<button type="button" class="backupBtn" id="siteFileBtn" onclick="handleSiteFileButton()">📁 აირჩიე ფაილი</button>
 </div>
-<div class="repoTokenRow">
-<button type="button" class="repoTokenOpenBtn" onclick="openCredentials(event)">🔐 Repository / Token</button>
-</div>
+<button class="repoTokenOpenBtn" style="margin-top:20px" onclick="openCredentials()">🔐 Repository / Token</button>
 <div class="backup">
 
 </div>
 <div class="meta" style="margin-top:12px">ატვირთული ფაილი უნდა იყოს index.html. Token მხოლოდ ამ ტელეფონში ინახება.</div>
-</div>
-
-<div class="section" id="myAuthSection" style="display:none">
-<h2>🔐 ჩემი ავტორიზაცია</h2>
-<div class="neonControlBox">
-<label style="display:block;margin-bottom:6px">👤 მომხმარებელი</label>
-<input id="myAuthName" type="text" readonly>
-<label style="display:block;margin:12px 0 6px">📧 ელფოსტა</label>
-<input id="myAuthEmail" type="email" readonly>
-</div>
 </div>
 
 <div class="section" id="neonControlSection" style="display:none">
@@ -660,79 +641,21 @@ const AUTH_PASSWORD='temo2139-590';
 const USERS_KEY='temoWorkTrackerUsers';
 const SESSION_USER_KEY='temoWorkTrackerUser';
 const SESSION_USER_ID_KEY='temoWorkTrackerUserId';
-const SESSION_EXPIRES_KEY='temoWorkTrackerSessionExpires';
-const SESSION_CLOSED_AT_KEY='temoWorkTrackerSessionClosedAt';
-const SESSION_LAST_ACTIVE_KEY='temoWorkTrackerLastActiveAt';
-const SESSION_DURATION_MS=5*60*1000;
 const FRESH_USER_IDS_KEY='temoFreshUserIds';
 const ADMIN_USER='TEMO';
 const REMOVED_USER_NAMES=['TEMOADMIN'];
 const FIREBASE_DB_URL='https://temo-75-default-rtdb.europe-west1.firebasedatabase.app';
 let currentUser=localStorage.getItem(SESSION_USER_KEY)||'';
 let currentUserId=localStorage.getItem(SESSION_USER_ID_KEY)||'';
-function markSessionActive(){
-  if(currentUser && localStorage.getItem(AUTH_KEY)==='yes' && document.visibilityState==='visible'){
-    localStorage.setItem(SESSION_LAST_ACTIVE_KEY,String(Date.now()));
-  }
-}
-function markSessionClosed(){
-  if(currentUser && localStorage.getItem(AUTH_KEY)==='yes'){
-    const now=Date.now();
-    localStorage.setItem(SESSION_CLOSED_AT_KEY,String(now));
-    localStorage.setItem(SESSION_EXPIRES_KEY,String(now+SESSION_DURATION_MS));
-    localStorage.setItem(SESSION_LAST_ACTIVE_KEY,String(now));
-  }
-}
-window.addEventListener('pagehide',markSessionClosed);
-window.addEventListener('beforeunload',markSessionClosed);
-document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='hidden') markSessionClosed();
-  else if(document.visibilityState==='visible' && localStorage.getItem(AUTH_KEY)==='yes'){
-    const expires=Number(localStorage.getItem(SESSION_EXPIRES_KEY)||0);
-    if(expires && Date.now()>expires){
-      localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);localStorage.removeItem(SESSION_USER_ID_KEY);localStorage.removeItem(SESSION_EXPIRES_KEY);localStorage.removeItem(SESSION_CLOSED_AT_KEY);localStorage.removeItem(SESSION_LAST_ACTIVE_KEY);currentUser='';currentUserId='';
-      $('loginScreen').classList.remove('hidden');
-    }else{
-      localStorage.removeItem(SESSION_CLOSED_AT_KEY);localStorage.removeItem(SESSION_EXPIRES_KEY);markSessionActive();
-    }
-  }
-});
-setInterval(()=>{if(document.visibilityState==='visible')markSessionActive();},30000);
 let firebaseSyncBusy=false;
 let firebaseWriteQueue=Promise.resolve();
-let jobsFirebaseReady=false;
-let jobsFirebaseSyncBusy=false;
-let jobsFirebaseWriteQueue=Promise.resolve();
 function makeUserId(){return window.crypto&&crypto.randomUUID?crypto.randomUUID():'u_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,10);}
 function makeLegacyUserId(name,password){const str=String(name||'').trim().toLowerCase()+'\u0000'+String(password??'');let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return 'legacy_'+(h>>>0).toString(16);}
 function firebaseUserKey(id){return encodeURIComponent(String(id)).replace(/%/g,'_');}
 async function loadUsersFromFirebase(){try{const r=await fetch(FIREBASE_DB_URL+'/users.json',{cache:'no-store'});if(!r.ok)throw new Error('Firebase HTTP '+r.status);const data=await r.json();if(data===null)return null;if(Array.isArray(data))return data.filter(Boolean).map(normalizeUser).filter(u=>!isRemovedUser(u));return Object.entries(data||{}).filter(([,u])=>u).map(([key,u])=>normalizeUser({...u,_firebaseKey:key})).filter(u=>!isRemovedUser(u));}catch(e){console.warn('Firebase users read failed:',e);return null}}
-function normalizeUser(raw){const u=(raw&&typeof raw==='object')?raw:{};const rawName=String(u.name||'').trim(),password=String(u.password??''),email=String(u.email??u.firebaseAuthEmail??'').trim(),language=(u.language==='en'||u.language==='el'||u.language==='ka')?u.language:'ka';const admin=(rawName.toUpperCase()===ADMIN_USER)||u.admin===true;const name=rawName.toUpperCase()===ADMIN_USER?ADMIN_USER:rawName;const blocked=admin?false:(typeof u.blocked==='boolean'?u.blocked:u.authorized===false);const rawId=String(u.id||'').trim();const id=admin?'admin-temo':(rawId||makeLegacyUserId(name,password));return {id,name,password,email,language,admin,authorized:admin?true:!blocked,blocked,_firebaseKey:u._firebaseKey||''};}
+function normalizeUser(raw){const u=(raw&&typeof raw==='object')?raw:{};const name=String(u.name||'').trim(),password=String(u.password??'');const admin=(name.toUpperCase()===ADMIN_USER)||u.admin===true;const blocked=admin?false:(typeof u.blocked==='boolean'?u.blocked:u.authorized===false);const id=String(u.id||'').trim()||makeLegacyUserId(name,password);return {id,name,password,admin,authorized:admin?true:!blocked,blocked,_firebaseKey:u._firebaseKey||''};}
 function isRemovedUser(u){return REMOVED_USER_NAMES.includes(String(u?.name||'').trim().toUpperCase());}
-async function saveUsersToFirebase(users){
-  const snapshot=users.filter(u=>u&&u.name&&!isRemovedUser(u)).map(normalizeUser);
-  firebaseWriteQueue=firebaseWriteQueue.then(async()=>{
-    const controller=new AbortController();
-    const timer=setTimeout(()=>controller.abort(),10000);
-    try{
-      const r=await fetch(FIREBASE_DB_URL+'/users.json',{
-        method:'PUT',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(snapshot),
-        signal:controller.signal
-      });
-      if(!r.ok)throw new Error('Firebase HTTP '+r.status);
-      return true;
-    }catch(e){
-      if(e&&e.name==='AbortError')throw new Error('Firebase პასუხს 10 წამში არ უპასუხა');
-      throw e;
-    }finally{clearTimeout(timer)}
-  });
-  return firebaseWriteQueue.catch(e=>{
-    console.warn('Firebase users write failed:',e);
-    throw e;
-  });
-}
+async function saveUsersToFirebase(users){const snapshot=users.filter(u=>u&&u.name&&!isRemovedUser(u)).map(normalizeUser);firebaseWriteQueue=firebaseWriteQueue.then(async()=>{try{const r=await fetch(FIREBASE_DB_URL+'/users.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(snapshot)});if(!r.ok)throw new Error('Firebase HTTP '+r.status);return true;}catch(e){console.warn('Firebase users write failed:',e);return false}});return firebaseWriteQueue;}
 async function syncUsersFromFirebase(){if(firebaseSyncBusy)return;firebaseSyncBusy=true;try{await firebaseWriteQueue;const remote=await loadUsersFromFirebase();if(remote!==null){let clean=remote.map(normalizeUser).filter(u=>u.name&&!isRemovedUser(u));if(!clean.some(u=>u.name.toUpperCase()===ADMIN_USER))clean.unshift(normalizeUser({id:'admin-temo',name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true,blocked:false}));localStorage.setItem(USERS_KEY,JSON.stringify(clean));return clean;}const local=getUsers().filter(u=>!isRemovedUser(u));await saveUsersToFirebase(local);return local;}finally{firebaseSyncBusy=false}}
 function getUsers(){let users;try{users=JSON.parse(localStorage.getItem(USERS_KEY)||'null')}catch(e){users=null}if(!Array.isArray(users)||!users.length)users=[normalizeUser({id:'admin-temo',name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true,blocked:false})];const normalized=users.map(normalizeUser).filter(u=>u.name&&!isRemovedUser(u));localStorage.setItem(USERS_KEY,JSON.stringify(normalized));return normalized;}
 function findUserById(id){return getUsers().find(u=>String(u.id)===String(id));}
@@ -746,49 +669,22 @@ function enablePasswordOnlyLogin(){
   $('loginName').focus();
 }
 function enableNameLogin(){enablePasswordOnlyLogin()}
-async function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));if(typeof window.restoreCurrentUserLanguage==='function')window.restoreCurrentUserLanguage(user.language||'ka');localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');localStorage.removeItem(SESSION_CLOSED_AT_KEY);localStorage.removeItem(SESSION_EXPIRES_KEY);localStorage.setItem(SESSION_LAST_ACTIVE_KEY,String(Date.now()));$('loginScreen').classList.add('hidden');$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();jobsFirebaseReady=false;await syncJobsFromFirebase();jobsFirebaseReady=true;updateUserUI();render();}
-async function login(){
-  const name=$('loginName').value.trim();
-  const pass=$('loginPassword').value;
-  const users=getUsers();
-  const u=users.find(x=>x.name && x.name.toLowerCase()===name.toLowerCase()&&x.password===pass);
-  if(!u){
-    $('loginError').textContent='სახელი ან პაროლი არასწორია';
-    $('loginPassword').value='';
-    $('loginPassword').focus();
-    return;
-  }
-  if(u.blocked===true||u.authorized!==true){
-    $('loginError').textContent='ეს მომხმარებელი დაბლოკილია';
-    $('loginPassword').value='';
-    $('loginPassword').focus();
-    return;
-  }
-  await completeLogin(u);
-}
+function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');$('loginScreen').classList.add('hidden');$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
+function login(){const name=$('loginName').value.trim(),pass=$('loginPassword').value,users=getUsers(),u=users.find(x=>x.name.toLowerCase()===name.toLowerCase()&&x.password===pass);if(!u){$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus();return;}if(u.blocked===true||u.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';$('loginPassword').focus();return;}completeLogin(u);}
 function renderLoginUsers(){}
 window.addEventListener('DOMContentLoaded',async()=>{
   await syncUsersFromFirebase();
   const savedUserId=currentUserId;
   const matched=findUserById(savedUserId);
-  const sessionClosedAt=Number(localStorage.getItem(SESSION_CLOSED_AT_KEY)||0);
-  const sessionLastActive=Number(localStorage.getItem(SESSION_LAST_ACTIVE_KEY)||0);
-  const referenceTime=sessionClosedAt||sessionLastActive;
-  const sessionValid=localStorage.getItem(AUTH_KEY)==='yes' && !!referenceTime && (Date.now()-referenceTime)<=SESSION_DURATION_MS && !!savedUserId && !!matched && matched.authorized===true && matched.blocked===false;
+  const sessionValid=localStorage.getItem(AUTH_KEY)==='yes' && !!savedUserId && !!matched && matched.authorized===true && matched.blocked===false;
   if(sessionValid){
-    currentUser=matched.name;currentUserId=matched.id;if(typeof window.restoreCurrentUserLanguage==='function')window.restoreCurrentUserLanguage(matched.language||'ka');
+    currentUser=matched.name;currentUserId=matched.id;
     localStorage.setItem(SESSION_USER_KEY,currentUser);
     localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);
-    localStorage.removeItem(SESSION_CLOSED_AT_KEY);
-    localStorage.removeItem(SESSION_EXPIRES_KEY);
     $('loginScreen').classList.add('hidden');
-    jobs=loadUserJobs();
-    jobsFirebaseReady=false;
-    await syncJobsFromFirebase();
-    jobsFirebaseReady=true;
-    updateUserUI();render();
+    jobs=loadUserJobs();updateUserUI();render();
   }else{
-    localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);localStorage.removeItem(SESSION_USER_ID_KEY);localStorage.removeItem(SESSION_EXPIRES_KEY);localStorage.removeItem(SESSION_CLOSED_AT_KEY);localStorage.removeItem(SESSION_LAST_ACTIVE_KEY);currentUser='';currentUserId='';
+    localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);localStorage.removeItem(SESSION_USER_ID_KEY);currentUser='';currentUserId='';
   }
   $('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
   updateUserUI();
@@ -820,92 +716,17 @@ function removeAllLegacyJobKeysForName(name){
     });
   }catch(e){}
 }
-function firebaseJobsKey(id){
-  return encodeURIComponent(String(id||'')).replace(/%/g,'_');
-}
-async function loadJobsFromFirebase(userId){
-  const id=String(userId||'').trim();
-  if(!id)return null;
-  try{
-    const r=await fetch(FIREBASE_DB_URL+'/jobs/'+firebaseJobsKey(id)+'.json?t='+Date.now(),{cache:'no-store'});
-    if(!r.ok)throw new Error('Firebase HTTP '+r.status);
-    const data=await r.json();
-    if(data===null)return null;
-    return Array.isArray(data)?data.filter(Boolean):[];
-  }catch(e){
-    console.warn('Firebase jobs read failed:',e);
-    return null;
-  }
-}
-async function saveJobsToFirebase(userId,data){
-  const id=String(userId||'').trim();
-  if(!id)return false;
-  const snapshot=Array.isArray(data)?data:[];
-  jobsFirebaseWriteQueue=jobsFirebaseWriteQueue.then(async()=>{
-    const controller=new AbortController();
-    const timer=setTimeout(()=>controller.abort(),10000);
-    try{
-      const r=await fetch(FIREBASE_DB_URL+'/jobs/'+firebaseJobsKey(id)+'.json',{
-        method:'PUT',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(snapshot),
-        signal:controller.signal
-      });
-      if(!r.ok)throw new Error('Firebase HTTP '+r.status);
-      return true;
-    }catch(e){
-      if(e&&e.name==='AbortError')throw new Error('Firebase jobs პასუხს 10 წამში არ უპასუხა');
-      throw e;
-    }finally{clearTimeout(timer)}
-  });
-  return jobsFirebaseWriteQueue.catch(e=>{
-    console.warn('Firebase jobs write failed:',e);
-    return false;
-  });
-}
-async function syncJobsFromFirebase(){
-  const id=String(currentUserId||'').trim();
-  if(!id||jobsFirebaseSyncBusy)return false;
-  jobsFirebaseSyncBusy=true;
-  try{
-    const remote=await loadJobsFromFirebase(id);
-    if(remote!==null){
-      jobs=remote;
-      saveLocalJobsOnly();
-      return true;
-    }
-    // Firebase-ში ამ მომხმარებლის მონაცემები ჯერ არ არსებობს:
-    // მხოლოდ ამ მოწყობილობაზე არსებული ჩანაწერები ხდება პირველი საერთო ასლი.
-    await saveJobsToFirebase(id,jobs);
-    return true;
-  }finally{
-    jobsFirebaseSyncBusy=false;
-  }
-}
-function saveLocalJobsOnly(){
-  const key=currentUserId?'temoJobsId_'+currentUserId:'temoJobs_'+(currentUser||ADMIN_USER);
-  localStorage.setItem(key,JSON.stringify(jobs));
-  if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs));
-}
-
 function loadUserJobs(){
   try{
-    // სამუშაოები ინახება მომხმარებლის უნიკალური ID-ით.
-    // TEMO-სთვის კი ძველი canonical key — temoJobs — რჩება მთავარ წყაროდ,
-    // რათა ადმინისტრატორის ძველი სამუშაოები ახალი account ID-ის გამო არ დაიკარგოს.
+    // სამუშაოები ინახება მომხმარებლის უნიკალური ID-ით და არა მხოლოდ სახელით.
+    // ამიტომ წაშლილი ანგარიშის ხელახლა შექმნისას ძველი სამუშაოები აღარ ბრუნდება.
     const idKey='temoJobsId_'+(currentUserId||'');
     const nameKey='temoJobs_'+(currentUser||ADMIN_USER);
     let own=idKey&&currentUserId?localStorage.getItem(idKey):null;
 
-    if(currentUser===ADMIN_USER){
-      const legacyAdmin=localStorage.getItem('temoJobs');
-      if(legacyAdmin!==null){
-        own=legacyAdmin;
-        if(currentUserId) localStorage.setItem(idKey,legacyAdmin);
-      }
-    }else if(own===null && currentUserId && !getFreshUserIds().includes(String(currentUserId))){
-      // ძველი ვერსიებიდან არსებული მონაცემების ერთჯერადი მიგრაცია მოქმედ მომხმარებელზე.
-      // ახალი ანგარიშისთვის, რომელსაც ახალი ID აქვს, ძველი სახელის მონაცემები აღარ გამოიყენება.
+    // ძველი ვერსიებიდან არსებული მონაცემების ერთჯერადი მიგრაცია მოქმედ მომხმარებელზე.
+    // ახალი ანგარიშისთვის, რომელსაც ახალი ID აქვს, ძველი სახელის მონაცემები აღარ გამოიყენება.
+    if(own===null && currentUserId && !getFreshUserIds().includes(String(currentUserId))){
       const legacy=localStorage.getItem(nameKey);
       if(legacy!==null){
         localStorage.setItem(idKey,legacy);
@@ -914,6 +735,16 @@ function loadUserJobs(){
       }
     }
 
+    if(currentUser===ADMIN_USER){
+      const legacyAdmin=localStorage.getItem('temoJobs');
+      if((own===null || own==='[]') && legacyAdmin){
+        const legacyJobs=JSON.parse(legacyAdmin||'[]');
+        if(Array.isArray(legacyJobs) && legacyJobs.length){
+          localStorage.setItem(idKey,JSON.stringify(legacyJobs));
+          return legacyJobs;
+        }
+      }
+    }
     return JSON.parse(own||'[]');
   }catch(e){return []}
 }
@@ -951,26 +782,41 @@ let calendarDate=new Date();
 let selectedDate='';
 const $=id=>document.getElementById(id);
 const euro=n=>'€'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2});
-$('today').textContent=new Date().toLocaleDateString(typeof getLangLocale==='function'?getLangLocale():'ka-GE');
+$('today').textContent=new Date().toLocaleDateString('ka-GE');
 
 function save(){
-  saveLocalJobsOnly();
-  if(jobsFirebaseReady && currentUserId){
-    saveJobsToFirebase(currentUserId,jobs);
-  }
+  const key=currentUserId?'temoJobsId_'+currentUserId:'temoJobs_'+(currentUser||ADMIN_USER);
+  localStorage.setItem(key,JSON.stringify(jobs));
+  if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs));
 }
-function formatDate(s){if(!s)return '';const [y,m,d]=s.split('-');return new Date(Number(y),Number(m)-1,Number(d)).toLocaleDateString(typeof getLangLocale==='function'?getLangLocale():'ka-GE',{day:'numeric',month:'long',year:'numeric'})}
-function monthName(key){const [y,m]=key.split('-');return new Date(y,Number(m)-1,1).toLocaleDateString(typeof getLangLocale==='function'?getLangLocale():'ka-GE',{year:'numeric',month:'long'})}
+function formatDate(s){if(!s)return '';const [y,m,d]=s.split('-');const months=['იანვარი','თებერვალი','მარტი','აპრილი','მაისი','ივნისი','ივლისი','აგვისტო','სექტემბერი','ოქტომბერი','ნოემბერი','დეკემბერი'];return Number(d)+' '+months[Number(m)-1]+' '+y}
+function monthName(key){const [y,m]=key.split('-');return new Date(y,Number(m)-1,1).toLocaleDateString('ka-GE',{year:'numeric',month:'long'})}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 
+function updateMonthFilter(){const old=$('monthFilter').value;const months=[...new Set(jobs.map(j=>(j.date||'').slice(0,7)).filter(Boolean))].sort().reverse();$('monthFilter').innerHTML='<option value="all">ყველა თვე</option>'+months.map(m=>`<option value="${m}">${monthName(m)}</option>`).join('');if(months.includes(old))$('monthFilter').value=old}
 function render(){
  const total=jobs.reduce((a,j)=>a+Number(j.money||0),0), paid=jobs.filter(j=>j.paid).reduce((a,j)=>a+Number(j.money||0),0), unpaid=total-paid;
  $('total').textContent=euro(total);$('paid').textContent=euro(paid);$('unpaid').textContent=euro(unpaid);
- $('days').textContent=jobs.length+' '+t('სამუშაო');$('paidDays').textContent=jobs.filter(j=>j.paid).length+' '+t('გადახდილი');$('unpaidDays').textContent=jobs.filter(j=>!j.paid).length+' '+t('გადასახდელი');
+ $('days').textContent=jobs.length+' სამუშაო';$('paidDays').textContent=jobs.filter(j=>j.paid).length+' გადახდილი';$('unpaidDays').textContent=jobs.filter(j=>!j.paid).length+' გადასახდელი';
  $('average').textContent=euro(jobs.length?total/jobs.length:0);
- const now=new Date(), key=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');const mj=jobs.filter(j=>(j.date||'').slice(0,7)===key);const monthTotal=mj.filter(j=>j.paid).reduce((a,j)=>a+Number(j.money||0),0);$('monthTotal').textContent=euro(monthTotal);$('monthDays').textContent=mj.length+' '+t('დღე');
+ const now=new Date(), key=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');const mj=jobs.filter(j=>(j.date||'').slice(0,7)===key);const monthTotal=mj.filter(j=>j.paid).reduce((a,j)=>a+Number(j.money||0),0);$('monthTotal').textContent=euro(monthTotal);$('monthDays').textContent=mj.length+' დღე';
  renderCalendar();renderDayJobs();
 }
+function renderList(){
+ const q=$('search').value.trim().toLowerCase(), st=$('statusFilter').value, mo=$('monthFilter').value;
+ const data=[...jobs].filter(j=>(!q||`${j.place||''} ${j.note||''}`.toLowerCase().includes(q))&&(st==='all'||(st==='paid'?j.paid:!j.paid))&&(mo==='all'||(j.date||'').slice(0,7)===mo)).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+ $('list').innerHTML=data.length?'':'<div class="empty">ამ ძიებით სამუშაო ვერ მოიძებნა</div>';
+ data.forEach(j=>{const d=document.createElement('div');d.className='item';d.innerHTML=`<div><b>${esc(j.place||'სამუშაო')} <span class="jobStatusMark ${j.paid?'paid':'unpaid'}">${j.paid?'✓':'+'}</span></b><div class="jobDateLine">${formatDate(j.date)}</div>${j.note?`<div class="meta">${esc(j.note)}</div>`:''}</div><div class="right"><b>${euro(j.money)}</b><div class="actions"><button class="small" onclick="togglePaid('${j.id}')">${j.paid?'გადაუხდელია':'გადახდა მივიღე'}</button><button class="small edit" onclick="editJob('${j.id}')">✎ შეცვლა</button><button class="small danger" onclick="delJob('${j.id}')">✕ წაშლა</button></div></div>`;$('list').appendChild(d)})
+}
+function receivedForWorkMonth(key){
+  return jobs.filter(j=>(j.date||'').slice(0,7)===key && j.paid)
+             .reduce((sum,j)=>sum+Number(j.money||0),0);
+}
+function renderMonths(){
+ const map={};jobs.forEach(j=>{const k=(j.date||'').slice(0,7)||'უცნობი';if(!map[k])map[k]={total:0,paid:0,count:0};map[k].total+=Number(j.money||0);if(j.paid)map[k].paid+=Number(j.money||0);map[k].count++});
+ const keys=Object.keys(map).sort().reverse();$('monthList').innerHTML=keys.length?'':'<div class="empty">ჯერ მონაცემები არ არის</div>';keys.forEach(k=>{$('monthList').innerHTML+=`<div class="monthRow"><div><b>${k==='უცნობი'?k:monthName(k)}</b><br><span>${map[k].count} სამუშაო • მიღებული ${euro(map[k].paid)}</span></div><b>${euro(map[k].total)}</b><span>მისაღები ${euro(map[k].total-map[k].paid)}</span></div>`})
+}
+
 function dateKey(y,m,d){
   return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
 }
@@ -979,7 +825,7 @@ function closeYearPicker(){$('yearPickerModal').classList.remove('show')}
 function selectCalendarYear(year){calendarDate=new Date(year,calendarDate.getMonth(),1);selectedDate='';closeYearPicker();renderCalendar();renderDayJobs()}
 function renderCalendar(){
   const y=calendarDate.getFullYear(), m=calendarDate.getMonth();
-  $('calendarTitle').textContent=new Date(y,m,1).toLocaleDateString(typeof getLangLocale==='function'?getLangLocale():'ka-GE',{year:'numeric',month:'long'});
+  $('calendarTitle').textContent=new Date(y,m,1).toLocaleDateString('ka-GE',{year:'numeric',month:'long'});
   const first=new Date(y,m,1);
   const start=(first.getDay()+6)%7;
   const days=new Date(y,m+1,0).getDate();
@@ -1022,12 +868,12 @@ function renderDayJobs(){
   }
   const data=jobs.filter(j=>(j.date||'')===selectedDate).sort((a,b)=>String(a.id).localeCompare(String(b.id)));
   title.textContent=formatDate(selectedDate);
-  count.textContent=data.length+' '+t('სამუშაო');
-  box.innerHTML=data.length?'':'<div class="empty">'+t('ამ დღეს სამუშაო არ არის')+'</div>';
+  count.textContent=data.length+' სამუშაო';
+  box.innerHTML=data.length?'':'<div class="empty">ამ დღეს სამუშაო არ არის</div>';
   data.forEach(j=>{
     const d=document.createElement('div');
     d.className='item';
-    d.innerHTML=`<div><b>${esc(j.place||'სამუშაო')} <span class="jobStatusMark ${j.paid?'paid':'unpaid'}">${j.paid?'✓':'+'}</span></b><div class="jobDateLine">${formatDate(j.date)}</div>${j.note?`<div class="meta">${esc(j.note)}</div>`:''}</div><div class="right"><b>${euro(j.money)}</b><div class="actions"><button class="small" onclick="togglePaid('${j.id}')">${j.paid?t('გადაუხდელია'):t('გადახდა მივიღე')}</button><button class="small edit" onclick="editJob('${j.id}')">✎ ${t('შეცვლა')}</button><button class="small danger" onclick="delJob('${j.id}')">✕ ${t('წაშლა')}</button></div></div>`;
+    d.innerHTML=`<div><b>${esc(j.place||'სამუშაო')} <span class="jobStatusMark ${j.paid?'paid':'unpaid'}">${j.paid?'✓':'+'}</span></b><div class="jobDateLine">${formatDate(j.date)}</div>${j.note?`<div class="meta">${esc(j.note)}</div>`:''}</div><div class="right"><b>${euro(j.money)}</b><div class="actions"><button class="small" onclick="togglePaid('${j.id}')">${j.paid?'გადაუხდელია':'გადახდა მივიღე'}</button><button class="small edit" onclick="editJob('${j.id}')">✎ შეცვლა</button><button class="small danger" onclick="delJob('${j.id}')">✕ წაშლა</button></div></div>`;
     box.appendChild(d);
   });
 }
@@ -1039,8 +885,8 @@ function openCalendarNote(){
   box.innerHTML=data.length?data.map(j=>{
     const mark=`<span class="jobStatusMark ${j.paid?'paid':'unpaid'}">${j.paid?'✓':'+'}</span>`;
     const amount=j.paid?`<span class="noteAmount">${euro(j.money)}</span>`:'';
-    return `<div class="noteEntry"><div class="noteDate">${formatDate(j.date)}</div><div class="noteLine"><b>${esc(j.place||'სამუშაო')}</b>${mark}${amount}</div>${j.note?`<div class="meta">${t('შენიშვნა')}: ${esc(j.note)}</div>`:''}</div>`;
-  }).join(''): '<div class="noteEntry">'+t('ჯერ ჩანაწერი არ არის.')+'</div>';
+    return `<div class="noteEntry"><div class="noteDate">${formatDate(j.date)}</div><div class="noteLine"><b>${esc(j.place||'სამუშაო')}</b>${mark}${amount}</div>${j.note?`<div class="meta">შენიშვნა: ${esc(j.note)}</div>`:''}</div>`;
+  }).join(''):'<div class="noteEntry">ჯერ ჩანაწერი არ არის.</div>';
   $('noteModal').classList.add('show');
 }
 function closeCalendarNote(){$('noteModal').classList.remove('show')}
@@ -1061,11 +907,11 @@ function renderReceivableModal(){
   const paid=data.filter(j=>j.paid).reduce((s,j)=>s+Number(j.money||0),0);
   const unpaid=total-paid;
   const unpaidCount=unpaidData.length;
-  summary.innerHTML=`${t('სულ სამუშაოები')}: <b>${data.length}</b> • ${t('მიღებული')}: <b>${euro(paid)}</b> • ${t('ჯერ მისაღები')}: <b>${euro(unpaid)}</b> • ${unpaidCount} ${t('გადაუხდელი')}`;
+  summary.innerHTML=`სულ სამუშაოები: <b>${data.length}</b> • მიღებული: <b>${euro(paid)}</b> • ჯერ მისაღები: <b>${euro(unpaid)}</b> • ${unpaidCount} გადაუხდელი`;
   all.checked=data.length>0 && unpaidCount===0;
   list.innerHTML='';
   if(!unpaidData.length){
-    list.innerHTML='<div class="receivableEmpty">'+t('ყველასგან მიღებულია თანხა. 🎉')+'</div>';
+    list.innerHTML='<div class="receivableEmpty">ყველასგან მიღებულია თანხა. 🎉</div>';
     return;
   }
   unpaidData.forEach(j=>{
@@ -1081,22 +927,26 @@ function setReceivablePaid(id,checked){
   j.paid=checked;
   save();
   render();
+  renderList();
+  renderMonths();
   renderReceivableModal();
 }
 function toggleAllReceivable(checked){
   jobs.forEach(j=>{j.paid=checked});
   save();
   render();
+  renderList();
+  renderMonths();
   renderReceivableModal();
 }
 function openForm(){editingId=null;$('formTitle').textContent='სამუშაოს დამატება';$('date').value=new Date().toISOString().slice(0,10);$('place').value='';$('money').value='';$('note').value='';$('paidCheck').checked=false;$('modal').classList.add('show')}
 function closeForm(){$('modal').classList.remove('show')}
 function editJob(id){const j=jobs.find(x=>x.id===id);if(!j)return;editingId=id;$('formTitle').textContent='სამუშაოს შეცვლა';$('date').value=j.date||'';$('place').value=j.place||'';$('money').value=j.money||'';$('note').value=j.note||'';$('paidCheck').checked=!!j.paid;$('modal').classList.add('show')}
 function saveJob(){const amount=Number($('money').value);if(!amount||amount<=0){alert('თანხა მიუთითე');return}const data={date:$('date').value,place:$('place').value.trim(),money:amount,note:$('note').value.trim(),paid:$('paidCheck').checked};if(!data.date){alert('თარიღი მიუთითე');return}if(editingId){const i=jobs.findIndex(x=>x.id===editingId);jobs[i]={...jobs[i],...data}}else jobs.push({id:Date.now().toString()+Math.random().toString(16).slice(2),...data});save();closeForm();render()}
-function togglePaid(id){const j=jobs.find(x=>x.id===id);if(j){j.paid=!j.paid;save();render();}}
+function togglePaid(id){const j=jobs.find(x=>x.id===id);if(j){j.paid=!j.paid;save();render();renderList();renderMonths();}}
 function delJob(id){if(confirm('წავშალოთ ეს ჩანაწერი?')){jobs=jobs.filter(x=>x.id!==id);save();render()}}
 function temoNavigatePage(pageId){
-  const ids=['mainPage','settingsPage','userManagementPage','walletPage'];
+  const ids=['mainPage','settingsPage','userManagementPage','walletPage','notesPage'];
   ids.forEach(id=>{
     const p=document.getElementById(id);
     if(!p)return;
@@ -1117,6 +967,8 @@ function goHome(){temoNavigatePage('mainPage')}
 function goSettings(){temoNavigatePage('settingsPage')}
 function goUsers(){if(currentUser===ADMIN_USER)temoNavigatePage('userManagementPage')}
 function goWallet(){temoNavigatePage('walletPage')}
+function goNotes(){temoNavigatePage('notesPage');loadNotes()}
+
 
 function togglePrivacy(){
   const app=document.querySelector('.app');
@@ -1167,9 +1019,8 @@ function updateUserUI(){
  const isAdmin=currentUser===ADMIN_USER;
  const site=$('websiteUpdateSection'); if(site)site.style.display=isAdmin?'':'none';
  const users=$('userManagementSection'); if(users)users.style.display=isAdmin?'':'none'; const neon=$('neonControlSection'); if(neon)neon.style.display=isAdmin?'':'none';
- const myAuth=$('myAuthSection'); if(myAuth){myAuth.style.display=isAdmin?'none':'block'; const me=getUsers().find(x=>String(x.id)===String(currentUserId)||String(x.name).toLowerCase()===String(currentUser).toLowerCase()); if(me){$('myAuthName').value=me.name||'';$('myAuthEmail').value=me.email||'';}}
  const manageBtn=$('userManagementOpenBtn'); if(manageBtn)manageBtn.style.display=isAdmin?'block':'none';
- const label=$('currentUserLabel'); if(label){label.textContent=currentUser?'👤 '+t('შენ შეხვედი...')+' '+currentUser:'';label.style.display=currentUser?'block':'none';}
+ const label=$('currentUserLabel'); if(label){label.textContent=currentUser?'👤 შენ შეხვედი... '+currentUser:'';label.style.display=currentUser?'block':'none';}
  if(isAdmin)renderManagedUsers();
 }
 let managedUsersRenderKey='';
@@ -1190,13 +1041,13 @@ async function renderManagedUsers(){
   }
 
   const list=users.filter(u=>!u.admin&&u.name.toUpperCase()!==ADMIN_USER&&!isRemovedUser(u));
-  const key=JSON.stringify(list.map(u=>[u.id,u.name,u.email,u.password,u.blocked===true]));
+  const key=JSON.stringify(list.map(u=>[u.id,u.name,u.password,u.blocked===true]));
 
   if(key===managedUsersRenderKey && box.children.length)return;
   managedUsersRenderKey=key;
 
   if(!list.length){
-    box.innerHTML='<div class="empty">'+t('მომხმარებლები ჯერ არ არის')+'</div>';
+    box.innerHTML='<div class="empty">მომხმარებლები ჯერ არ არის</div>';
     return;
   }
 
@@ -1206,15 +1057,15 @@ async function renderManagedUsers(){
     row.className='userRow';
     const b=document.createElement('button');
     b.className='backupBtn userNameBtn';
-    b.textContent='👤 '+u.name+' | 📧 '+(u.email||t('ელფოსტა არ არის'))+' | 🔑 '+u.password;
+    b.textContent='👤 '+u.name+' | 🔑 '+u.password;
     b.disabled=true;
     const l=document.createElement('button');
     l.className='backupBtn lockBtn'+(u.blocked===true?' locked':'');
-    l.textContent=u.blocked===true?'🔓 '+t('განბლოკვა'):'🔒 '+t('დაბლოკვა');
+    l.textContent=u.blocked===true?'🔓 განბლოკვა':'🔒 დაბლოკვა';
     l.onclick=()=>toggleUserBlock(u.id);
     const d=document.createElement('button');
     d.className='backupBtn danger';
-    d.textContent='🗑️ '+t('წაშლა');
+    d.textContent='🗑️ წაშლა';
     d.onclick=()=>deleteManagedUser(u.id);
     row.append(b,l,d);
     frag.appendChild(row);
@@ -1275,8 +1126,7 @@ async function deleteManagedUser(id){
   await renderManagedUsers();
 }
 
-function openCredentials(event){
-  if(event){event.preventDefault();event.stopPropagation();}
+function openCredentials(){
   loadGitHubSettings();
   $('credentialsModal').classList.add('show');
   setTimeout(()=>{
@@ -1290,7 +1140,7 @@ function closeCredentials(){
 function showSettings(){updateUserUI();document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('userManagementPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.remove('pageHidden');window.scrollTo(0,0)}
 function showUserManagement(){if(currentUser!==ADMIN_USER)return;updateUserUI();document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.add('pageHidden');document.getElementById('userManagementPage').classList.remove('pageHidden');window.scrollTo(0,0)}
 function showMain(){document.getElementById('settingsPage').classList.add('pageHidden');document.getElementById('userManagementPage').classList.add('pageHidden');document.getElementById('mainPage').classList.remove('pageHidden');window.scrollTo(0,0)}
-function logout(){localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);localStorage.removeItem(SESSION_USER_ID_KEY);localStorage.removeItem(SESSION_EXPIRES_KEY);localStorage.removeItem(SESSION_CLOSED_AT_KEY);localStorage.removeItem(SESSION_LAST_ACTIVE_KEY);window.location.reload()}
+function logout(){localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);localStorage.removeItem(SESSION_USER_ID_KEY);window.location.reload()}
 function exportData(){const blob=new Blob([JSON.stringify({version:1,exported:new Date().toISOString(),jobs},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='TEMO_WORK_TRACKER_BACKUP.json';a.click();URL.revokeObjectURL(a.href)}
 function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result),arr=Array.isArray(d)?d:d.jobs;if(!Array.isArray(arr))throw 0;if(confirm('არსებული მონაცემები შეიცვალოს ამ სარეზერვო ასლით?')){jobs=arr;save();render();alert('მონაცემები აღდგენილია')}}catch(x){alert('ეს სარეზერვო ფაილი არასწორია')}e.target.value=''};r.readAsText(f)}
 function clearAll(){
@@ -1361,8 +1211,7 @@ function siteFileSelected(){
     btn.textContent='⬆ ატვირთე';
   }
 }
-function handleSiteFileButton(event){
-  if(event){event.preventDefault();event.stopPropagation();}
+function handleSiteFileButton(){
   const input=$('siteUpdateFile'), file=input.files[0];
   if(!file){
     input.click();
@@ -1372,9 +1221,6 @@ function handleSiteFileButton(event){
 }
 
 async function updateWebsite(){
-  // ყოველთვის თავიდან ჩავტვირთოთ შენახული Repository/Token,
-  // რათა პირველი ატვირთვისას Repository/Token ფანჯრის გახსნა აღარ იყოს საჭირო.
-  loadGitHubSettings();
   const repo=$('ghRepo').value.trim(), token=$('ghToken').value.trim(), file=$('siteUpdateFile').files[0];
 
   if(!repo || !repo.includes('/')){alert('რეპოზიტორია ჩაწერე ასე: მომხმარებელი/რეპოზიტორია');return}
@@ -1425,135 +1271,8 @@ async function updateWebsite(){
   }
 }
 
-function forgotPassword(){
-  const m=document.getElementById('forgotPasswordModal');
-  const e=document.getElementById('forgotPasswordEmail');
-  const n=document.getElementById('forgotPasswordNew');
-  const er=document.getElementById('forgotPasswordError');
-  e.value=''; n.value=''; er.textContent='';
-  m.classList.add('show');
-  m.setAttribute('aria-hidden','false');
-  setTimeout(()=>e.focus(),80);
-}
-function closeForgotPassword(){
-  const m=document.getElementById('forgotPasswordModal');
-  m.classList.remove('show');
-  m.setAttribute('aria-hidden','true');
-}
-function submitForgotPassword(){
-  const email=document.getElementById('forgotPasswordEmail').value.trim().toLowerCase();
-  const newPassword=document.getElementById('forgotPasswordNew').value;
-  const er=document.getElementById('forgotPasswordError');
-  er.textContent='';
-  if(!email){er.textContent='შეიყვანე ელფოსტა';return;}
-  if(!newPassword){er.textContent='შეიყვანე ახალი პაროლი';return;}
-  const users=getUsers();
-  const u=users.find(x=>x.email&&String(x.email).toLowerCase()===email);
-  if(!u){er.textContent='ამ ელფოსტით მომხმარებელი ვერ მოიძებნა';return;}
-  u.password=newPassword;
-  localStorage.setItem(USERS_KEY,JSON.stringify(users));
-  const btn=document.getElementById('forgotPasswordSubmit');
-  btn.disabled=true; btn.textContent='ინახება...';
-  saveUsersToFirebase(users).then(()=>{
-    closeForgotPassword();
-    showForgotPasswordSuccess();
-  }).catch(()=>{
-    closeForgotPassword();
-    alert('პაროლი შეიცვალა ამ მოწყობილობაზე, მაგრამ Firebase-ში შენახვა ვერ მოხერხდა');
-  }).finally(()=>{
-    btn.disabled=false; btn.textContent=t('პაროლის შეცვლა');
-  });
-}
-
-function showForgotPasswordSuccess(){
-  const m=document.getElementById('forgotPasswordSuccess');
-  document.querySelectorAll('#forgotPasswordSuccess .successStar').forEach((x,i)=>{x.style.animation='none';void x.offsetWidth;x.style.animation='';});
-  m.classList.add('show');
-  m.setAttribute('aria-hidden','false');
-}
-function closeForgotPasswordSuccess(){
-  const m=document.getElementById('forgotPasswordSuccess');
-  m.classList.remove('show');
-  m.setAttribute('aria-hidden','true');
-}
-
 function showNewUserAuth(){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('newUserAuthModal').classList.add('show')}
-async function registerNewUser(){
-  const nameEl=document.getElementById('newUserAuthName');
-  const emailEl=document.getElementById('newUserAuthEmail');
-  const passEl=document.getElementById('newUserAuthPassword');
-  const n=nameEl.value.trim();
-  const email=emailEl?emailEl.value.trim().toLowerCase():'';
-  const p=passEl.value;
-
-  if(!n||!email||!p){
-    alert('სახელი, ელფოსტა და ახალი პაროლი სამივე შეავსე');
-    return;
-  }
-  if(!/^[A-Za-z]+$/.test(n)){
-    alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');
-    nameEl.value=n.replace(/[^A-Za-z]/g,'');
-    return;
-  }
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
-    alert('შეიყვანე სწორი ელფოსტა');
-    return;
-  }
-  if(n.toUpperCase()===ADMIN_USER){
-    alert('ეს სახელი ადმინისტრატორისთვისაა');
-    return;
-  }
-
-  const users=getUsers();
-  if(users.some(u=>u.name&&u.name.toLowerCase()===n.toLowerCase())){
-    alert('ასეთი მომხმარებელი უკვე არსებობს');
-    return;
-  }
-  if(users.some(u=>u.email&&u.email.toLowerCase()===email)){
-    alert('ეს ელფოსტა უკვე გამოყენებულია');
-    return;
-  }
-
-  const user=normalizeUser({
-    id:makeUserId(),
-    name:n,
-    email:email,
-    password:p,
-    admin:false,
-    authorized:true,
-    blocked:false
-  });
-
-  users.push(user);
-  try{
-    await saveUsersToFirebase(users);
-  }catch(e){
-    alert('მომხმარებელი ვერ შეინახა Firebase-ში. შეამოწმე ინტერნეტი ან Firebase-ის წვდომა.\n\n'+(e?.message||''));
-    return;
-  }
-  markFreshUser(user.id);
-  localStorage.setItem(USERS_KEY,JSON.stringify(users));
-
-  currentUser=user.name;
-  currentUserId=user.id;
-  localStorage.setItem(SESSION_USER_KEY,currentUser);
-  localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);
-  localStorage.setItem(AUTH_KEY,'yes');
-
-  jobs=[];
-  jobsFirebaseReady=false;
-  await syncJobsFromFirebase();
-  jobsFirebaseReady=true;
-
-  nameEl.value='';
-  if(emailEl)emailEl.value='';
-  passEl.value='';
-  document.getElementById('newUserAuthModal').classList.remove('show');
-  $('loginError').textContent='';
-  jobs=loadUserJobs();
-  updateUserUI();
-  render();
-}
+async function registerNewUser(){const nameEl=document.getElementById('newUserAuthName'),passEl=document.getElementById('newUserAuthPassword'),n=nameEl.value.trim(),p=passEl.value;if(!n||!p){alert('სახელი და ახალი პაროლი ორივე შეავსე');return;}if(!/^[A-Za-z]+$/.test(n)){alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');nameEl.value=n.replace(/[^A-Za-z]/g,'');return;}if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return;}const users=getUsers();if(users.some(u=>u.name.toLowerCase()===n.toLowerCase()&&u.password===p)){alert('ასეთი მომხმარებელი უკვე არსებობს');return;}const user=normalizeUser({id:makeUserId(),name:n,password:p,admin:false,authorized:true,blocked:false});users.push(user);markFreshUser(user.id);localStorage.setItem(USERS_KEY,JSON.stringify(users));await saveUsersToFirebase(users);currentUser=user.name;currentUserId=user.id;localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');nameEl.value='';passEl.value='';document.getElementById('newUserAuthModal').classList.remove('show');$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
 window.addEventListener('DOMContentLoaded',loadNeonSettings);
 </script>
 
@@ -1879,41 +1598,15 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
   window.addEventListener('DOMContentLoaded',window.loadNeonSettings);
 })();
 </script>
-<div id="forgotPasswordModal" aria-hidden="true">
-  <div class="forgotPasswordBox" role="dialog" aria-modal="true" aria-labelledby="forgotPasswordTitle">
-    <div class="forgotPasswordIcon">🔑</div>
-    <h2 id="forgotPasswordTitle">პაროლის აღდგენა</h2>
-    <p>შეიყვანე რეგისტრირებული ელფოსტა და დააყენე ახალი პაროლი.</p>
-    <label for="forgotPasswordEmail">რეგისტრირებული ელფოსტა</label>
-    <input id="forgotPasswordEmail" type="email" placeholder="მაგ: temo@gmail.com" autocomplete="email">
-    <label for="forgotPasswordNew">ახალი პაროლი</label>
-    <input id="forgotPasswordNew" type="password" maxlength="80" placeholder="შეიყვანე ახალი პაროლი" autocomplete="new-password">
-    <div id="forgotPasswordError" class="forgotPasswordError"></div>
-    <div class="forgotPasswordRow">
-      <button type="button" id="forgotPasswordCancel" onclick="closeForgotPassword()">გაუქმება</button>
-      <button type="button" id="forgotPasswordSubmit" onclick="submitForgotPassword()" data-i18n-key="პაროლის შეცვლა">შეცვლა</button>
-    </div>
-    <p class="forgotPasswordHint">პაროლი შეინახება ამ მოწყობილობასა და Firebase-ში.</p>
-  </div>
-</div>
-
-<div id="forgotPasswordSuccess" aria-hidden="true">
-  <div class="forgotSuccessBox" role="dialog" aria-modal="true" aria-labelledby="forgotSuccessTitle">
-    <span class="successStar s1">✦</span><span class="successStar s2">★</span><span class="successStar s3">✦</span><span class="successStar s4">★</span><span class="successStar s5">✦</span><span class="successStar s6">★</span>
-    <div class="forgotSuccessCheck">✓</div>
-    <h2 id="forgotSuccessTitle">პაროლი წარმატებით შეიცვალა!</h2>
-    <p>ახალი პაროლი შენახულია.</p>
-    <button type="button" class="forgotSuccessClose" onclick="closeForgotPasswordSuccess()">კარგი</button>
-  </div>
-</div>
 <div id="newUserAuthModal"><div class="newUserAuthBox">
 <h2>🔐 ახალი მომხმარებლის ავტორიზაცია</h2>
 <label>1. თქვენი სახელი</label><input id="newUserAuthName" maxlength="40" pattern="[A-Za-z]+" inputmode="latin" autocomplete="username" oninput="this.value=this.value.replace(/[^A-Za-z]/g,'')" onpaste="setTimeout(()=>this.value=this.value.replace(/[^A-Za-z]/g,''),0)">
-<label>2. თქვენი ელფოსტა</label><input id="newUserAuthEmail" type="email" maxlength="120" placeholder="მაგ: temo@gmail.com" autocomplete="email">
-<label>3. თქვენი ახალი პაროლი</label><input id="newUserAuthPassword" type="password" maxlength="80" autocomplete="new-password">
-<button onclick="registerNewUser()">👤 ანგარიშის შექმნა</button>
+<label>2. თქვენი ახალი პაროლი</label><input id="newUserAuthPassword" type="password" maxlength="80">
+<button onclick="registerNewUser()">შესვლა</button>
 <button type="button" onclick="document.getElementById('newUserAuthModal').classList.remove('show');document.getElementById('loginScreen').classList.remove('hidden')" style="background:#20323b;border-color:#285269">✕ გაუქმება</button>
 </div></div><script>
+// ახალი მომხმარებლის ავტორიზაციისას მთავარი ავტორიზაციის ფანჯარა იმალება, რათა ორი ფანჯარა ერთმანეთს არ დაეფაროს.
+// გაუქმებისას მთავარი ავტორიზაციის ფანჯარა ისევ გამოჩნდება.
 </script>
 <style id="temo-swipe-navigation-style">
 /*
@@ -1922,7 +1615,7 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
   This prevents a page from changing from normal-flow -> absolute -> normal-flow
   during the animation, which was causing the visible vertical "jump".
 */
-#mainPage,#settingsPage,#userManagementPage,#walletPage{
+#mainPage,#settingsPage,#userManagementPage,#walletPage,#notesPage{
   position:fixed !important;
   left:0 !important;
   top:0 !important;
@@ -1942,14 +1635,14 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
   -webkit-backface-visibility:hidden;
   will-change:transform;
 }
-#mainPage.pageHidden,#settingsPage.pageHidden,#userManagementPage.pageHidden,#walletPage.pageHidden{
+#mainPage.pageHidden,#settingsPage.pageHidden,#userManagementPage.pageHidden,#walletPage.pageHidden,#notesPage.pageHidden{
   display:none !important;
 }
 </style>
 <script id="temo-swipe-navigation">
 (function(){
   /* One internal order for both Swipe and the four visible buttons. */
-  const NAV=['mainPage','settingsPage','userManagementPage','walletPage'];
+  const NAV=['mainPage','settingsPage','userManagementPage','walletPage','notesPage'];
   let sx=0,sy=0,dx=0,tracking=false,locked=false;
   let current=null,next=null,currentIndex=-1;
 
@@ -2174,144 +1867,199 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
 </script>
 
 
+<script id="temo-notes-script">
+/* TEMO Notes Book: Firebase-backed personal notes + browser reminders. */
+const NOTES_ROOT='/notes/';
+let notesCache=[];
+let editingNoteId='';
+let notesReminderTimer=null;
+let notesSyncTimer=null;
 
-<script id="temo-webview-button-tap-fix">
-(function(){
-  /* Android WebView safety: if a tap does not become a native click,
-     dispatch one once. Native clicks are detected and are never duplicated. */
-  const interactive='button,[role="button"],input[type="checkbox"],input[type="range"],input[type="color"],.calendarNav,.calendarTitle';
-  let nativeClick=false;
-  document.addEventListener('click',function(e){
-    if(e.target.closest(interactive)) nativeClick=true;
-  },true);
-  document.addEventListener('touchend',function(e){
-    const el=e.target.closest(interactive);
-    if(!el || el.disabled) return;
-    nativeClick=false;
-    setTimeout(function(){
-      if(nativeClick) return;
-      try{el.click();}catch(err){console.warn('WebView tap fallback failed',err)}
-    },280);
-  },{passive:true});
-})();
-</script>
-</body>
-<script id="temo-language-system">
-(function(){
-  const GLOBAL_KEY='temoLanguage';
-  const userLanguageKey=()=>{const id=String(window.currentUserId||'').trim();return id?'temoLanguage_'+id:GLOBAL_KEY;};
-  const LANGS={ka:{name:'ქართული',short:'KA',locale:'ka-GE'},en:{name:'English',short:'EN',locale:'en-US'},el:{name:'Ελληνικά',short:'EL',locale:'el-GR'}};
-  /* სრული UI ლექსიკონი: მხოლოდ პროგრამის ტექსტები, არა მომხმარებლის მიერ შეყვანილი სამუშაოების სახელები. */
-  const D={
-    'მთავარი':['Home','Αρχική'],'სეთინგები':['Settings','Ρυθμίσεις'],'მომხმარებლები':['Users','Χρήστες'],'საფულე':['Wallet','Πορτοφόλι'],'გამოსვლა':['Logout','Αποσύνδεση'],
-    'ქართული':['Georgian','Γεωργιανά'],'ენები':['Languages','Γλώσσες'],'ჩემი სამუშაო':['My Work','Η εργασία μου'],'თანხების დამალვა':['Hide amounts','Απόκρυψη ποσών'],'თანხების ჩვენება':['Show amounts','Εμφάνιση ποσών'],
-    'ამ თვის ნამუშევარი':['This month earned','Κέρδη αυτού του μήνα'],'დღიური საშუალო':['Daily average','Ημερήσιος μέσος όρος'],'მისაღები':['Receivable','Προς είσπραξη'],'ამ თვის სამუშაოები':['This month jobs','Εργασίες αυτού του μήνα'],
-    'სამუშაოს დამატება':['Add work','Προσθήκη εργασίας'],'კალენდარი':['Calendar','Ημερολόγιο'],'ორშ':['Mon','Δευ'],'სამ':['Tue','Τρι'],'ოთხ':['Wed','Τετ'],'ხუთ':['Thu','Πεμ'],'პარ':['Fri','Παρ'],'შაბ':['Sat','Σαβ'],'კვი':['Sun','Κυρ'],
-    'ნოუთი':['Notes','Σημειώσεις'],'აირჩიე თარიღი':['Choose a date','Επίλεξε ημερομηνία'],'სამუშაო':['work','εργασία'],'დღე':['days','ημέρες'],'გადახდილი':['paid','πληρωμένα'],'გადასახდელი':['unpaid','απλήρωτα'],'ამ დღეს სამუშაო არ არის':['No work on this day','Δεν υπάρχει εργασία αυτή την ημέρα'],
-    'გადაუხდელია':['Not paid','Δεν έχει πληρωθεί'],'გადახდა მივიღე':['Payment received','Πληρωμή λήφθηκε'],'შეცვლა':['Edit','Επεξεργασία'],'წაშლა':['Delete','Διαγραφή'],'შენიშვნა':['Note','Σημείωση'],'ჯერ ჩანაწერი არ არის.':['No entries yet.','Δεν υπάρχουν ακόμη καταχωρίσεις.'],
-    'სულ სამუშაოები':['Total jobs','Σύνολο εργασιών'],'მიღებული':['Received','Εισπραχθέντα'],'ჯერ მისაღები':['Still receivable','Προς είσπραξη'],'გადაუხდელი':['unpaid','απλήρωτα'],'ყველასგან მიღებულია თანხა. 🎉':['All payments received. 🎉','Έχουν εισπραχθεί όλες οι πληρωμές. 🎉'],
-    'სულ ნამუშევარი':['Total earned','Συνολικά κερδισμένα'],'სამუშაოების ფინანსები':['Work finances','Οικονομικά εργασιών'],'მონაცემების მართვა':['Data management','Διαχείριση δεδομένων'],'საიტის განახლება':['Website update','Ενημέρωση ιστοσελίδας'],'აირჩიე ფაილი':['Choose file','Επίλεξε αρχείο'],
-    'ატვირთული ფაილი უნდა იყოს index.html. Token მხოლოდ ამ ტელეფონში ინახება.':['Uploaded file must be index.html. Token is stored only on this phone.','Το αρχείο πρέπει να είναι index.html. Το Token αποθηκεύεται μόνο σε αυτή τη συσκευή.'],
-    'ჩემი ავტორიზაცია':['My authorization','Η εξουσιοδότησή μου'],'მომხმარებელი':['User','Χρήστης'],'ელფოსტა':['Email','Email'],'ნეონის მართვა':['Neon control','Έλεγχος neon'],'ფერი':['Color','Χρώμα'],'სიმძლავრე':['Strength','Ένταση'],
-    'მომხმარებლების მართვა':['User management','Διαχείριση χρηστών'],'მომხმარებლების დამატება და მართვა':['Add and manage users','Προσθήκη και διαχείριση χρηστών'],'მომხმარებლები ჯერ არ არის':['No users yet','Δεν υπάρχουν ακόμη χρήστες'],'ელფოსტა არ არის':['No email','Δεν υπάρχει email'],'განბლოკვა':['Unblock','Ξεμπλοκάρισμα'],'დაბლოკვა':['Block','Αποκλεισμός'],
-    'აირჩიე წელი':['Choose year','Επίλεξε έτος'],'დახურვა':['Close','Κλείσιμο'],'დადასტურება':['Confirmation','Επιβεβαίωση'],'ყველა სამუშაოს წასაშლელად შეიყვანე საიტზე შესასვლელი პაროლი.':['Enter the site password to delete all work.','Πληκτρολόγησε τον κωδικό πρόσβασης του site για να διαγράψεις όλες τις εργασίες.'],'გაუქმება':['Cancel','Ακύρωση'],'შენახვა':['Save','Αποθήκευση'],
-    'მისაღები თანხები':['Receivable amounts','Ποσά προς είσπραξη'],'ყველამ მომცა ფული ვისაც ემართა':['Everyone who owed me has paid','Όλοι όσοι μου χρωστούσαν πλήρωσαν'],'ჩანაწერები':['Notes','Σημειώσεις'],'სამუშაოს შეცვლა':['Edit work','Επεξεργασία εργασίας'],'თარიღი':['Date','Ημερομηνία'],'სამუშაო ადგილი / დამსაქმებელი':['Workplace / employer','Τόπος εργασίας / εργοδότης'],'თანხა (€)':['Amount (€)','Ποσό (€)'],'უკვე გადახდილია':['Already paid','Έχει ήδη πληρωθεί'],
-    'შეიყვანე პაროლი':['Enter password','Πληκτρολόγησε κωδικό'],'სახელი':['Name','Όνομα'],'პაროლი':['Password','Κωδικός'],'დაგავიწყდა პაროლი?':['Forgot password?','Ξέχασες τον κωδικό;'],'შესვლა':['Login','Σύνδεση'],'ახალი მომხმარებელი':['New user','Νέος χρήστης'],
-    'პაროლის აღდგენა':['Password recovery','Ανάκτηση κωδικού'],'შეიყვანე რეგისტრირებული ელფოსტა და დააყენე ახალი პაროლი.':['Enter your registered email and set a new password.','Πληκτρολόγησε το καταχωρημένο email σου και όρισε νέο κωδικό.'],'რეგისტრირებული ელფოსტა':['Registered email','Καταχωρημένο email'],'ახალი პაროლი':['New password','Νέος κωδικός'],'შეიყვანე ახალი პაროლი':['Enter a new password','Πληκτρολόγησε νέο κωδικό'],'პაროლის შეცვლა':['Change password','Αλλαγή κωδικού'],'პაროლი შეინახება ამ მოწყობილობასა და Firebase-ში.':['The password will be saved on this device and in Firebase.','Ο κωδικός θα αποθηκευτεί σε αυτή τη συσκευή και στο Firebase.'],'პაროლი წარმატებით შეიცვალა!':['Password changed successfully!','Ο κωδικός άλλαξε με επιτυχία!'],'ახალი პაროლი შენახულია.':['The new password has been saved.','Ο νέος κωδικός αποθηκεύτηκε.'],'კარგი':['OK','Εντάξει'],
-    'ახალი მომხმარებლის ავტორიზაცია':['New user authorization','Εξουσιοδότηση νέου χρήστη'],'1. თქვენი სახელი':['1. Your name','1. Το όνομά σας'],'2. თქვენი ელფოსტა':['2. Your email','2. Το email σας'],'3. თქვენი ახალი პაროლი':['3. Your new password','3. Ο νέος σας κωδικός'],'ანგარიშის შექმნა':['Create account','Δημιουργία λογαριασμού'],
-    'შენიშვნა:':['Note:','Σημείωση:'],'სურვილის შემთხვევაში':['Optional','Προαιρετικό'],'მაგ: გიორგი - ვილა':['e.g. Giorgi - Villa','π.χ. Giorgi - Villa'],'მაგ: 100':['e.g. 100','π.χ. 100'],'Repository':['Repository','Repository'],'GitHub Token':['GitHub Token','GitHub Token'],
-    'თანხა მიუთითე':['Enter an amount','Πληκτρολόγησε ποσό'],'თარიღი მიუთითე':['Enter a date','Επίλεξε ημερομηνία'],'წავშალოთ ეს ჩანაწერი?':['Delete this entry?','Να διαγραφεί αυτή η καταχώριση;'],'პაროლი არასწორია':['Incorrect password','Λάθος κωδικός'],'შეიყვანე ელფოსტა':['Enter email','Πληκτρολόγησε email'],'ამ ელფოსტით მომხმარებელი ვერ მოიძებნა':['No user found with this email','Δεν βρέθηκε χρήστης με αυτό το email'],'შეცდომა:':['Error:','Σφάλμα:'],
-    'Firebase პასუხს 10 წამში არ უპასუხა':['Firebase did not respond within 10 seconds','Το Firebase δεν απάντησε μέσα σε 10 δευτερόλεπτα'],'ჯერ არც ერთ მომხმარებელს არ აქვს აქტიური ანგარიში':['No user has an active account yet','Κανένας χρήστης δεν έχει ενεργό λογαριασμό ακόμη'],'შეიყვანე სახელი და პაროლი':['Enter your name and password','Πληκτρολόγησε όνομα και κωδικό'],'ეს მომხმარებელი დაბლოკილია':['This user is blocked','Αυτός ο χρήστης είναι αποκλεισμένος'],'სახელი ან პაროლი არასწორია':['Incorrect name or password','Λάθος όνομα ή κωδικός'],
-    'დავბლოკოთ ':['Block ','Αποκλεισμός '],'განვბლოკოთ ':['Unblock ','Κατάργηση αποκλεισμού '],'წავშალოთ მომხმარებელი ':['Delete user ','Διαγραφή χρήστη '],'არსებული მონაცემები შეიცვალოს ამ სარეზერვო ასლით?':['Replace existing data with this backup?','Να αντικατασταθούν τα υπάρχοντα δεδομένα με αυτό το αντίγραφο ασφαλείας;'],'მონაცემები აღდგენილია':['Data restored','Τα δεδομένα αποκαταστάθηκαν'],'ეს სარეზერვო ფაილი არასწორია':['This backup file is invalid','Αυτό το αντίγραφο ασφαλείας δεν είναι έγκυρο'],
-    'რეპოზიტორია ჩაწერე ასე: მომხმარებელი/რეპოზიტორია':['Enter repository as: user/repository','Γράψε το repository ως: user/repository'],'GitHub Token ჩაწერე':['Enter GitHub Token','Γράψε το GitHub Token'],'GitHub მონაცემები დამახსოვრებულია ამ ტელეფონში':['GitHub data saved on this device','Τα δεδομένα GitHub αποθηκεύτηκαν σε αυτή τη συσκευή'],'⬆ ატვირთე':['⬆ Upload','⬆ Μεταφόρτωση'],'აირჩიე ახალი index.html ფაილი':['Choose a new index.html file','Επίλεξε νέο αρχείο index.html'],'GitHub-თან დაკავშირება ვერ მოხერხდა':['Could not connect to GitHub','Δεν ήταν δυνατή η σύνδεση στο GitHub'],'ატვირთვა ვერ მოხერხდა':['Upload failed','Η μεταφόρτωση απέτυχε'],'📁 აირჩიე ფაილი':['📁 Choose file','📁 Επίλεξε αρχείο'],
-    'ინახება...':['Saving...','Αποθήκευση...'],'პაროლი შეიცვალა ამ მოწყობილობაზე, მაგრამ Firebase-ში შენახვა ვერ მოხერხდა':['Password changed on this device, but could not be saved to Firebase','Ο κωδικός άλλαξε σε αυτή τη συσκευή, αλλά δεν αποθηκεύτηκε στο Firebase'],'სახელი, ელფოსტა და ახალი პაროლი სამივე შეავსე':['Fill in name, email and new password','Συμπλήρωσε όνομα, email και νέο κωδικό'],'სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)':['Name must contain only Latin letters (A-Z, a-z)','Το όνομα πρέπει να περιέχει μόνο λατινικά γράμματα (A-Z, a-z)'],'შეიყვანე სწორი ელფოსტა':['Enter a valid email','Πληκτρολόγησε έγκυρο email'],'ეს სახელი ადმინისტრატორისთვისაა':['This name is reserved for the administrator','Αυτό το όνομα είναι δεσμευμένο για τον διαχειριστή'],'ასეთი მომხმარებელი უკვე არსებობს':['This user already exists','Αυτός ο χρήστης υπάρχει ήδη'],'ეს ელფოსტა უკვე გამოყენებულია':['This email is already in use','Αυτό το email χρησιμοποιείται ήδη'],
-    '0 გადასახდელი':['0 unpaid','0 απλήρωτα'],'0 დღე':['0 days','0 ημέρες'],'0 სამუშაო':['0 jobs','0 εργασίες'],'0 გადახდილი':['0 paid','0 πληρωμένα'],'შენ შეხვედი...':['You are logged in as...','Συνδέθηκες ως...'],'შენ შეხვედი':['You are logged in as','Συνδέθηκες ως']
-  };
-  const all={ka:{},en:{},el:{}};
-  Object.keys(D).forEach(k=>{all.ka[k]=k;all.en[k]=D[k][0];all.el[k]=D[k][1]});
-  let lang='ka';
-  function readStoredLanguage(){const key=userLanguageKey();const saved=localStorage.getItem(key);if(saved&&LANGS[saved])return saved;const global=localStorage.getItem(GLOBAL_KEY);return LANGS[global]?global:'ka';}
-  lang=readStoredLanguage();
-  window.getLangLocale=()=>LANGS[lang].locale;
-  window.t=k=>all[lang]?.[k]??k;
-  window.getCurrentLanguage=()=>lang;
-  window.setCurrentLanguage=(next)=>{if(!LANGS[next])next='ka';lang=next;const key=userLanguageKey();localStorage.setItem(key,lang);apply();};
-  window.restoreCurrentUserLanguage=(fallback)=>{const key=userLanguageKey();const saved=localStorage.getItem(key);const next=(saved&&LANGS[saved])?saved:((fallback&&LANGS[fallback])?fallback:'ka');lang=next;localStorage.setItem(key,lang);apply();};
-  async function persistLanguageForCurrentUser(next){
-    const id=String(window.currentUserId||'').trim();
-    if(!id)return;
-    try{
-      const r=await fetch(FIREBASE_DB_URL+'/users.json',{cache:'no-store'});
-      if(!r.ok)return;
-      const data=await r.json();
-      let users=Array.isArray(data)?data.filter(Boolean):Object.values(data||{}).filter(Boolean);
-      const target=users.find(u=>String(u?.id||'')===id);
-      if(!target)return;
-      target.language=next;
-      const put=await fetch(FIREBASE_DB_URL+'/users.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(users)});
-      if(!put.ok)throw new Error('Firebase HTTP '+put.status);
-      const local=getUsers();const me=local.find(u=>String(u.id)===id);if(me){me.language=next;localStorage.setItem(USERS_KEY,JSON.stringify(local));}
-    }catch(e){console.warn('Firebase language save failed:',e);}
-  }
-
-  /* ყოველთვის ეძებს ყველაზე გრძელ ფრაზას ჯერ, ამიტომ emoji/რიცხვები/შერეული ტექსტიც ითარგმნება. */
-  const keys=Object.keys(D).sort((a,b)=>b.length-a.length);
-  function translateText(text){
-    let out=String(text??'');
-    if(!out.trim())return out;
-    for(const k of keys){
-      const variants=[all.ka[k],all.en[k],all.el[k]].filter(Boolean).sort((a,b)=>b.length-a.length);
-      for(const from of variants){
-        if(from===out.trim()){
-          const lead=out.match(/^\s*/)?.[0]||'',trail=out.match(/\s*$/)?.[0]||'';
-          out=lead+all[lang][k]+trail; break;
-        }
-        if(out.includes(from)) out=out.split(from).join(all[lang][k]);
-      }
-    }
-    return out;
-  }
-  window.temoTranslateMessage=translateText;
-  const nativeAlert=window.alert.bind(window),nativeConfirm=window.confirm.bind(window);
-  window.alert=msg=>nativeAlert(translateText(msg));
-  window.confirm=msg=>nativeConfirm(translateText(msg));
-
-  function applyTextNodes(){
-    const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT); const nodes=[];
-    while(walker.nextNode())nodes.push(walker.currentNode);
-    nodes.forEach(n=>{
-      const p=n.parentElement;if(!p||['SCRIPT','STYLE'].includes(p.tagName)||p.closest('.languageBox'))return;
-      const v=n.nodeValue;if(!v.trim())return;
-      const translated=translateText(v);if(translated!==v)n.nodeValue=translated;
+function notesUserKey(){
+  const raw=String(currentUserId||currentUser||'').trim();
+  return raw ? encodeURIComponent(raw).replace(/%/g,'_') : '';
+}
+function notesUrl(){
+  const key=notesUserKey();
+  return key ? FIREBASE_DB_URL+NOTES_ROOT+key+'.json' : '';
+}
+function makeNoteId(){
+  return (window.crypto&&crypto.randomUUID)?crypto.randomUUID():'n_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,9);
+}
+function noteEsc(text){
+  return String(text??'').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+}
+function localToday(){
+  const d=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+}
+function localTime(){
+  const d=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  return pad(d.getHours())+':'+pad(d.getMinutes());
+}
+function formatNoteDate(date,time){
+  if(!date)return '';
+  const parts=date.split('-');
+  if(parts.length!==3)return date+(time?' '+time:'');
+  return parts[2]+'.'+parts[1]+'.'+parts[0]+(time?' • '+time:'');
+}
+function openNoteModal(note){
+  editingNoteId=note?.id||'';
+  $('noteModalTitle').textContent=editingNoteId?'✏️ ჩანაწერის შეცვლა':'➕ ახალი ჩანაწერი';
+  $('noteText').value=note?.text||'';
+  $('noteDate').value=note?.date||localToday();
+  $('noteTime').value=note?.time||localTime();
+  $('noteReminder').checked=note?.reminder!==false;
+  toggleNoteReminderFields();
+  $('noteModal').classList.add('show');
+  setTimeout(()=>$('noteText').focus(),50);
+}
+function closeNoteModal(){
+  $('noteModal').classList.remove('show');
+  editingNoteId='';
+}
+function toggleNoteReminderFields(){
+  const on=$('noteReminder').checked;
+  $('noteDate').disabled=false;
+  $('noteTime').disabled=false;
+  $('noteReminderHint').textContent=on?'შეხსენება ჩაირთვება მითითებულ თარიღსა და დროს.':'ჩანაწერი შეინახება შეხსენების გარეშე.';
+}
+async function loadNotes(){
+  const list=$('notesList');
+  if(!list)return;
+  const url=notesUrl();
+  if(!url){renderNotes();return;}
+  try{
+    const r=await fetch(url,{cache:'no-store'});
+    if(!r.ok)throw new Error('Firebase HTTP '+r.status);
+    const data=await r.json();
+    notesCache=Array.isArray(data)?data.filter(Boolean):Object.entries(data||{}).map(([id,n])=>({...n,id}));
+    notesCache=notesCache.map(n=>({id:String(n.id||makeNoteId()),text:String(n.text||''),date:String(n.date||''),time:String(n.time||''),reminder:n.reminder!==false,done:n.done===true,notifiedAt:Number(n.notifiedAt||0),updatedAt:Number(n.updatedAt||0)}));
+    notesCache.sort((a,b)=>{
+      const ak=(a.date||'9999-99-99')+' '+(a.time||'99:99');
+      const bk=(b.date||'9999-99-99')+' '+(b.time||'99:99');
+      return ak.localeCompare(bk);
     });
+  }catch(e){
+    console.warn('Firebase notes read failed:',e);
   }
-  function apply(){
-    document.documentElement.lang=lang;
-    const btn=document.getElementById('languageBtn');if(btn)btn.textContent='🌐 '+LANGS[lang].short;
-    document.querySelectorAll('.languageOption').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));
-    document.querySelectorAll('[data-i18n-key]').forEach(el=>el.textContent=t(el.dataset.i18nKey));
-    const attrMap={loginName:{placeholder:'სახელი'},loginPassword:{placeholder:'პაროლი'},forgotPasswordEmail:{placeholder:'მაგ: temo@gmail.com'},forgotPasswordNew:{placeholder:'შეიყვანე ახალი პაროლი'},newUserAuthEmail:{placeholder:'მაგ: temo@gmail.com'},ghToken:{placeholder:'GitHub Token'},deleteAuthPassword:{placeholder:'პაროლი'},place:{placeholder:'მაგ: გიორგი - ვილა'},money:{placeholder:'მაგ: 100'},note:{placeholder:'სურვილის შემთხვევაში'}};
-    Object.entries(attrMap).forEach(([id,a])=>{const el=document.getElementById(id);if(el)for(const [x,k] of Object.entries(a))el.setAttribute(x,t(k));});
-    const eye=document.getElementById('privacyEye');if(eye){const hidden=localStorage.getItem('temoPrivacyHidden')==='yes';eye.title=t(hidden?'თანხების ჩვენება':'თანხების დამალვა');eye.setAttribute('aria-label',eye.title)}
-    const todayEl=document.getElementById('today');if(todayEl)todayEl.textContent=new Date().toLocaleDateString(LANGS[lang].locale);
-    applyTextNodes();
-    if(typeof render==='function')render();
-    if(typeof updateUserUI==='function')updateUserUI();
-    if(typeof renderReceivableModal==='function'&&document.getElementById('receivableModal')?.classList.contains('show'))renderReceivableModal();
-    if(typeof renderManagedUsers==='function'&&typeof currentUser!=='undefined'&&currentUser===ADMIN_USER)renderManagedUsers();
-    /* render()-ის შემდეგ გენერირებული ტექსტიც გადაითარგმნოს */
-    applyTextNodes();
-    const titleKa='TEMO სამუშაო ანგარიში';document.title=lang==='ka'?titleKa:lang==='en'?'TEMO Work Tracker':'TEMO Εργασίες';
+  renderNotes();
+  checkNoteReminders();
+}
+function renderNotes(){
+  const list=$('notesList');
+  if(!list)return;
+  if(!notesCache.length){list.innerHTML='<div class="noteEmpty">📖 ჯერ ჩანაწერები არ გაქვს.<br>დააჭირე „➕ ახალი ჩანაწერი“-ს.</div>';return;}
+  list.innerHTML=notesCache.map(n=>{
+    const reminder=n.reminder?'🔔 შეხსენება ჩართულია':'🔕 შეხსენება გამორთულია';
+    return `<div class="noteCard ${n.done?'done':''}" data-note-id="${noteEsc(n.id)}">
+      <div class="noteTop"><div class="noteText">${noteEsc(n.text)}</div><div>${n.done?'✅':''}</div></div>
+      <div class="noteTime">${noteEsc(formatNoteDate(n.date,n.time))}</div>
+      <div class="noteReminder">${reminder}</div>
+      <div class="noteActions">
+        <button type="button" onclick="toggleNoteDone('${noteEsc(n.id)}')">${n.done?'↩️ აქტიური':'✅ შესრულდა'}</button>
+        <button type="button" onclick="editNote('${noteEsc(n.id)}')">✏️ შეცვლა</button>
+        <button type="button" class="danger" onclick="deleteNote('${noteEsc(n.id)}')">🗑️ წაშლა</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function editNote(id){
+  const n=notesCache.find(x=>x.id===id);
+  if(n)openNoteModal(n);
+}
+async function saveNotesRemote(){
+  const url=notesUrl();
+  if(!url)throw new Error('მომხმარებელი ჯერ არ არის ავტორიზებული');
+  const r=await fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(notesCache)});
+  if(!r.ok)throw new Error('Firebase HTTP '+r.status);
+}
+async function saveNote(){
+  const text=String($('noteText').value||'').trim();
+  const date=String($('noteDate').value||'').trim();
+  const time=String($('noteTime').value||'').trim();
+  const reminder=$('noteReminder').checked;
+  if(!text){alert('ჩანაწერი ცარიელი არ უნდა იყოს');$('noteText').focus();return;}
+  if(reminder && (!date||!time)){alert('შეხსენებისთვის თარიღი და საათი ორივე უნდა მიუთითო');return;}
+  if(reminder && new Date(date+'T'+time).getTime()<=Date.now()){
+    alert('შეხსენების დრო მომავალში უნდა იყოს');return;
   }
-  function prepare(){
-    const btn=document.getElementById('languageBtn'),menu=document.getElementById('languageMenu');
-    if(btn&&menu){
-      btn.addEventListener('click',e=>{e.stopPropagation();menu.classList.toggle('show')});
-      document.addEventListener('click',()=>menu.classList.remove('show'));
-      document.querySelectorAll('.languageOption').forEach(b=>b.addEventListener('click',()=>{lang=b.dataset.lang;localStorage.setItem(userLanguageKey(),lang);menu.classList.remove('show');apply();persistLanguageForCurrentUser(lang)}));
+  if(reminder && 'Notification' in window && Notification.permission==='default'){
+    try{await Notification.requestPermission();}catch(e){console.warn('Notification permission failed:',e);}
+  }
+  const now=Date.now();
+  const base={text,date,time,reminder,done:false,notifiedAt:0,updatedAt:now};
+  if(editingNoteId){
+    const i=notesCache.findIndex(n=>n.id===editingNoteId);
+    if(i>=0)notesCache[i]={...notesCache[i],...base};
+  }else{
+    notesCache.push({id:makeNoteId(),...base});
+  }
+  try{
+    await saveNotesRemote();
+    closeNoteModal();
+    renderNotes();
+    checkNoteReminders();
+  }catch(e){
+    alert('ჩანაწერი Firebase-ში ვერ შეინახა.\n\n'+(e?.message||''));
+    await loadNotes();
+  }
+}
+async function toggleNoteDone(id){
+  const n=notesCache.find(x=>x.id===id);if(!n)return;
+  n.done=!n.done;n.updatedAt=Date.now();
+  try{await saveNotesRemote();renderNotes();}catch(e){alert('ცვლილება ვერ შეინახა Firebase-ში.');await loadNotes();}
+}
+async function deleteNote(id){
+  const n=notesCache.find(x=>x.id===id);if(!n)return;
+  if(!confirm('ეს ჩანაწერი წავშალოთ?'))return;
+  notesCache=notesCache.filter(x=>x.id!==id);
+  try{await saveNotesRemote();renderNotes();}catch(e){alert('ჩანაწერი ვერ წაიშალა Firebase-დან.');await loadNotes();}
+}
+function playNoteAlarm(){
+  try{
+    const C=window.AudioContext||window.webkitAudioContext;if(!C)return;
+    const ctx=new C();
+    const now=ctx.currentTime;
+    [[659,0],[784,.16],[988,.32],[784,.48],[659,.64]].forEach(([freq,at])=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.value=freq;
+      g.gain.setValueAtTime(.0001,now+at);g.gain.exponentialRampToValueAtTime(.18,now+at+.03);g.gain.exponentialRampToValueAtTime(.0001,now+at+.22);
+      o.connect(g);g.connect(ctx.destination);o.start(now+at);o.stop(now+at+.24);
+    });
+    setTimeout(()=>ctx.close().catch(()=>{}),1400);
+  }catch(e){console.warn('Note alarm audio blocked:',e);}
+}
+function checkNoteReminders(){
+  const now=Date.now();
+  let changed=false;
+  notesCache.forEach(n=>{
+    if(n.done||!n.reminder||!n.date||!n.time)return;
+    const due=new Date(n.date+'T'+n.time).getTime();
+    if(!Number.isFinite(due)||due>now)return;
+    if(n.notifiedAt && Math.abs(now-n.notifiedAt)<24*60*60*1000)return;
+    n.notifiedAt=now;changed=true;
+    playNoteAlarm();
+    if('Notification' in window && Notification.permission==='granted'){
+      try{new Notification('📖 TEMO — ჩანაწერის შეხსენება',{body:n.text+'\n'+formatNoteDate(n.date,n.time),tag:'temo-note-'+n.id});}catch(e){console.warn('Notification failed:',e);}
+    }else{
+      try{alert('🔔 '+n.text+'\n'+formatNoteDate(n.date,n.time));}catch(e){}
     }
-    apply();
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',prepare);else prepare();
-})();
-</script></html>
+  });
+  if(changed)saveNotesRemote().catch(e=>console.warn('Reminder state save failed:',e));
+}
+function startNotesReminderWatcher(){
+  if(notesReminderTimer)clearInterval(notesReminderTimer);
+  if(notesSyncTimer)clearInterval(notesSyncTimer);
+  notesReminderTimer=setInterval(checkNoteReminders,15000);
+  notesSyncTimer=setInterval(()=>{
+    const p=$('notesPage');
+    if(p&&!p.classList.contains('pageHidden'))loadNotes();
+  },30000);
+}
+startNotesReminderWatcher();
+</script>
+
+</body>
+</html>
