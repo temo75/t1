@@ -441,6 +441,14 @@ body.neon-global .userName{
 @media(max-width:520px){#notesPage .notesHeader{align-items:stretch}.notesAddBtn{width:100%}#notesPage .notesTitle{font-size:23px}}
 </style>
 
+<script>
+/* TEMO notes notification service worker */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./temo-notes-sw.js', {scope:'./'}).catch(e => console.warn('Notes service worker registration failed:', e));
+  });
+}
+</script>
 </head>
 <body>
 <nav id="bottomNav">
