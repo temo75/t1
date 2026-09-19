@@ -1986,8 +1986,10 @@ async function saveNote(){
   if(reminder && new Date(date+'T'+time).getTime()<=Date.now()){
     alert('შეხსენების დრო მომავალში უნდა იყოს');return;
   }
-  if(reminder && 'Notification' in window && Notification.permission==='default'){
-    try{await Notification.requestPermission();}catch(e){console.warn('Notification permission failed:',e);}
+  if(reminder && 'Notification' in window){
+    try{
+      if(Notification.permission==='default') await Notification.requestPermission();
+    }catch(e){console.warn('Notification permission failed:',e);}
   }
   const now=Date.now();
   const base={text,date,time,reminder,done:false,notifiedAt:0,updatedAt:now};
@@ -2042,13 +2044,31 @@ function checkNoteReminders(){
     n.notifiedAt=now;changed=true;
     playNoteAlarm();
     if('Notification' in window && Notification.permission==='granted'){
-      try{new Notification('📖 TEMO — ჩანაწერის შეხსენება',{body:n.text+'\n'+formatNoteDate(n.date,n.time),tag:'temo-note-'+n.id});}catch(e){console.warn('Notification failed:',e);}
+      try{
+        const title='📖 TEMO — ჩანაწერის შეხსენება';
+        const body=n.text+'\n'+formatNoteDate(n.date,n.time);
+        if('serviceWorker' in navigator){
+          navigator.serviceWorker.ready.then(reg=>{
+            if(reg && reg.showNotification){
+              return reg.showNotification(title,{body,tag:'temo-note-'+n.id,renotify:true,requireInteraction:true});
+            }
+            return new Notification(title,{body,tag:'temo-note-'+n.id});
+          }).catch(()=>{try{new Notification(title,{body,tag:'temo-note-'+n.id});}catch(e){}});
+        }else{
+          new Notification(title,{body,tag:'temo-note-'+n.id});
+        }
+      }catch(e){console.warn('Notification failed:',e);}
     }else{
       try{alert('🔔 '+n.text+'\n'+formatNoteDate(n.date,n.time));}catch(e){}
     }
   });
   if(changed)saveNotesRemote().catch(e=>console.warn('Reminder state save failed:',e));
 }
+async function getNotesNotificationRegistration(){
+  if(!('serviceWorker' in navigator))return null;
+  try{return await navigator.serviceWorker.getRegistration();}catch(e){return null;}
+}
+
 function startNotesReminderWatcher(){
   if(notesReminderTimer)clearInterval(notesReminderTimer);
   if(notesSyncTimer)clearInterval(notesSyncTimer);
