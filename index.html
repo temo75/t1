@@ -451,6 +451,14 @@ body.neon-global .userName{
 .languageOption:hover,.languageOption.active{background:rgba(54,184,255,.16);color:#fff}
 @media(max-width:520px){.languageBtn{padding:5px 7px;font-size:11px}.languageMenu{min-width:110px}}
 </style>
+<style id="iphone-notes-nav-fix">
+/* iPhone: keep all 5 page buttons visible and equal width */
+#bottomNav{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:stretch!important;justify-content:stretch!important;gap:4px!important;width:100%!important;box-sizing:border-box!important;}
+#bottomNav > button{display:flex!important;flex:1 1 0!important;width:auto!important;min-width:0!important;max-width:none!important;margin:0!important;padding:4px 1px!important;box-sizing:border-box!important;visibility:visible!important;opacity:1!important;}
+#bottomNav > button .navLogo{display:flex!important;align-items:center!important;justify-content:center!important;width:32px!important;height:32px!important;margin:auto!important;font-size:20px!important;line-height:1!important;}
+#bottomNav > button:nth-child(5){display:flex!important;visibility:visible!important;opacity:1!important;}
+@media(max-width:430px){#bottomNav > button{padding-left:0!important;padding-right:0!important}#bottomNav > button .navLogo{width:30px!important;height:30px!important;font-size:19px!important}}
+</style>
 </head>
 <body>
 <nav id="bottomNav">
@@ -458,7 +466,7 @@ body.neon-global .userName{
   <button type="button" onclick="goSettings()" aria-label="სეთინგები" title="სეთინგები"><span class="navLogo">⚙️</span></button>
   <button type="button" onclick="goUsers()" aria-label="მომხმარებლები" title="მომხმარებლები"><span class="navLogo">👥</span></button>
   <button type="button" onclick="goWallet()" aria-label="საფულე" title="საფულე"><span class="navLogo">💰</span></button>
-  <button type="button" id="notesNavButton" onclick="goNotes()" aria-label="ჩანაწერების წიგნი" title="ჩანაწერების წიგნი"><span class="navLogo">📖</span></button>
+  <button type="button" onclick="goNotes()" aria-label="ჩანაწერების წიგნი" title="ჩანაწერების წიგნი"><span class="navLogo">📖</span></button>
   <button type="button" onclick="logout()" class="logoutNav" aria-label="გამოსვლა" title="გამოსვლა"><span class="navLogo">🚪</span></button>
 </nav>
 
@@ -978,22 +986,6 @@ function goSettings(){temoNavigatePage('settingsPage')}
 function goUsers(){if(currentUser===ADMIN_USER)temoNavigatePage('userManagementPage')}
 function goWallet(){temoNavigatePage('walletPage')}
 function goNotes(){temoNavigatePage('notesPage');loadNotes()}
-
-// iPhone/iOS tap fallback for the Notes button.
-(function(){
-  function bindNotesButton(){
-    const b=document.getElementById('notesNavButton');
-    if(!b || b.dataset.iosNotesBound==='1')return;
-    b.dataset.iosNotesBound='1';
-    b.addEventListener('touchend',function(e){
-      e.preventDefault();
-      e.stopPropagation();
-      goNotes();
-    },{passive:false});
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindNotesButton);
-  else bindNotesButton();
-})();
 
 
 function togglePrivacy(){
@@ -1933,7 +1925,7 @@ function formatNoteDate(date,time){
 }
 function openNoteModal(note){
   editingNoteId=note?.id||'';
-  $('noteModalTitle').textContent=editingNoteId?notesUi('✏️ ჩანაწერის შეცვლა','✏️ ჩანაწერის შეცვლა'):notesUi('➕ ახალი ჩანაწერი','➕ ახალი ჩანაწერი');
+  $('noteModalTitle').textContent=editingNoteId?'✏️ ჩანაწერის შეცვლა':'➕ ახალი ჩანაწერი';
   $('noteText').value=note?.text||'';
   $('noteDate').value=note?.date||localToday();
   $('noteTime').value=note?.time||localTime();
@@ -1950,9 +1942,7 @@ function toggleNoteReminderFields(){
   const on=$('noteReminder').checked;
   $('noteDate').disabled=false;
   $('noteTime').disabled=false;
-  $('noteReminderHint').textContent=on
-    ?notesUi('შეხსენება ჩაირთვება მითითებულ თარიღსა და დროს.','შეხსენება ჩაირთვება მითითებულ თარიღსა და დროს.')
-    :notesUi('ჩანაწერი შეინახება შეხსენების გარეშე.','ჩანაწერი შეინახება შეხსენების გარეშე.');
+  $('noteReminderHint').textContent=on?'შეხსენება ჩაირთვება მითითებულ თარიღსა და დროს.':'ჩანაწერი შეინახება შეხსენების გარეშე.';
 }
 async function loadNotes(){
   const list=$('notesList');
@@ -1976,31 +1966,20 @@ async function loadNotes(){
   renderNotes();
   checkNoteReminders();
 }
-function notesUi(key, fallback){
-  try{
-    if(typeof window.t==='function')return window.t(key);
-  }catch(e){}
-  return fallback||key;
-}
 function renderNotes(){
   const list=$('notesList');
   if(!list)return;
-  if(!notesCache.length){
-    list.innerHTML=`<div class="noteEmpty">${notesUi('📖 ჯერ ჩანაწერები არ გაქვს.','📖 ჯერ ჩანაწერები არ გაქვს.')}<br>${notesUi('დააჭირე „➕ ახალი ჩანაწერი“-ს.','დააჭირე „➕ ახალი ჩანაწერი“-ს.')}</div>`;
-    return;
-  }
+  if(!notesCache.length){list.innerHTML='<div class="noteEmpty">📖 ჯერ ჩანაწერები არ გაქვს.<br>დააჭირე „➕ ახალი ჩანაწერი“-ს.</div>';return;}
   list.innerHTML=notesCache.map(n=>{
-    const reminder=n.reminder
-      ?notesUi('🔔 შეხსენება ჩართულია','🔔 შეხსენება ჩართულია')
-      :notesUi('🔕 შეხსენება გამორთულია','🔕 შეხსენება გამორთულია');
+    const reminder=n.reminder?'🔔 შეხსენება ჩართულია':'🔕 შეხსენება გამორთულია';
     return `<div class="noteCard ${n.done?'done':''}" data-note-id="${noteEsc(n.id)}">
-      <div class="noteTop"><div class="noteText" data-user-content="true">${noteEsc(n.text)}</div><div>${n.done?'✅':''}</div></div>
+      <div class="noteTop"><div class="noteText">${noteEsc(n.text)}</div><div>${n.done?'✅':''}</div></div>
       <div class="noteTime">${noteEsc(formatNoteDate(n.date,n.time))}</div>
       <div class="noteReminder">${reminder}</div>
       <div class="noteActions">
-        <button type="button" onclick="toggleNoteDone('${noteEsc(n.id)}')">${n.done?notesUi('↩️ აქტიური','↩️ აქტიური'):notesUi('✅ შესრულდა','✅ შესრულდა')}</button>
-        <button type="button" onclick="editNote('${noteEsc(n.id)}')">${notesUi('✏️ შეცვლა','✏️ შეცვლა')}</button>
-        <button type="button" class="danger" onclick="deleteNote('${noteEsc(n.id)}')">${notesUi('🗑️ წაშლა','🗑️ წაშლა')}</button>
+        <button type="button" onclick="toggleNoteDone('${noteEsc(n.id)}')">${n.done?'↩️ აქტიური':'✅ შესრულდა'}</button>
+        <button type="button" onclick="editNote('${noteEsc(n.id)}')">✏️ შეცვლა</button>
+        <button type="button" class="danger" onclick="deleteNote('${noteEsc(n.id)}')">🗑️ წაშლა</button>
       </div>
     </div>`;
   }).join('');
@@ -2123,14 +2102,6 @@ startNotesReminderWatcher();
     'საფულე':['Wallet','Πορτοφόλι'],
     'გამოსვლა':['Logout','Αποσύνδεση'],
     'ჩანაწერების წიგნი':['Notes Book','Βιβλίο σημειώσεων'],
-    '➕ ახალი ჩანაწერი':['➕ New note','➕ Νέα σημείωση'],
-    '✏️ ჩანაწერის შეცვლა':['✏️ Edit note','✏️ Επεξεργασία σημείωσης'],
-    '📝 ჩანაწერი':['📝 Note','📝 Σημείωση'],
-    '📅 თარიღი':['📅 Date','📅 Ημερομηνία'],
-    '⏰ საათი':['⏰ Time','⏰ Ώρα'],
-    '🔔 შეხსენება':['🔔 Reminder','🔔 Υπενθύμιση'],
-    '✕ გაუქმება':['✕ Cancel','✕ Ακύρωση'],
-    '💾 შენახვა':['💾 Save','💾 Αποθήκευση'],
     '➕ ახალი მომხმარებელი':['➕ New user','➕ Νέος χρήστης'],
     'შენი პირადი ჩანაწერები და შეხსენებები':['Your personal notes and reminders','Οι προσωπικές σου σημειώσεις και υπενθυμίσεις'],
     'ყველა თვე':['All months','Όλοι οι μήνες'],
@@ -2373,7 +2344,7 @@ startNotesReminderWatcher();
   function isUserContent(node){
     const p=node?.parentElement;
     if(!p)return false;
-    return !!p.closest('[data-user-content="true"],.noteText,.receivablePlace,.noteLine b,.noteEntry .meta') || !!(p.closest('.item') && (p.classList.contains('meta') || p.tagName==='B'));
+    return !!p.closest('.noteText,.receivablePlace,.noteLine b,.noteEntry .meta,[data-user-content="true"]') || !!(p.closest('.item') && (p.classList.contains('meta') || p.tagName==='B'));
   }
 
   function applyTextNodes(root=document.body){
