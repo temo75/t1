@@ -458,7 +458,7 @@ body.neon-global .userName{
   <button type="button" onclick="goSettings()" aria-label="სეთინგები" title="სეთინგები"><span class="navLogo">⚙️</span></button>
   <button type="button" onclick="goUsers()" aria-label="მომხმარებლები" title="მომხმარებლები"><span class="navLogo">👥</span></button>
   <button type="button" onclick="goWallet()" aria-label="საფულე" title="საფულე"><span class="navLogo">💰</span></button>
-  <button type="button" onclick="goNotes()" aria-label="ჩანაწერების წიგნი" title="ჩანაწერების წიგნი"><span class="navLogo">📖</span></button>
+  <button type="button" id="notesNavButton" onclick="goNotes()" aria-label="ჩანაწერების წიგნი" title="ჩანაწერების წიგნი"><span class="navLogo">📖</span></button>
   <button type="button" onclick="logout()" class="logoutNav" aria-label="გამოსვლა" title="გამოსვლა"><span class="navLogo">🚪</span></button>
 </nav>
 
@@ -978,6 +978,22 @@ function goSettings(){temoNavigatePage('settingsPage')}
 function goUsers(){if(currentUser===ADMIN_USER)temoNavigatePage('userManagementPage')}
 function goWallet(){temoNavigatePage('walletPage')}
 function goNotes(){temoNavigatePage('notesPage');loadNotes()}
+
+// iPhone/iOS tap fallback for the Notes button.
+(function(){
+  function bindNotesButton(){
+    const b=document.getElementById('notesNavButton');
+    if(!b || b.dataset.iosNotesBound==='1')return;
+    b.dataset.iosNotesBound='1';
+    b.addEventListener('touchend',function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      goNotes();
+    },{passive:false});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindNotesButton);
+  else bindNotesButton();
+})();
 
 
 function togglePrivacy(){
