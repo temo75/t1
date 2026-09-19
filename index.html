@@ -2053,6 +2053,21 @@ function renderNotes(){
     </div>`;
   }).join('');
 }
+function scheduleNativeNoteReminder(note){
+  try{
+    if(typeof window.AndroidReminder==='undefined'||!window.AndroidReminder||typeof window.AndroidReminder.scheduleReminder!=='function')return;
+    if(note.done||!note.reminder||!note.date||!note.time)return;
+    const triggerAtMillis=new Date(note.date+'T'+note.time).getTime();
+    if(!Number.isFinite(triggerAtMillis)||triggerAtMillis<=Date.now())return;
+    window.AndroidReminder.scheduleReminder(String(note.id),triggerAtMillis,String(note.text||''));
+  }catch(e){console.warn('Native reminder schedule failed:',e);}
+}
+function cancelNativeNoteReminder(noteId){
+  try{
+    if(typeof window.AndroidReminder==='undefined'||!window.AndroidReminder||typeof window.AndroidReminder.cancelReminder!=='function')return;
+    window.AndroidReminder.cancelReminder(String(noteId));
+  }catch(e){console.warn('Native reminder cancel failed:',e);}
+}
 function editNote(id){
   const n=notesCache.find(x=>x.id===id);
   if(n)openNoteModal(n);
@@ -2078,14 +2093,20 @@ async function saveNote(){
   }
   const now=Date.now();
   const base={text,date,time,reminder,done:false,notifiedAt:0,updatedAt:now};
+  let savedNoteId=editingNoteId;
   if(editingNoteId){
     const i=notesCache.findIndex(n=>n.id===editingNoteId);
     if(i>=0)notesCache[i]={...notesCache[i],...base};
   }else{
-    notesCache.push({id:makeNoteId(),...base});
+    const newNote={id:makeNoteId(),...base};
+    savedNoteId=newNote.id;
+    notesCache.push(newNote);
   }
   try{
     await saveNotesRemote();
+    cancelNativeNoteReminder(savedNoteId);
+    const savedNote=notesCache.find(n=>n.id===savedNoteId);
+    if(savedNote)scheduleNativeNoteReminder(savedNote);
     closeNoteModal();
     renderNotes();
     checkNoteReminders();
@@ -2097,13 +2118,18 @@ async function saveNote(){
 async function toggleNoteDone(id){
   const n=notesCache.find(x=>x.id===id);if(!n)return;
   n.done=!n.done;n.updatedAt=Date.now();
-  try{await saveNotesRemote();renderNotes();}catch(e){alert('ცვლილება ვერ შეინახა Firebase-ში.');await loadNotes();}
+  try{
+    await saveNotesRemote();
+    if(n.done)cancelNativeNoteReminder(n.id);
+    else scheduleNativeNoteReminder(n);
+    renderNotes();
+  }catch(e){alert('ცვლილება ვერ შეინახა Firebase-ში.');await loadNotes();}
 }
 async function deleteNote(id){
   const n=notesCache.find(x=>x.id===id);if(!n)return;
   if(!confirm('ეს ჩანაწერი წავშალოთ?'))return;
   notesCache=notesCache.filter(x=>x.id!==id);
-  try{await saveNotesRemote();renderNotes();}catch(e){alert('ჩანაწერი ვერ წაიშალა Firebase-დან.');await loadNotes();}
+  try{await saveNotesRemote();cancelNativeNoteReminder(id);renderNotes();}catch(e){alert('ჩანაწერი ვერ წაიშალა Firebase-დან.');await loadNotes();}
 }
 function playNoteAlarm(){
   try{
