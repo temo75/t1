@@ -2075,43 +2075,225 @@ startNotesReminderWatcher();
 (function(){
   const GLOBAL_KEY='temoLanguage';
   const userLanguageKey=()=>{const id=String(window.currentUserId||'').trim();return id?'temoLanguage_'+id:GLOBAL_KEY;};
-  const LANGS={ka:{name:'ქართული',short:'KA',locale:'ka-GE'},en:{name:'English',short:'EN',locale:'en-US'},el:{name:'Ελληνικά',short:'EL',locale:'el-GR'}};
-  /* სრული UI ლექსიკონი: მხოლოდ პროგრამის ტექსტები, არა მომხმარებლის მიერ შეყვანილი სამუშაოების სახელები. */
-  const D={
-    'მთავარი':['Home','Αρχική'],'სეთინგები':['Settings','Ρυθμίσεις'],'მომხმარებლები':['Users','Χρήστες'],'საფულე':['Wallet','Πορτοφόλι'],'გამოსვლა':['Logout','Αποσύνδεση'],
-    'ქართული':['Georgian','Γεωργιανά'],'ენები':['Languages','Γλώσσες'],'ჩემი სამუშაო':['My Work','Η εργασία μου'],'თანხების დამალვა':['Hide amounts','Απόκρυψη ποσών'],'თანხების ჩვენება':['Show amounts','Εμφάνιση ποσών'],
-    'ამ თვის ნამუშევარი':['This month earned','Κέρδη αυτού του μήνα'],'დღიური საშუალო':['Daily average','Ημερήσιος μέσος όρος'],'მისაღები':['Receivable','Προς είσπραξη'],'ამ თვის სამუშაოები':['This month jobs','Εργασίες αυτού του μήνα'],
-    'სამუშაოს დამატება':['Add work','Προσθήκη εργασίας'],'კალენდარი':['Calendar','Ημερολόγιο'],'ორშ':['Mon','Δευ'],'სამ':['Tue','Τρι'],'ოთხ':['Wed','Τετ'],'ხუთ':['Thu','Πεμ'],'პარ':['Fri','Παρ'],'შაბ':['Sat','Σαβ'],'კვი':['Sun','Κυρ'],
-    'ნოუთი':['Notes','Σημειώσεις'],'აირჩიე თარიღი':['Choose a date','Επίλεξε ημερομηνία'],'სამუშაო':['work','εργασία'],'დღე':['days','ημέρες'],'გადახდილი':['paid','πληρωμένα'],'გადასახდელი':['unpaid','απλήρωτα'],'ამ დღეს სამუშაო არ არის':['No work on this day','Δεν υπάρχει εργασία αυτή την ημέρα'],
-    'გადაუხდელია':['Not paid','Δεν έχει πληρωθεί'],'გადახდა მივიღე':['Payment received','Πληρωμή λήφθηκε'],'შეცვლა':['Edit','Επεξεργασία'],'წაშლა':['Delete','Διαγραφή'],'შენიშვნა':['Note','Σημείωση'],'ჯერ ჩანაწერი არ არის.':['No entries yet.','Δεν υπάρχουν ακόμη καταχωρίσεις.'],
-    'სულ სამუშაოები':['Total jobs','Σύνολο εργασιών'],'მიღებული':['Received','Εισπραχθέντα'],'ჯერ მისაღები':['Still receivable','Προς είσπραξη'],'გადაუხდელი':['unpaid','απλήρωτα'],'ყველასგან მიღებულია თანხა. 🎉':['All payments received. 🎉','Έχουν εισπραχθεί όλες οι πληρωμές. 🎉'],
-    'სულ ნამუშევარი':['Total earned','Συνολικά κερδισμένα'],'სამუშაოების ფინანსები':['Work finances','Οικονομικά εργασιών'],'მონაცემების მართვა':['Data management','Διαχείριση δεδομένων'],'საიტის განახლება':['Website update','Ενημέρωση ιστοσελίδας'],'აირჩიე ფაილი':['Choose file','Επίλεξε αρχείο'],
-    'ატვირთული ფაილი უნდა იყოს index.html. Token მხოლოდ ამ ტელეფონში ინახება.':['Uploaded file must be index.html. Token is stored only on this phone.','Το αρχείο πρέπει να είναι index.html. Το Token αποθηκεύεται μόνο σε αυτή τη συσκευή.'],
-    'ჩემი ავტორიზაცია':['My authorization','Η εξουσιοδότησή μου'],'მომხმარებელი':['User','Χρήστης'],'ელფოსტა':['Email','Email'],'ნეონის მართვა':['Neon control','Έλεγχος neon'],'ფერი':['Color','Χρώμα'],'სიმძლავრე':['Strength','Ένταση'],
-    'მომხმარებლების მართვა':['User management','Διαχείριση χρηστών'],'მომხმარებლების დამატება და მართვა':['Add and manage users','Προσθήκη και διαχείριση χρηστών'],'მომხმარებლები ჯერ არ არის':['No users yet','Δεν υπάρχουν ακόμη χρήστες'],'ელფოსტა არ არის':['No email','Δεν υπάρχει email'],'განბლოკვა':['Unblock','Ξεμπλοκάρισμα'],'დაბლოკვა':['Block','Αποκλεισμός'],
-    'აირჩიე წელი':['Choose year','Επίλεξε έτος'],'დახურვა':['Close','Κλείσιμο'],'დადასტურება':['Confirmation','Επιβεβαίωση'],'ყველა სამუშაოს წასაშლელად შეიყვანე საიტზე შესასვლელი პაროლი.':['Enter the site password to delete all work.','Πληκτρολόγησε τον κωδικό πρόσβασης του site για να διαγράψεις όλες τις εργασίες.'],'გაუქმება':['Cancel','Ακύρωση'],'შენახვა':['Save','Αποθήκευση'],
-    'მისაღები თანხები':['Receivable amounts','Ποσά προς είσπραξη'],'ყველამ მომცა ფული ვისაც ემართა':['Everyone who owed me has paid','Όλοι όσοι μου χρωστούσαν πλήρωσαν'],'ჩანაწერები':['Notes','Σημειώσεις'],'სამუშაოს შეცვლა':['Edit work','Επεξεργασία εργασίας'],'თარიღი':['Date','Ημερομηνία'],'სამუშაო ადგილი / დამსაქმებელი':['Workplace / employer','Τόπος εργασίας / εργοδότης'],'თანხა (€)':['Amount (€)','Ποσό (€)'],'უკვე გადახდილია':['Already paid','Έχει ήδη πληρωθεί'],
-    'შეიყვანე პაროლი':['Enter password','Πληκτρολόγησε κωδικό'],'სახელი':['Name','Όνομα'],'პაროლი':['Password','Κωδικός'],'დაგავიწყდა პაროლი?':['Forgot password?','Ξέχασες τον κωδικό;'],'შესვლა':['Login','Σύνδεση'],'ახალი მომხმარებელი':['New user','Νέος χρήστης'],
-    'პაროლის აღდგენა':['Password recovery','Ανάκτηση κωδικού'],'შეიყვანე რეგისტრირებული ელფოსტა და დააყენე ახალი პაროლი.':['Enter your registered email and set a new password.','Πληκτρολόγησε το καταχωρημένο email σου και όρισε νέο κωδικό.'],'რეგისტრირებული ელფოსტა':['Registered email','Καταχωρημένο email'],'ახალი პაროლი':['New password','Νέος κωδικός'],'შეიყვანე ახალი პაროლი':['Enter a new password','Πληκτρολόγησε νέο κωδικό'],'პაროლის შეცვლა':['Change password','Αλλαγή κωδικού'],'პაროლი შეინახება ამ მოწყობილობასა და Firebase-ში.':['The password will be saved on this device and in Firebase.','Ο κωδικός θα αποθηκευτεί σε αυτή τη συσκευή και στο Firebase.'],'პაროლი წარმატებით შეიცვალა!':['Password changed successfully!','Ο κωδικός άλλαξε με επιτυχία!'],'ახალი პაროლი შენახულია.':['The new password has been saved.','Ο νέος κωδικός αποθηκεύτηκε.'],'კარგი':['OK','Εντάξει'],
-    'ახალი მომხმარებლის ავტორიზაცია':['New user authorization','Εξουσιοδότηση νέου χρήστη'],'1. თქვენი სახელი':['1. Your name','1. Το όνομά σας'],'2. თქვენი ელფოსტა':['2. Your email','2. Το email σας'],'3. თქვენი ახალი პაროლი':['3. Your new password','3. Ο νέος σας κωδικός'],'ანგარიშის შექმნა':['Create account','Δημιουργία λογαριασμού'],
-    'შენიშვნა:':['Note:','Σημείωση:'],'სურვილის შემთხვევაში':['Optional','Προαιρετικό'],'მაგ: გიორგი - ვილა':['e.g. Giorgi - Villa','π.χ. Giorgi - Villa'],'მაგ: 100':['e.g. 100','π.χ. 100'],'Repository':['Repository','Repository'],'GitHub Token':['GitHub Token','GitHub Token'],
-    'თანხა მიუთითე':['Enter an amount','Πληκτρολόγησε ποσό'],'თარიღი მიუთითე':['Enter a date','Επίλεξε ημερομηνία'],'წავშალოთ ეს ჩანაწერი?':['Delete this entry?','Να διαγραφεί αυτή η καταχώριση;'],'პაროლი არასწორია':['Incorrect password','Λάθος κωδικός'],'შეიყვანე ელფოსტა':['Enter email','Πληκτρολόγησε email'],'ამ ელფოსტით მომხმარებელი ვერ მოიძებნა':['No user found with this email','Δεν βρέθηκε χρήστης με αυτό το email'],'შეცდომა:':['Error:','Σφάλμα:'],
-    'Firebase პასუხს 10 წამში არ უპასუხა':['Firebase did not respond within 10 seconds','Το Firebase δεν απάντησε μέσα σε 10 δευτερόλεπτα'],'ჯერ არც ერთ მომხმარებელს არ აქვს აქტიური ანგარიში':['No user has an active account yet','Κανένας χρήστης δεν έχει ενεργό λογαριασμό ακόμη'],'შეიყვანე სახელი და პაროლი':['Enter your name and password','Πληκτρολόγησε όνομα και κωδικό'],'ეს მომხმარებელი დაბლოკილია':['This user is blocked','Αυτός ο χρήστης είναι αποκλεισμένος'],'სახელი ან პაროლი არასწორია':['Incorrect name or password','Λάθος όνομα ή κωδικός'],
-    'დავბლოკოთ ':['Block ','Αποκλεισμός '],'განვბლოკოთ ':['Unblock ','Κατάργηση αποκλεισμού '],'წავშალოთ მომხმარებელი ':['Delete user ','Διαγραφή χρήστη '],'არსებული მონაცემები შეიცვალოს ამ სარეზერვო ასლით?':['Replace existing data with this backup?','Να αντικατασταθούν τα υπάρχοντα δεδομένα με αυτό το αντίγραφο ασφαλείας;'],'მონაცემები აღდგენილია':['Data restored','Τα δεδομένα αποκαταστάθηκαν'],'ეს სარეზერვო ფაილი არასწორია':['This backup file is invalid','Αυτό το αντίγραφο ασφαλείας δεν είναι έγκυρο'],
-    'რეპოზიტორია ჩაწერე ასე: მომხმარებელი/რეპოზიტორია':['Enter repository as: user/repository','Γράψε το repository ως: user/repository'],'GitHub Token ჩაწერე':['Enter GitHub Token','Γράψε το GitHub Token'],'GitHub მონაცემები დამახსოვრებულია ამ ტელეფონში':['GitHub data saved on this device','Τα δεδομένα GitHub αποθηκεύτηκαν σε αυτή τη συσκευή'],'⬆ ატვირთე':['⬆ Upload','⬆ Μεταφόρτωση'],'აირჩიე ახალი index.html ფაილი':['Choose a new index.html file','Επίλεξε νέο αρχείο index.html'],'GitHub-თან დაკავშირება ვერ მოხერხდა':['Could not connect to GitHub','Δεν ήταν δυνατή η σύνδεση στο GitHub'],'ატვირთვა ვერ მოხერხდა':['Upload failed','Η μεταφόρτωση απέτυχε'],'📁 აირჩიე ფაილი':['📁 Choose file','📁 Επίλεξε αρχείο'],
-    'ინახება...':['Saving...','Αποθήκευση...'],'პაროლი შეიცვალა ამ მოწყობილობაზე, მაგრამ Firebase-ში შენახვა ვერ მოხერხდა':['Password changed on this device, but could not be saved to Firebase','Ο κωδικός άλλαξε σε αυτή τη συσκευή, αλλά δεν αποθηκεύτηκε στο Firebase'],'სახელი, ელფოსტა და ახალი პაროლი სამივე შეავსე':['Fill in name, email and new password','Συμπλήρωσε όνομα, email και νέο κωδικό'],'სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)':['Name must contain only Latin letters (A-Z, a-z)','Το όνομα πρέπει να περιέχει μόνο λατινικά γράμματα (A-Z, a-z)'],'შეიყვანე სწორი ელფოსტა':['Enter a valid email','Πληκτρολόγησε έγκυρο email'],'ეს სახელი ადმინისტრატორისთვისაა':['This name is reserved for the administrator','Αυτό το όνομα είναι δεσμευμένο για τον διαχειριστή'],'ასეთი მომხმარებელი უკვე არსებობს':['This user already exists','Αυτός ο χρήστης υπάρχει ήδη'],'ეს ელფოსტა უკვე გამოყენებულია':['This email is already in use','Αυτό το email χρησιμοποιείται ήδη'],
-    '0 გადასახდელი':['0 unpaid','0 απλήρωτα'],'0 დღე':['0 days','0 ημέρες'],'0 სამუშაო':['0 jobs','0 εργασίες'],'0 გადახდილი':['0 paid','0 πληρωμένα'],'შენ შეხვედი...':['You are logged in as...','Συνδέθηκες ως...'],'შენ შეხვედი':['You are logged in as','Συνδέθηκες ως']
+  const LANGS={
+    ka:{name:'ქართული',short:'KA',locale:'ka-GE'},
+    en:{name:'English',short:'EN',locale:'en-US'},
+    el:{name:'Ελληνικά',short:'EL',locale:'el-GR'}
   };
+
+  /*
+   * სრული ინტერფეისის ლექსიკონი.
+   * მომხმარებლის მიერ შეყვანილი სამუშაოს/ჩანაწერის ტექსტი არ ითარგმნება.
+   */
+  const D={
+    'მთავარი':['Home','Αρχική'],
+    'სეთინგები':['Settings','Ρυθμίσεις'],
+    'მომხმარებლები':['Users','Χρήστες'],
+    'მომხმარებლების მართვა':['User management','Διαχείριση χρηστών'],
+    'მომხმარებლების დამატება და მართვა':['Add and manage users','Προσθήκη και διαχείριση χρηστών'],
+    'საფულე':['Wallet','Πορτοφόλι'],
+    'გამოსვლა':['Logout','Αποσύνδεση'],
+    'ჩანაწერების წიგნი':['Notes Book','Βιβλίο σημειώσεων'],
+    '➕ ახალი მომხმარებელი':['➕ New user','➕ Νέος χρήστης'],
+    'შენი პირადი ჩანაწერები და შეხსენებები':['Your personal notes and reminders','Οι προσωπικές σου σημειώσεις και υπενθυμίσεις'],
+    'ყველა თვე':['All months','Όλοι οι μήνες'],
+    'ქართული':['Georgian','Γεωργιανά'],
+    'ენები':['Languages','Γλώσσες'],
+    'ინგლისური':['English','Αγγλικά'],
+    'ბერძნული':['Greek','Ελληνικά'],
+    'ჩემი სამუშაო':['My Work','Η εργασία μου'],
+    'თანხების დამალვა':['Hide amounts','Απόκρυψη ποσών'],
+    'თანხების ჩვენება':['Show amounts','Εμφάνιση ποσών'],
+    'ამ თვის ნამუშევარი':['This month earned','Κέρδη αυτού του μήνα'],
+    'დღიური საშუალო':['Daily average','Ημερήσιος μέσος όρος'],
+    'მისაღები':['Receivable','Προς είσπραξη'],
+    'მისაღები თანხების ნახვა':['View receivable amounts','Προβολή ποσών προς είσπραξη'],
+    'ამ თვის სამუშაოები':['This month jobs','Εργασίες αυτού του μήνα'],
+    'სამუშაოს დამატება':['Add work','Προσθήκη εργασίας'],
+    'სამუშაოს შეცვლა':['Edit work','Επεξεργασία εργασίας'],
+    'კალენდარი':['Calendar','Ημερολόγιο'],
+    'ორშ':['Mon','Δευ'], 'სამ':['Tue','Τρι'], 'ოთხ':['Wed','Τετ'], 'ხუთ':['Thu','Πεμ'],
+    'პარ':['Fri','Παρ'], 'შაბ':['Sat','Σαβ'], 'კვი':['Sun','Κυρ'],
+    'ნოუთი':['Notes','Σημειώσεις'],
+    'აირჩიე თარიღი':['Choose a date','Επίλεξε ημερομηνία'],
+    'სამუშაო':['work','εργασία'],
+    'დღე':['days','ημέρες'],
+    'გადახდილი':['paid','πληρωμένα'],
+    'გადასახდელი':['unpaid','απλήρωτα'],
+    'გადაუხდელი':['unpaid','απλήρωτα'],
+    'გადაუხდელია':['Not paid','Δεν έχει πληρωθεί'],
+    'გადახდა მივიღე':['Payment received','Πληρωμή λήφθηκε'],
+    'შეცვლა':['Edit','Επεξεργασία'],
+    'წაშლა':['Delete','Διαγραφή'],
+    'შენიშვნა':['Note','Σημείωση'],
+    'ჯერ ჩანაწერი არ არის.':['No entries yet.','Δεν υπάρχουν ακόμη καταχωρίσεις.'],
+    'ამ ძიებით სამუშაო ვერ მოიძებნა':['No work found for this search','Δεν βρέθηκε εργασία για αυτή την αναζήτηση'],
+    'ამ დღეს სამუშაო არ არის':['No work on this day','Δεν υπάρχει εργασία αυτή την ημέρα'],
+    'ჯერ მონაცემები არ არის':['No data yet','Δεν υπάρχουν ακόμη δεδομένα'],
+    'უცნობი':['Unknown','Άγνωστο'],
+    'სულ სამუშაოები':['Total jobs','Σύνολο εργασιών'],
+    'მიღებული':['Received','Εισπραχθέντα'],
+    'ჯერ მისაღები':['Still receivable','Προς είσπραξη'],
+    'ყველასგან მიღებულია თანხა. 🎉':['All payments received. 🎉','Έχουν εισπραχθεί όλες οι πληρωμές. 🎉'],
+    'სულ ნამუშევარი':['Total earned','Συνολικά κερδισμένα'],
+    'სამუშაოების ფინანსები':['Work finances','Οικονομικά εργασιών'],
+    'მონაცემების მართვა':['Data management','Διαχείριση δεδομένων'],
+    'საიტის განახლება':['Website update','Ενημέρωση ιστοσελίδας'],
+    'აირჩიე ფაილი':['Choose file','Επίλεξε αρχείο'],
+    'ატვირთული ფაილი უნდა იყოს index.html. Token მხოლოდ ამ ტელეფონში ინახება.':['Uploaded file must be index.html. Token is stored only on this device.','Το αρχείο πρέπει να είναι index.html. Το Token αποθηκεύεται μόνο σε αυτή τη συσκευή.'],
+    'ნეონის მართვა':['Neon control','Έλεγχος neon'],
+    'ფერი':['Color','Χρώμα'],
+    'ნეონის ფერი':['Neon color','Χρώμα neon'],
+    'სიმძლავრე':['Strength','Ένταση'],
+    'ნეონის სიმძლავრე':['Neon strength','Ένταση neon'],
+    'ჩემი ავტორიზაცია':['My authorization','Η εξουσιοδότησή μου'],
+    'მომხმარებელი':['User','Χρήστης'],
+    'ელფოსტა':['Email','Email'],
+    'ელფოსტა არ არის':['No email','Δεν υπάρχει email'],
+    'მომხმარებლები ჯერ არ არის':['No users yet','Δεν υπάρχουν ακόμη χρήστες'],
+    'მომხმარებელი ჯერ არ არის ავტორიზებული':['User is not authorized yet','Ο χρήστης δεν έχει εξουσιοδοτηθεί ακόμη'],
+    'განბლოკვა':['Unblock','Ξεμπλοκάρισμα'],
+    'დაბლოკვა':['Block','Αποκλεισμός'],
+    'აირჩიე წელი':['Choose year','Επίλεξε έτος'],
+    'დახურვა':['Close','Κλείσιμο'],
+    'დადასტურება':['Confirmation','Επιβεβαίωση'],
+    'ყველა სამუშაოს წასაშლელად შეიყვანე საიტზე შესასვლელი პაროლი.':['Enter the site password to delete all work.','Πληκτρολόγησε τον κωδικό πρόσβασης του site για να διαγράψεις όλες τις εργασίες.'],
+    'გაუქმება':['Cancel','Ακύρωση'],
+    'შენახვა':['Save','Αποθήκευση'],
+    'მისაღები თანხები':['Receivable amounts','Ποσά προς είσπραξη'],
+    'ყველამ მომცა ფული ვისაც ემართა':['Everyone who owed me has paid','Όλοι όσοι μου χρωστούσαν πλήρωσαν'],
+    'ჩანაწერები':['Notes','Σημειώσεις'],
+    'თარიღი':['Date','Ημερομηνία'],
+    'საათი':['Time','Ώρα'],
+    'სამუშაო ადგილი / დამსაქმებელი':['Workplace / employer','Τόπος εργασίας / εργοδότης'],
+    'თანხა (€)':['Amount (€)','Ποσό (€)'],
+    'უკვე გადახდილია':['Already paid','Έχει ήδη πληρωθεί'],
+    'შეიყვანე პაროლი':['Enter password','Πληκτρολόγησε κωδικό'],
+    'სახელი':['Name','Όνομα'],
+    'პაროლი':['Password','Κωδικός'],
+    'დაგავიწყდა პაროლი?':['Forgot password?','Ξέχασες τον κωδικό;'],
+    'შესვლა':['Login','Σύνδεση'],
+    'ახალი მომხმარებელი':['New user','Νέος χρήστης'],
+    'პაროლის აღდგენა':['Password recovery','Ανάκτηση κωδικού'],
+    'შეიყვანე რეგისტრირებული ელფოსტა და დააყენე ახალი პაროლი.':['Enter your registered email and set a new password.','Πληκτρολόγησε το καταχωρημένο email σου και όρισε νέο κωδικό.'],
+    'რეგისტრირებული ელფოსტა':['Registered email','Καταχωρημένο email'],
+    'ახალი პაროლი':['New password','Νέος κωδικός'],
+    'შეიყვანე ახალი პაროლი':['Enter a new password','Πληκτρολόγησε νέο κωδικό'],
+    'პაროლის შეცვლა':['Change password','Αλλαγή κωδικού'],
+    'პაროლი შეინახება ამ მოწყობილობასა და Firebase-ში.':['The password will be saved on this device and in Firebase.','Ο κωδικός θα αποθηκευτεί σε αυτή τη συσκευή και στο Firebase.'],
+    'პაროლი წარმატებით შეიცვალა!':['Password changed successfully!','Ο κωδικός άλλαξε με επιτυχία!'],
+    'ახალი პაროლი შენახულია.':['The new password has been saved.','Ο νέος κωδικός αποθηκεύτηκε.'],
+    'კარგი':['OK','Εντάξει'],
+    'ახალი მომხმარებლის ავტორიზაცია':['New user authorization','Εξουσιοδότηση νέου χρήστη'],
+    '1. თქვენი სახელი':['1. Your name','1. Το όνομά σας'],
+    '2. თქვენი ელფოსტა':['2. Your email','2. Το email σας'],
+    '3. თქვენი ახალი პაროლი':['3. Your new password','3. Ο νέος σας κωδικός'],
+    'ანგარიშის შექმნა':['Create account','Δημιουργία λογαριασμού'],
+    'შენიშვნა:':['Note:','Σημείωση:'],
+    'სურვილის შემთხვევაში':['Optional','Προαιρετικό'],
+    'მაგ: გიორგი - ვილა':['e.g. Giorgi - Villa','π.χ. Giorgi - Villa'],
+    'მაგ: 100':['e.g. 100','π.χ. 100'],
+    'ჩაწერე რაც გინდა...':['Write anything you want...','Γράψε ό,τι θέλεις...'],
+    'შეხსენება':['Reminder','Υπενθύμιση'],
+    'შეხსენება ჩაირთვება მითითებულ თარიღსა და დროს.':['The reminder will be enabled for the specified date and time.','Η υπενθύμιση θα ενεργοποιηθεί για την καθορισμένη ημερομηνία και ώρα.'],
+    'ჩანაწერი ცარიელი არ უნდა იყოს':['The note cannot be empty','Η σημείωση δεν μπορεί να είναι κενή'],
+    'შეხსენებისთვის თარიღი და საათი ორივე უნდა მიუთითო':['Enter both date and time for the reminder','Πρέπει να ορίσεις ημερομηνία και ώρα για την υπενθύμιση'],
+    'შეხსენების დრო მომავალში უნდა იყოს':['The reminder time must be in the future','Η ώρα της υπενθύμισης πρέπει να είναι στο μέλλον'],
+    'ჩანაწერი Firebase-ში ვერ შეინახა.\n\n':['The note could not be saved to Firebase.\n\n','Η σημείωση δεν αποθηκεύτηκε στο Firebase.\n\n'],
+    'ცვლილება ვერ შეინახა Firebase-ში.':['The change could not be saved to Firebase.','Η αλλαγή δεν αποθηκεύτηκε στο Firebase.'],
+    'ეს ჩანაწერი წავშალოთ?':['Delete this note?','Να διαγραφεί αυτή η σημείωση;'],
+    'ჩანაწერი ვერ წაიშალა Firebase-დან.':['The note could not be deleted from Firebase.','Η σημείωση δεν διαγράφηκε από το Firebase.'],
+    '📖 TEMO — ჩანაწერის შეხსენება':['📖 TEMO — Note reminder','📖 TEMO — Υπενθύμιση σημείωσης'],
+    'ჩანაწერი შეინახება შეხსენების გარეშე.':['The note will be saved without a reminder.','Η σημείωση θα αποθηκευτεί χωρίς υπενθύμιση.'],
+    '🔔 შეხსენება ჩართულია':['🔔 Reminder enabled','🔔 Η υπενθύμιση είναι ενεργή'],
+    '🔕 შეხსენება გამორთულია':['🔕 Reminder disabled','🔕 Η υπενθύμιση είναι απενεργοποιημένη'],
+    '📖 ჯერ ჩანაწერები არ გაქვს.':['📖 You have no notes yet.','📖 Δεν έχεις ακόμη σημειώσεις.'],
+    'დააჭირე „➕ ახალი ჩანაწერი“-ს.':['Tap “➕ New note”.','Πάτησε «➕ Νέα σημείωση».'],
+    '↩️ აქტიური':['↩️ Active','↩️ Ενεργή'],
+    '✏️ შეცვლა':['✏️ Edit','✏️ Επεξεργασία'],
+    '🗑️ წაშლა':['🗑️ Delete','🗑️ Διαγραφή'],
+    '✅ შესრულდა':['✅ Completed','✅ Ολοκληρώθηκε'],
+    'ინახება...':['Saving...','Αποθήκευση...'],
+    'თანხა მიუთითე':['Enter an amount','Πληκτρολόγησε ποσό'],
+    'თარიღი მიუთითე':['Enter a date','Επίλεξε ημερομηνία'],
+    'წავშალოთ ეს ჩანაწერი?':['Delete this entry?','Να διαγραφεί αυτή η καταχώριση;'],
+    'პაროლი არასწორია':['Incorrect password','Λάθος κωδικός'],
+    'შეიყვანე ელფოსტა':['Enter email','Πληκτρολόγησε email'],
+    'ამ ელფოსტით მომხმარებელი ვერ მოიძებნა':['No user found with this email','Δεν βρέθηκε χρήστης με αυτό το email'],
+    'შეცდომა:':['Error:','Σφάλμα:'],
+    'Firebase პასუხს 10 წამში არ უპასუხა':['Firebase did not respond within 10 seconds','Το Firebase δεν απάντησε μέσα σε 10 δευτερόλεπτα'],
+    'ჯერ არც ერთ მომხმარებელს არ აქვს აქტიური ანგარიში':['No user has an active account yet','Κανένας χρήστης δεν έχει ενεργό λογαριασμό ακόμη'],
+    'შეიყვანე სახელი და პაროლი':['Enter your name and password','Πληκτρολόγησε όνομα και κωδικό'],
+    'ეს მომხმარებელი დაბლოკილია':['This user is blocked','Αυτός ο χρήστης είναι αποκλεισμένος'],
+    'სახელი ან პაროლი არასწორია':['Incorrect name or password','Λάθος όνομα ή κωδικός'],
+    'დავბლოკოთ ':['Block ','Αποκλεισμός '],
+    'განვბლოკოთ ':['Unblock ','Κατάργηση αποκλεισμού '],
+    'წავშალოთ მომხმარებელი ':['Delete user ','Διαγραφή χρήστη '],
+    'არსებული მონაცემები შეიცვალოს ამ სარეზერვო ასლით?':['Replace existing data with this backup?','Να αντικατασταθούν τα υπάρχοντα δεδομένα με αυτό το αντίγραφο ασφαλείας;'],
+    'მონაცემები აღდგენილია':['Data restored','Τα δεδομένα αποκαταστάθηκαν'],
+    'ეს სარეზერვო ფაილი არასწორია':['This backup file is invalid','Αυτό το αντίγραφο ασφαλείας δεν είναι έγκυρο'],
+    'რეპოზიტორია ჩაწერე ასე: მომხმარებელი/რეპოზიტორია':['Enter repository as: user/repository','Γράψε το repository ως: user/repository'],
+    'GitHub Token ჩაწერე':['Enter GitHub Token','Γράψε το GitHub Token'],
+    'GitHub მონაცემები დამახსოვრებულია ამ ტელეფონში':['GitHub data saved on this device','Τα δεδομένα GitHub αποθηκεύτηκαν σε αυτή τη συσκευή'],
+    '⬆ ატვირთე':['⬆ Upload','⬆ Μεταφόρτωση'],
+    'აირჩიე ახალი index.html ფაილი':['Choose a new index.html file','Επίλεξε νέο αρχείο index.html'],
+    'GitHub-თან დაკავშირება ვერ მოხერხდა':['Could not connect to GitHub','Δεν ήταν δυνατή η σύνδεση στο GitHub'],
+    'ატვირთვა ვერ მოხერხდა':['Upload failed','Η μεταφόρτωση απέτυχε'],
+    '📁 აირჩიე ფაილი':['📁 Choose file','📁 Επίλεξε αρχείο'],
+    'პაროლი შეიცვალა ამ მოწყობილობაზე, მაგრამ Firebase-ში შენახვა ვერ მოხერხდა':['Password changed on this device, but could not be saved to Firebase','Ο κωδικός άλλαξε σε αυτή τη συσκευή, αλλά δεν αποθηκεύτηκε στο Firebase'],
+    'სახელი, ელფოსტა და ახალი პაროლი სამივე შეავსე':['Fill in name, email and new password','Συμπλήρωσε όνομα, email και νέο κωδικό'],
+    'სახელი და ახალი პაროლი ორივე შეავსე':['Fill in both name and new password','Συμπλήρωσε όνομα και νέο κωδικό'],
+    'სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)':['Name must contain only Latin letters (A-Z, a-z)','Το όνομα πρέπει να περιέχει μόνο λατινικά γράμματα (A-Z, a-z)'],
+    'შეიყვანე სწორი ელფოსტა':['Enter a valid email','Πληκτρολόγησε έγκυρο email'],
+    'ეს სახელი ადმინისტრატორისთვისაა':['This name is reserved for the administrator','Αυτό το όνομα είναι δεσμευμένο για τον διαχειριστή'],
+    'ასეთი მომხმარებელი უკვე არსებობს':['This user already exists','Αυτός ο χρήστης υπάρχει ήδη'],
+    'ეს ელფოსტა უკვე გამოყენებულია':['This email is already in use','Αυτό το email χρησιμοποιείται ήδη'],
+    '0 გადასახდელი':['0 unpaid','0 απλήρωτα'],
+    '0 დღე':['0 days','0 ημέρες'],
+    '0 სამუშაო':['0 jobs','0 εργασίες'],
+    '0 გადახდილი':['0 paid','0 πληρωμένα'],
+    'შენ შეხვედი...':['You are logged in as...','Συνδέθηκες ως...'],
+    'შენ შეხვედი':['You are logged in as','Συνδέθηκες ως'],
+    'Repository':['Repository','Repository'],
+    'GitHub Token':['GitHub Token','GitHub Token'],
+    'TEMO სამუშაო ანგარიში':['TEMO Work Tracker','TEMO Εργασίες'],
+    'სამუშაო • მიღებული':['Work • Received','Εργασία • Εισπραχθέντα'],
+    'მისაღები $':['Receivable $','Προς είσπραξη $'],
+    'შენიშვნა: $':['Note: $','Σημείωση: $'],
+    '1. თქვენი სახელი':['1. Your name','1. Το όνομά σας'],
+    '2. თქვენი ელფოსტა':['2. Your email','2. Το email σας'],
+    '3. თქვენი ახალი პაროლი':['3. Your new password','3. Ο νέος σας κωδικός']
+  };
+
+  const MONTHS={
+    'იანვარი':['January','Ιανουάριος'],'თებერვალი':['February','Φεβρουάριος'],'მარტი':['March','Μάρτιος'],
+    'აპრილი':['April','Απρίλιος'],'მაისი':['May','Μάιος'],'ივნისი':['June','Ιούνιος'],
+    'ივლისი':['July','Ιούλιος'],'აგვისტო':['August','Αύγουστος'],'სექტემბერი':['September','Σεπτέμβριος'],
+    'ოქტომბერი':['October','Οκτώβριος'],'ნოემბერი':['November','Νοέμβριος'],'დეკემბერი':['December','Δεκέμβριος']
+  };
+  Object.assign(D,MONTHS);
+
   const all={ka:{},en:{},el:{}};
   Object.keys(D).forEach(k=>{all.ka[k]=k;all.en[k]=D[k][0];all.el[k]=D[k][1]});
   let lang='ka';
-  function readStoredLanguage(){const key=userLanguageKey();const saved=localStorage.getItem(key);if(saved&&LANGS[saved])return saved;const global=localStorage.getItem(GLOBAL_KEY);return LANGS[global]?global:'ka';}
+  let applying=false;
+  let observerStarted=false;
+
+  function readStoredLanguage(){
+    const key=userLanguageKey();
+    const saved=localStorage.getItem(key);
+    if(saved&&LANGS[saved])return saved;
+    const global=localStorage.getItem(GLOBAL_KEY);
+    return LANGS[global]?global:'ka';
+  }
   lang=readStoredLanguage();
+
   window.getLangLocale=()=>LANGS[lang].locale;
   window.t=k=>all[lang]?.[k]??k;
   window.getCurrentLanguage=()=>lang;
-  window.setCurrentLanguage=(next)=>{if(!LANGS[next])next='ka';lang=next;const key=userLanguageKey();localStorage.setItem(key,lang);apply();};
+  window.setCurrentLanguage=(next)=>{if(!LANGS[next])next='ka';lang=next;localStorage.setItem(userLanguageKey(),lang);apply();};
   window.restoreCurrentUserLanguage=(fallback)=>{const key=userLanguageKey();const saved=localStorage.getItem(key);const next=(saved&&LANGS[saved])?saved:((fallback&&LANGS[fallback])?fallback:'ka');lang=next;localStorage.setItem(key,lang);apply();};
+
   async function persistLanguageForCurrentUser(next){
     const id=String(window.currentUserId||'').trim();
     if(!id)return;
@@ -2125,68 +2307,147 @@ startNotesReminderWatcher();
       target.language=next;
       const put=await fetch(FIREBASE_DB_URL+'/users.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(users)});
       if(!put.ok)throw new Error('Firebase HTTP '+put.status);
-      const local=getUsers();const me=local.find(u=>String(u.id)===id);if(me){me.language=next;localStorage.setItem(USERS_KEY,JSON.stringify(local));}
+      const local=getUsers();const me=local.find(u=>String(u.id)===id);
+      if(me){me.language=next;localStorage.setItem(USERS_KEY,JSON.stringify(local));}
     }catch(e){console.warn('Firebase language save failed:',e);}
   }
 
-  /* ყოველთვის ეძებს ყველაზე გრძელ ფრაზას ჯერ, ამიტომ emoji/რიცხვები/შერეული ტექსტიც ითარგმნება. */
   const keys=Object.keys(D).sort((a,b)=>b.length-a.length);
+
   function translateText(text){
     let out=String(text??'');
     if(!out.trim())return out;
     for(const k of keys){
       const variants=[all.ka[k],all.en[k],all.el[k]].filter(Boolean).sort((a,b)=>b.length-a.length);
       for(const from of variants){
-        if(from===out.trim()){
+        if(!from)continue;
+        if(out.trim()===from){
           const lead=out.match(/^\s*/)?.[0]||'',trail=out.match(/\s*$/)?.[0]||'';
-          out=lead+all[lang][k]+trail; break;
+          out=lead+all[lang][k]+trail;
+          break;
         }
-        if(out.includes(from)) out=out.split(from).join(all[lang][k]);
+        if(out.includes(from))out=out.split(from).join(all[lang][k]);
       }
     }
     return out;
   }
   window.temoTranslateMessage=translateText;
+
+  function isUserContent(node){
+    const p=node?.parentElement;
+    if(!p)return false;
+    return !!p.closest('.noteText,.receivablePlace,.noteLine b,.noteEntry .meta,[data-user-content="true"]') || !!(p.closest('.item') && (p.classList.contains('meta') || p.tagName==='B'));
+  }
+
+  function applyTextNodes(root=document.body){
+    if(!root)return;
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+    const nodes=[];
+    while(walker.nextNode())nodes.push(walker.currentNode);
+    nodes.forEach(n=>{
+      const p=n.parentElement;
+      if(!p||['SCRIPT','STYLE'].includes(p.tagName)||p.closest('.languageBox')||isUserContent(n))return;
+      const v=n.nodeValue;
+      if(!v||!v.trim())return;
+      const translated=translateText(v);
+      if(translated!==v)n.nodeValue=translated;
+    });
+  }
+
+  function applyAttributes(root=document){
+    const attrs=['placeholder','title','aria-label'];
+    const els=root.querySelectorAll?root.querySelectorAll('*'):[];
+    els.forEach(el=>{
+      if(el.closest?.('.languageBox'))return;
+      attrs.forEach(a=>{
+        if(el.hasAttribute(a)){
+          const v=el.getAttribute(a), nv=translateText(v);
+          if(nv!==v)el.setAttribute(a,nv);
+        }
+      });
+    });
+  }
+
+  function applyGenerated(root=document.body){
+    if(applying)return;
+    applying=true;
+    try{
+      applyTextNodes(root);
+      applyAttributes(document);
+    }finally{applying=false;}
+  }
+  window.temoApplyLanguageText=applyGenerated;
+
   const nativeAlert=window.alert.bind(window),nativeConfirm=window.confirm.bind(window);
   window.alert=msg=>nativeAlert(translateText(msg));
   window.confirm=msg=>nativeConfirm(translateText(msg));
 
-  function applyTextNodes(){
-    const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT); const nodes=[];
-    while(walker.nextNode())nodes.push(walker.currentNode);
-    nodes.forEach(n=>{
-      const p=n.parentElement;if(!p||['SCRIPT','STYLE'].includes(p.tagName)||p.closest('.languageBox'))return;
-      const v=n.nodeValue;if(!v.trim())return;
-      const translated=translateText(v);if(translated!==v)n.nodeValue=translated;
-    });
-  }
   function apply(){
-    document.documentElement.lang=lang;
-    const btn=document.getElementById('languageBtn');if(btn)btn.textContent='🌐 '+LANGS[lang].short;
-    document.querySelectorAll('.languageOption').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));
-    document.querySelectorAll('[data-i18n-key]').forEach(el=>el.textContent=t(el.dataset.i18nKey));
-    const attrMap={loginName:{placeholder:'სახელი'},loginPassword:{placeholder:'პაროლი'},forgotPasswordEmail:{placeholder:'მაგ: temo@gmail.com'},forgotPasswordNew:{placeholder:'შეიყვანე ახალი პაროლი'},newUserAuthEmail:{placeholder:'მაგ: temo@gmail.com'},ghToken:{placeholder:'GitHub Token'},deleteAuthPassword:{placeholder:'პაროლი'},place:{placeholder:'მაგ: გიორგი - ვილა'},money:{placeholder:'მაგ: 100'},note:{placeholder:'სურვილის შემთხვევაში'}};
-    Object.entries(attrMap).forEach(([id,a])=>{const el=document.getElementById(id);if(el)for(const [x,k] of Object.entries(a))el.setAttribute(x,t(k));});
-    const eye=document.getElementById('privacyEye');if(eye){const hidden=localStorage.getItem('temoPrivacyHidden')==='yes';eye.title=t(hidden?'თანხების ჩვენება':'თანხების დამალვა');eye.setAttribute('aria-label',eye.title)}
-    const todayEl=document.getElementById('today');if(todayEl)todayEl.textContent=new Date().toLocaleDateString(LANGS[lang].locale);
-    applyTextNodes();
-    if(typeof render==='function')render();
-    if(typeof updateUserUI==='function')updateUserUI();
-    if(typeof renderReceivableModal==='function'&&document.getElementById('receivableModal')?.classList.contains('show'))renderReceivableModal();
-    if(typeof renderManagedUsers==='function'&&typeof currentUser!=='undefined'&&currentUser===ADMIN_USER)renderManagedUsers();
-    /* render()-ის შემდეგ გენერირებული ტექსტიც გადაითარგმნოს */
-    applyTextNodes();
-    const titleKa='TEMO სამუშაო ანგარიში';document.title=lang==='ka'?titleKa:lang==='en'?'TEMO Work Tracker':'TEMO Εργασίες';
+    if(applying)return;
+    applying=true;
+    try{
+      document.documentElement.lang=lang;
+      const btn=document.getElementById('languageBtn');
+      if(btn){btn.textContent='🌐 '+LANGS[lang].short;btn.title=all[lang]['ენები'];btn.setAttribute('aria-label',all[lang]['ენები']);}
+      document.querySelectorAll('.languageOption').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));
+
+      /* ყველა placeholder/title/aria-label, მათ შორის ნავიგაციის ღილაკები */
+      applyAttributes(document);
+
+      const eye=document.getElementById('privacyEye');
+      if(eye){
+        const hidden=localStorage.getItem('temoPrivacyHidden')==='yes';
+        eye.title=all[lang][hidden?'თანხების ჩვენება':'თანხების დამალვა'];
+        eye.setAttribute('aria-label',eye.title);
+      }
+
+      const todayEl=document.getElementById('today');
+      if(todayEl)todayEl.textContent=new Date().toLocaleDateString(LANGS[lang].locale);
+
+      /* ქართული კალენდრის სათაური/თარიღები locale-ითაც სწორად იცვლება. */
+      if(typeof render==='function')render();
+      if(typeof updateUserUI==='function')updateUserUI();
+      if(typeof renderReceivableModal==='function'&&document.getElementById('receivableModal')?.classList.contains('show'))renderReceivableModal();
+      if(typeof renderNotes==='function'&&document.getElementById('notesPage')&&!document.getElementById('notesPage').classList.contains('pageHidden'))renderNotes();
+
+      applyTextNodes(document.body);
+      applyAttributes(document);
+
+      const titleMap={ka:'TEMO სამუშაო ანგარიში',en:'TEMO Work Tracker',el:'TEMO Εργασίες'};
+      document.title=titleMap[lang];
+    }finally{applying=false;}
   }
+
+  function startObserver(){
+    if(observerStarted||!document.body)return;
+    observerStarted=true;
+    const observer=new MutationObserver(mutations=>{
+      if(applying)return;
+      let hasAdded=false;
+      for(const m of mutations){if(m.type==='childList'&&m.addedNodes.length){hasAdded=true;break;}}
+      if(hasAdded)applyGenerated(document.body);
+    });
+    observer.observe(document.body,{childList:true,subtree:true});
+  }
+
   function prepare(){
     const btn=document.getElementById('languageBtn'),menu=document.getElementById('languageMenu');
     if(btn&&menu){
       btn.addEventListener('click',e=>{e.stopPropagation();menu.classList.toggle('show')});
       document.addEventListener('click',()=>menu.classList.remove('show'));
-      document.querySelectorAll('.languageOption').forEach(b=>b.addEventListener('click',()=>{lang=b.dataset.lang;localStorage.setItem(userLanguageKey(),lang);menu.classList.remove('show');apply();persistLanguageForCurrentUser(lang)}));
+      document.querySelectorAll('.languageOption').forEach(b=>b.addEventListener('click',()=>{
+        lang=b.dataset.lang;
+        localStorage.setItem(userLanguageKey(),lang);
+        localStorage.setItem(GLOBAL_KEY,lang);
+        menu.classList.remove('show');
+        apply();
+        persistLanguageForCurrentUser(lang);
+      }));
     }
     apply();
+    startObserver();
   }
+
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',prepare);else prepare();
 })();
 </script>
