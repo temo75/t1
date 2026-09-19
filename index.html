@@ -742,7 +742,7 @@ function enablePasswordOnlyLogin(){
   $('loginName').focus();
 }
 function enableNameLogin(){enablePasswordOnlyLogin()}
-function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');$('loginScreen').classList.add('hidden');if($('bottomNav'))$('bottomNav').style.display='grid';$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
+function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');$('loginScreen').classList.add('hidden');if($('bottomNav'))$('bottomNav').style.display='grid';$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();syncJobsFromFirebase().then(()=>{updateMonthFilter();render();renderList();renderMonths();renderReceivableModal();}).catch(e=>console.warn('Firebase jobs sync failed:',e));}
 function login(){const name=$('loginName').value.trim(),pass=$('loginPassword').value,users=getUsers(),u=users.find(x=>x.name.toLowerCase()===name.toLowerCase()&&x.password===pass);if(!u){$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus();return;}if(u.blocked===true||u.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';$('loginPassword').focus();return;}completeLogin(u);}
 function renderLoginUsers(){}
 window.addEventListener('DOMContentLoaded',async()=>{
@@ -766,6 +766,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
     $('loginScreen').classList.add('hidden');
     if($('bottomNav'))$('bottomNav').style.display='grid';
     jobs=loadUserJobs();updateUserUI();render();
+    syncJobsFromFirebase().then(()=>{updateMonthFilter();render();renderList();renderMonths();renderReceivableModal();}).catch(e=>console.warn('Firebase jobs sync failed:',e));
   }else{
     localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);localStorage.removeItem(SESSION_USER_ID_KEY);currentUser='';currentUserId='';
   }
@@ -867,10 +868,58 @@ const $=id=>document.getElementById(id);
 const euro=n=>'€'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2});
 $('today').textContent=new Date().toLocaleDateString('ka-GE');
 
+let firebaseJobsWriteQueue=Promise.resolve();
+async function saveJobsToFirebase(snapshot){
+  const id=String(currentUserId||'').trim();
+  if(!id)return false;
+  const url=FIREBASE_DB_URL+'/jobs/'+firebaseUserKey(id)+'.json';
+  const data=Array.isArray(snapshot)?snapshot.map(j=>({id:String(j.id||''),date:String(j.date||''),place:String(j.place||''),money:Number(j.money||0),note:String(j.note||''),paid:j.paid===true})):[];
+  firebaseJobsWriteQueue=firebaseJobsWriteQueue.then(async()=>{
+    try{
+      const r=await fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data),keepalive:true});
+      if(!r.ok)throw new Error('Firebase HTTP '+r.status);
+      return true;
+    }catch(e){
+      console.warn('Firebase jobs write failed:',e);
+      return false;
+    }
+  });
+  return firebaseJobsWriteQueue;
+}
+async function loadJobsFromFirebase(){
+  const id=String(currentUserId||'').trim();
+  if(!id)return null;
+  try{
+    const r=await fetch(FIREBASE_DB_URL+'/jobs/'+firebaseUserKey(id)+'.json',{cache:'no-store'});
+    if(!r.ok)throw new Error('Firebase HTTP '+r.status);
+    const data=await r.json();
+    if(data===null)return null;
+    if(Array.isArray(data))return data.filter(Boolean);
+    return Object.entries(data||{}).filter(([,j])=>j).map(([id,j])=>({...j,id:String(j.id||id)}));
+  }catch(e){
+    console.warn('Firebase jobs read failed:',e);
+    return null;
+  }
+}
+async function syncJobsFromFirebase(){
+  const id=String(currentUserId||'').trim();
+  if(!id)return;
+  await firebaseJobsWriteQueue;
+  const remote=await loadJobsFromFirebase();
+  if(remote!==null){
+    jobs=remote.map(j=>({id:String(j.id||''),date:String(j.date||''),place:String(j.place||''),money:Number(j.money||0),note:String(j.note||''),paid:j.paid===true}));
+    const key='temoJobsId_'+id;
+    localStorage.setItem(key,JSON.stringify(jobs));
+    if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs));
+    return;
+  }
+  await saveJobsToFirebase(jobs);
+}
 function save(){
   const key=currentUserId?'temoJobsId_'+currentUserId:'temoJobs_'+(currentUser||ADMIN_USER);
   localStorage.setItem(key,JSON.stringify(jobs));
   if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs));
+  saveJobsToFirebase(jobs).catch(e=>console.warn('Firebase jobs save failed:',e));
 }
 function formatDate(s){if(!s)return '';const [y,m,d]=s.split('-');const months=['იანვარი','თებერვალი','მარტი','აპრილი','მაისი','ივნისი','ივლისი','აგვისტო','სექტემბერი','ოქტომბერი','ნოემბერი','დეკემბერი'];return Number(d)+' '+months[Number(m)-1]+' '+y}
 function monthName(key){const [y,m]=key.split('-');return new Date(y,Number(m)-1,1).toLocaleDateString('ka-GE',{year:'numeric',month:'long'})}
