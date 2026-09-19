@@ -2,7 +2,7 @@
 <html lang="ka">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>TEMO სამუშაო ანგარიში</title>
 <style>
 :root{--bg:#071117;--panel:#0d1b24;--panel2:#10232f;--text:#eef7f7;--muted:#9fb0b8;--red:#ef5b67;--blue:#2999df;--orange:#e6a24c;--line:#1e3542}
@@ -459,6 +459,61 @@ body.neon-global .userName{
 #bottomNav > button:nth-child(5){display:flex!important;visibility:visible!important;opacity:1!important;}
 @media(max-width:430px){#bottomNav > button{padding-left:0!important;padding-right:0!important}#bottomNav > button .navLogo{width:30px!important;height:30px!important;font-size:19px!important}}
 </style>
+
+<style id="temo-iphone-notes-final-fix">
+/* iPhone-only stability fix: six equal navigation buttons + direct Notes target. */
+#bottomNav{
+  position:fixed !important;
+  left:0 !important;
+  right:0 !important;
+  bottom:env(safe-area-inset-bottom,0px) !important;
+  width:100% !important;
+  height:58px !important;
+  padding:4px 3px !important;
+  margin:0 !important;
+  display:grid !important;
+  grid-template-columns:repeat(6,minmax(0,1fr)) !important;
+  grid-auto-flow:column !important;
+  gap:3px !important;
+  box-sizing:border-box !important;
+  z-index:2147483647 !important;
+  overflow:visible !important;
+}
+#bottomNav > button,
+#bottomNav > button:nth-child(5){
+  display:flex !important;
+  position:relative !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:none !important;
+  height:50px !important;
+  min-height:50px !important;
+  margin:0 !important;
+  padding:3px 0 !important;
+  flex:none !important;
+  box-sizing:border-box !important;
+  align-items:center !important;
+  justify-content:center !important;
+  overflow:visible !important;
+  touch-action:manipulation !important;
+  -webkit-tap-highlight-color:transparent !important;
+}
+#bottomNav > button .navLogo{
+  display:flex !important;
+  width:30px !important;
+  height:30px !important;
+  margin:auto !important;
+  align-items:center !important;
+  justify-content:center !important;
+  font-size:19px !important;
+  line-height:1 !important;
+}
+@media (max-width:600px){
+  #bottomNav{grid-template-columns:repeat(6,minmax(0,1fr)) !important;}
+}
+</style>
 </head>
 <body>
 <nav id="bottomNav">
@@ -466,7 +521,7 @@ body.neon-global .userName{
   <button type="button" onclick="goSettings()" aria-label="სეთინგები" title="სეთინგები"><span class="navLogo">⚙️</span></button>
   <button type="button" onclick="goUsers()" aria-label="მომხმარებლები" title="მომხმარებლები"><span class="navLogo">👥</span></button>
   <button type="button" onclick="goWallet()" aria-label="საფულე" title="საფულე"><span class="navLogo">💰</span></button>
-  <button type="button" onclick="goNotes()" aria-label="ჩანაწერების წიგნი" title="ჩანაწერების წიგნი"><span class="navLogo">📖</span></button>
+  <button id="notesNavButton" type="button" onclick="goNotes()" aria-label="ჩანაწერების წიგნი" title="ჩანაწერების წიგნი"><span class="navLogo">📖</span></button>
   <button type="button" onclick="logout()" class="logoutNav" aria-label="გამოსვლა" title="გამოსვლა"><span class="navLogo">🚪</span></button>
 </nav>
 
@@ -687,10 +742,19 @@ function enablePasswordOnlyLogin(){
   $('loginName').focus();
 }
 function enableNameLogin(){enablePasswordOnlyLogin()}
-function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');$('loginScreen').classList.add('hidden');$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
+function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');$('loginScreen').classList.add('hidden');if($('bottomNav'))$('bottomNav').style.display='grid';$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
 function login(){const name=$('loginName').value.trim(),pass=$('loginPassword').value,users=getUsers(),u=users.find(x=>x.name.toLowerCase()===name.toLowerCase()&&x.password===pass);if(!u){$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus();return;}if(u.blocked===true||u.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';$('loginPassword').focus();return;}completeLogin(u);}
 function renderLoginUsers(){}
 window.addEventListener('DOMContentLoaded',async()=>{
+  const notesNav=document.getElementById('notesNavButton');
+  if(notesNav){
+    notesNav.addEventListener('touchend',e=>{
+      e.preventDefault();
+      e.stopPropagation();
+      goNotes();
+    },{passive:false});
+  }
+
   await syncUsersFromFirebase();
   const savedUserId=currentUserId;
   const matched=findUserById(savedUserId);
@@ -700,6 +764,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
     localStorage.setItem(SESSION_USER_KEY,currentUser);
     localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);
     $('loginScreen').classList.add('hidden');
+    if($('bottomNav'))$('bottomNav').style.display='grid';
     jobs=loadUserJobs();updateUserUI();render();
   }else{
     localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);localStorage.removeItem(SESSION_USER_ID_KEY);currentUser='';currentUserId='';
@@ -970,6 +1035,9 @@ function temoNavigatePage(pageId){
     if(!p)return;
     p.classList.toggle('pageHidden',id!==pageId);
     p.scrollTop=0;
+    p.style.transform='translate3d(0,0,0)';
+    p.style.transition='none';
+    p.style.zIndex=id===pageId?'20000':'';
   });
   window.scrollTo(0,0);
   const index=ids.indexOf(pageId);
@@ -979,13 +1047,14 @@ function temoNavigatePage(pageId){
     b.setAttribute('aria-current',i===index?'page':'false');
   });
   if(pageId==='mainPage')render();
+  if(pageId==='notesPage' && typeof loadNotes==='function')loadNotes();
   updateUserUI();
 }
 function goHome(){temoNavigatePage('mainPage')}
 function goSettings(){temoNavigatePage('settingsPage')}
 function goUsers(){if(currentUser===ADMIN_USER)temoNavigatePage('userManagementPage')}
 function goWallet(){temoNavigatePage('walletPage')}
-function goNotes(){temoNavigatePage('notesPage');loadNotes()}
+function goNotes(){temoNavigatePage('notesPage')}
 
 
 function togglePrivacy(){
