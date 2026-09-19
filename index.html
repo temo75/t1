@@ -514,6 +514,43 @@ body.neon-global .userName{
   #bottomNav{grid-template-columns:repeat(6,minmax(0,1fr)) !important;}
 }
 </style>
+<style id="forgot-password-restored-style">
+.loginBox .forgotPasswordBtn{position:absolute;top:10px;right:12px;width:auto;margin:0;padding:5px 9px;border:1px solid #285269;border-radius:8px;background:#10232f;color:#9fb0b8;font-size:11px;line-height:1.2;box-shadow:none}
+#forgotPasswordModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:18px;z-index:70000}
+#forgotPasswordModal.show{display:flex}
+.forgotPasswordBox{width:min(410px,100%);box-sizing:border-box;background:linear-gradient(145deg,#0b1821,#102936 72%,#0b1a23);border:1px solid #36b8ff;border-radius:24px;padding:25px 22px 22px;box-shadow:0 0 12px rgba(41,153,255,.45),0 0 35px rgba(41,153,255,.22),0 24px 70px rgba(0,0,0,.7);animation:forgotPop .18s ease-out}
+@keyframes forgotPop{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+.forgotPasswordIcon{width:58px;height:58px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;border:1px solid #39c1ff;border-radius:18px;background:#0a202d;font-size:28px;box-shadow:0 0 10px rgba(41,153,255,.35),inset 0 0 18px rgba(41,153,255,.12)}
+.forgotPasswordBox h2{margin:0;text-align:center;color:#fff;font-size:21px}
+.forgotPasswordBox p{margin:7px 0 20px;text-align:center;color:#9fb5bf;font-size:13px;line-height:1.45}
+.forgotPasswordBox label{display:block;margin:0 0 7px;color:#dce8ec;font-size:13px;font-weight:bold}
+.forgotPasswordBox input{width:100%;box-sizing:border-box;padding:14px 13px;border-radius:12px;border:1px solid #294b5d;background:#061118;color:#fff;font-size:16px;outline:none;margin-bottom:13px}
+.forgotPasswordBox input:focus{border-color:#36b8ff;box-shadow:0 0 0 2px rgba(54,184,255,.12),0 0 13px rgba(54,184,255,.22)}
+.forgotPasswordRow{display:flex;gap:10px;margin-top:5px}
+.forgotPasswordRow button{flex:1;padding:13px;border-radius:12px;font-size:15px;font-weight:bold;cursor:pointer}
+#forgotPasswordSubmit{border:1px solid #36b8ff;background:#123b52;color:#fff;box-shadow:0 0 8px rgba(41,153,255,.35)}
+#forgotPasswordCancel{border:1px solid #314650;background:#172831;color:#b9c7cc}
+.forgotPasswordError{min-height:19px;margin:1px 0 5px;color:#ff7781;text-align:center;font-size:13px;font-weight:bold}
+.forgotPasswordHint{margin-top:2px!important;margin-bottom:0!important}
+</style>
+
+</style>
+<style id="forgot-password-success-style">
+#forgotPasswordSuccess{display:none;position:fixed;inset:0;z-index:70001;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.78);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);overflow:hidden}
+#forgotPasswordSuccess.show{display:flex}
+.forgotSuccessBox{position:relative;width:min(390px,100%);padding:34px 24px 28px;text-align:center;border:1px solid #36b8ff;border-radius:25px;background:linear-gradient(145deg,#08151e,#102b38);box-shadow:0 0 14px rgba(54,184,255,.55),0 0 45px rgba(54,184,255,.25),0 24px 70px rgba(0,0,0,.75);animation:successBoxPop .35s ease-out}
+@keyframes successBoxPop{0%{opacity:0;transform:scale(.72)}70%{transform:scale(1.05)}100%{opacity:1;transform:scale(1)}}
+.forgotSuccessCheck{position:relative;width:92px;height:92px;margin:0 auto 18px;border-radius:50%;border:2px solid #62ff9a;display:flex;align-items:center;justify-content:center;color:#62ff9a;font-size:55px;font-weight:900;text-shadow:0 0 10px #62ff9a,0 0 25px #62ff9a;box-shadow:0 0 12px #62ff9a,0 0 35px rgba(98,255,154,.55);animation:successCheck .75s cubic-bezier(.2,.9,.2,1) both}
+@keyframes successCheck{0%{transform:scale(.1) rotate(-30deg);opacity:0;box-shadow:0 0 0 transparent}55%{transform:scale(1.3) rotate(8deg);opacity:1}75%{transform:scale(.92) rotate(0)}100%{transform:scale(1)}}
+.forgotSuccessCheck:before,.forgotSuccessCheck:after{content:"";position:absolute;left:50%;top:50%;width:10px;height:10px;border-radius:50%;background:#62ff9a;box-shadow:0 0 9px #62ff9a;animation:successBurst .8s ease-out .12s forwards;opacity:0}
+.forgotSuccessCheck:before{--bx:-62px;--by:-58px}
+.forgotSuccessCheck:after{--bx:62px;--by:58px}
+@keyframes successBurst{0%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(calc(-50% + var(--bx)),calc(-50% + var(--by))) scale(.2)}}
+.successStar{position:absolute;top:-12px;font-size:22px;opacity:0;animation:starFall 1.9s ease-in forwards;filter:drop-shadow(0 0 6px #62ff9a)}
+.successStar.s1{left:10%;animation-delay:.15s}.successStar.s2{left:25%;animation-delay:.35s;font-size:16px}.successStar.s3{left:43%;animation-delay:.05s;font-size:26px}.successStar.s4{left:62%;animation-delay:.45s;font-size:18px}.successStar.s5{left:78%;animation-delay:.25s;font-size:24px}.successStar.s6{left:90%;animation-delay:.6s;font-size:15px}
+@keyframes starFall{0%{top:-12px;opacity:0;transform:rotate(0) scale(.5)}12%{opacity:1}100%{top:105%;opacity:0;transform:rotate(280deg) translateX(18px) scale(1.05)}}
+.forgotSuccessBox h2{margin:0 0 8px;color:#fff;font-size:23px}.forgotSuccessBox p{margin:0 0 20px;color:#a9bdc5;font-size:14px}.forgotSuccessClose{width:100%;padding:13px;border:1px solid #36b8ff;border-radius:12px;background:#123b52;color:#fff;font-size:15px;font-weight:bold;cursor:pointer;box-shadow:0 0 9px rgba(54,184,255,.4)}
+</style>
 </head>
 <body>
 <nav id="bottomNav">
@@ -534,6 +571,7 @@ body.neon-global .userName{
 
 <input id="loginName" class="loginSelect" type="text" placeholder="სახელი" autocomplete="username">
 <input id="loginPassword" type="password" placeholder="პაროლი" autocomplete="current-password">
+<button type="button" class="loginModeBtn secondary forgotPasswordBtn" onclick="forgotPassword()">დაგავიწყდა პაროლი?</button>
 <button onclick="login()">შესვლა</button>
 <button class="loginModeBtn" onclick="showNewUserAuth()">➕ ახალი მომხმარებელი</button>
 <div id="loginError"></div>
@@ -726,7 +764,7 @@ function makeUserId(){return window.crypto&&crypto.randomUUID?crypto.randomUUID(
 function makeLegacyUserId(name,password){const str=String(name||'').trim().toLowerCase()+'\u0000'+String(password??'');let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return 'legacy_'+(h>>>0).toString(16);}
 function firebaseUserKey(id){return encodeURIComponent(String(id)).replace(/%/g,'_');}
 async function loadUsersFromFirebase(){try{const r=await fetch(FIREBASE_DB_URL+'/users.json',{cache:'no-store'});if(!r.ok)throw new Error('Firebase HTTP '+r.status);const data=await r.json();if(data===null)return null;if(Array.isArray(data))return data.filter(Boolean).map(normalizeUser).filter(u=>!isRemovedUser(u));return Object.entries(data||{}).filter(([,u])=>u).map(([key,u])=>normalizeUser({...u,_firebaseKey:key})).filter(u=>!isRemovedUser(u));}catch(e){console.warn('Firebase users read failed:',e);return null}}
-function normalizeUser(raw){const u=(raw&&typeof raw==='object')?raw:{};const name=String(u.name||'').trim(),password=String(u.password??'');const admin=(name.toUpperCase()===ADMIN_USER)||u.admin===true;const blocked=admin?false:(typeof u.blocked==='boolean'?u.blocked:u.authorized===false);const id=String(u.id||'').trim()||makeLegacyUserId(name,password);return {id,name,password,admin,authorized:admin?true:!blocked,blocked,_firebaseKey:u._firebaseKey||''};}
+function normalizeUser(raw){const u=(raw&&typeof raw==='object')?raw:{};const name=String(u.name||'').trim(),email=String(u.email||'').trim(),password=String(u.password??'');const admin=(name.toUpperCase()===ADMIN_USER)||u.admin===true;const blocked=admin?false:(typeof u.blocked==='boolean'?u.blocked:u.authorized===false);const id=String(u.id||'').trim()||makeLegacyUserId(name,password);return {id,name,email,password,admin,authorized:admin?true:!blocked,blocked,_firebaseKey:u._firebaseKey||''};}
 function isRemovedUser(u){return REMOVED_USER_NAMES.includes(String(u?.name||'').trim().toUpperCase());}
 async function saveUsersToFirebase(users){const snapshot=users.filter(u=>u&&u.name&&!isRemovedUser(u)).map(normalizeUser);firebaseWriteQueue=firebaseWriteQueue.then(async()=>{try{const r=await fetch(FIREBASE_DB_URL+'/users.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(snapshot)});if(!r.ok)throw new Error('Firebase HTTP '+r.status);return true;}catch(e){console.warn('Firebase users write failed:',e);return false}});return firebaseWriteQueue;}
 async function syncUsersFromFirebase(){if(firebaseSyncBusy)return;firebaseSyncBusy=true;try{await firebaseWriteQueue;const remote=await loadUsersFromFirebase();if(remote!==null){let clean=remote.map(normalizeUser).filter(u=>u.name&&!isRemovedUser(u));if(!clean.some(u=>u.name.toUpperCase()===ADMIN_USER))clean.unshift(normalizeUser({id:'admin-temo',name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true,blocked:false}));localStorage.setItem(USERS_KEY,JSON.stringify(clean));return clean;}const local=getUsers().filter(u=>!isRemovedUser(u));await saveUsersToFirebase(local);return local;}finally{firebaseSyncBusy=false}}
@@ -1407,20 +1445,77 @@ async function updateWebsite(){
   }
 }
 
+function forgotPassword(){
+  const m=document.getElementById('forgotPasswordModal');
+  const e=document.getElementById('forgotPasswordEmail');
+  const n=document.getElementById('forgotPasswordNew');
+  const er=document.getElementById('forgotPasswordError');
+  e.value=''; n.value=''; er.textContent='';
+  m.classList.add('show');
+  m.setAttribute('aria-hidden','false');
+  setTimeout(()=>e.focus(),80);
+}
+function closeForgotPassword(){
+  const m=document.getElementById('forgotPasswordModal');
+  m.classList.remove('show');
+  m.setAttribute('aria-hidden','true');
+}
+function submitForgotPassword(){
+  const email=document.getElementById('forgotPasswordEmail').value.trim().toLowerCase();
+  const newPassword=document.getElementById('forgotPasswordNew').value;
+  const er=document.getElementById('forgotPasswordError');
+  er.textContent='';
+  if(!email){er.textContent='შეიყვანე ელფოსტა';return;}
+  if(!newPassword){er.textContent='შეიყვანე ახალი პაროლი';return;}
+  const users=getUsers();
+  const u=users.find(x=>x.email&&String(x.email).toLowerCase()===email);
+  if(!u){er.textContent='ამ ელფოსტით მომხმარებელი ვერ მოიძებნა';return;}
+  u.password=newPassword;
+  localStorage.setItem(USERS_KEY,JSON.stringify(users));
+  const btn=document.getElementById('forgotPasswordSubmit');
+  btn.disabled=true; btn.textContent='ინახება...';
+  saveUsersToFirebase(users).then(()=>{
+    closeForgotPassword();
+    showForgotPasswordSuccess();
+  }).catch(()=>{
+    closeForgotPassword();
+    alert('პაროლი შეიცვალა ამ მოწყობილობაზე, მაგრამ Firebase-ში შენახვა ვერ მოხერხდა');
+  }).finally(()=>{
+    btn.disabled=false; btn.textContent=t('პაროლის შეცვლა');
+  });
+}
+
+function showForgotPasswordSuccess(){
+  const m=document.getElementById('forgotPasswordSuccess');
+  document.querySelectorAll('#forgotPasswordSuccess .successStar').forEach((x,i)=>{x.style.animation='none';void x.offsetWidth;x.style.animation='';});
+  m.classList.add('show');
+  m.setAttribute('aria-hidden','false');
+}
+function closeForgotPasswordSuccess(){
+  const m=document.getElementById('forgotPasswordSuccess');
+  m.classList.remove('show');
+  m.setAttribute('aria-hidden','true');
+}
+
 function showNewUserAuth(){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('newUserAuthModal').classList.add('show')}
-async function registerNewUser(){const nameEl=document.getElementById('newUserAuthName'),passEl=document.getElementById('newUserAuthPassword'),n=nameEl.value.trim(),p=passEl.value;if(!n||!p){alert('სახელი და ახალი პაროლი ორივე შეავსე');return;}if(!/^[A-Za-z]+$/.test(n)){alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');nameEl.value=n.replace(/[^A-Za-z]/g,'');return;}if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return;}const users=getUsers();if(users.some(u=>u.name.toLowerCase()===n.toLowerCase()&&u.password===p)){alert('ასეთი მომხმარებელი უკვე არსებობს');return;}const user=normalizeUser({id:makeUserId(),name:n,password:p,admin:false,authorized:true,blocked:false});users.push(user);markFreshUser(user.id);localStorage.setItem(USERS_KEY,JSON.stringify(users));await saveUsersToFirebase(users);currentUser=user.name;currentUserId=user.id;localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');nameEl.value='';passEl.value='';document.getElementById('newUserAuthModal').classList.remove('show');$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();}
-window.addEventListener('DOMContentLoaded',loadNeonSettings);
+async function registerNewUser(){
+  const nameEl=document.getElementById('newUserAuthName'),emailEl=document.getElementById('newUserAuthEmail'),passEl=document.getElementById('newUserAuthPassword');
+  const n=nameEl.value.trim(),email=emailEl.value.trim().toLowerCase(),p=passEl.value;
+  if(!n||!email||!p){alert('სახელი, ელფოსტა და ახალი პაროლი სამივე შეავსე');return;}
+  if(!/^[A-Za-z]+$/.test(n)){alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');nameEl.value=n.replace(/[^A-Za-z]/g,'');return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('შეიყვანე სწორი ელფოსტა');return;}
+  if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return;}
+  const users=getUsers();
+  if(users.some(u=>u.name.toLowerCase()===n.toLowerCase())){alert('ასეთი მომხმარებელი უკვე არსებობს');return;}
+  if(users.some(u=>u.email&&u.email.toLowerCase()===email)){alert('ეს ელფოსტა უკვე გამოყენებულია');return;}
+  const user=normalizeUser({id:makeUserId(),name:n,email:email,password:p,admin:false,authorized:true,blocked:false});
+  users.push(user);
+  try{await saveUsersToFirebase(users);}catch(e){alert('მომხმარებელი ვერ შეინახა Firebase-ში. შეამოწმე ინტერნეტი ან Firebase-ის წვდომა.\n\n'+(e?.message||''));return;}
+  markFreshUser(user.id);localStorage.setItem(USERS_KEY,JSON.stringify(users));currentUser=user.name;currentUserId=user.id;localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');nameEl.value='';emailEl.value='';passEl.value='';document.getElementById('newUserAuthModal').classList.remove('show');$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();
+}
 </script>
 
-
 <style id="temo-user-management-layout-fix">
-/* User Management — stable mobile layout */
-#userManagementSection{
-  width:100% !important;
-  box-sizing:border-box !important;
-  overflow:hidden !important;
-}
-#userManagementSection .userManagementInner,
 #userManagementSection .userManagementBox,
 #userManagementSection .userManagementListWrap{
   width:100% !important;
@@ -1734,10 +1829,38 @@ window.addEventListener('DOMContentLoaded',loadNeonSettings);
   window.addEventListener('DOMContentLoaded',window.loadNeonSettings);
 })();
 </script>
+<div id="forgotPasswordModal" aria-hidden="true">
+  <div class="forgotPasswordBox" role="dialog" aria-modal="true" aria-labelledby="forgotPasswordTitle">
+    <div class="forgotPasswordIcon">🔑</div>
+    <h2 id="forgotPasswordTitle">პაროლის აღდგენა</h2>
+    <p>შეიყვანე რეგისტრირებული ელფოსტა და დააყენე ახალი პაროლი.</p>
+    <label for="forgotPasswordEmail">რეგისტრირებული ელფოსტა</label>
+    <input id="forgotPasswordEmail" type="email" placeholder="მაგ: temo@gmail.com" autocomplete="email">
+    <label for="forgotPasswordNew">ახალი პაროლი</label>
+    <input id="forgotPasswordNew" type="password" maxlength="80" placeholder="შეიყვანე ახალი პაროლი" autocomplete="new-password">
+    <div id="forgotPasswordError" class="forgotPasswordError"></div>
+    <div class="forgotPasswordRow">
+      <button type="button" id="forgotPasswordCancel" onclick="closeForgotPassword()">გაუქმება</button>
+      <button type="button" id="forgotPasswordSubmit" onclick="submitForgotPassword()" data-i18n-key="პაროლის შეცვლა">შეცვლა</button>
+    </div>
+    <p class="forgotPasswordHint">პაროლი შეინახება ამ მოწყობილობასა და Firebase-ში.</p>
+  </div>
+</div>
+
+<div id="forgotPasswordSuccess" aria-hidden="true">
+  <div class="forgotSuccessBox" role="dialog" aria-modal="true" aria-labelledby="forgotSuccessTitle">
+    <span class="successStar s1">✦</span><span class="successStar s2">★</span><span class="successStar s3">✦</span><span class="successStar s4">★</span><span class="successStar s5">✦</span><span class="successStar s6">★</span>
+    <div class="forgotSuccessCheck">✓</div>
+    <h2 id="forgotSuccessTitle">პაროლი წარმატებით შეიცვალა!</h2>
+    <p>ახალი პაროლი შენახულია.</p>
+    <button type="button" class="forgotSuccessClose" onclick="closeForgotPasswordSuccess()">კარგი</button>
+  </div>
+</div>
 <div id="newUserAuthModal"><div class="newUserAuthBox">
 <h2>🔐 ახალი მომხმარებლის ავტორიზაცია</h2>
 <label>1. თქვენი სახელი</label><input id="newUserAuthName" maxlength="40" pattern="[A-Za-z]+" inputmode="latin" autocomplete="username" oninput="this.value=this.value.replace(/[^A-Za-z]/g,'')" onpaste="setTimeout(()=>this.value=this.value.replace(/[^A-Za-z]/g,''),0)">
-<label>2. თქვენი ახალი პაროლი</label><input id="newUserAuthPassword" type="password" maxlength="80">
+<label>2. თქვენი ელფოსტა</label><input id="newUserAuthEmail" type="email" maxlength="120" placeholder="მაგ: temo@gmail.com" autocomplete="email">
+<label>3. თქვენი ახალი პაროლი</label><input id="newUserAuthPassword" type="password" maxlength="80">
 <button onclick="registerNewUser()">შესვლა</button>
 <button type="button" onclick="document.getElementById('newUserAuthModal').classList.remove('show');document.getElementById('loginScreen').classList.remove('hidden')" style="background:#20323b;border-color:#285269">✕ გაუქმება</button>
 </div></div><script>
