@@ -441,14 +441,16 @@ body.neon-global .userName{
 @media(max-width:520px){#notesPage .notesHeader{align-items:stretch}.notesAddBtn{width:100%}#notesPage .notesTitle{font-size:23px}}
 </style>
 
-<script>
-/* TEMO notes notification service worker */
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./temo-notes-sw.js', {scope:'./'}).catch(e => console.warn('Notes service worker registration failed:', e));
-  });
-}
-</script>
+<style id="temo-language-style">
+.languageBox{position:relative;display:flex;align-items:center;gap:5px;margin-left:10px}
+.languageBtn{appearance:none;border:1px solid #36b8ff;background:rgba(5,18,28,.82);color:#fff;border-radius:9px;padding:6px 8px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 0 8px rgba(54,184,255,.35);outline:none}
+.languageBtn:focus{box-shadow:0 0 10px rgba(54,184,255,.7)}
+.languageMenu{position:absolute;right:0;top:calc(100% + 6px);display:none;min-width:118px;padding:5px;background:#07141c;border:1px solid #36b8ff;border-radius:10px;box-shadow:0 0 14px rgba(54,184,255,.45);z-index:9999}
+.languageMenu.show{display:block}
+.languageOption{display:block;width:100%;border:0;background:transparent;color:#fff;text-align:left;padding:8px 9px;border-radius:7px;font-size:12px;cursor:pointer}
+.languageOption:hover,.languageOption.active{background:rgba(54,184,255,.16);color:#fff}
+@media(max-width:520px){.languageBtn{padding:5px 7px;font-size:11px}.languageMenu{min-width:110px}}
+</style>
 </head>
 <body>
 <nav id="bottomNav">
@@ -476,7 +478,7 @@ if ('serviceWorker' in navigator) {
 
 <div class="app">
 <div id="mainPage">
-<header><div><div class="temo-logo" aria-label="TEMO"><img src="data:image/webp;base64,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" alt="TEMO logo"></div><small>ჩემი სამუშაო</small><div class="userWelcomeUnderLogo" id="currentUserLabel" aria-live="polite"></div></div><div id="today"></div></header>
+<header><div><div class="temo-logo" aria-label="TEMO"><img src="data:image/webp;base64,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" alt="TEMO logo"></div><small>ჩემი სამუშაო</small><div class="userWelcomeUnderLogo" id="currentUserLabel" aria-live="polite"></div></div><div class="headerRight"><div id="today"></div><div class="languageBox"><button type="button" id="languageBtn" class="languageBtn" aria-label="ენები" title="ენები">🌐 KA</button><div id="languageMenu" class="languageMenu"><button type="button" class="languageOption" data-lang="en">🇬🇧 English</button><button type="button" class="languageOption" data-lang="el">🇬🇷 Ελληνικά</button><button type="button" class="languageOption" data-lang="ka">🇬🇪 ქართული</button></div></div></div></header>
 
 <div class="grid">
 <div class="privacyEyeSlot"><button id="privacyEye" class="privacyEyeMain" onclick="togglePrivacy()" aria-label="თანხების დამალვა" title="თანხების დამალვა">👁</button></div>
@@ -1994,10 +1996,8 @@ async function saveNote(){
   if(reminder && new Date(date+'T'+time).getTime()<=Date.now()){
     alert('შეხსენების დრო მომავალში უნდა იყოს');return;
   }
-  if(reminder && 'Notification' in window){
-    try{
-      if(Notification.permission==='default') await Notification.requestPermission();
-    }catch(e){console.warn('Notification permission failed:',e);}
+  if(reminder && 'Notification' in window && Notification.permission==='default'){
+    try{await Notification.requestPermission();}catch(e){console.warn('Notification permission failed:',e);}
   }
   const now=Date.now();
   const base={text,date,time,reminder,done:false,notifiedAt:0,updatedAt:now};
@@ -2052,31 +2052,13 @@ function checkNoteReminders(){
     n.notifiedAt=now;changed=true;
     playNoteAlarm();
     if('Notification' in window && Notification.permission==='granted'){
-      try{
-        const title='📖 TEMO — ჩანაწერის შეხსენება';
-        const body=n.text+'\n'+formatNoteDate(n.date,n.time);
-        if('serviceWorker' in navigator){
-          navigator.serviceWorker.ready.then(reg=>{
-            if(reg && reg.showNotification){
-              return reg.showNotification(title,{body,tag:'temo-note-'+n.id,renotify:true,requireInteraction:true});
-            }
-            return new Notification(title,{body,tag:'temo-note-'+n.id});
-          }).catch(()=>{try{new Notification(title,{body,tag:'temo-note-'+n.id});}catch(e){}});
-        }else{
-          new Notification(title,{body,tag:'temo-note-'+n.id});
-        }
-      }catch(e){console.warn('Notification failed:',e);}
+      try{new Notification('📖 TEMO — ჩანაწერის შეხსენება',{body:n.text+'\n'+formatNoteDate(n.date,n.time),tag:'temo-note-'+n.id});}catch(e){console.warn('Notification failed:',e);}
     }else{
       try{alert('🔔 '+n.text+'\n'+formatNoteDate(n.date,n.time));}catch(e){}
     }
   });
   if(changed)saveNotesRemote().catch(e=>console.warn('Reminder state save failed:',e));
 }
-async function getNotesNotificationRegistration(){
-  if(!('serviceWorker' in navigator))return null;
-  try{return await navigator.serviceWorker.getRegistration();}catch(e){return null;}
-}
-
 function startNotesReminderWatcher(){
   if(notesReminderTimer)clearInterval(notesReminderTimer);
   if(notesSyncTimer)clearInterval(notesSyncTimer);
@@ -2089,5 +2071,124 @@ function startNotesReminderWatcher(){
 startNotesReminderWatcher();
 </script>
 
+<script id="temo-language-system">
+(function(){
+  const GLOBAL_KEY='temoLanguage';
+  const userLanguageKey=()=>{const id=String(window.currentUserId||'').trim();return id?'temoLanguage_'+id:GLOBAL_KEY;};
+  const LANGS={ka:{name:'ქართული',short:'KA',locale:'ka-GE'},en:{name:'English',short:'EN',locale:'en-US'},el:{name:'Ελληνικά',short:'EL',locale:'el-GR'}};
+  /* სრული UI ლექსიკონი: მხოლოდ პროგრამის ტექსტები, არა მომხმარებლის მიერ შეყვანილი სამუშაოების სახელები. */
+  const D={
+    'მთავარი':['Home','Αρχική'],'სეთინგები':['Settings','Ρυθμίσεις'],'მომხმარებლები':['Users','Χρήστες'],'საფულე':['Wallet','Πορτοφόλι'],'გამოსვლა':['Logout','Αποσύνδεση'],
+    'ქართული':['Georgian','Γεωργιανά'],'ენები':['Languages','Γλώσσες'],'ჩემი სამუშაო':['My Work','Η εργασία μου'],'თანხების დამალვა':['Hide amounts','Απόκρυψη ποσών'],'თანხების ჩვენება':['Show amounts','Εμφάνιση ποσών'],
+    'ამ თვის ნამუშევარი':['This month earned','Κέρδη αυτού του μήνα'],'დღიური საშუალო':['Daily average','Ημερήσιος μέσος όρος'],'მისაღები':['Receivable','Προς είσπραξη'],'ამ თვის სამუშაოები':['This month jobs','Εργασίες αυτού του μήνα'],
+    'სამუშაოს დამატება':['Add work','Προσθήκη εργασίας'],'კალენდარი':['Calendar','Ημερολόγιο'],'ორშ':['Mon','Δευ'],'სამ':['Tue','Τρι'],'ოთხ':['Wed','Τετ'],'ხუთ':['Thu','Πεμ'],'პარ':['Fri','Παρ'],'შაბ':['Sat','Σαβ'],'კვი':['Sun','Κυρ'],
+    'ნოუთი':['Notes','Σημειώσεις'],'აირჩიე თარიღი':['Choose a date','Επίλεξε ημερομηνία'],'სამუშაო':['work','εργασία'],'დღე':['days','ημέρες'],'გადახდილი':['paid','πληρωμένα'],'გადასახდელი':['unpaid','απλήρωτα'],'ამ დღეს სამუშაო არ არის':['No work on this day','Δεν υπάρχει εργασία αυτή την ημέρα'],
+    'გადაუხდელია':['Not paid','Δεν έχει πληρωθεί'],'გადახდა მივიღე':['Payment received','Πληρωμή λήφθηκε'],'შეცვლა':['Edit','Επεξεργασία'],'წაშლა':['Delete','Διαγραφή'],'შენიშვნა':['Note','Σημείωση'],'ჯერ ჩანაწერი არ არის.':['No entries yet.','Δεν υπάρχουν ακόμη καταχωρίσεις.'],
+    'სულ სამუშაოები':['Total jobs','Σύνολο εργασιών'],'მიღებული':['Received','Εισπραχθέντα'],'ჯერ მისაღები':['Still receivable','Προς είσπραξη'],'გადაუხდელი':['unpaid','απλήρωτα'],'ყველასგან მიღებულია თანხა. 🎉':['All payments received. 🎉','Έχουν εισπραχθεί όλες οι πληρωμές. 🎉'],
+    'სულ ნამუშევარი':['Total earned','Συνολικά κερδισμένα'],'სამუშაოების ფინანსები':['Work finances','Οικονομικά εργασιών'],'მონაცემების მართვა':['Data management','Διαχείριση δεδομένων'],'საიტის განახლება':['Website update','Ενημέρωση ιστοσελίδας'],'აირჩიე ფაილი':['Choose file','Επίλεξε αρχείο'],
+    'ატვირთული ფაილი უნდა იყოს index.html. Token მხოლოდ ამ ტელეფონში ინახება.':['Uploaded file must be index.html. Token is stored only on this phone.','Το αρχείο πρέπει να είναι index.html. Το Token αποθηκεύεται μόνο σε αυτή τη συσκευή.'],
+    'ჩემი ავტორიზაცია':['My authorization','Η εξουσιοδότησή μου'],'მომხმარებელი':['User','Χρήστης'],'ელფოსტა':['Email','Email'],'ნეონის მართვა':['Neon control','Έλεγχος neon'],'ფერი':['Color','Χρώμα'],'სიმძლავრე':['Strength','Ένταση'],
+    'მომხმარებლების მართვა':['User management','Διαχείριση χρηστών'],'მომხმარებლების დამატება და მართვა':['Add and manage users','Προσθήκη και διαχείριση χρηστών'],'მომხმარებლები ჯერ არ არის':['No users yet','Δεν υπάρχουν ακόμη χρήστες'],'ელფოსტა არ არის':['No email','Δεν υπάρχει email'],'განბლოკვა':['Unblock','Ξεμπλοκάρισμα'],'დაბლოკვა':['Block','Αποκλεισμός'],
+    'აირჩიე წელი':['Choose year','Επίλεξε έτος'],'დახურვა':['Close','Κλείσιμο'],'დადასტურება':['Confirmation','Επιβεβαίωση'],'ყველა სამუშაოს წასაშლელად შეიყვანე საიტზე შესასვლელი პაროლი.':['Enter the site password to delete all work.','Πληκτρολόγησε τον κωδικό πρόσβασης του site για να διαγράψεις όλες τις εργασίες.'],'გაუქმება':['Cancel','Ακύρωση'],'შენახვა':['Save','Αποθήκευση'],
+    'მისაღები თანხები':['Receivable amounts','Ποσά προς είσπραξη'],'ყველამ მომცა ფული ვისაც ემართა':['Everyone who owed me has paid','Όλοι όσοι μου χρωστούσαν πλήρωσαν'],'ჩანაწერები':['Notes','Σημειώσεις'],'სამუშაოს შეცვლა':['Edit work','Επεξεργασία εργασίας'],'თარიღი':['Date','Ημερομηνία'],'სამუშაო ადგილი / დამსაქმებელი':['Workplace / employer','Τόπος εργασίας / εργοδότης'],'თანხა (€)':['Amount (€)','Ποσό (€)'],'უკვე გადახდილია':['Already paid','Έχει ήδη πληρωθεί'],
+    'შეიყვანე პაროლი':['Enter password','Πληκτρολόγησε κωδικό'],'სახელი':['Name','Όνομα'],'პაროლი':['Password','Κωδικός'],'დაგავიწყდა პაროლი?':['Forgot password?','Ξέχασες τον κωδικό;'],'შესვლა':['Login','Σύνδεση'],'ახალი მომხმარებელი':['New user','Νέος χρήστης'],
+    'პაროლის აღდგენა':['Password recovery','Ανάκτηση κωδικού'],'შეიყვანე რეგისტრირებული ელფოსტა და დააყენე ახალი პაროლი.':['Enter your registered email and set a new password.','Πληκτρολόγησε το καταχωρημένο email σου και όρισε νέο κωδικό.'],'რეგისტრირებული ელფოსტა':['Registered email','Καταχωρημένο email'],'ახალი პაროლი':['New password','Νέος κωδικός'],'შეიყვანე ახალი პაროლი':['Enter a new password','Πληκτρολόγησε νέο κωδικό'],'პაროლის შეცვლა':['Change password','Αλλαγή κωδικού'],'პაროლი შეინახება ამ მოწყობილობასა და Firebase-ში.':['The password will be saved on this device and in Firebase.','Ο κωδικός θα αποθηκευτεί σε αυτή τη συσκευή και στο Firebase.'],'პაროლი წარმატებით შეიცვალა!':['Password changed successfully!','Ο κωδικός άλλαξε με επιτυχία!'],'ახალი პაროლი შენახულია.':['The new password has been saved.','Ο νέος κωδικός αποθηκεύτηκε.'],'კარგი':['OK','Εντάξει'],
+    'ახალი მომხმარებლის ავტორიზაცია':['New user authorization','Εξουσιοδότηση νέου χρήστη'],'1. თქვენი სახელი':['1. Your name','1. Το όνομά σας'],'2. თქვენი ელფოსტა':['2. Your email','2. Το email σας'],'3. თქვენი ახალი პაროლი':['3. Your new password','3. Ο νέος σας κωδικός'],'ანგარიშის შექმნა':['Create account','Δημιουργία λογαριασμού'],
+    'შენიშვნა:':['Note:','Σημείωση:'],'სურვილის შემთხვევაში':['Optional','Προαιρετικό'],'მაგ: გიორგი - ვილა':['e.g. Giorgi - Villa','π.χ. Giorgi - Villa'],'მაგ: 100':['e.g. 100','π.χ. 100'],'Repository':['Repository','Repository'],'GitHub Token':['GitHub Token','GitHub Token'],
+    'თანხა მიუთითე':['Enter an amount','Πληκτρολόγησε ποσό'],'თარიღი მიუთითე':['Enter a date','Επίλεξε ημερομηνία'],'წავშალოთ ეს ჩანაწერი?':['Delete this entry?','Να διαγραφεί αυτή η καταχώριση;'],'პაროლი არასწორია':['Incorrect password','Λάθος κωδικός'],'შეიყვანე ელფოსტა':['Enter email','Πληκτρολόγησε email'],'ამ ელფოსტით მომხმარებელი ვერ მოიძებნა':['No user found with this email','Δεν βρέθηκε χρήστης με αυτό το email'],'შეცდომა:':['Error:','Σφάλμα:'],
+    'Firebase პასუხს 10 წამში არ უპასუხა':['Firebase did not respond within 10 seconds','Το Firebase δεν απάντησε μέσα σε 10 δευτερόλεπτα'],'ჯერ არც ერთ მომხმარებელს არ აქვს აქტიური ანგარიში':['No user has an active account yet','Κανένας χρήστης δεν έχει ενεργό λογαριασμό ακόμη'],'შეიყვანე სახელი და პაროლი':['Enter your name and password','Πληκτρολόγησε όνομα και κωδικό'],'ეს მომხმარებელი დაბლოკილია':['This user is blocked','Αυτός ο χρήστης είναι αποκλεισμένος'],'სახელი ან პაროლი არასწორია':['Incorrect name or password','Λάθος όνομα ή κωδικός'],
+    'დავბლოკოთ ':['Block ','Αποκλεισμός '],'განვბლოკოთ ':['Unblock ','Κατάργηση αποκλεισμού '],'წავშალოთ მომხმარებელი ':['Delete user ','Διαγραφή χρήστη '],'არსებული მონაცემები შეიცვალოს ამ სარეზერვო ასლით?':['Replace existing data with this backup?','Να αντικατασταθούν τα υπάρχοντα δεδομένα με αυτό το αντίγραφο ασφαλείας;'],'მონაცემები აღდგენილია':['Data restored','Τα δεδομένα αποκαταστάθηκαν'],'ეს სარეზერვო ფაილი არასწორია':['This backup file is invalid','Αυτό το αντίγραφο ασφαλείας δεν είναι έγκυρο'],
+    'რეპოზიტორია ჩაწერე ასე: მომხმარებელი/რეპოზიტორია':['Enter repository as: user/repository','Γράψε το repository ως: user/repository'],'GitHub Token ჩაწერე':['Enter GitHub Token','Γράψε το GitHub Token'],'GitHub მონაცემები დამახსოვრებულია ამ ტელეფონში':['GitHub data saved on this device','Τα δεδομένα GitHub αποθηκεύτηκαν σε αυτή τη συσκευή'],'⬆ ატვირთე':['⬆ Upload','⬆ Μεταφόρτωση'],'აირჩიე ახალი index.html ფაილი':['Choose a new index.html file','Επίλεξε νέο αρχείο index.html'],'GitHub-თან დაკავშირება ვერ მოხერხდა':['Could not connect to GitHub','Δεν ήταν δυνατή η σύνδεση στο GitHub'],'ატვირთვა ვერ მოხერხდა':['Upload failed','Η μεταφόρτωση απέτυχε'],'📁 აირჩიე ფაილი':['📁 Choose file','📁 Επίλεξε αρχείο'],
+    'ინახება...':['Saving...','Αποθήκευση...'],'პაროლი შეიცვალა ამ მოწყობილობაზე, მაგრამ Firebase-ში შენახვა ვერ მოხერხდა':['Password changed on this device, but could not be saved to Firebase','Ο κωδικός άλλαξε σε αυτή τη συσκευή, αλλά δεν αποθηκεύτηκε στο Firebase'],'სახელი, ელფოსტა და ახალი პაროლი სამივე შეავსე':['Fill in name, email and new password','Συμπλήρωσε όνομα, email και νέο κωδικό'],'სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)':['Name must contain only Latin letters (A-Z, a-z)','Το όνομα πρέπει να περιέχει μόνο λατινικά γράμματα (A-Z, a-z)'],'შეიყვანე სწორი ელფოსტა':['Enter a valid email','Πληκτρολόγησε έγκυρο email'],'ეს სახელი ადმინისტრატორისთვისაა':['This name is reserved for the administrator','Αυτό το όνομα είναι δεσμευμένο για τον διαχειριστή'],'ასეთი მომხმარებელი უკვე არსებობს':['This user already exists','Αυτός ο χρήστης υπάρχει ήδη'],'ეს ელფოსტა უკვე გამოყენებულია':['This email is already in use','Αυτό το email χρησιμοποιείται ήδη'],
+    '0 გადასახდელი':['0 unpaid','0 απλήρωτα'],'0 დღე':['0 days','0 ημέρες'],'0 სამუშაო':['0 jobs','0 εργασίες'],'0 გადახდილი':['0 paid','0 πληρωμένα'],'შენ შეხვედი...':['You are logged in as...','Συνδέθηκες ως...'],'შენ შეხვედი':['You are logged in as','Συνδέθηκες ως']
+  };
+  const all={ka:{},en:{},el:{}};
+  Object.keys(D).forEach(k=>{all.ka[k]=k;all.en[k]=D[k][0];all.el[k]=D[k][1]});
+  let lang='ka';
+  function readStoredLanguage(){const key=userLanguageKey();const saved=localStorage.getItem(key);if(saved&&LANGS[saved])return saved;const global=localStorage.getItem(GLOBAL_KEY);return LANGS[global]?global:'ka';}
+  lang=readStoredLanguage();
+  window.getLangLocale=()=>LANGS[lang].locale;
+  window.t=k=>all[lang]?.[k]??k;
+  window.getCurrentLanguage=()=>lang;
+  window.setCurrentLanguage=(next)=>{if(!LANGS[next])next='ka';lang=next;const key=userLanguageKey();localStorage.setItem(key,lang);apply();};
+  window.restoreCurrentUserLanguage=(fallback)=>{const key=userLanguageKey();const saved=localStorage.getItem(key);const next=(saved&&LANGS[saved])?saved:((fallback&&LANGS[fallback])?fallback:'ka');lang=next;localStorage.setItem(key,lang);apply();};
+  async function persistLanguageForCurrentUser(next){
+    const id=String(window.currentUserId||'').trim();
+    if(!id)return;
+    try{
+      const r=await fetch(FIREBASE_DB_URL+'/users.json',{cache:'no-store'});
+      if(!r.ok)return;
+      const data=await r.json();
+      let users=Array.isArray(data)?data.filter(Boolean):Object.values(data||{}).filter(Boolean);
+      const target=users.find(u=>String(u?.id||'')===id);
+      if(!target)return;
+      target.language=next;
+      const put=await fetch(FIREBASE_DB_URL+'/users.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(users)});
+      if(!put.ok)throw new Error('Firebase HTTP '+put.status);
+      const local=getUsers();const me=local.find(u=>String(u.id)===id);if(me){me.language=next;localStorage.setItem(USERS_KEY,JSON.stringify(local));}
+    }catch(e){console.warn('Firebase language save failed:',e);}
+  }
+
+  /* ყოველთვის ეძებს ყველაზე გრძელ ფრაზას ჯერ, ამიტომ emoji/რიცხვები/შერეული ტექსტიც ითარგმნება. */
+  const keys=Object.keys(D).sort((a,b)=>b.length-a.length);
+  function translateText(text){
+    let out=String(text??'');
+    if(!out.trim())return out;
+    for(const k of keys){
+      const variants=[all.ka[k],all.en[k],all.el[k]].filter(Boolean).sort((a,b)=>b.length-a.length);
+      for(const from of variants){
+        if(from===out.trim()){
+          const lead=out.match(/^\s*/)?.[0]||'',trail=out.match(/\s*$/)?.[0]||'';
+          out=lead+all[lang][k]+trail; break;
+        }
+        if(out.includes(from)) out=out.split(from).join(all[lang][k]);
+      }
+    }
+    return out;
+  }
+  window.temoTranslateMessage=translateText;
+  const nativeAlert=window.alert.bind(window),nativeConfirm=window.confirm.bind(window);
+  window.alert=msg=>nativeAlert(translateText(msg));
+  window.confirm=msg=>nativeConfirm(translateText(msg));
+
+  function applyTextNodes(){
+    const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT); const nodes=[];
+    while(walker.nextNode())nodes.push(walker.currentNode);
+    nodes.forEach(n=>{
+      const p=n.parentElement;if(!p||['SCRIPT','STYLE'].includes(p.tagName)||p.closest('.languageBox'))return;
+      const v=n.nodeValue;if(!v.trim())return;
+      const translated=translateText(v);if(translated!==v)n.nodeValue=translated;
+    });
+  }
+  function apply(){
+    document.documentElement.lang=lang;
+    const btn=document.getElementById('languageBtn');if(btn)btn.textContent='🌐 '+LANGS[lang].short;
+    document.querySelectorAll('.languageOption').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));
+    document.querySelectorAll('[data-i18n-key]').forEach(el=>el.textContent=t(el.dataset.i18nKey));
+    const attrMap={loginName:{placeholder:'სახელი'},loginPassword:{placeholder:'პაროლი'},forgotPasswordEmail:{placeholder:'მაგ: temo@gmail.com'},forgotPasswordNew:{placeholder:'შეიყვანე ახალი პაროლი'},newUserAuthEmail:{placeholder:'მაგ: temo@gmail.com'},ghToken:{placeholder:'GitHub Token'},deleteAuthPassword:{placeholder:'პაროლი'},place:{placeholder:'მაგ: გიორგი - ვილა'},money:{placeholder:'მაგ: 100'},note:{placeholder:'სურვილის შემთხვევაში'}};
+    Object.entries(attrMap).forEach(([id,a])=>{const el=document.getElementById(id);if(el)for(const [x,k] of Object.entries(a))el.setAttribute(x,t(k));});
+    const eye=document.getElementById('privacyEye');if(eye){const hidden=localStorage.getItem('temoPrivacyHidden')==='yes';eye.title=t(hidden?'თანხების ჩვენება':'თანხების დამალვა');eye.setAttribute('aria-label',eye.title)}
+    const todayEl=document.getElementById('today');if(todayEl)todayEl.textContent=new Date().toLocaleDateString(LANGS[lang].locale);
+    applyTextNodes();
+    if(typeof render==='function')render();
+    if(typeof updateUserUI==='function')updateUserUI();
+    if(typeof renderReceivableModal==='function'&&document.getElementById('receivableModal')?.classList.contains('show'))renderReceivableModal();
+    if(typeof renderManagedUsers==='function'&&typeof currentUser!=='undefined'&&currentUser===ADMIN_USER)renderManagedUsers();
+    /* render()-ის შემდეგ გენერირებული ტექსტიც გადაითარგმნოს */
+    applyTextNodes();
+    const titleKa='TEMO სამუშაო ანგარიში';document.title=lang==='ka'?titleKa:lang==='en'?'TEMO Work Tracker':'TEMO Εργασίες';
+  }
+  function prepare(){
+    const btn=document.getElementById('languageBtn'),menu=document.getElementById('languageMenu');
+    if(btn&&menu){
+      btn.addEventListener('click',e=>{e.stopPropagation();menu.classList.toggle('show')});
+      document.addEventListener('click',()=>menu.classList.remove('show'));
+      document.querySelectorAll('.languageOption').forEach(b=>b.addEventListener('click',()=>{lang=b.dataset.lang;localStorage.setItem(userLanguageKey(),lang);menu.classList.remove('show');apply();persistLanguageForCurrentUser(lang)}));
+    }
+    apply();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',prepare);else prepare();
+})();
+</script>
 </body>
 </html>
