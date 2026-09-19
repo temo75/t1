@@ -690,7 +690,7 @@ body.neon-global .userName{
   <div class="receivableList" id="receivableList"></div>
 </div>
 </div>
-<div class="noteModal" id="noteModal" onclick="if(event.target===this)closeCalendarNote()">
+<div class="noteModal" id="calendarNoteModal" onclick="if(event.target===this)closeCalendarNote()">
 <div class="noteBox">
 <div class="noteHeader"><h2>ჩანაწერები</h2><button class="noteClose" onclick="closeCalendarNote()" aria-label="დახურვა" title="დახურვა">✕</button></div>
 <div class="noteEntriesScroll"><div id="noteEntries"></div></div>
@@ -970,9 +970,9 @@ function openCalendarNote(){
     const amount=j.paid?`<span class="noteAmount">${euro(j.money)}</span>`:'';
     return `<div class="noteEntry"><div class="noteDate">${formatDate(j.date)}</div><div class="noteLine"><b>${esc(j.place||'სამუშაო')}</b>${mark}${amount}</div>${j.note?`<div class="meta">შენიშვნა: ${esc(j.note)}</div>`:''}</div>`;
   }).join(''):'<div class="noteEntry">ჯერ ჩანაწერი არ არის.</div>';
-  $('noteModal').classList.add('show');
+  $('calendarNoteModal').classList.add('show');
 }
-function closeCalendarNote(){$('noteModal').classList.remove('show')}
+function closeCalendarNote(){$('calendarNoteModal').classList.remove('show')}
 
 function openReceivableModal(){
   renderReceivableModal();
