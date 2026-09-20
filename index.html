@@ -145,11 +145,45 @@ footer{display:none!important;}
 .neonControlled{border-color:var(--neon-control)!important;}
 .neonControlled .label,.neonControlled span{color:#dfffe6!important;}
 .neonControlled .amount,.neonControlled b{ }
-.neonControlBox{margin-top:14px;padding:16px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(145deg,var(--panel),var(--panel2))}
-.neonControlRow{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;margin-top:12px}
-.neonControlRow input[type=color]{width:58px;height:42px;padding:2px;border-radius:10px;border:1px solid var(--line);background:#071117;cursor:pointer}
-.neonControlRow input[type=range]{width:100%}
-.neonValue{font-weight:bold;color:var(--neon-control);text-shadow:0 0 8px rgba(var(--neon-control-rgb),.8);min-width:48px;text-align:right}
+.neonControlBox{
+  margin-top:14px;
+  padding:22px 18px 20px;
+  border:1px solid rgba(0,255,190,.55);
+  border-radius:24px;
+  background:
+    radial-gradient(circle at 15% 15%,rgba(0,255,170,.13),transparent 34%),
+    radial-gradient(circle at 90% 85%,rgba(0,190,255,.12),transparent 38%),
+    linear-gradient(145deg,rgba(7,27,35,.96),rgba(4,17,24,.98));
+  box-shadow:
+    inset 0 0 22px rgba(0,255,170,.08),
+    0 0 14px rgba(0,255,170,.16);
+  position:relative;
+  overflow:hidden;
+}
+.neonControlBox:before{
+  content:"";position:absolute;left:-10%;right:-10%;top:54%;height:70px;
+  background:linear-gradient(90deg,transparent,rgba(0,255,170,.10),rgba(0,220,255,.13),transparent);
+  transform:rotate(-4deg);pointer-events:none;
+}
+.neonControlHead{display:flex;align-items:center;gap:13px;position:relative;z-index:1;margin-bottom:18px}
+.neonControlIcon{width:58px;height:58px;display:grid;place-items:center;border-radius:50%;font-size:34px;
+  background:radial-gradient(circle at 35% 30%,#fff9,rgba(0,255,170,.18) 35%,rgba(0,80,75,.18) 70%);
+  border:1px solid rgba(0,255,190,.75);
+  box-shadow:0 0 10px rgba(0,255,170,.35),inset 0 0 16px rgba(0,255,170,.18);}
+.neonControlTitle{font-size:23px;font-weight:900;color:#f3ffff;text-shadow:0 0 8px rgba(0,255,190,.32)}
+.neonControlSub{font-size:13px;color:#9fc2c5;margin-top:3px}
+.neonControlLabel{font-size:16px;font-weight:800;color:#eaffff;margin:15px 0 10px;position:relative;z-index:1}
+.neonColorRow{display:flex;gap:12px;align-items:center;position:relative;z-index:1}
+.neonControlRow{display:flex;align-items:center;gap:14px;margin-top:0;position:relative;z-index:1}
+.neonControlRow input[type=color]{width:68px;height:68px;padding:0;border-radius:50%;border:3px solid #eaffff;background:#071117;cursor:pointer;overflow:hidden;
+  box-shadow:0 0 0 5px rgba(0,255,190,.10),0 0 16px rgba(var(--neon-control-rgb),.72);}
+.neonControlRow input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+.neonControlRow input[type=color]::-webkit-color-swatch{border:none;border-radius:50%}
+.neonControlRow input[type=range]{width:100%;height:8px;accent-color:var(--neon-control);cursor:pointer}
+.neonValue{font-size:20px;font-weight:900;color:#efffff;text-shadow:0 0 9px rgba(var(--neon-control-rgb),.85);min-width:58px;text-align:right}
+.neonStrengthTrack{display:flex;align-items:center;gap:12px;position:relative;z-index:1}
+.neonStrengthTrack input[type=range]{flex:1}
+
 </style>
 </style>
 
@@ -847,10 +881,22 @@ body.temo-android-app{
 <div class="section" id="neonControlSection" style="display:none">
 <h2>✨ ნეონის მართვა</h2>
 <div class="neonControlBox">
-<div>ფერი</div>
-<div class="neonControlRow"><input id="neonColor" type="color" value="#49d86a" aria-label="ნეონის ფერი"></div>
-<div style="margin-top:14px">სიმძლავრე</div>
-<div class="neonControlRow"><input id="neonStrength" type="range" min="0" max="100" value="65" step="1" aria-label="ნეონის სიმძლავრე"><span id="neonStrengthValue" class="neonValue">65%</span></div>
+  <div class="neonControlHead">
+    <div class="neonControlIcon">🎨</div>
+    <div>
+      <div class="neonControlTitle">ნეონის მართვა</div>
+      <div class="neonControlSub">აირჩიე ფერი და სიმძლავრე</div>
+    </div>
+  </div>
+  <div class="neonControlLabel">ფერი</div>
+  <div class="neonColorRow">
+    <div class="neonControlRow"><input id="neonColor" type="color" value="#49d86a" aria-label="ნეონის ფერი"></div>
+  </div>
+  <div class="neonControlLabel">სიმძლავრე</div>
+  <div class="neonStrengthTrack">
+    <input id="neonStrength" type="range" min="0" max="100" value="65" step="1" aria-label="ნეონის სიმძლავრე">
+    <span id="neonStrengthValue" class="neonValue">65%</span>
+  </div>
 </div>
 </div>
 
