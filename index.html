@@ -699,6 +699,26 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
 }
 </style>
 
+
+<style id="temo-android-app-nav-small">
+/* მხოლოდ Android აპში — ქვედა მენიუს ღილაკების დაპატარავება */
+body.temo-android-app #bottomNav{
+  height:64px !important;
+  padding:2px 7px env(safe-area-inset-bottom,2px) !important;
+  gap:1px !important;
+}
+body.temo-android-app #bottomNav > button{
+  height:56px !important;
+  font-size:34px !important;
+}
+body.temo-android-app #bottomNav > button .navLogo{
+  font-size:34px !important;
+}
+body.temo-android-app{
+  padding-bottom:72px !important;
+}
+</style>
+
 </head>
 <body>
 <nav id="bottomNav" aria-label="მთავარი მენიუ">
@@ -2995,5 +3015,14 @@ startNotesReminderWatcher();
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',prepare);else prepare();
 })();
 </script>
+
+<script id="temo-android-app-detect">
+(function(){
+  var ua=navigator.userAgent||'';
+  var isAndroidWebView=/Android/i.test(ua) && (/;\s*wv\)/i.test(ua) || /Version\/4\.0/i.test(ua) || !!window.AndroidReminder);
+  if(isAndroidWebView) document.body.classList.add('temo-android-app');
+})();
+</script>
+
 </body>
 </html>
