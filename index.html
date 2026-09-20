@@ -667,8 +667,8 @@ body.neon-global .userName{
 <div id="notesPage" class="pageHidden">
   <div class="notesHeader">
     <div>
-      <h1 class="notesTitle">📖 ჩანაწერების წიგნი</h1>
-      <div class="notesSub">შენი პირადი ჩანაწერები და შეხსენებები</div>
+      <h1 class="notesTitle">📖 ჩანაწერები</h1>
+      <div class="notesSub"></div>
     </div>
     <button type="button" class="notesAddBtn" onclick="openNoteModal()">➕ ახალი ჩანაწერი</button>
   </div>
@@ -1361,7 +1361,7 @@ function updateUserUI(){
  const site=$('websiteUpdateSection'); if(site)site.style.display=isAdmin?'':'none';
  const users=$('userManagementSection'); if(users)users.style.display=isAdmin?'':'none'; const neon=$('neonControlSection'); if(neon)neon.style.display=isAdmin?'':'none';
  const manageBtn=$('userManagementOpenBtn'); if(manageBtn)manageBtn.style.display=isAdmin?'block':'none';
- const label=$('currentUserLabel'); if(label){label.textContent=currentUser?'👤 შენ შეხვედი... '+currentUser:'';label.style.display=currentUser?'block':'none';}
+ const label=$('currentUserLabel'); if(label){label.textContent=currentUser?'👤  შეხვედი- '+currentUser:'';label.style.display=currentUser?'block':'none';}
  if(isAdmin)renderManagedUsers();
 }
 let managedUsersRenderKey='';
