@@ -2205,6 +2205,9 @@ async function loadNotes(){
     console.warn('Firebase notes read failed:',e);
   }
   renderNotes();
+  // Android აპში ყველა არსებული აქტიური შეხსენება თავიდან დაიგეგმოს
+  // Firebase-დან ჩანაწერების ჩატვირთვის შემდეგაც.
+  notesCache.forEach(n=>scheduleNativeNoteReminder(n));
   checkNoteReminders();
 }
 function renderNotes(){
@@ -2317,6 +2320,10 @@ function playNoteAlarm(){
   }catch(e){console.warn('Note alarm audio blocked:',e);}
 }
 function checkNoteReminders(){
+  // Android აპში შეხსენებას სისტემა თვითონ აგზავნის.
+  // ამიტომ WebView-ის alert/Notification აღარ უნდა გაიმეოროს იგივე შეხსენება.
+  if(typeof window.AndroidReminder!=='undefined' && window.AndroidReminder &&
+     typeof window.AndroidReminder.scheduleReminder==='function')return;
   const now=Date.now();
   let changed=false;
   notesCache.forEach(n=>{
