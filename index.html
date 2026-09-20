@@ -2232,7 +2232,7 @@ function formatNoteDate(date,time){
 }
 function openNoteModal(note){
   editingNoteId=note?.id||'';
-  $('noteModalTitle').textContent=editingNoteId?'✏️ ჩანაწერის შეცვლა':'➕ ახალი ჩანაწერი';
+  $('noteModalTitle').textContent=editingNoteId?window.t('✏️ ჩანაწერის შეცვლა'):window.t('➕ ახალი ჩანაწერი');
   $('noteText').value=note?.text||'';
   $('noteDate').value=note?.date||localToday();
   $('noteTime').value=note?.time||localTime();
@@ -2249,7 +2249,7 @@ function toggleNoteReminderFields(){
   const on=$('noteReminder').checked;
   $('noteDate').disabled=false;
   $('noteTime').disabled=false;
-  $('noteReminderHint').textContent=on?'შეხსენება ჩაირთვება მითითებულ თარიღსა და დროს.':'ჩანაწერი შეინახება შეხსენების გარეშე.';
+  $('noteReminderHint').textContent=on?window.t('შეხსენება ჩაირთვება მითითებულ თარიღსა და დროს.'):window.t('ჩანაწერი შეინახება შეხსენების გარეშე.');
 }
 async function loadNotes(){
   const list=$('notesList');
@@ -2281,15 +2281,15 @@ function renderNotes(){
   if(!list)return;
   if(!notesCache.length){list.innerHTML='<div class="noteEmpty">📖 ჯერ ჩანაწერები არ გაქვს.<br>დააჭირე „➕ ახალი ჩანაწერი“-ს.</div>';return;}
   list.innerHTML=notesCache.map(n=>{
-    const reminder=n.reminder?'🔔 შეხსენება ჩართულია':'🔕 შეხსენება გამორთულია';
+    const reminder=n.reminder?window.t('🔔 შეხსენება ჩართულია'):window.t('🔕 შეხსენება გამორთულია');
     return `<div class="noteCard ${n.done?'done':''}" data-note-id="${noteEsc(n.id)}">
       <div class="noteTop"><div class="noteText">${noteEsc(n.text)}</div><div>${n.done?'✅':''}</div></div>
       <div class="noteTime">${noteEsc(formatNoteDate(n.date,n.time))}</div>
       <div class="noteReminder">${reminder}</div>
       <div class="noteActions">
-        <button type="button" onclick="toggleNoteDone('${noteEsc(n.id)}')">${n.done?'↩️ აქტიური':'✅ შესრულდა'}</button>
-        <button type="button" onclick="editNote('${noteEsc(n.id)}')">✏️ შეცვლა</button>
-        <button type="button" class="danger" onclick="deleteNote('${noteEsc(n.id)}')">🗑️ წაშლა</button>
+        <button type="button" onclick="toggleNoteDone('${noteEsc(n.id)}')">${n.done?window.t('↩️ აქტიური'):window.t('✅ შესრულდა')}</button>
+        <button type="button" onclick="editNote('${noteEsc(n.id)}')">${window.t('✏️ შეცვლა')}</button>
+        <button type="button" class="danger" onclick="deleteNote('${noteEsc(n.id)}')">${window.t('🗑️ წაშლა')}</button>
       </div>
     </div>`;
   }).join('');
