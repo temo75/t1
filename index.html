@@ -586,6 +586,10 @@ body.neon-global .userName{
   #notesPage .notesModalBox .notesField textarea{min-height:58px;max-height:66px}
 }
 </style>
+<style id="temo-work-save-no-blue-neon">
+/* სამუშაოს დამატების/შეცვლის ფანჯრის შენახვის ღილაკზე ლურჯი ნეონი სრულად გამორთულია. */
+.modal .form .save{box-shadow:none!important;text-shadow:none!important;}
+</style>
 </head>
 <body>
 <nav id="bottomNav">
@@ -773,7 +777,7 @@ body.neon-global .userName{
 <div class="modal" id="modal"><div class="form">
 <h2 id="formTitle">სამუშაოს დამატება</h2>
 <label>თარიღი</label><input id="date" type="date">
-<label>სამუშაო ადგილი </label><input id="place" placeholder="მაგ: სად ვიმუშავე">
+<label>სამუშაო ადგილი / დამსაქმებელი</label><input id="place" placeholder="მაგ: გიორგი - ვილა">
 <label>თანხა (€)</label><input id="money" type="number" inputmode="decimal" step="0.01" placeholder="მაგ: 100">
 <label>შენიშვნა</label><textarea id="note" rows="3" placeholder="სურვილის შემთხვევაში"></textarea>
 <label class="checkrow"><input id="paidCheck" type="checkbox"> უკვე გადახდილია</label>
