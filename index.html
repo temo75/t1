@@ -2232,8 +2232,9 @@ function formatNoteDate(date,time){
 }
 function openNoteModal(note){
   editingNoteId=note?.id||'';
-  $('noteModalTitle').textContent=editingNoteId?window.t('✏️ ჩანაწერის შეცვლა'):window.t('➕ ახალი ჩანაწერი');
+  $('noteModalTitle').textContent=editingNoteId?t('✏️ ჩანაწერის შეცვლა'):t('➕ ახალი ჩანაწერი');
   $('noteText').value=note?.text||'';
+  $('noteText').setAttribute('placeholder',t('ჩაწერე რაც გინდა...'));
   $('noteDate').value=note?.date||localToday();
   $('noteTime').value=note?.time||localTime();
   $('noteReminder').checked=note?.reminder!==false;
@@ -2249,7 +2250,7 @@ function toggleNoteReminderFields(){
   const on=$('noteReminder').checked;
   $('noteDate').disabled=false;
   $('noteTime').disabled=false;
-  $('noteReminderHint').textContent=on?window.t('შეხსენება ჩაირთვება მითითებულ თარიღსა და დროს.'):window.t('ჩანაწერი შეინახება შეხსენების გარეშე.');
+  $('noteReminderHint').textContent=on?t('შეხსენება ჩაირთვება მითითებულ თარიღსა და დროს.'):t('ჩანაწერი შეინახება შეხსენების გარეშე.');
 }
 async function loadNotes(){
   const list=$('notesList');
@@ -2279,17 +2280,20 @@ async function loadNotes(){
 function renderNotes(){
   const list=$('notesList');
   if(!list)return;
-  if(!notesCache.length){list.innerHTML='<div class="noteEmpty">📖 ჯერ ჩანაწერები არ გაქვს.<br>დააჭირე „➕ ახალი ჩანაწერი“-ს.</div>';return;}
+  if(!notesCache.length){
+    list.innerHTML='<div class="noteEmpty">'+t('📖 ჯერ ჩანაწერები არ გაქვს.')+'<br>'+t('დააჭირე „➕ ახალი ჩანაწერი“-ს.')+'</div>';
+    return;
+  }
   list.innerHTML=notesCache.map(n=>{
-    const reminder=n.reminder?window.t('🔔 შეხსენება ჩართულია'):window.t('🔕 შეხსენება გამორთულია');
+    const reminder=n.reminder?t('🔔 შეხსენება ჩართულია'):t('🔕 შეხსენება გამორთულია');
     return `<div class="noteCard ${n.done?'done':''}" data-note-id="${noteEsc(n.id)}">
       <div class="noteTop"><div class="noteText">${noteEsc(n.text)}</div><div>${n.done?'✅':''}</div></div>
       <div class="noteTime">${noteEsc(formatNoteDate(n.date,n.time))}</div>
       <div class="noteReminder">${reminder}</div>
       <div class="noteActions">
-        <button type="button" onclick="toggleNoteDone('${noteEsc(n.id)}')">${n.done?window.t('↩️ აქტიური'):window.t('✅ შესრულდა')}</button>
-        <button type="button" onclick="editNote('${noteEsc(n.id)}')">${window.t('✏️ შეცვლა')}</button>
-        <button type="button" class="danger" onclick="deleteNote('${noteEsc(n.id)}')">${window.t('🗑️ წაშლა')}</button>
+        <button type="button" onclick="toggleNoteDone('${noteEsc(n.id)}')">${n.done?t('↩️ აქტიური'):t('✅ შესრულდა')}</button>
+        <button type="button" onclick="editNote('${noteEsc(n.id)}')">${t('✏️ შეცვლა')}</button>
+        <button type="button" class="danger" onclick="deleteNote('${noteEsc(n.id)}')">${t('🗑️ წაშლა')}</button>
       </div>
     </div>`;
   }).join('');
@@ -2447,6 +2451,8 @@ startNotesReminderWatcher();
     'ჩანაწერების წიგნი':['Notes Book','Βιβλίο σημειώσεων'],
     '➕ ახალი მომხმარებელი':['➕ New user','➕ Νέος χρήστης'],
     'შენი პირადი ჩანაწერები და შეხსენებები':['Your personal notes and reminders','Οι προσωπικές σου σημειώσεις και υπενθυμίσεις'],
+    '➕ ახალი ჩანაწერი':['➕ New note','➕ Νέα σημείωση'],
+    '✏️ ჩანაწერის შეცვლა':['✏️ Edit note','✏️ Επεξεργασία σημείωσης'],
     'ყველა თვე':['All months','Όλοι οι μήνες'],
     'ქართული':['Georgian','Γεωργιανά'],
     'ენები':['Languages','Γλώσσες'],
