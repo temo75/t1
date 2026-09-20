@@ -1009,9 +1009,11 @@ function startJobsSyncWatcher(){
   if(jobsSyncTimer)clearInterval(jobsSyncTimer);
   if(currentUser===ADMIN_USER||!currentUserId)return;
   const run=()=>{if(!document.hidden)syncJobsFromFirebase().catch(e=>console.warn('Firebase jobs sync failed:',e));};
-  jobsSyncTimer=setInterval(run,5000);
+  jobsSyncTimer=setInterval(run,1000);
   if(!jobsSyncEventsBound){
     window.addEventListener('focus',run);
+    window.addEventListener('pageshow',run);
+    window.addEventListener('online',run);
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)run()});
     jobsSyncEventsBound=true;
   }
@@ -2412,7 +2414,10 @@ function startNotesReminderWatcher(){
   notesSyncTimer=setInterval(()=>{
     if(!currentUserId||currentUser===ADMIN_USER||editingNoteId)return;
     loadNotes();
-  },5000);
+  },1000);
+  window.addEventListener('online',()=>{
+    if(currentUserId&&currentUser!==ADMIN_USER&&!editingNoteId&&document.visibilityState==='visible')loadNotes();
+  });
 }
 startNotesReminderWatcher();
 </script>
