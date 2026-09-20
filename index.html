@@ -2247,9 +2247,47 @@ function editNote(id){
   const n=notesCache.find(x=>x.id===id);
   if(n)openNoteModal(n);
 }
-async function saveNotesRemote(){
+async function saveNotesRemote(mergeWithRemote=true){
   const url=notesUrl();
   if(!url)throw new Error('მომხმარებელი ჯერ არ არის ავტორიზებული');
+
+  /*
+   * მომხმარებლის ჩანაწერის განახლებისას ძველი კლიენტის სრული notesCache-ის
+   * PUT-ს შეეძლო ახალი ჩანაწერის უკან ძველ მდგომარეობაზე დაბრუნება.
+   * ამიტომ ჩვეულებრივი შენახვისას ჯერ Firebase-ის ბოლო ვერსიას ვკითხულობთ
+   * და თითოეულ ჩანაწერზე უფრო ახალი updatedAt-ს ვინარჩუნებთ.
+   * წაშლისას merge გამორთულია, რათა წაშლილი ჩანაწერი უკან არ დაბრუნდეს.
+   */
+  if(mergeWithRemote){
+    try{
+      const rr=await fetch(url,{cache:'no-store'});
+      if(rr.ok){
+        const remoteData=await rr.json();
+        const remote=Array.isArray(remoteData)
+          ? remoteData.filter(Boolean)
+          : Object.entries(remoteData||{}).map(([id,n])=>({...n,id}));
+        const localById=new Map(notesCache.map(n=>[String(n.id),n]));
+        const remoteById=new Map(remote.map(n=>[String(n.id||''),n]));
+        const merged=[];
+
+        remoteById.forEach((r,id)=>{
+          const l=localById.get(id);
+          if(!l){
+            merged.push(r);
+            return;
+          }
+          const lt=Number(l.updatedAt||0), rt=Number(r.updatedAt||0);
+          merged.push(lt>=rt?l:r);
+          localById.delete(id);
+        });
+        localById.forEach(n=>merged.push(n));
+        notesCache=merged;
+      }
+    }catch(e){
+      console.warn('Firebase notes merge read failed:',e);
+    }
+  }
+
   const r=await fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(notesCache)});
   if(!r.ok)throw new Error('Firebase HTTP '+r.status);
 }
@@ -2304,7 +2342,7 @@ async function deleteNote(id){
   const n=notesCache.find(x=>x.id===id);if(!n)return;
   if(!confirm('ეს ჩანაწერი წავშალოთ?'))return;
   notesCache=notesCache.filter(x=>x.id!==id);
-  try{await saveNotesRemote();cancelNativeNoteReminder(id);renderNotes();}catch(e){alert('ჩანაწერი ვერ წაიშალა Firebase-დან.');await loadNotes();}
+  try{await saveNotesRemote(false);cancelNativeNoteReminder(id);renderNotes();}catch(e){alert('ჩანაწერი ვერ წაიშალა Firebase-დან.');await loadNotes();}
 }
 function playNoteAlarm(){
   try{
