@@ -2687,6 +2687,13 @@ startNotesReminderWatcher();
   window.getLangLocale=()=>LANGS[lang].locale;
   window.t=k=>all[lang]?.[k]??k;
   window.getCurrentLanguage=()=>lang;
+  function syncNativeReminderLanguage(){
+    try{
+      if(window.AndroidReminder&&typeof window.AndroidReminder.setLanguage==='function'){
+        window.AndroidReminder.setLanguage(String(lang));
+      }
+    }catch(e){console.warn('Native reminder language sync failed:',e);}
+  }
   window.setCurrentLanguage=(next)=>{if(!LANGS[next])next='ka';lang=next;localStorage.setItem(userLanguageKey(),lang);apply();};
   window.restoreCurrentUserLanguage=(fallback)=>{const key=userLanguageKey();const saved=localStorage.getItem(key);const next=(saved&&LANGS[saved])?saved:((fallback&&LANGS[fallback])?fallback:'ka');lang=next;localStorage.setItem(key,lang);apply();};
 
@@ -2783,6 +2790,7 @@ startNotesReminderWatcher();
     applying=true;
     try{
       document.documentElement.lang=lang;
+      syncNativeReminderLanguage();
       const btn=document.getElementById('languageBtn');
       if(btn){btn.textContent='🌐 '+LANGS[lang].short;btn.title=all[lang]['ენები'];btn.setAttribute('aria-label',all[lang]['ენები']);}
       document.querySelectorAll('.languageOption').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));
