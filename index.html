@@ -2386,7 +2386,7 @@ function renderNotes(){
   const list=$('notesList');
   if(!list)return;
   if(!notesCache.length){
-    list.innerHTML='<div class="noteEmpty">'+t('📖  ჩანაწერები არ გაქვს.')+'<br>'+t('დააჭირე „➕ ახალი ჩანაწერი“-ს.')+'</div>';
+    list.innerHTML='<div class="noteEmpty">'+t('📖  ჩანაწერები არ გაქვს.')+'<br>'+t('')+'</div>';
     return;
   }
   list.innerHTML=notesCache.map(n=>{
