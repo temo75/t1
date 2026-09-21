@@ -1515,7 +1515,7 @@ async function renderManagedUsers(){
     b.onclick=()=>toggleUserDetails(row,u);
     const details=document.createElement('div');
     details.className='userDetailsPopover';
-    details.innerHTML='<div><b>სახელი:</b> '+esc(u.name)+'</div><div><b>პაროლი:</b> '+esc(u.password)+'</div><div><b>ემაილი:</b> '+esc(u.email||'—')+'</div>';
+    details.innerHTML='<div><b>სახელი:</b> '+esc(u.name)+'</div><div><b>პაროლი:</b> '+esc(u.password)+'</div><div><b>📧 ემაილი:</b> '+esc(u.email||'—')+'</div>';
     const l=document.createElement('button');
     l.className='backupBtn lockBtn'+(u.blocked===true?' locked':'');
     l.textContent=u.blocked===true?'🔓 განბლოკვა':'🔒 დაბლოკვა';
@@ -1531,7 +1531,22 @@ async function renderManagedUsers(){
 }
 function toggleUserDetails(row,u){
   document.querySelectorAll('#userManagementList .userRow.detailsOpen').forEach(r=>{if(r!==row)r.classList.remove('detailsOpen');});
-  row.classList.toggle('detailsOpen');
+  const open=!row.classList.contains('detailsOpen');
+  row.classList.toggle('detailsOpen',open);
+  if(open){
+    const pop=row.querySelector('.userDetailsPopover');
+    const btn=row.querySelector('.userNameBtn');
+    if(pop&&btn){
+      const r=btn.getBoundingClientRect();
+      const w=Math.min(240,window.innerWidth-20);
+      let left=r.right+8;
+      if(left+w>window.innerWidth-10)left=Math.max(10,r.left-w-8);
+      let top=r.top;
+      const h=pop.offsetHeight||100;
+      if(top+h>window.innerHeight-10)top=Math.max(10,window.innerHeight-h-10);
+      pop.style.left=left+'px';pop.style.top=top+'px';pop.style.width=w+'px';
+    }
+  }
 }
 
 async function toggleUserBlock(id){
@@ -1822,18 +1837,19 @@ async function registerNewUser(){
 <style id="temo-user-details-popover">
 #userManagementList .userRow{
   position:relative !important;
+  overflow:visible !important;
 }
 #userManagementList .userRow .userNameBtn{
   cursor:pointer !important;
 }
 #userManagementList .userDetailsPopover{
   display:none;
-  position:absolute;
-  left:8px;
-  top:46px;
+  position:fixed;
+  left:0;
+  top:0;
   z-index:50;
-  width:220px;
-  max-width:calc(100% - 16px);
+  width:240px;
+  max-width:min(240px,calc(100vw - 20px));
   box-sizing:border-box;
   padding:10px 12px;
   border:1px solid #3da9ff;
