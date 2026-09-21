@@ -863,10 +863,10 @@ body.temo-android-app{
 
 </div>
 <div id="userManagementPage" class="pageHidden">
-<header><div><h1>👥 მომხმარებლების მართვა</h1><small>მომხმარებლების დამატება და მართვა</small></div></header>
+<header><div><h1>👥 მომხმარებლები</h1></div></header>
 
 <div class="section adminOnly" id="userManagementSection">
-<h2>👥 მომხმარებლების მართვა</h2>
+<h2>👥 მომხმარებლები</h2>
 <div id="userManagementList"></div>
 
 </div>
@@ -1508,9 +1508,14 @@ async function renderManagedUsers(){
     const row=document.createElement('div');
     row.className='userRow';
     const b=document.createElement('button');
+    b.type='button';
     b.className='backupBtn userNameBtn';
-    b.textContent='👤 '+u.name+' | 🔑 '+u.password;
-    b.disabled=true;
+    b.textContent='👤 '+u.name;
+    b.title='მომხმარებლის მონაცემები';
+    b.onclick=()=>toggleUserDetails(row,u);
+    const details=document.createElement('div');
+    details.className='userDetailsPopover';
+    details.innerHTML='<div><b>სახელი:</b> '+esc(u.name)+'</div><div><b>პაროლი:</b> '+esc(u.password)+'</div><div><b>ემაილი:</b> '+esc(u.email||'—')+'</div>';
     const l=document.createElement('button');
     l.className='backupBtn lockBtn'+(u.blocked===true?' locked':'');
     l.textContent=u.blocked===true?'🔓 განბლოკვა':'🔒 დაბლოკვა';
@@ -1519,11 +1524,16 @@ async function renderManagedUsers(){
     d.className='backupBtn danger';
     d.textContent='🗑️ წაშლა';
     d.onclick=()=>deleteManagedUser(u.id);
-    row.append(b,l,d);
+    row.append(b,details,l,d);
     frag.appendChild(row);
   });
   box.replaceChildren(frag);
 }
+function toggleUserDetails(row,u){
+  document.querySelectorAll('#userManagementList .userRow.detailsOpen').forEach(r=>{if(r!==row)r.classList.remove('detailsOpen');});
+  row.classList.toggle('detailsOpen');
+}
+
 async function toggleUserBlock(id){
   if(currentUser!==ADMIN_USER)return;
   const users=getUsers();
@@ -1808,6 +1818,40 @@ async function registerNewUser(){
 }
 </script>
 
+
+<style id="temo-user-details-popover">
+#userManagementList .userRow{
+  position:relative !important;
+}
+#userManagementList .userRow .userNameBtn{
+  cursor:pointer !important;
+}
+#userManagementList .userDetailsPopover{
+  display:none;
+  position:absolute;
+  left:8px;
+  top:46px;
+  z-index:50;
+  width:220px;
+  max-width:calc(100% - 16px);
+  box-sizing:border-box;
+  padding:10px 12px;
+  border:1px solid #3da9ff;
+  border-radius:12px;
+  background:rgba(9,25,34,.98);
+  box-shadow:0 0 14px rgba(61,169,255,.55);
+  color:#fff;
+  font-size:13px;
+  line-height:1.55;
+  text-align:left;
+}
+#userManagementList .userRow.detailsOpen .userDetailsPopover{
+  display:block;
+}
+#userManagementList .userDetailsPopover b{
+  color:#8fd0ff;
+}
+</style>
 <style id="temo-user-management-layout-fix">
 #userManagementSection .userManagementBox,
 #userManagementSection .userManagementListWrap{
