@@ -1206,8 +1206,21 @@ function render(){
  const total=jobs.reduce((a,j)=>a+Number(j.money||0),0), paid=jobs.filter(j=>j.paid).reduce((a,j)=>a+Number(j.money||0),0), unpaid=total-paid;
  $('total').textContent=euro(total);$('paid').textContent=euro(paid);$('unpaid').textContent=euro(unpaid);
  $('days').textContent=jobs.length+' სამუშაო';$('paidDays').textContent=jobs.filter(j=>j.paid).length+' გადახდილი';$('unpaidDays').textContent=jobs.filter(j=>!j.paid).length+' გადასახდელი';
- $('average').textContent=euro(jobs.length?total/jobs.length:0);
- const now=new Date(), key=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');const mj=jobs.filter(j=>(j.date||'').slice(0,7)===key);const monthTotal=mj.filter(j=>j.paid).reduce((a,j)=>a+Number(j.money||0),0);$('monthTotal').textContent=euro(monthTotal);$('monthDays').textContent=mj.length+' დღე';
+ const calendarKey=calendarDate.getFullYear()+'-'+String(calendarDate.getMonth()+1).padStart(2,'0');
+ const mj=jobs.filter(j=>(j.date||'').slice(0,7)===calendarKey);
+ const monthTotal=mj.filter(j=>j.paid).reduce((a,j)=>a+Number(j.money||0),0);
+ const monthAll=mj.reduce((a,j)=>a+Number(j.money||0),0);
+ const monthUnpaid=monthAll-monthTotal;
+ $('monthTotal').textContent=euro(monthTotal);
+ $('average').textContent=euro(mj.length?monthAll/mj.length:0);
+ $('unpaid').textContent=euro(monthUnpaid);
+ $('unpaidDays').textContent=mj.filter(j=>!j.paid).length+' გადასახდელი';
+ $('monthDays').textContent=mj.length+' დღე';
+ const selectedMonthName=monthName(calendarKey);
+ const monthTotalLabel=document.querySelector('.monthTotalHero .label');
+ if(monthTotalLabel)monthTotalLabel.textContent='📆 '+selectedMonthName+' ნამუშევარი';
+ const monthDaysLabel=document.querySelector('.stats .mini:last-child span');
+ if(monthDaysLabel)monthDaysLabel.textContent='📊 '+selectedMonthName+' სამუშაოები';
  renderCalendar();renderDayJobs();
 }
 function renderList(){
@@ -1252,19 +1265,19 @@ function selectCalendarDate(key){
   $('dayJobsSection').style.display='block';
   const [y,m,d]=key.split('-').map(Number);
   calendarDate=new Date(y,m-1,d);
-  renderCalendar();
+  render();
   renderDayJobs();
   setTimeout(()=>{$('dayJobsSection').scrollIntoView({behavior:'smooth',block:'start'})},30);
 }
 function prevCalendarMonth(){
   calendarDate=new Date(calendarDate.getFullYear(),calendarDate.getMonth()-1,1);
   selectedDate='';
-  renderCalendar();renderDayJobs();
+  render();
 }
 function nextCalendarMonth(){
   calendarDate=new Date(calendarDate.getFullYear(),calendarDate.getMonth()+1,1);
   selectedDate='';
-  renderCalendar();renderDayJobs();
+  render();
 }
 function renderDayJobs(){
   const box=$('dayJobs'), title=$('dayJobsTitle'), count=$('dayJobsCount');
