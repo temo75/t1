@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>TEMO სამუშაო ანგარიში</title>
+<title>TEMO</title>
 <style>
 :root{--bg:#071117;--panel:#0d1b24;--panel2:#10232f;--text:#eef7f7;--muted:#9fb0b8;--red:#ef5b67;--blue:#2999df;--orange:#e6a24c;--line:#1e3542}
 *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#061015,#0a1821);color:var(--text)}button,input,select,textarea{font:inherit}.app{max-width:1100px;margin:auto;padding:18px}header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}h1{margin:0;font-size:28px;color:#eef7f7}header small{color:var(--muted)}#today{color:var(--muted);white-space:nowrap}.grid{display:grid;grid-template-columns:1fr;gap:12px}.card,.section,.toolbox{background:linear-gradient(145deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:18px;padding:18px}.card .label{color:var(--muted);font-size:14px}.amount{font-size:30px;font-weight:bold;margin-top:10px}.blue{border-color:#1b4d6c;position:relative}.green{border-color:#285269}.red{border-color:#6e2931}.grid .card.red{grid-column:1/-1;padding:26px 28px}.grid .card.red .label{font-size:18px}.grid .card.red .amount{font-size:42px;margin-top:12px}.grid .card.red .meta{font-size:15px;margin-top:8px}.grid .monthTotalHero{grid-column:1/-1;padding:26px 28px;border-color:#285269}.grid .monthTotalHero .label{font-size:18px}.grid .monthTotalHero .amount{font-size:42px;margin-top:12px}.miniReceivable{padding:13px}.miniReceivable b{font-size:20px}.miniReceivable small{display:block;color:var(--muted);font-size:12px;margin-top:4px}
-.card .temo-eye-btn{position:absolute;top:9px;right:9px;width:30px;height:30px;font-size:16px;line-height:28px}.add{width:52%;max-width:420px;margin:16px auto;padding:10px 14px;display:block;border:2px solid #2999ff;border-radius:14px;background:#102b3b;color:white;font-size:16px;font-weight:bold;cursor:pointer;box-shadow:0 0 8px #2999ff,0 0 18px #2999ff,0 0 30px rgba(41,153,255,.75);text-shadow:0 0 7px #2999ff}.section{margin-top:14px}.section h2{margin:0 0 14px;font-size:17px}.toolbox{margin-top:14px}.tools{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px}.tools input,.tools select,.form input,.form textarea{width:100%;padding:13px;border-radius:10px;border:1px solid #29404c;background:#071117;color:white;font-size:16px}.tools input[type=file]{border-radius:16px;border-color:#1f75aa;box-shadow:0 0 10px #2f7d32,0 8px 20px rgba(46,125,50,.78),0 18px 34px rgba(46,125,50,.44),0 26px 42px rgba(46,125,50,.20);background:#0b1a24;cursor:pointer}.tools input[type=file]::file-selector-button{border:1px solid #2a86bb;border-radius:12px;padding:9px 14px;background:#183445;color:#eef7f7;cursor:pointer;box-shadow:0 0 5px #2999df55}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.mini{background:#09161e;border:1px solid var(--line);border-radius:14px;padding:13px}.mini b{display:block;font-size:20px;margin-top:5px}.mini span{color:var(--muted);font-size:13px}.userWelcomeUnderLogo{display:block;margin-top:5px;color:#eef7f7;font-size:13px;font-weight:bold;line-height:1.25;text-align:center;min-height:18px}.item{display:grid;grid-template-columns:1fr auto;gap:12px;padding:14px;margin:9px 0;background:#0a151d;border:1px solid #1a2c37;border-radius:14px}.meta{color:var(--muted);font-size:13px;margin-top:5px}.right{text-align:right}.status{font-size:13px;font-weight:bold;margin:7px 0}.paid{color:#62b8ff}.unpaid{color:#ff7c84}.actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:5px}.small,.backupBtn{background:#183445;color:white;border:1px solid #285269;border-radius:9px;padding:8px 10px;cursor:pointer}.edit{background:#26394a}.danger{background:#4a2228;border-color:#74333d}.empty{text-align:center;color:var(--muted);padding:28px}.modal{display:none;position:fixed;inset:0;background:#000a;align-items:center;justify-content:center;padding:10px;z-index:5}.modal.show{display:flex}.form{width:min(410px,100%);max-height:none;overflow:visible;background:#0c1a23;border:1px solid #28404d;border-radius:18px;padding:14px}.form label{margin:7px 0 3px}.form input,.form textarea{padding:9px 11px}.form textarea{min-height:58px}.form .row{gap:8px;margin-top:10px}.form .save,.form .cancel{padding:10px 12px}.form h2{margin:0 0 8px}label{display:block;margin:12px 0 5px;color:#c7d4d8}.checkrow{display:flex;align-items:center;gap:9px;margin-top:14px;color:#c7d4d8}.checkrow input{width:auto}.row{display:flex;gap:10px;margin-top:18px}.save{flex:1;background:#2999df;border:0;border-radius:10px;padding:14px;color:white;font-weight:bold;font-size:16px;box-shadow:0 0 7px rgba(41,153,255,.45)}.cancel{background:#20323b;color:white;border:0;border-radius:10px;padding:14px}.backup{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.backupBtn{flex:1;min-width:150px}.adminButtons{display:flex;justify-content:center;gap:10px;align-items:center}.adminButtons .settingsBtn{width:42%;max-width:220px;margin-left:0;margin-right:0}.adminButtons .adminOnly{display:block!important}.adminButtons .adminOnly[style*="display: none"]{display:none!important}.settingsBtn{width:42%;max-width:220px;margin:22px auto 8px;padding:9px 12px;border:2px solid #2999ff;border-radius:12px;background:#102b3b;color:white;font-size:14px;font-weight:bold;cursor:pointer;box-shadow:0 0 7px #2999ff,0 0 16px #2999ff,0 0 28px rgba(41,153,255,.7);text-shadow:0 0 6px #2999ff}.pageHidden{display:none}.settingsBack{margin-bottom:14px}.privacyEyeSlot{display:flex;align-items:flex-start;justify-content:flex-end;padding:9px;min-height:0;position:absolute;right:18px;z-index:2}.privacyEyeMain{width:30px;height:30px;font-size:16px;line-height:28px;border-radius:9px;border:1px solid #285269;background:#183445;color:#fff;cursor:pointer}
+.card .temo-eye-btn{position:absolute;top:9px;right:9px;width:30px;height:30px;font-size:16px;line-height:28px}.add{width:52%;max-width:420px;margin:16px auto;padding:10px 14px;display:block;border:2px solid #2999ff;border-radius:14px;background:#102b3b;color:white;font-size:16px;font-weight:bold;cursor:pointer;box-shadow:0 0 8px #2999ff,0 0 18px #2999ff,0 0 30px rgba(41,153,255,.75);text-shadow:0 0 7px #2999ff}.section{margin-top:14px}.section h2{margin:0 0 14px;font-size:17px}.toolbox{margin-top:14px}.tools{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px}.tools input,.tools select,.form input,.form textarea{width:100%;padding:13px;border-radius:10px;border:1px solid #29404c;background:#071117;color:white;font-size:16px}.tools input[type=file]{border-radius:16px;border-color:#1f75aa;box-shadow:0 0 10px #2f7d32,0 8px 20px rgba(46,125,50,.78),0 18px 34px rgba(46,125,50,.44),0 26px 42px rgba(46,125,50,.20);background:#0b1a24;cursor:pointer}.tools input[type=file]::file-selector-button{border:1px solid #2a86bb;border-radius:12px;padding:9px 14px;background:#183445;color:#eef7f7;cursor:pointer;box-shadow:0 0 5px #2999df55}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.mini{background:#09161e;border:1px solid var(--line);border-radius:14px;padding:13px}.mini b{display:block;font-size:20px;margin-top:5px}.mini span{color:var(--muted);font-size:13px}.userWelcomeUnderLogo{display:block;margin-top:5px;color:#eef7f7;font-size:13px;font-weight:bold;line-height:1.25;text-align:center;min-height:18px}.item{display:grid;grid-template-columns:1fr auto;gap:12px;padding:14px;margin:9px 0;background:#0a151d;border:1px solid #1a2c37;border-radius:14px}.meta{color:var(--muted);font-size:13px;margin-top:5px}.right{text-align:right}.status{font-size:13px;font-weight:bold;margin:7px 0}.paid{color:#62b8ff}.unpaid{color:#ff7c84}.actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:5px}.small,.backupBtn{background:#183445;color:white;border:1px solid #285269;border-radius:9px;padding:8px 10px;cursor:pointer}.edit{background:#26394a}.danger{background:#4a2228;border-color:#74333d}.empty{text-align:center;color:var(--muted);padding:28px}.modal{display:none;position:fixed;inset:0;background:#000a;align-items:center;justify-content:center;padding:10px;z-index:2147483646}.modal.show{display:flex}.form{width:min(410px,100%);max-height:none;overflow:visible;background:#0c1a23;border:1px solid #28404d;border-radius:18px;padding:14px}.form label{margin:7px 0 3px}.form input,.form textarea{padding:9px 11px}.form textarea{min-height:58px}.form .row{gap:8px;margin-top:10px}.form .save,.form .cancel{padding:10px 12px}.form h2{margin:0 0 8px}label{display:block;margin:12px 0 5px;color:#c7d4d8}.checkrow{display:flex;align-items:center;gap:9px;margin-top:14px;color:#c7d4d8}.checkrow input{width:auto}.row{display:flex;gap:10px;margin-top:18px}.save{flex:1;background:#2999df;border:0;border-radius:10px;padding:14px;color:white;font-weight:bold;font-size:16px;box-shadow:0 0 7px rgba(41,153,255,.45)}.cancel{background:#20323b;color:white;border:0;border-radius:10px;padding:14px}.backup{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.backupBtn{flex:1;min-width:150px}.adminButtons{display:flex;justify-content:center;gap:10px;align-items:center}.adminButtons .settingsBtn{width:42%;max-width:220px;margin-left:0;margin-right:0}.adminButtons .adminOnly{display:block!important}.adminButtons .adminOnly[style*="display: none"]{display:none!important}.settingsBtn{width:42%;max-width:220px;margin:22px auto 8px;padding:9px 12px;border:2px solid #2999ff;border-radius:12px;background:#102b3b;color:white;font-size:14px;font-weight:bold;cursor:pointer;box-shadow:0 0 7px #2999ff,0 0 16px #2999ff,0 0 28px rgba(41,153,255,.7);text-shadow:0 0 6px #2999ff}.pageHidden{display:none}.settingsBack{margin-bottom:14px}.privacyEyeSlot{display:flex;align-items:flex-start;justify-content:flex-end;padding:9px;min-height:0;position:absolute;right:18px;z-index:2}.privacyEyeMain{width:30px;height:30px;font-size:16px;line-height:28px;border-radius:9px;border:1px solid #285269;background:#183445;color:#fff;cursor:pointer}
 .deleteAuthModal{display:none;position:fixed;inset:0;background:#000a;align-items:center;justify-content:center;padding:16px;z-index:10001}
 .deleteAuthModal.show{display:flex}
 .deleteAuthBox{width:min(430px,100%);background:linear-gradient(145deg,#0c1a23,#10232f);border:1px solid #74333d;border-radius:20px;padding:22px;box-shadow:0 20px 60px #000b;text-align:center}
@@ -36,7 +36,9 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 #loginScreen.hidden{display:none}
 .loginModeBtn{width:100%;margin-top:10px;padding:13px;border:1px solid #2999df;border-radius:11px;background:#183445;color:#fff;font-weight:bold;font-size:15px;cursor:pointer;box-shadow:0 0 6px rgba(41,153,223,.35)}
 .loginModeBtn.secondary{border-color:#285269;background:#10232f;color:#9fb0b8;box-shadow:none}
-.loginBox{width:min(400px,100%);background:linear-gradient(145deg,#0d1b24,#10232f);border:1px solid #1e3542;border-radius:22px;padding:28px;text-align:center;box-shadow:0 20px 60px #0008}
+.loginBox{width:min(400px,100%);background:linear-gradient(145deg,#0d1b24,#10232f);border:1px solid #1e3542;border-radius:22px;padding:28px;text-align:center;box-shadow:0 20px 60px #0008}.loginBox{position:relative}
+.loginLanguageBox{position:absolute;top:10px;right:12px;margin:0;z-index:5}
+.loginLanguageBox .languageMenu{right:0;left:auto;top:calc(100% + 6px)}
 .loginBox h2{margin:0 0 10px;color:#eef7f7}.loginBox p{color:#9fb0b8;margin:0 0 20px}
 .loginBox input{width:100%;padding:15px;border-radius:11px;border:1px solid #29404c;background:#071117;color:#fff;font-size:17px;text-align:center;margin-bottom:12px}
 .loginBox button{width:100%;padding:15px;border:1px solid #2999ff;border-radius:11px;background:#102b3b;color:#fff;font-weight:bold;font-size:17px;cursor:pointer;box-shadow:0 0 7px #2999ff,0 0 16px #2999ff}
@@ -451,11 +453,6 @@ body.neon-global .userName{
 .languageOption:hover,.languageOption.active{background:rgba(54,184,255,.16);color:#fff}
 @media(max-width:520px){.languageBtn{padding:5px 7px;font-size:11px}.languageMenu{min-width:110px}}
 </style>
-<style id="login-language-selector-style">
-.loginBox{position:relative}
-.loginLanguageBox{position:absolute;top:10px;right:12px;z-index:20}
-.loginLanguageMenu{right:0;top:calc(100% + 6px);z-index:99999}
-</style>
 <style id="iphone-notes-nav-fix">
 /* iPhone: keep all 5 page buttons visible and equal width */
 #bottomNav{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:stretch!important;justify-content:stretch!important;gap:4px!important;width:100%!important;box-sizing:border-box!important;}
@@ -595,14 +592,143 @@ body.neon-global .userName{
 /* სამუშაოს დამატების/შეცვლის ფანჯრის შენახვის ღილაკზე ლურჯი ნეონი სრულად გამორთულია. */
 .modal .form .save{box-shadow:none!important;text-shadow:none!important;}
 </style>
+
+<style id="temo-bottom-menu-exact-reference">
+/* მხოლოდ ქვედა მენიუ — ზუსტად ატვირთულ სურათის სტილზე */
+#bottomNav{
+  position:fixed !important;
+  left:0 !important;
+  right:0 !important;
+  bottom:0 !important;
+  width:100% !important;
+  height:82px !important;
+  padding:5px 18px env(safe-area-inset-bottom,5px) !important;
+  margin:0 !important;
+  display:grid !important;
+  grid-template-columns:repeat(6,minmax(0,1fr)) !important;
+  align-items:center !important;
+  justify-items:center !important;
+  gap:8px !important;
+  background:#000 !important;
+  border:0 !important;
+  border-top:0 !important;
+  box-shadow:none !important;
+  z-index:2147483647 !important;
+  box-sizing:border-box !important;
+}
+#bottomNav > button{
+  width:100% !important;
+  height:70px !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  max-width:none !important;
+  margin:0 !important;
+  padding:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  color:#fff !important;
+  box-shadow:none !important;
+  text-shadow:none !important;
+  font-size:56px !important;
+  font-weight:400 !important;
+  line-height:1 !important;
+  overflow:visible !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  touch-action:manipulation !important;
+  -webkit-tap-highlight-color:transparent !important;
+}
+#bottomNav > button:active{
+  transform:scale(.94) !important;
+}
+#bottomNav > button .navLogo{
+  display:flex !important;
+  width:auto !important;
+  height:auto !important;
+  margin:0 !important;
+  padding:0 !important;
+  align-items:center !important;
+  justify-content:center !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  font-size:56px !important;
+  line-height:1 !important;
+}
+#bottomNav .logoutNav,
+#bottomNav .logoutNav .navLogo{
+  border:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  color:#fff !important;
+}
+body{
+  padding-bottom:90px !important;
+}
+#loginScreen ~ #bottomNav,
+body:has(#loginScreen:not(.hidden)) #bottomNav{
+  display:none !important;
+}
+@media(max-width:700px){
+  #bottomNav{
+    height:76px !important;
+    padding:3px 7px env(safe-area-inset-bottom,3px) !important;
+    gap:2px !important;
+  }
+  #bottomNav > button{
+    height:67px !important;
+    font-size:46px !important;
+  }
+  #bottomNav > button .navLogo{
+    font-size:46px !important;
+  }
+}
+@media(max-width:390px){
+  #bottomNav{
+    padding-left:3px !important;
+    padding-right:3px !important;
+    gap:0 !important;
+  }
+  #bottomNav > button,
+  #bottomNav > button .navLogo{
+    font-size:41px !important;
+  }
+}
+</style>
+
+
+<style id="temo-android-app-nav-small">
+/* მხოლოდ Android აპში — ქვედა მენიუს ღილაკების დაპატარავება */
+body.temo-android-app #bottomNav{
+  height:64px !important;
+  padding:2px 7px env(safe-area-inset-bottom,2px) !important;
+  gap:1px !important;
+}
+body.temo-android-app #bottomNav > button{
+  height:56px !important;
+  font-size:34px !important;
+}
+body.temo-android-app #bottomNav > button .navLogo{
+  font-size:34px !important;
+}
+body.temo-android-app{
+  padding-bottom:72px !important;
+}
+</style>
+
 </head>
 <body>
-<nav id="bottomNav">
+<nav id="bottomNav" aria-label="მთავარი მენიუ">
   <button type="button" onclick="goHome()" aria-label="მთავარი" title="მთავარი"><span class="navLogo">🏠</span></button>
-  <button type="button" onclick="goSettings()" aria-label="სეთინგები" title="სეთინგები"><span class="navLogo">⚙️</span></button>
+  <button type="button" onclick="goSettings()" aria-label="პარამეტრები" title="პარამეტრები"><span class="navLogo">⚙️</span></button>
   <button type="button" onclick="goUsers()" aria-label="მომხმარებლები" title="მომხმარებლები"><span class="navLogo">👥</span></button>
-  <button type="button" onclick="goWallet()" aria-label="საფულე" title="საფულე"><span class="navLogo">💰</span></button>
-  <button id="notesNavButton" type="button" onclick="goNotes()" aria-label="ჩანაწერების წიგნი" title="ჩანაწერების წიგნი"><span class="navLogo">📖</span></button>
+  <button type="button" onclick="goWallet()" aria-label="ფული" title="ფული"><span class="navLogo">💰</span></button>
+  <button id="notesNavButton" type="button" onclick="goNotes()" aria-label="ჩანაწერები" title="ჩანაწერები"><span class="navLogo">📖</span></button>
   <button type="button" onclick="logout()" class="logoutNav" aria-label="გამოსვლა" title="გამოსვლა"><span class="navLogo">🚪</span></button>
 </nav>
 
@@ -610,7 +736,7 @@ body.neon-global .userName{
 
 
 <div id="loginScreen"><div class="loginBox">
-<div class="languageBox loginLanguageBox"><button type="button" id="loginLanguageBtn" class="languageBtn" aria-label="ენები" title="ენები">🌐 KA</button><div id="loginLanguageMenu" class="languageMenu loginLanguageMenu"><button type="button" class="languageOption" data-lang="en">🇬🇧 English</button><button type="button" class="languageOption" data-lang="el">🇬🇷 Ελληνικά</button><button type="button" class="languageOption" data-lang="ka">🇬🇪 ქართული</button></div></div>
+<div class="languageBox loginLanguageBox"><button type="button" id="languageBtnLogin" class="languageBtn" aria-label="ენები" title="ენები">🌐 KA</button><div id="languageMenuLogin" class="languageMenu"><button type="button" class="languageOption" data-lang="en">🇬🇧 English</button><button type="button" class="languageOption" data-lang="el">🇬🇷 Ελληνικά</button><button type="button" class="languageOption" data-lang="ka">🇬🇪 ქართული</button></div></div>
 <h2>🔐 </h2>
 <p id="loginHint">შეიყვანე პაროლი</p>
 
@@ -783,7 +909,7 @@ body.neon-global .userName{
 <div class="modal" id="modal"><div class="form">
 <h2 id="formTitle">სამუშაოს დამატება</h2>
 <label>თარიღი</label><input id="date" type="date">
-<label>სამუშაო ადგილი / დამსაქმებელი</label><input id="place" placeholder="მაგ: გიორგი - ვილა">
+<label>სამუშაო ადგილი /</label><input id="place" placeholder="მაგ: გიორგი ">
 <label>თანხა (€)</label><input id="money" type="number" inputmode="decimal" step="0.01" placeholder="მაგ: 100">
 <label>შენიშვნა</label><textarea id="note" rows="3" placeholder="სურვილის შემთხვევაში"></textarea>
 <label class="checkrow"><input id="paidCheck" type="checkbox"> უკვე გადახდილია</label>
@@ -1221,7 +1347,33 @@ function toggleAllReceivable(checked){
   renderMonths();
   renderReceivableModal();
 }
-function openForm(){editingId=null;$('formTitle').textContent='სამუშაოს დამატება';$('date').value=localToday();$('place').value='';$('money').value='';$('note').value='';$('paidCheck').checked=false;$('modal').classList.add('show')}
+function openForm(){
+  /* სამუშაოს დამატება ყოველთვის იწყება მთავარ გვერდზე.
+     ეს განსაკუთრებით საჭიროა: ჩანაწერები → მთავარი → სამუშაოს დამატება. */
+  const pages=['mainPage','settingsPage','userManagementPage','walletPage','notesPage'];
+  pages.forEach(id=>{
+    const p=document.getElementById(id);
+    if(!p)return;
+    p.classList.toggle('pageHidden',id!=='mainPage');
+    p.style.transform='translate3d(0,0,0)';
+    p.style.transition='none';
+    p.style.zIndex=id==='mainPage'?'20000':'';
+  });
+  const noteModal=document.getElementById('noteModal');
+  if(noteModal)noteModal.classList.remove('show');
+  const calendarNoteModal=document.getElementById('calendarNoteModal');
+  if(calendarNoteModal)calendarNoteModal.classList.remove('show');
+  window.scrollTo(0,0);
+
+  editingId=null;
+  $('formTitle').textContent='სამუშაოს დამატება';
+  $('date').value=localToday();
+  $('place').value='';
+  $('money').value='';
+  $('note').value='';
+  $('paidCheck').checked=false;
+  $('modal').classList.add('show');
+}
 function closeForm(){$('modal').classList.remove('show')}
 function editJob(id){const j=jobs.find(x=>x.id===id);if(!j)return;editingId=id;$('formTitle').textContent='სამუშაოს შეცვლა';$('date').value=j.date||'';$('place').value=j.place||'';$('money').value=j.money||'';$('note').value=j.note||'';$('paidCheck').checked=!!j.paid;$('modal').classList.add('show')}
 function saveJob(){const amount=Number($('money').value);if(!amount||amount<=0){alert('თანხა მიუთითე');return}const data={date:$('date').value,place:$('place').value.trim(),money:amount,note:$('note').value.trim(),paid:$('paidCheck').checked};if(!data.date){alert('თარიღი მიუთითე');return}const now=Date.now();if(editingId){const i=jobs.findIndex(x=>x.id===editingId);if(i<0)return;jobs[i]={...jobs[i],...data,updatedAt:now}}else jobs.push({id:Date.now().toString()+Math.random().toString(16).slice(2),...data,updatedAt:now});save();closeForm();render()}
@@ -2804,7 +2956,7 @@ startNotesReminderWatcher();
       syncNativeReminderLanguage();
       const btn=document.getElementById('languageBtn');
       if(btn){btn.textContent='🌐 '+LANGS[lang].short;btn.title=all[lang]['ენები'];btn.setAttribute('aria-label',all[lang]['ენები']);}
-      const loginBtn=document.getElementById('loginLanguageBtn');
+      const loginBtn=document.getElementById('languageBtnLogin');
       if(loginBtn){loginBtn.textContent='🌐 '+LANGS[lang].short;loginBtn.title=all[lang]['ენები'];loginBtn.setAttribute('aria-label',all[lang]['ენები']);}
       document.querySelectorAll('.languageOption').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));
 
@@ -2848,28 +3000,25 @@ startNotesReminderWatcher();
   }
 
   function prepare(){
-    const selectors=[
-      {btn:document.getElementById('languageBtn'),menu:document.getElementById('languageMenu')},
-      {btn:document.getElementById('loginLanguageBtn'),menu:document.getElementById('loginLanguageMenu')}
-    ].filter(x=>x.btn&&x.menu);
-    if(selectors.length){
-      selectors.forEach(({btn,menu})=>{
-        btn.addEventListener('click',e=>{
-          e.stopPropagation();
-          selectors.forEach(x=>{if(x.menu!==menu)x.menu.classList.remove('show')});
-          menu.classList.toggle('show');
-        });
-      });
-      document.addEventListener('click',()=>selectors.forEach(x=>x.menu.classList.remove('show')));
-      document.querySelectorAll('.languageOption').forEach(b=>b.addEventListener('click',e=>{
-        e.stopPropagation();
+    const btn=document.getElementById('languageBtn'),menu=document.getElementById('languageMenu');
+    if(btn&&menu){
+      btn.addEventListener('click',e=>{e.stopPropagation();menu.classList.toggle('show')});
+      document.addEventListener('click',()=>menu.classList.remove('show'));
+      document.querySelectorAll('.languageOption').forEach(b=>b.addEventListener('click',()=>{
         lang=b.dataset.lang;
         localStorage.setItem(userLanguageKey(),lang);
         localStorage.setItem(GLOBAL_KEY,lang);
-        selectors.forEach(x=>x.menu.classList.remove('show'));
+        document.querySelectorAll('.languageMenu').forEach(m=>m.classList.remove('show'));
         apply();
         persistLanguageForCurrentUser(lang);
       }));
+    }
+
+    const loginBtn=document.getElementById('languageBtnLogin');
+    const loginMenu=document.getElementById('languageMenuLogin');
+    if(loginBtn&&loginMenu){
+      loginBtn.addEventListener('click',e=>{e.stopPropagation();loginMenu.classList.toggle('show')});
+      document.addEventListener('click',()=>loginMenu.classList.remove('show'));
     }
     apply();
     startObserver();
@@ -2878,5 +3027,14 @@ startNotesReminderWatcher();
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',prepare);else prepare();
 })();
 </script>
+
+<script id="temo-android-app-detect">
+(function(){
+  var ua=navigator.userAgent||'';
+  var isAndroidWebView=/Android/i.test(ua) && (/;\s*wv\)/i.test(ua) || /Version\/4\.0/i.test(ua) || !!window.AndroidReminder);
+  if(isAndroidWebView) document.body.classList.add('temo-android-app');
+})();
+</script>
+
 </body>
 </html>
