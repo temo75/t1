@@ -1482,9 +1482,17 @@ async function renderManagedUsers(){
 
   let users=getUsers();
   if(currentUser===ADMIN_USER){
+    const localUsers=getUsers();
     const remote=await loadUsersFromFirebase();
     if(Array.isArray(remote)){
       users=remote.map(normalizeUser).filter(u=>u.name&&!isRemovedUser(u));
+      // Preserve an older user's email from this device when Firebase's old record has no email.
+      users.forEach(u=>{
+        if(!u.email){
+          const local=localUsers.find(x=>String(x.id)===String(u.id)||String(x.name)===String(u.name));
+          if(local&&local.email)u.email=String(local.email).trim();
+        }
+      });
       if(!users.some(u=>u.name.toUpperCase()===ADMIN_USER)){
         users.unshift(normalizeUser({id:'admin-temo',name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true,blocked:false}));
       }
