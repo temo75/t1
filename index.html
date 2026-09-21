@@ -1725,13 +1725,14 @@ async function updateWebsite(){
 
 function forgotPassword(){
   const m=document.getElementById('forgotPasswordModal');
+  const name=document.getElementById('forgotPasswordName');
   const e=document.getElementById('forgotPasswordEmail');
   const n=document.getElementById('forgotPasswordNew');
   const er=document.getElementById('forgotPasswordError');
-  e.value=''; n.value=''; er.textContent='';
+  name.value=''; e.value=''; n.value=''; er.textContent='';
   m.classList.add('show');
   m.setAttribute('aria-hidden','false');
-  setTimeout(()=>e.focus(),80);
+  setTimeout(()=>name.focus(),80);
 }
 function closeForgotPassword(){
   const m=document.getElementById('forgotPasswordModal');
@@ -1739,15 +1740,17 @@ function closeForgotPassword(){
   m.setAttribute('aria-hidden','true');
 }
 function submitForgotPassword(){
+  const name=document.getElementById('forgotPasswordName').value.trim();
   const email=document.getElementById('forgotPasswordEmail').value.trim().toLowerCase();
   const newPassword=document.getElementById('forgotPasswordNew').value;
   const er=document.getElementById('forgotPasswordError');
   er.textContent='';
+  if(!name){er.textContent='შეიყვანე სახელი';return;}
   if(!email){er.textContent='შეიყვანე ელფოსტა';return;}
   if(!newPassword){er.textContent='შეიყვანე ახალი პაროლი';return;}
   const users=getUsers();
-  const u=users.find(x=>x.email&&String(x.email).toLowerCase()===email);
-  if(!u){er.textContent='ამ ელფოსტით მომხმარებელი ვერ მოიძებნა';return;}
+  const u=users.find(x=>String(x.name||'')===name && x.email&&String(x.email).toLowerCase()===email);
+  if(!u){er.textContent='სახელი და ელფოსტა ზუსტად უნდა ემთხვეოდეს რეგისტრირებულ მონაცემებს';return;}
   u.password=newPassword;
   localStorage.setItem(USERS_KEY,JSON.stringify(users));
   const btn=document.getElementById('forgotPasswordSubmit');
@@ -2124,6 +2127,8 @@ async function registerNewUser(){
     <div class="forgotPasswordIcon">🔑</div>
     <h2 id="forgotPasswordTitle">პაროლის აღდგენა</h2>
     <p>შეიყვანე რეგისტრირებული ელფოსტა და დააყენე ახალი პაროლი.</p>
+    <label for="forgotPasswordName">რეგისტრირებული სახელი</label>
+    <input id="forgotPasswordName" type="text" maxlength="40" placeholder="შეიყვანე შენი სახელი" autocomplete="username">
     <label for="forgotPasswordEmail">რეგისტრირებული ელფოსტა</label>
     <input id="forgotPasswordEmail" type="email" placeholder="მაგ: temo@gmail.com" autocomplete="email">
     <label for="forgotPasswordNew">ახალი პაროლი</label>
@@ -2760,6 +2765,8 @@ startNotesReminderWatcher();
     'ახალი მომხმარებელი':['New user','Νέος χρήστης'],
     'პაროლის აღდგენა':['Password recovery','Ανάκτηση κωδικού'],
     'შეიყვანე რეგისტრირებული ელფოსტა და დააყენე ახალი პაროლი.':['Enter your registered email and set a new password.','Πληκτρολόγησε το καταχωρημένο email σου και όρισε νέο κωδικό.'],
+    'რეგისტრირებული სახელი':['Registered name','Καταχωρημένο όνομα'],
+    'შეიყვანე შენი სახელი':['Enter your name','Πληκτρολόγησε το όνομά σου'],
     'რეგისტრირებული ელფოსტა':['Registered email','Καταχωρημένο email'],
     'ახალი პაროლი':['New password','Νέος κωδικός'],
     'შეიყვანე ახალი პაროლი':['Enter a new password','Πληκτρολόγησε νέο κωδικό'],
