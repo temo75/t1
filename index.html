@@ -1771,13 +1771,24 @@ async function registerNewUser(){
   if(!/^[A-Za-z]+$/.test(n)){alert('სახელი უნდა შეიცავდეს მხოლოდ ლათინურ ასოებს (A-Z, a-z)');nameEl.value=n.replace(/[^A-Za-z]/g,'');return;}
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('შეიყვანე სწორი ელფოსტა');return;}
   if(n.toUpperCase()===ADMIN_USER){alert('ეს სახელი ადმინისტრატორისთვისაა');return;}
-  const users=getUsers();
+
+  const localUsers=getUsers();
+  const remoteUsers=await loadUsersFromFirebase();
+  let users=Array.isArray(remoteUsers)?remoteUsers.map(normalizeUser).filter(u=>u.name&&!isRemovedUser(u)):localUsers;
+
+  if(!users.some(u=>u.name.toUpperCase()===ADMIN_USER)){
+    users.unshift(normalizeUser({id:'admin-temo',name:ADMIN_USER,password:AUTH_PASSWORD,admin:true,authorized:true,blocked:false}));
+  }
   if(users.some(u=>u.name.toLowerCase()===n.toLowerCase())){alert('ასეთი მომხმარებელი უკვე არსებობს');return;}
   if(users.some(u=>u.email&&u.email.toLowerCase()===email)){alert('ეს ელფოსტა უკვე გამოყენებულია');return;}
+
   const user=normalizeUser({id:makeUserId(),name:n,email:email,password:p,admin:false,authorized:true,blocked:false});
   users.push(user);
-  try{await saveUsersToFirebase(users);}catch(e){alert('მომხმარებელი ვერ შეინახა Firebase-ში. შეამოწმე ინტერნეტი ან Firebase-ის წვდომა.\n\n'+(e?.message||''));return;}
-  markFreshUser(user.id);localStorage.setItem(USERS_KEY,JSON.stringify(users));currentUser=user.name;currentUserId=user.id;localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');nameEl.value='';emailEl.value='';passEl.value='';document.getElementById('newUserAuthModal').classList.remove('show');$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();startJobsSyncWatcher();syncJobsFromFirebase().catch(e=>console.warn('Firebase jobs sync failed:',e));
+  const saved=await saveUsersToFirebase(users);
+  if(saved!==true){alert('მომხმარებელი ვერ შეინახა Firebase-ში. შეამოწმე ინტერნეტი ან Firebase-ის წვდომა.');return;}
+
+  localStorage.setItem(USERS_KEY,JSON.stringify(users));
+  markFreshUser(user.id);currentUser=user.name;currentUserId=user.id;localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');nameEl.value='';emailEl.value='';passEl.value='';document.getElementById('newUserAuthModal').classList.remove('show');$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();startJobsSyncWatcher();syncJobsFromFirebase().catch(e=>console.warn('Firebase jobs sync failed:',e));
 }
 </script>
 
