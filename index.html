@@ -152,6 +152,23 @@ footer{display:none!important;}
 .neonControlRow{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;margin-top:12px}
 .neonControlRow input[type=color]{width:58px;height:42px;padding:2px;border-radius:10px;border:1px solid var(--line);background:#071117;cursor:pointer}
 .neonControlRow input[type=range]{width:100%}
+.neonColorChooseRow{grid-template-columns:1fr;gap:10px}
+.neonColorChooseBtn{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);color:var(--text);font:inherit;font-weight:700;cursor:pointer}
+.neonSelectedColorBlock{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);box-sizing:border-box}
+.neonSelectedColorPreview{display:block;width:48px;height:36px;border-radius:7px;border:1px solid #777;box-shadow:inset 0 0 0 1px rgba(255,255,255,.15);background:#49d86a;flex:0 0 auto}
+.neonHiddenColor{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.neonPickerModal{display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;background:rgba(0,0,0,.58);padding:16px;box-sizing:border-box}
+.neonPickerModal.show{display:flex}
+.neonPickerBox{width:min(430px,calc(100vw - 32px));padding:24px;border-radius:24px;background:var(--panel);border:1px solid var(--line);box-shadow:0 18px 60px rgba(0,0,0,.55);box-sizing:border-box}
+.neonPickerTitle{margin:0 0 18px;font-size:28px}
+.neonPalette{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.neonSwatch{height:78px;border-radius:10px;border:1px solid #777;box-shadow:inset 0 0 0 3px rgba(255,255,255,.08);cursor:pointer}
+.neonCustomBtn{width:100%;margin-top:18px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);color:var(--text);font:inherit;font-weight:700;cursor:pointer}
+.neonPickedBlock{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2)}
+.neonPickedPreview{width:52px;height:40px;border-radius:7px;border:1px solid #777;box-sizing:border-box}
+.neonPickerActions{display:flex;justify-content:flex-end;gap:26px;margin-top:22px}
+.neonPickerActions button{border:0;background:transparent;color:#b8c8ff;font:inherit;font-weight:700;cursor:pointer}
+
 .neonValue{font-weight:bold;color:var(--neon-control);text-shadow:0 0 8px rgba(var(--neon-control-rgb),.8);min-width:48px;text-align:right}
 </style>
 </style>
@@ -852,7 +869,14 @@ body.temo-android-app{
 <h2>✨ ნეონის მართვა</h2>
 <div class="neonControlBox">
 <div>ფერი</div>
-<div class="neonControlRow"><input id="neonColor" type="color" value="#49d86a" aria-label="ნეონის ფერი"></div>
+<div class="neonControlRow neonColorChooseRow">
+  <button type="button" id="neonColorChooseBtn" class="neonColorChooseBtn" onclick="openNeonColorPicker()">🎨 აირჩიე ფერი...</button>
+  <div id="neonSelectedColorBlock" class="neonSelectedColorBlock">
+    <span>არჩეული ფერი</span>
+    <span id="neonSelectedColorPreview" class="neonSelectedColorPreview"></span>
+  </div>
+  <input id="neonColor" type="color" value="#49d86a" aria-label="ნეონის ფერი" class="neonHiddenColor">
+</div>
 <div style="margin-top:14px">სიმძლავრე</div>
 <div class="neonControlRow"><input id="neonStrength" type="range" min="0" max="100" value="65" step="1" aria-label="ნეონის სიმძლავრე"><span id="neonStrengthValue" class="neonValue">65%</span></div>
 </div>
@@ -917,6 +941,25 @@ body.temo-android-app{
 <div class="row"><button class="cancel" onclick="closeForm()">გაუქმება</button><button class="save" onclick="saveJob()">შენახვა</button></div>
 </div></div>
 
+
+<div id="neonPickerModal" class="neonPickerModal" onclick="if(event.target===this)closeNeonColorPicker()">
+  <div class="neonPickerBox">
+    <h3 class="neonPickerTitle">აირჩიე ფერი</h3>
+    <div class="neonPalette">
+      <button type="button" class="neonSwatch" data-color="#ff0000" style="background:#ff0000" aria-label="წითელი"></button>
+      <button type="button" class="neonSwatch" data-color="#00ffff" style="background:#00ffff" aria-label="ცისფერი"></button>
+      <button type="button" class="neonSwatch" data-color="#0000ff" style="background:#0000ff" aria-label="ლურჯი"></button>
+      <button type="button" class="neonSwatch" data-color="#00ff00" style="background:#00ff00" aria-label="მწვანე"></button>
+      <button type="button" class="neonSwatch" data-color="#ff00ff" style="background:#ff00ff" aria-label="ვარდისფერი"></button>
+      <button type="button" class="neonSwatch" data-color="#ffff00" style="background:#ffff00" aria-label="ყვითელი"></button>
+      <button type="button" class="neonSwatch" data-color="#000000" style="background:#000000" aria-label="შავი"></button>
+      <button type="button" class="neonSwatch" data-color="#ffffff" style="background:#ffffff" aria-label="თეთრი"></button>
+    </div>
+    <button type="button" class="neonCustomBtn" onclick="openNeonNativePicker()">🎨 აირჩიე ფერი...</button>
+    <div class="neonPickedBlock"><span>არჩეული ფერი</span><span id="neonPickedPreview" class="neonPickedPreview"></span></div>
+    <div class="neonPickerActions"><button type="button" onclick="closeNeonColorPicker()">გაუქმება</button><button type="button" onclick="applyNeonPickerColor()">დაყენება</button></div>
+  </div>
+</div>
 
 <script>
 const AUTH_KEY='temoWorkTrackerAuthorized';
@@ -2073,6 +2116,53 @@ async function registerNewUser(){
   }
 }
 </style>
+<script>
+(function(){
+  function syncPreview(){
+    const c=document.getElementById('neonColor');
+    const a=document.getElementById('neonSelectedColorPreview');
+    const b=document.getElementById('neonPickedPreview');
+    if(c){
+      if(a)a.style.background=c.value;
+      if(b)b.style.background=c.value;
+    }
+  }
+  window.openNeonColorPicker=function(){
+    syncPreview();
+    const m=document.getElementById('neonPickerModal');
+    if(m)m.classList.add('show');
+  };
+  window.closeNeonColorPicker=function(){
+    const m=document.getElementById('neonPickerModal');
+    if(m)m.classList.remove('show');
+    syncPreview();
+  };
+  window.openNeonNativePicker=function(){
+    const c=document.getElementById('neonColor');
+    if(c){
+      c.click();
+      c.oninput=()=>syncPreview();
+    }
+  };
+  window.applyNeonPickerColor=function(){
+    const c=document.getElementById('neonColor');
+    syncPreview();
+    if(typeof window.applyNeonSettings==='function')window.applyNeonSettings(true);
+    const m=document.getElementById('neonPickerModal');
+    if(m)m.classList.remove('show');
+  };
+  document.addEventListener('click',function(e){
+    const sw=e.target.closest('.neonSwatch');
+    if(sw){
+      const c=document.getElementById('neonColor');
+      if(c)c.value=sw.getAttribute('data-color')||c.value;
+      syncPreview();
+    }
+  });
+  document.addEventListener('DOMContentLoaded',syncPreview);
+})();
+</script>
+
 <script id="temo-global-neon-controller">
 (function(){
   const BASE_SELECTORS = [
