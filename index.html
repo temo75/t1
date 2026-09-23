@@ -157,7 +157,7 @@ footer{display:none!important;}
 .neonColorOpen{width:58px;height:42px;padding:3px;border-radius:10px;border:1px solid var(--line);background:#071117;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .neonColorOpen span{display:block;width:100%;height:100%;border-radius:7px;background:var(--neon-control);box-shadow:0 0 12px rgba(var(--neon-control-rgb),.65)}
 #neonColor{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
-.neonPickerModal{position:fixed;inset:0;z-index:2147483647;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:18px}
+.neonPickerModal{position:fixed;inset:0;z-index:10050;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:18px}
 .neonPickerModal.show{display:flex}
 .neonPickerBox{width:min(88vw,430px);max-height:calc(100vh - 36px);overflow:hidden;border-radius:22px;background:#f1f1f7;color:#20212a;box-shadow:0 20px 70px rgba(0,0,0,.65);padding:16px 14px 14px}
 .neonPickerBox h2{text-align:center;font-size:clamp(22px,5.5vw,32px);margin:0 0 12px;font-weight:800}
@@ -881,7 +881,7 @@ body.temo-android-app{
 }
 </style>
 <style id="temo-index3-exact-neon-white">
-/* მხოლოდ მოთხოვნილი ცვლილება: ნეონის ფერი ჩარჩოებზე; ტექსტი და რიცხვები თეთრი */
+/* მოთხოვნილი ცვლილება: ნეონი მხოლოდ ჩარჩოებზე; ტექსტი/რიცხვები თეთრი */
 body.neon-global .neonControlled .label,
 body.neon-global .neonControlled span,
 body.neon-global .neonControlled b,
@@ -891,7 +891,7 @@ body.neon-global .neonAll *{
   color:#fff !important;
 }
 
-/* Notes Book — არსებული ჩარჩოები იღებს მიმდინარე ნეონის ფერს */
+/* Notes Book — ჩარჩოები იყენებს საიტის მიმდინარე ნეონის ფერს; ტექსტი/რიცხვები თეთრი */
 body.neon-global #notesPage .notesPageBtn,
 body.neon-global #notesPage .notesSubPage,
 body.neon-global #notesPage .dailyCard,
@@ -908,6 +908,7 @@ body.neon-global #notesPage .dailyViewBottom button,
 body.neon-global #notesPage .notesAddBtn,
 body.neon-global #notesPage .noteCard,
 body.neon-global #notesPage .noteActions button,
+body.neon-global #notesPage .notesEmpty,
 body.neon-global #notesPage .notesModalBox,
 body.neon-global #notesPage .notesField input,
 body.neon-global #notesPage .notesField textarea,
@@ -928,13 +929,31 @@ body.neon-global #notesPage .dailyViewSaveBtn{
   color:#fff !important;
   box-shadow:0 0 10px rgba(var(--neon-control-rgb),.22) !important;
 }
-body.neon-global #notesPage .dailyViewClose,
+body.neon-global #notesPage .notesPageBtn.active,
+body.neon-global #notesPage .dailyCalendarBtn,
+body.neon-global #notesPage .dailySaveBtn,
+body.neon-global #notesPage .notesAddBtn,
+body.neon-global #notesPage .notesModalActions .primary,
+body.neon-global #notesPage .dailyViewBottom .dailyAddMoreBtn,
+body.neon-global #notesPage .dailyViewSaveBtn{
+  background:inherit !important;
+}
+body.neon-global #notesPage .dailyViewClose{
+  border-color:var(--neon-control) !important;
+  color:#fff !important;
+  box-shadow:0 0 7px rgba(var(--neon-control-rgb),.55) !important;
+}
 body.neon-global #notesPage .noteClose{
   border-color:var(--neon-control) !important;
   color:#fff !important;
   text-shadow:none !important;
   box-shadow:0 0 7px rgba(var(--neon-control-rgb),.55) !important;
 }
+</style>
+
+<style id="temo-index3-requested-fixes">
+/* მხოლოდ მოთხოვნილი: ფერების არჩევის ფანჯარა ყოველთვის წინა ფენაზე */
+.neonPickerModal{z-index:2147483647 !important;}
 </style>
 </head>
 <body>
@@ -1705,13 +1724,16 @@ function saveJob(){const amount=Number($('money').value);if(!amount||amount<=0){
 function togglePaid(id){const j=jobs.find(x=>x.id===id);if(j){j.paid=!j.paid;j.updatedAt=Date.now();save();render();renderList();renderMonths();}}
 function delJob(id){if(confirm('წავშალოთ ეს ჩანაწერი?')){if(currentUser!==ADMIN_USER){const d=getLocalJobDeletes();d[String(id)]=Date.now();setLocalJobDeletes(d)}jobs=jobs.filter(x=>x.id!==id);save();render()}}
 function closeOpenModalsForNavigation(){
-  document.querySelectorAll('.modal.show,.notesModal.show,.noteModal.show,.neonPickerModal.show,.yearPickerModal.show,.credentialsModal.show,.deleteAuthModal.show,.receivableModal.show').forEach(m=>{
+  document.querySelectorAll('.modal.show, .deleteAuthModal.show, .yearPickerModal.show, .credentialsModal.show, .neonPickerModal.show').forEach(m=>{
     m.classList.remove('show');
-    if(m.hasAttribute('aria-hidden'))m.setAttribute('aria-hidden','true');
+    m.setAttribute('aria-hidden','true');
   });
-  if(typeof editingNoteId!=='undefined')editingNoteId='';
+  editingId=null;
+  editingNoteId='';
   if(typeof dailyViewId!=='undefined')dailyViewId='';
+  if(document.body)document.body.style.overflow='';
 }
+
 function temoNavigatePage(pageId){
   closeOpenModalsForNavigation();
   const ids=['mainPage','settingsPage','userManagementPage','walletPage','notesPage'];
@@ -3413,6 +3435,24 @@ function closeNoteModal(){
   $('noteModal').classList.remove('show');
   editingNoteId='';
 }
+
+// სხვა ღილაკზე/ელემენტზე გადასვლისას ღია ფანჯარა ავტომატურად იკეტება.
+document.addEventListener('click',function(e){
+  const openModal=e.target.closest('.modal.show, .deleteAuthModal.show, .yearPickerModal.show, .credentialsModal.show, .neonPickerModal.show');
+  if(!openModal)return;
+  const insideBox=e.target.closest('.form, .deleteAuthBox, .yearPickerBox, .credentialsBox, .neonPickerBox');
+  if(insideBox)return;
+  if(openModal.classList.contains('neonPickerModal') && typeof window.closeNeonPicker==='function'){window.closeNeonPicker(false);return;}
+  openModal.classList.remove('show');
+  openModal.setAttribute('aria-hidden','true');
+  if(openModal.id==='modal')editingId=null;
+  if(openModal.id==='noteModal')editingNoteId='';
+  if(openModal.id==='dailyViewModal' && typeof closeDailyViewModal==='function')closeDailyViewModal();
+  if(openModal.id==='dailyDeleteModal' && typeof closeDailyDeleteModal==='function')closeDailyDeleteModal();
+  if(openModal.id==='calendarNoteModal' && typeof closeCalendarNote==='function')closeCalendarNote();
+  if(openModal.id==='receivableModal' && typeof closeReceivableModal==='function')closeReceivableModal();
+  document.body.style.overflow='';
+});
 function toggleNoteReminderFields(){
   const on=$('noteReminder').checked;
   $('noteDate').disabled=false;
