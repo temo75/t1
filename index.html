@@ -871,98 +871,6 @@ body.temo-android-app{
 .neonPickerActions .confirm{padding:8px 14px!important}
 }
 </style>
-
-<style id="temo-neon-one-system">
-/* TEMO — ერთი ნეონის მართვის სისტემა ყველა გვერდისთვის, ფანჯრისთვის, მომხმარებლის ბლოკისთვის და ლოგოსთვის */
-body.neon-global #mainPage,
-body.neon-global #settingsPage,
-body.neon-global #userManagementPage,
-body.neon-global #walletPage,
-body.neon-global #notesPage{
-  border-top:2px solid rgba(var(--neon-control-rgb),calc(.22 + var(--neon-power)*.55)) !important;
-  box-shadow:inset 0 2px 18px rgba(var(--neon-control-rgb),calc(.04 + var(--neon-power)*.10)) !important;
-}
-body.neon-global header,
-body.neon-global .notesHeader,
-body.neon-global .section,
-body.neon-global .card,
-body.neon-global .mini,
-body.neon-global .form,
-body.neon-global .toolbox,
-body.neon-global .credentialsBox,
-body.neon-global .notesSubPage,
-body.neon-global .dailyCard,
-body.neon-global .userManagementPage,
-body.neon-global .modalBox,
-body.neon-global .modalContent,
-body.neon-global .dialog,
-body.neon-global .popup,
-body.neon-global [role="dialog"]{
-  border-color:rgba(var(--neon-control-rgb),calc(.28 + var(--neon-power)*.62)) !important;
-  box-shadow:0 0 calc(7px + var(--neon-power)*10px) rgba(var(--neon-control-rgb),calc(.12 + var(--neon-power)*.30)),
-             0 0 calc(18px + var(--neon-power)*22px) rgba(var(--neon-control-rgb),calc(.05 + var(--neon-power)*.16)),
-             inset 0 0 12px rgba(var(--neon-control-rgb),calc(.025 + var(--neon-power)*.08)) !important;
-}
-body.neon-global h1,
-body.neon-global h2,
-body.neon-global h3,
-body.neon-global .notesTitle,
-body.neon-global .notesSubPageTitle,
-body.neon-global .label,
-body.neon-global .amount,
-body.neon-global .username,
-body.neon-global .userName,
-body.neon-global .userWelcomeUnderLogo{
-  text-shadow:0 0 calc(5px + var(--neon-power)*7px) rgba(var(--neon-control-rgb),calc(.30 + var(--neon-power)*.48)),
-              0 0 calc(14px + var(--neon-power)*14px) rgba(var(--neon-control-rgb),calc(.10 + var(--neon-power)*.24)) !important;
-}
-body.neon-global .temo-logo,
-body.neon-global .temo-logo img,
-body.neon-global .temo-logo svg{
-  filter:drop-shadow(0 0 calc(6px + var(--neon-power)*9px) rgba(var(--neon-control-rgb),calc(.30 + var(--neon-power)*.55))) !important;
-}
-body.neon-global #bottomNav > button,
-body.neon-global #bottomNav > button .navLogo,
-body.neon-global .settingsBtn,
-body.neon-global .add,
-body.neon-global .save,
-body.neon-global .notesPageBtn,
-body.neon-global .dailyCalendarBtn,
-body.neon-global .dailyCalendarClear,
-body.neon-global .dailyPagination button{
-  border-color:rgba(var(--neon-control-rgb),calc(.35 + var(--neon-power)*.60)) !important;
-  box-shadow:0 0 calc(6px + var(--neon-power)*9px) rgba(var(--neon-control-rgb),calc(.18 + var(--neon-power)*.38)),
-             0 0 calc(16px + var(--neon-power)*16px) rgba(var(--neon-control-rgb),calc(.06 + var(--neon-power)*.18)) !important;
-}
-body.neon-global #notesPage .dailyCard{
-  border:1px solid rgba(var(--neon-control-rgb),calc(.30 + var(--neon-power)*.55)) !important;
-  border-top:5px solid var(--neon-control) !important;
-  box-shadow:0 0 calc(7px + var(--neon-power)*10px) rgba(var(--neon-control-rgb),calc(.12 + var(--neon-power)*.30)),
-             0 0 calc(18px + var(--neon-power)*20px) rgba(var(--neon-control-rgb),calc(.04 + var(--neon-power)*.14)) !important;
-}
-body.neon-global #notesPage .dailyCardTitle{
-  border-color:rgba(var(--neon-control-rgb),calc(.25 + var(--neon-power)*.55)) !important;
-  box-shadow:inset 0 0 9px rgba(var(--neon-control-rgb),calc(.03 + var(--neon-power)*.10)),0 0 calc(5px + var(--neon-power)*7px) rgba(var(--neon-control-rgb),calc(.08 + var(--neon-power)*.22)) !important;
-}
-body.neon-global #notesPage .dailyCalendarBtn{
-  border-color:var(--neon-control) !important;
-  color:var(--neon-control) !important;
-  background:rgba(var(--neon-control-rgb),.08) !important;
-}
-body.neon-global #notesPage .notesPageBtn.active{
-  border-color:var(--neon-control) !important;
-  color:var(--neon-control) !important;
-  background:rgba(var(--neon-control-rgb),.10) !important;
-}
-body.neon-global input:focus,
-body.neon-global textarea:focus,
-body.neon-global select:focus{
-  border-color:var(--neon-control) !important;
-  box-shadow:0 0 calc(6px + var(--neon-power)*10px) rgba(var(--neon-control-rgb),calc(.20 + var(--neon-power)*.35)) !important;
-  outline:none !important;
-}
-</style>
-
 </head>
 <body>
 <nav id="bottomNav" aria-label="მთავარი მენიუ">
@@ -1289,7 +1197,7 @@ function enablePasswordOnlyLogin(){
   $('loginName').focus();
 }
 function enableNameLogin(){enablePasswordOnlyLogin()}
-function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');try{if(window.AndroidReminder&&typeof window.AndroidReminder.setNotesEndpoint==='function'){window.AndroidReminder.setNotesEndpoint(FIREBASE_DB_URL+'/notes/'+firebaseUserKey(currentUserId)+'.json');}}catch(e){}$('loginScreen').classList.add('hidden');if($('bottomNav'))$('bottomNav').style.display='grid';$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();startJobsSyncWatcher();startDailySyncWatcher();syncJobsFromFirebase().then(()=>{updateMonthFilter();render();renderList();renderMonths();renderReceivableModal();}).catch(e=>console.warn('Firebase jobs sync failed:',e));}
+function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');try{if(window.AndroidReminder&&typeof window.AndroidReminder.setNotesEndpoint==='function'){window.AndroidReminder.setNotesEndpoint(FIREBASE_DB_URL+'/notes/'+firebaseUserKey(currentUserId)+'.json');}}catch(e){}$('loginScreen').classList.add('hidden');if($('bottomNav'))$('bottomNav').style.display='grid';$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();startJobsSyncWatcher();startDailySyncWatcher();seedLegacyDailyForTemo();syncJobsFromFirebase().then(()=>{updateMonthFilter();render();renderList();renderMonths();renderReceivableModal();}).catch(e=>console.warn('Firebase jobs sync failed:',e));}
 function login(){const name=$('loginName').value.trim(),pass=$('loginPassword').value,users=getUsers(),u=users.find(x=>x.name===name&&x.password===pass);if(!u){$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus();return;}if(u.blocked===true||u.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';$('loginPassword').focus();return;}completeLogin(u);}
 function renderLoginUsers(){}
 window.addEventListener('DOMContentLoaded',async()=>{
@@ -1315,6 +1223,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
     if($('bottomNav'))$('bottomNav').style.display='grid';
     if(typeof window.loadNeonSettings==='function')window.loadNeonSettings();
     jobs=loadUserJobs();updateUserUI();render();
+    startDailySyncWatcher();seedLegacyDailyForTemo();
     startJobsSyncWatcher();
     syncJobsFromFirebase().then(()=>{updateMonthFilter();render();renderList();renderMonths();renderReceivableModal();}).catch(e=>console.warn('Firebase jobs sync failed:',e));
   }else{
@@ -1755,7 +1664,7 @@ function temoNavigatePage(pageId){
 }
 function goHome(){temoNavigatePage('mainPage')}
 function goSettings(){temoNavigatePage('settingsPage');if(typeof window.loadNeonSettings==='function')window.loadNeonSettings()}
-function goUsers(){temoNavigatePage('userManagementPage')}
+function goUsers(){if(currentUser===ADMIN_USER)temoNavigatePage('userManagementPage')}
 function goWallet(){temoNavigatePage('walletPage')}
 function showNotesSubPage(which){
   const reminders=document.getElementById('notesRemindersPage');
@@ -1867,6 +1776,82 @@ async function syncDailyFromFirebase(){
   }catch(e){console.warn('Firebase daily sync failed:',e);}
   finally{dailySyncBusy=false;}
 }
+function seedLegacyDailyForTemo(){
+  if(currentUser!==ADMIN_USER||!currentUserId)return;
+  const seedKey='temoLegacyDiary2019_2020_v1';
+  if(localStorage.getItem(seedKey)==='done')return;
+  const legacy=[
+    ['2019-12-06','6 +m',''],
+    ['2019-12-07','7 +m','100'],
+    ['2019-12-13','13 +m',''],
+    ['2019-12-14','14 +m',''],
+    ['2019-12-15','15 +m','115-darcha 10m'],
+    ['2019-12-28','Ivlisi','450'],
+    ['2020-01-10','10 +m',''],
+    ['2020-01-11','11 +m',''],
+    ['2020-01-12','12 +m','150. Misacemi mak 5'],
+    ['2020-01-13','13 kvira',''],
+    ['2020-01-14','14 +m',''],
+    ['2020-01-15','15 +m',''],
+    ['2020-01-16','16 +m',''],
+    ['2020-01-17','17 +m.','140'],
+    ['2020-01-18','18 +m',''],
+    ['2020-01-19','19 +m.','90'],
+    ['2020-01-20','20 kvira',''],
+    ['2020-01-21','21 +m',''],
+    ['2020-01-22','22. Siderim.','50'],
+    ['2020-01-23','23 +m',''],
+    ['2020-01-24','24 +m',''],
+    ['2020-01-25','25 +m',''],
+    ['2020-01-26','26 +m.','220'],
+    ['2020-01-27','27 kvira',''],
+    ['2020-01-28','28 +m',''],
+    ['2020-01-29','29 +m',''],
+    ['2020-01-30','30 +m',''],
+    ['2020-01-31','31 +m',''],
+    ['2020-02-01','1 +m',''],
+    ['2020-02-02','2 +m.','270'],
+    ['2020-02-03','3 kvira',''],
+    ['2020-02-04','4 +m',''],
+    ['2020-02-05','5 +m',''],
+    ['2020-02-06','6 +m',''],
+    ['2020-02-07','7 +m',''],
+    ['2020-02-08','8 +m',''],
+    ['2020-02-09','9 +m.','270'],
+    ['2020-02-10','10 kvira',''],
+    ['2020-02-11','11',''],
+    ['2020-02-12','12+m',''],
+    ['2020-02-13','13',''],
+    ['2020-02-14','14 +m',''],
+    ['2020-02-15','15+m',''],
+    ['2020-02-16','16 + m','180'],
+    ['2020-02-17','17 kvira',''],
+    ['2020-02-18','18 +m',''],
+    ['2020-02-19','19 +m',''],
+    ['2020-02-20','20 +m',''],
+    ['2020-02-21','21+m.','150'],
+    ['2020-03-02','2 + m','50.'],
+    ['2020-03-05','5 + m',''],
+    ['2020-03-06','6+ m','80']
+  ];
+  const entries=loadDailyEntries();
+  const existing=new Set(entries.map(e=>String(e.id)));
+  legacy.forEach(([date,title,text])=>{
+    const id='legacy-'+date;
+    if(existing.has(id))return;
+    const [y,m,d]=date.split('-').map(Number);
+    const stamp=new Date(y,m-1,d,12,0,0,0).getTime();
+    entries.push({id,title,text:String(text),createdAt:stamp,updatedAt:stamp});
+  });
+  entries.sort((a,b)=>Number(a.createdAt||0)-Number(b.createdAt||0));
+  dailyDeletes=loadDailyDeletes();
+  saveDailyEntries(entries);saveDailyDeletes(dailyDeletes);
+  localStorage.setItem(seedKey,'done');
+  saveDailyRemote(entries,dailyDeletes).catch(e=>console.warn('Legacy diary seed sync failed:',e));
+  dailyPage=0;
+  renderDailyEntries();
+}
+
 function startDailySyncWatcher(){
   if(dailySyncTimer)clearInterval(dailySyncTimer);
   if(!currentUserId)return;
@@ -2949,13 +2934,19 @@ async function registerNewUser(){
 (function(){
   const BASE_SELECTORS = [
     '.neonControlled','.settingsBtn','.add','.loginBox button','.loginModeBtn','.loginBox .loginLanguageBox .languageBtn',
-    '.repoTokenOpenBtn','.backupBtn','.save','.calendarNav','.calendarNoteBtn',
+    '.repoTokenOpenBtn','.backupBtn','.save','.calendarNav','.calendarNav button','.calendarNoteBtn',
     '.yearPickerGrid button','.calendarTitle','.temo-eye-btn','.privacyEyeMain',
-    '#siteFileBtn','#bottomNav > button','.receivableClose','.noteClose',
+    '#siteFileBtn','#bottomNav > button','#bottomNav > button .navLogo','.receivableClose','.noteClose',
     '.credentialsBox','.form','.section','.toolbox','.card','.mini',
     '.dayCell.today','.dayCell.selected','.jobStatusMark.paid',
-    '.temo-logo','.notesPageSwitch .notesPageBtn','.notesSubPage','.dailyCard','.dailyCardTitle','.dailyCalendarBtn','.dailyCalendarClear','.dailyPagination','.dailyPagination button',
-    '.modalBox','.modalContent','.dialog','.popup','.forgotPasswordBox','.forgotSuccessBox','.newUserAuthBox','.neonPickerBox','.languageBox','.languageBtn'
+    '.tools input[type=file]','.tools input[type=file]::file-selector-button','.uploadSpinner','.uploadCheck','.uploadBurst i','.temo-logo',
+    '.languageBtn','.languageOption','.notesPageBtn','.notesAddBtn','.notesToolsRow','.dailyCalendarBtn','.dailyCalendarClear','.dailyPageBtn','.dailySaveBtn',
+    '.dailyCard','.dailyCardTitle','.dailyEditor','.dailyViewClose','.dailyViewBox','.dailyViewTitleEdit','.dailyViewEditText','.notesModalBox','.notesModalActions',
+    '.notesField','.notesCheck','.receivableBox','.deleteAuthBox','.deleteAuthRow button','.yearPickerBox','.yearPickerClose','.neonControlBox','.neonColorOpen','.neonPickerBox',
+    '.neonPickerActions button','.forgotPasswordBox','.forgotPasswordRow button','.forgotSuccessBox','.forgotSuccessClose','.newUserAuthBox','.userManagementBox',
+    '.userManagementListWrap','#userManagementList button','.modal','.notesModal','.receivableModal','.noteModal','.deleteAuthModal','.credentialsModal',
+    '.yearPickerModal','.neonPickerModal','.dailyViewModal','#forgotPasswordModal','#newUserAuthModal','.temo-exit-btn','.receivableAll',
+    '.forgotPasswordIcon','.forgotSuccessCheck','.neonValue','.neonWheelCenter','.temo-3d'
   ];
 
   const FIREBASE_NEON_USERS_URL='https://temo-75-default-rtdb.europe-west1.firebasedatabase.app/settings/neon/users';
@@ -4025,5 +4016,14 @@ startNotesReminderWatcher();
 })();
 </script>
 
+<style id="temo-neon-single-source-final">
+/* SINGLE NEON SOURCE: all visible neon effects read only from Neon Control Center variables. */
+body.neon-global .settingsBtn,body.neon-global .add,body.neon-global .loginBox button,body.neon-global .loginModeBtn,body.neon-global .loginBox .languageBtn,body.neon-global .languageBtn,body.neon-global .repoTokenOpenBtn,body.neon-global .backupBtn,body.neon-global .save,body.neon-global .calendarNav,body.neon-global .calendarNav button,body.neon-global .calendarNoteBtn,body.neon-global .yearPickerGrid button,body.neon-global .yearPickerGrid button.active,body.neon-global .temo-eye-btn,body.neon-global .privacyEyeMain,body.neon-global #siteFileBtn,body.neon-global .tools input[type=file],body.neon-global .tools input[type=file]::file-selector-button,body.neon-global .uploadSpinner,body.neon-global .uploadCheck,body.neon-global .uploadBurst i,body.neon-global .receivableClose,body.neon-global .noteClose,body.neon-global .credentialsBox,body.neon-global .form,body.neon-global .section,body.neon-global .toolbox,body.neon-global .card,body.neon-global .mini,body.neon-global .dayCell.today,body.neon-global .dayCell.selected,body.neon-global .calendar .today,body.neon-global .calendar .today-cell,body.neon-global .calendar td.today,body.neon-global .jobStatusMark.paid,body.neon-global .neonControlBox,body.neon-global .neonColorOpen,body.neon-global .neonPickerBox,body.neon-global .neonPickerActions button,body.neon-global .forgotPasswordBox,body.neon-global .forgotPasswordRow button,body.neon-global .forgotSuccessBox,body.neon-global .forgotSuccessClose,body.neon-global .forgotPasswordIcon,body.neon-global .forgotSuccessCheck,body.neon-global .newUserAuthBox,body.neon-global .userManagementBox,body.neon-global .userManagementListWrap,body.neon-global #userManagementList button,body.neon-global .notesPageBtn,body.neon-global .notesAddBtn,body.neon-global .dailyCalendarBtn,body.neon-global .dailyCalendarClear,body.neon-global .dailyPageBtn,body.neon-global .dailySaveBtn,body.neon-global .dailyCard,body.neon-global .dailyViewClose,body.neon-global .dailyViewBox,body.neon-global .dailyViewTitleEdit,body.neon-global .dailyViewEditText,body.neon-global .notesModalBox,body.neon-global .notesModalActions,body.neon-global .notesField,body.neon-global .notesCheck,body.neon-global .receivableBox,body.neon-global .deleteAuthBox,body.neon-global .deleteAuthRow button,body.neon-global .yearPickerBox,body.neon-global .yearPickerClose,body.neon-global .temo-exit-btn,body.neon-global .receivableAll{border-color:var(--neon-control)!important;box-shadow:0 0 8px rgba(var(--neon-control-rgb),calc(.35 + .45*var(--neon-power))),0 0 22px rgba(var(--neon-control-rgb),calc(.12 + .35*var(--neon-power)))!important}
+body.neon-global .save,body.neon-global .notesPageBtn.active,body.neon-global .notesAddBtn,body.neon-global .dailyCalendarBtn,body.neon-global .dailySaveBtn,body.neon-global .dailyPageBtn,body.neon-global .dailyCalendarClear{background:rgba(var(--neon-control-rgb),.16)!important;color:var(--neon-control)!important}
+body.neon-global .add,body.neon-global .settingsBtn,body.neon-global .loginBox button,body.neon-global .loginModeBtn,body.neon-global .calendarNoteBtn,body.neon-global .repoTokenOpenBtn,body.neon-global .backupBtn,body.neon-global .temo-eye-btn,body.neon-global .calendarTitle,body.neon-global .temo-exit-btn,body.neon-global .neonValue,body.neon-global .jobStatusMark.paid,body.neon-global .forgotSuccessCheck,body.neon-global .forgotSuccessCheck:before,body.neon-global .forgotSuccessCheck:after,body.neon-global .uploadCheck{color:var(--neon-control)!important;text-shadow:0 0 calc(5px + 10px*var(--neon-power)) rgba(var(--neon-control-rgb),calc(.35 + .55*var(--neon-power)))!important}
+body.neon-global .uploadBurst i{background:var(--neon-control)!important}body.neon-global .uploadSpinner{border-top-color:var(--neon-control)!important;border-right-color:var(--neon-control)!important}body.neon-global .neonColorOpen span{background:var(--neon-control)!important;box-shadow:0 0 12px rgba(var(--neon-control-rgb),.75)!important}body.neon-global .neonWheelCenter{background:var(--neon-control)!important;box-shadow:0 0 18px rgba(var(--neon-control-rgb),.9),0 0 38px rgba(var(--neon-control-rgb),.45)!important}
+body.neon-global .temo-3d{text-shadow:1px 1px 0 #b9c7cc,2px 2px 0 #8fa1a8,3px 3px 0 #667980,4px 4px 0 #43545b,0 0 8px var(--neon-control),0 0 18px rgba(var(--neon-control-rgb),.8)!important}body.neon-global #bottomNav > button .navLogo,body.neon-global #bottomNav .logoutNav .navLogo{filter:drop-shadow(0 0 6px rgba(var(--neon-control-rgb),.85)) drop-shadow(0 0 16px rgba(var(--neon-control-rgb),.45))!important}
+body.neon-global .neonControlled,body.neon-global .neonAll{border-color:var(--neon-control)!important;box-shadow:inset 0 0 10px rgba(var(--neon-control-rgb),.9),inset 0 0 24px rgba(var(--neon-control-rgb),.55),inset 0 0 40px rgba(var(--neon-control-rgb),.32),0 0 8px rgba(var(--neon-control-rgb),.35)!important}body.neon-global .neonAll,body.neon-global .neonAll *{text-shadow:0 0 calc(4px + 8px*var(--neon-power)) rgba(var(--neon-control-rgb),calc(.18 + .62*var(--neon-power)))!important}
+</style>
 </body>
 </html>
