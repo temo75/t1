@@ -482,6 +482,15 @@ body.neon-global .userName{
 #notesPage .dailyEditor{display:flex;flex-direction:column;min-height:calc(100vh - 250px);gap:12px}
 #notesPage .dailyEditor textarea{flex:1;width:100%;min-height:300px;resize:none;box-sizing:border-box;background:#071017;color:#fff;border:1px solid #29404c;border-radius:14px;padding:14px;font:inherit;line-height:1.5;outline:none}
 #notesPage .dailySaveBtn{width:100%;border:1px solid rgba(73,216,106,.65);background:#10271b;color:#9cffb0;border-radius:12px;padding:13px 16px;font-weight:800;cursor:pointer;box-shadow:0 0 12px rgba(73,216,106,.16)}
+#notesPage .dailyViewModal{position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;align-items:center;justify-content:center;padding:12px;z-index:2147483647}
+#notesPage .dailyViewModal.show{display:flex}
+#notesPage .dailyViewBox{width:min(620px,100%);height:min(82vh,760px);display:flex;flex-direction:column;background:#0d1b24;border:1px solid #315061;border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.55);overflow:hidden}
+#notesPage .dailyViewHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;border-bottom:1px solid #29404c}
+#notesPage .dailyViewHeader h2{margin:0;color:#fff;font-size:20px}
+#notesPage .dailyViewText{flex:1;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;color:#fff;font-size:18px;line-height:1.6;padding:18px}
+#notesPage .dailyViewClose{width:40px;height:40px;border:1px solid #ff3b3b;border-radius:50%;background:rgba(70,0,0,.45);color:#ff5b5b;font-size:23px;font-weight:900;cursor:pointer;box-shadow:0 0 7px rgba(255,59,59,.6)}
+#notesPage .dailyViewBottom{padding:12px;border-top:1px solid #29404c}
+#notesPage .dailyViewBottom button{width:100%;padding:12px;border:1px solid #29404c;border-radius:10px;background:#172631;color:#fff;font-weight:700;cursor:pointer}
 @media(max-width:520px){#notesPage .notesPageSwitch{width:100%;justify-content:stretch}.notesPageBtn{flex:1;min-width:0}.notesToolsRow{justify-content:stretch}.notesToolsRow .notesAddBtn{width:100%}}
 </style>
 <style id="temo-notes-style">
@@ -936,6 +945,17 @@ body.temo-android-app{
     <div id="dailyEditorPage" class="dailyEditor" style="display:none">
       <textarea id="dailyText" placeholder="ჩაწერე შენი ჩანაწერი..."></textarea>
       <button type="button" class="dailySaveBtn" onclick="saveDailyEntry()">💾 შენახვა</button>
+    </div>
+  </div>
+
+  <div id="dailyViewModal" class="dailyViewModal" onclick="if(event.target===this)closeDailyViewModal()">
+    <div class="dailyViewBox">
+      <div class="dailyViewHeader">
+        <h2>📖 ჩანაწერი</h2>
+        <button type="button" class="dailyViewClose" onclick="closeDailyViewModal()" aria-label="დახურვა">✕</button>
+      </div>
+      <div id="dailyViewText" class="dailyViewText"></div>
+      <div class="dailyViewBottom"><button type="button" onclick="closeDailyViewModal()">✕ დახურვა</button></div>
     </div>
   </div>
 
@@ -1750,20 +1770,46 @@ function renderDailyEntries(){
       date.textContent=new Date(e.createdAt).toLocaleDateString();
       card.appendChild(date);
     }
+    let longPressed=false;
     const startPress=ev=>{
       if(ev.pointerType==='mouse' && ev.button!==0)return;
+      longPressed=false;
       clearTimeout(dailyLongPressTimer);
-      dailyLongPressTimer=setTimeout(()=>openDailyDeleteModal(e.id),650);
+      dailyLongPressTimer=setTimeout(()=>{
+        longPressed=true;
+        openDailyDeleteModal(e.id);
+      },650);
+    };
+    const finishPress=()=>{
+      clearTimeout(dailyLongPressTimer);
+      if(!longPressed)openDailyViewModal(e.id);
     };
     const cancelPress=()=>clearTimeout(dailyLongPressTimer);
     card.addEventListener('pointerdown',startPress);
-    card.addEventListener('pointerup',cancelPress);
+    card.addEventListener('pointerup',finishPress);
     card.addEventListener('pointercancel',cancelPress);
     card.addEventListener('pointerleave',cancelPress);
     card.addEventListener('contextmenu',ev=>ev.preventDefault());
     list.appendChild(card);
   });
 }
+function openDailyViewModal(id){
+  const entry=loadDailyEntries().find(e=>String(e.id)===String(id));
+  if(!entry)return;
+  const modal=document.getElementById('dailyViewModal');
+  const text=document.getElementById('dailyViewText');
+  if(!modal||!text)return;
+  text.textContent=entry.text||'';
+  modal.classList.add('show');
+  modal.setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+}
+function closeDailyViewModal(){
+  const modal=document.getElementById('dailyViewModal');
+  if(modal){modal.classList.remove('show');modal.setAttribute('aria-hidden','true');}
+  document.body.style.overflow='';
+}
+
 function openDailyDeleteModal(id){
   clearTimeout(dailyLongPressTimer);
   dailyDeleteId=id;
