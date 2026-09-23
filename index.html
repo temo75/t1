@@ -967,7 +967,6 @@ body.neon-global #notesPage .noteClose{
 .chatMessageTime{color:var(--muted);font-size:11px}
 .chatMessageText{color:#fff;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.4}
 .chatReply{margin-top:9px;padding:10px;border-radius:10px;border:1px solid #29404c;background:#071117;color:#78e08f;width:100%;min-height:70px;resize:vertical;box-sizing:border-box}
-.chatReply::placeholder{color:#78e08f;opacity:1}
 .chatReplyRow{display:flex;justify-content:flex-end;gap:8px;margin-top:7px}
 .chatReplyBtn{border:1px solid var(--neon-control,#49d86a);border-radius:9px;background:#102b3b;color:#fff;padding:8px 12px;font-weight:bold;cursor:pointer}
 .chatReplyBox{margin-top:10px;padding-top:9px;border-top:1px solid #1e3542}
@@ -2418,7 +2417,7 @@ async function renderAdminMessages(){
   box.innerHTML=groups.map(g=>{
     const latest=g.messages[g.messages.length-1];
     const messagesHtml=g.messages.map(m=>`<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.12)"><div class="chatMessageHead"><span class="chatMessageTime">${chatEscape(chatFormatTime(m.createdAt))}</span></div><div class="chatMessageText">${chatEscape(m.text)}</div>${m.reply?`<div class="chatReplyBox"><div class="chatAdminLabel">ადმინი · ${chatEscape(chatFormatTime(m.replyAt))}</div><div class="chatAdminMessageText">${chatEscape(m.reply)}</div></div>`:''}</div>`).join('');
-    return `<div class="chatMessage"><div class="chatMessageHead"><b>👤 ${chatEscape(g.userName)}</b><span class="chatMessageTime">${chatEscape(chatFormatTime(g.latestAt))}</span></div>${messagesHtml}<div class="chatReplyBox"><textarea class="chatReply" id="chatReply_${chatEscape(g.userId)}" maxlength="1000" placeholder="ჩემი მინაწერი"></textarea><div class="chatReplyRow"><button type="button" class="chatReplyBtn" onclick="replyToUser('${chatEscape(g.userId)}','${chatEscape(latest.id)}')">↩️ პასუხი</button></div></div><div class="chatDeleteRow"><button type="button" class="chatDeleteBtn" onclick="deleteChatDialog('${chatEscape(g.userId)}')">🗑️ მთელი დიალოგის წაშლა</button></div></div>`;
+    return `<div class="chatMessage"><div class="chatMessageHead"><b>👤 ${chatEscape(g.userName)}</b><span class="chatMessageTime">${chatEscape(chatFormatTime(g.latestAt))}</span></div>${messagesHtml}<div class="chatReplyBox"><textarea class="chatReply" id="chatReply_${chatEscape(g.userId)}" maxlength="1000"></textarea><div class="chatReplyRow"><button type="button" class="chatReplyBtn" onclick="replyToUser('${chatEscape(g.userId)}','${chatEscape(latest.id)}')">↩️ პასუხი</button></div></div><div class="chatDeleteRow"><button type="button" class="chatDeleteBtn" onclick="deleteChatDialog('${chatEscape(g.userId)}')">🗑️ მთელი დიალოგის წაშლა</button></div></div>`;
   }).join('');
 }
 async function deleteChatDialog(userId){
