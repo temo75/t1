@@ -472,9 +472,13 @@ body.neon-global .userName{
 #notesPage .notesToolsRow .notesAddBtn{margin:0}
 #notesPage .notesSubPage{padding:14px;border:1px solid #29404c;border-radius:14px;background:linear-gradient(145deg,#0d1b24,#0a151d);min-height:180px}
 #notesPage .notesSubPageTitle{font-size:20px;font-weight:800;color:#fff}
-#notesPage .dailyList{display:grid;gap:12px}
-#notesPage .dailyCard{background:linear-gradient(145deg,#0d1b24,#0a151d);border:1px solid #29404c;border-radius:14px;padding:14px;box-shadow:0 4px 18px rgba(0,0,0,.18);white-space:pre-wrap;word-break:break-word}
-#notesPage .dailyEmpty{padding:22px 14px;text-align:center;color:var(--muted);border:1px dashed #29404c;border-radius:14px}
+#notesPage .dailyList{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+#notesPage .dailyCard{position:relative;background:#000;border:1px solid #222;border-top:5px solid #49d86a;border-radius:0;padding:10px 8px;min-height:150px;box-shadow:none;white-space:pre-wrap;word-break:break-word;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+#notesPage .dailyCard:active{transform:scale(.99)}
+#notesPage .dailyCardText{font-size:18px;line-height:1.35;color:#fff;font-weight:600}
+#notesPage .dailyCardDate{margin-top:9px;color:#aaa;font-size:12px}
+#notesPage .dailyEmpty{grid-column:1/-1;padding:22px 14px;text-align:center;color:var(--muted);border:1px dashed #29404c;border-radius:14px}
+@media(max-width:520px){#notesPage .dailyList{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}#notesPage .dailyCard{min-height:145px;padding:9px 7px}#notesPage .dailyCardText{font-size:16px}}
 #notesPage .dailyEditor{display:flex;flex-direction:column;min-height:calc(100vh - 250px);gap:12px}
 #notesPage .dailyEditor textarea{flex:1;width:100%;min-height:300px;resize:none;box-sizing:border-box;background:#071017;color:#fff;border:1px solid #29404c;border-radius:14px;padding:14px;font:inherit;line-height:1.5;outline:none}
 #notesPage .dailySaveBtn{width:100%;border:1px solid rgba(73,216,106,.65);background:#10271b;color:#9cffb0;border-radius:12px;padding:13px 16px;font-weight:800;cursor:pointer;box-shadow:0 0 12px rgba(73,216,106,.16)}
@@ -932,6 +936,17 @@ body.temo-android-app{
     <div id="dailyEditorPage" class="dailyEditor" style="display:none">
       <textarea id="dailyText" placeholder="ჩაწერე შენი ჩანაწერი..."></textarea>
       <button type="button" class="dailySaveBtn" onclick="saveDailyEntry()">💾 შენახვა</button>
+    </div>
+  </div>
+
+  <div id="dailyDeleteModal" class="notesModal" onclick="if(event.target===this)closeDailyDeleteModal()">
+    <div class="notesModalBox">
+      <h2>🗑️ ჩანაწერის წაშლა</h2>
+      <div class="notesSub" style="margin:8px 0 16px">ნამდვილად გინდა ამ ჩანაწერის წაშლა?</div>
+      <div class="notesModalActions">
+        <button type="button" onclick="closeDailyDeleteModal()">✕ გაუქმება</button>
+        <button type="button" class="primary" style="background:#4a2228;border-color:#74333d" onclick="confirmDeleteDailyEntry()">🗑️ წაშლა</button>
+      </div>
     </div>
   </div>
 
@@ -1614,6 +1629,9 @@ function loadDailyEntries(){
 function saveDailyEntries(data){
   localStorage.setItem(dailyStorageKey(),JSON.stringify(data));
 }
+let dailyDeleteId='';
+let dailyLongPressTimer=null;
+
 function renderDailyEntries(){
   const list=document.getElementById('dailyList');
   const listPage=document.getElementById('dailyListPage');
@@ -1626,7 +1644,53 @@ function renderDailyEntries(){
     list.innerHTML='<div class="dailyEmpty">ჯერ ჩანაწერი არ არის.</div>';
     return;
   }
-  list.innerHTML=entries.map(e=>`<div class="dailyCard">${noteEsc(e.text)}</div>`).join('');
+  list.innerHTML='';
+  entries.forEach(e=>{
+    const card=document.createElement('div');
+    card.className='dailyCard';
+    card.dataset.dailyId=e.id;
+    const text=document.createElement('div');
+    text.className='dailyCardText';
+    text.textContent=e.text;
+    card.appendChild(text);
+    if(e.createdAt){
+      const date=document.createElement('div');
+      date.className='dailyCardDate';
+      date.textContent=new Date(e.createdAt).toLocaleDateString();
+      card.appendChild(date);
+    }
+    const startPress=ev=>{
+      if(ev.pointerType==='mouse' && ev.button!==0)return;
+      clearTimeout(dailyLongPressTimer);
+      dailyLongPressTimer=setTimeout(()=>openDailyDeleteModal(e.id),650);
+    };
+    const cancelPress=()=>clearTimeout(dailyLongPressTimer);
+    card.addEventListener('pointerdown',startPress);
+    card.addEventListener('pointerup',cancelPress);
+    card.addEventListener('pointercancel',cancelPress);
+    card.addEventListener('pointerleave',cancelPress);
+    card.addEventListener('contextmenu',ev=>ev.preventDefault());
+    list.appendChild(card);
+  });
+}
+function openDailyDeleteModal(id){
+  clearTimeout(dailyLongPressTimer);
+  dailyDeleteId=id;
+  const modal=document.getElementById('dailyDeleteModal');
+  if(modal){modal.classList.add('show');modal.setAttribute('aria-hidden','false');}
+}
+function closeDailyDeleteModal(){
+  clearTimeout(dailyLongPressTimer);
+  dailyDeleteId='';
+  const modal=document.getElementById('dailyDeleteModal');
+  if(modal){modal.classList.remove('show');modal.setAttribute('aria-hidden','true');}
+}
+function confirmDeleteDailyEntry(){
+  if(!dailyDeleteId)return;
+  const entries=loadDailyEntries().filter(e=>String(e.id)!==String(dailyDeleteId));
+  saveDailyEntries(entries);
+  closeDailyDeleteModal();
+  renderDailyEntries();
 }
 function openDailyEditor(){
   const listPage=document.getElementById('dailyListPage');
