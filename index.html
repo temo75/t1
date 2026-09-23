@@ -1443,8 +1443,8 @@ function save(){
   if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs));
   saveJobsToFirebase(jobs).catch(e=>console.warn('Firebase jobs save failed:',e));
 }
-function formatDate(s){if(!s)return '';const [y,m,d]=s.split('-');const months=['იანვარი','თებერვალი','მარტი','აპრილი','მაისი','ივნისი','ივლისი','აგვისტო','სექტემბერი','ოქტომბერი','ნოემბერი','დეკემბერი'];return Number(d)+' '+months[Number(m)-1]+' '+y}
-function monthName(key){const [y,m]=key.split('-');return new Date(y,Number(m)-1,1).toLocaleDateString('ka-GE',{year:'numeric',month:'long'})}
+function formatDate(s){if(!s)return '';const [y,m,d]=s.split('-');const months=['იანვარი','თებერვალი','მარტი','აპრილი','მაისი','ივნისი','ივლისი','აგვისტო','სექტემბერი','ოქტომბერი','ნოემბერი','დეკემბერი'];const locale=window.getLangLocale?window.getLangLocale():'ka-GE';return Number(d)+' '+new Date(Number(y),Number(m)-1,1).toLocaleDateString(locale,{month:'long'})+' '+y}
+function monthName(key){const [y,m]=key.split('-');const locale=window.getLangLocale?window.getLangLocale():'ka-GE';return new Date(y,Number(m)-1,1).toLocaleDateString(locale,{year:'numeric',month:'long'})}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
 
 function updateMonthFilter(){const old=$('monthFilter').value;const months=[...new Set(jobs.map(j=>(j.date||'').slice(0,7)).filter(Boolean))].sort().reverse();$('monthFilter').innerHTML='<option value="all">ყველა თვე</option>'+months.map(m=>`<option value="${m}">${monthName(m)}</option>`).join('');if(months.includes(old))$('monthFilter').value=old}
@@ -1464,9 +1464,9 @@ function render(){
  $('monthDays').textContent=mj.length+' დღე';
  const selectedMonthName=monthName(calendarKey);
  const monthTotalLabel=document.querySelector('.monthTotalHero .label');
- if(monthTotalLabel)monthTotalLabel.textContent='📆 '+selectedMonthName+' ნამუშევარი';
+ if(monthTotalLabel)monthTotalLabel.textContent='📆 '+selectedMonthName+' '+(window.t?window.t('ნამუშევარი'):'ნამუშევარი');
  const monthDaysLabel=document.querySelector('.stats .mini:last-child span');
- if(monthDaysLabel)monthDaysLabel.textContent='📊 '+selectedMonthName+' სამუშაოები';
+ if(monthDaysLabel)monthDaysLabel.textContent='📊 '+selectedMonthName+' '+(window.t?window.t('სამუშაოები'):'სამუშაოები');
  renderCalendar();renderDayJobs();
 }
 function renderList(){
@@ -1663,7 +1663,7 @@ function temoNavigatePage(pageId){
 }
 function goHome(){temoNavigatePage('mainPage')}
 function goSettings(){temoNavigatePage('settingsPage');if(typeof window.loadNeonSettings==='function')window.loadNeonSettings()}
-function goUsers(){temoNavigatePage('userManagementPage')}
+function goUsers(){if(currentUser===ADMIN_USER)temoNavigatePage('userManagementPage')}
 function goWallet(){temoNavigatePage('walletPage')}
 function showNotesSubPage(which){
   const reminders=document.getElementById('notesRemindersPage');
@@ -1880,7 +1880,7 @@ function renderDailyEntries(){
   const filteredEntries=dailyCalendarDate?entries.filter(e=>getDailyDateKey(e.createdAt)===dailyCalendarDate):entries;
   if(!filteredEntries.length){
     dailyPage=0;
-    list.innerHTML=dailyCalendarDate?'<div class="dailyEmpty">ამ თარიღზე ჩანაწერი არ არის.</div>':'<div class="dailyEmpty">ჯერ ჩანაწერი არ არის.</div>';
+    list.innerHTML=dailyCalendarDate?'<div class="dailyEmpty">'+(window.t?window.t('ამ თარიღზე ჩანაწერი არ არის.'):'ამ თარიღზე ჩანაწერი არ არის.')+'</div>':'<div class="dailyEmpty">'+(window.t?window.t('ჯერ ჩანაწერი არ არის.'):'ჯერ ჩანაწერი არ არის.')+'</div>';
     updateDailyPagination(0);
     return;
   }
@@ -3567,6 +3567,26 @@ startNotesReminderWatcher();
     'ორშ':['Mon','Δευ'], 'სამ':['Tue','Τρι'], 'ოთხ':['Wed','Τετ'], 'ხუთ':['Thu','Πεμ'],
     'პარ':['Fri','Παρ'], 'შაბ':['Sat','Σαβ'], 'კვი':['Sun','Κυρ'],
     'ნოუთი':['Notes','Σημειώσεις'],
+    'ნამუშევარი':['earnings','κέρδη'],
+    'სამუშაოები':['jobs','εργασίες'],
+    'დააყენე შეტყობინება':['Set reminder','Ορισμός υπενθύμισης'],
+    'დღიური':['Diary','Ημερολόγιο'],
+    '➕ დამატე':['➕ Add','➕ Προσθήκη'],
+    'ყველა ჩანაწერი':['All notes','Όλες οι σημειώσεις'],
+    'ყველა თარიღი':['All dates','Όλες οι ημερομηνίες'],
+    'ჩანაწერის თარიღი':['Note date','Ημερομηνία σημείωσης'],
+    '‹ წინა':['‹ Previous','‹ Προηγούμενο'],
+    'შემდეგი ›':['Next ›','Επόμενο ›'],
+    'ჩანაწერის სახელი':['Note title','Τίτλος σημείωσης'],
+    'ჩაწერე შენი ჩანაწერი...':['Write your note...','Γράψε τη σημείωσή σου...'],
+    '📖 ჩანაწერი':['📖 Note','📖 Σημείωση'],
+    'სათაურის შეცვლა':['Edit title','Επεξεργασία τίτλου'],
+    'ჩანაწერის გაგრძელება':['Continue note','Συνέχεια σημείωσης'],
+    '➕ ჩაამატე ჩანაწერი':['➕ Add to note','➕ Προσθήκη στη σημείωση'],
+    '✕ დახურვა':['✕ Close','✕ Κλείσιμο'],
+    '🗑️ ჩანაწერის წაშლა':['🗑️ Delete note','🗑️ Διαγραφή σημείωσης'],
+    'ნამდვილად გინდა ამ ჩანაწერის წაშლა?':['Are you sure you want to delete this note?','Είσαι σίγουρος ότι θέλεις να διαγράψεις αυτή τη σημείωση;'],
+    'ამ თარიღზე ჩანაწერი არ არის.':['No notes on this date.','Δεν υπάρχουν σημειώσεις για αυτή την ημερομηνία.'],
     'აირჩიე თარიღი':['Choose a date','Επίλεξε ημερομηνία'],
     'სამუშაო':['work','εργασία'],
     'დღე':['days','ημέρες'],
@@ -3797,7 +3817,7 @@ startNotesReminderWatcher();
   function isUserContent(node){
     const p=node?.parentElement;
     if(!p)return false;
-    return !!p.closest('.noteText,.receivablePlace,.noteLine b,.noteEntry .meta,[data-user-content="true"]') || !!(p.closest('.item') && (p.classList.contains('meta') || p.tagName==='B'));
+    return !!p.closest('.noteText,.receivablePlace,.noteLine b,.noteEntry .meta,.dailyCardTitle,.dailyViewTitle,.dailyViewTitleEdit,[data-user-content="true"]') || !!(p.closest('.item') && (p.classList.contains('meta') || p.tagName==='B'));
   }
 
   function applyTextNodes(root=document.body){
