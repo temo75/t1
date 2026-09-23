@@ -2399,16 +2399,20 @@ async function renderAdminMessages(){
   if(currentUser!==ADMIN_USER)return;
   const box=$('adminMessagesList');if(!box)return;
   const all=await loadAllAdminChats();if(all===null)return;
-  const rows=[];
+  const groups=[];
   Object.entries(all).forEach(([key,thread])=>{
-    const arr=Array.isArray(thread)?thread.filter(Boolean):Object.entries(thread||{}).map(([id,m])=>({...m,id:String(m?.id||id)}));
-    arr.forEach(m=>{if(m&&m.text)rows.push({id:String(m.id||''),userId:String(m.userId||''),userName:String(m.userName||key),text:String(m.text||''),createdAt:Number(m.createdAt||0),reply:String(m.reply||''),replyAt:Number(m.replyAt||0)});});
+    const arr=(Array.isArray(thread)?thread.filter(Boolean):Object.entries(thread||{}).map(([id,m])=>({...m,id:String(m?.id||id)})))
+      .map(m=>({id:String(m.id||''),userId:String(m.userId||key),userName:String(m.userName||key),text:String(m.text||''),createdAt:Number(m.createdAt||0),reply:String(m.reply||''),replyAt:Number(m.replyAt||0)}))
+      .filter(m=>m.text)
+      .sort((a,b)=>a.createdAt-b.createdAt);
+    if(!arr.length)return;
+    groups.push({userId:String(arr[0].userId||key),userName:String(arr[0].userName||key),messages:arr,latestAt:Number(arr[arr.length-1].createdAt||0)});
   });
-  rows.sort((a,b)=>b.createdAt-a.createdAt);
-  const key=JSON.stringify(rows.map(m=>[m.userId,m.id,m.text,m.reply,m.createdAt,m.replyAt]));
+  groups.sort((a,b)=>b.latestAt-a.latestAt);
+  const key=JSON.stringify(groups.map(g=>[g.userId,g.userName,g.latestAt,g.messages.map(m=>[m.id,m.text,m.reply,m.createdAt,m.replyAt])]));
   if(key===adminChatRenderKey&&box.children.length)return;adminChatRenderKey=key;
-  if(!rows.length){box.innerHTML='<div class="chatEmpty">მიღებული მესიჯები ჯერ არ არის.</div>';return;}
-  box.innerHTML=rows.map(m=>`<div class="chatMessage"><div class="chatMessageHead"><b>👤 ${chatEscape(m.userName)}</b><span class="chatMessageTime">${chatEscape(chatFormatTime(m.createdAt))}</span></div><div class="chatMessageText">${chatEscape(m.text)}</div><div class="chatReplyBox"><div class="chatReplyLabel">${m.reply?'↩️ გაცემული პასუხი':'✍️ პასუხი'}</div><textarea class="chatReply" id="chatReply_${chatEscape(m.userId)}_${chatEscape(m.id)}" maxlength="1000" placeholder="დაწერე პასუხი...">${chatEscape(m.reply)}</textarea><div class="chatReplyRow"><button type="button" class="chatReplyBtn" onclick="replyToUser('${chatEscape(m.userId)}','${chatEscape(m.id)}')">↩️ ${m.reply?'შეცვლა':'პასუხი'}</button></div></div><div class="chatDeleteRow"><button type="button" class="chatDeleteBtn" onclick="deleteChatDialog('${chatEscape(m.userId)}')">🗑️ წაშლა</button></div></div>`).join('');
+  if(!groups.length){box.innerHTML='<div class="chatEmpty">მიღებული მესიჯები ჯერ არ არის.</div>';return;}
+  box.innerHTML=groups.map(g=>`<div class="chatMessage"><div class="chatMessageHead"><b>👤 ${chatEscape(g.userName)}</b><span class="chatMessageTime">${chatEscape(chatFormatTime(g.latestAt))}</span></div>${g.messages.map(m=>`<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.12)"><div class="chatMessageHead"><b>📨 მესიჯი</b><span class="chatMessageTime">${chatEscape(chatFormatTime(m.createdAt))}</span></div><div class="chatMessageText">${chatEscape(m.text)}</div><div class="chatReplyBox"><div class="chatReplyLabel">${m.reply?'↩️ გაცემული პასუხი':'✍️ პასუხი'}</div><textarea class="chatReply" id="chatReply_${chatEscape(m.userId)}_${chatEscape(m.id)}" maxlength="1000" placeholder="დაწერე პასუხი...">${chatEscape(m.reply)}</textarea><div class="chatReplyRow"><button type="button" class="chatReplyBtn" onclick="replyToUser('${chatEscape(m.userId)}','${chatEscape(m.id)}')">↩️ ${m.reply?'შეცვლა':'პასუხი'}</button></div></div></div>`).join('')}<div class="chatDeleteRow"><button type="button" class="chatDeleteBtn" onclick="deleteChatDialog('${chatEscape(g.userId)}')">🗑️ მთელი დიალოგის წაშლა</button></div></div>`).join('');
 }
 async function deleteChatDialog(userId){
   if(currentUser!==ADMIN_USER)return;
