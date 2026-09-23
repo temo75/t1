@@ -492,6 +492,12 @@ body.neon-global .userName{
 #notesPage .dailyViewBottom{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;border-top:1px solid #29404c;flex:0 0 auto}
 #notesPage .dailyViewBottom button{width:100%;padding:12px;border:1px solid #29404c;border-radius:10px;background:#172631;color:#fff;font-weight:700;cursor:pointer;min-height:44px}
 #notesPage .dailyViewBottom .dailyAddMoreBtn{border-color:rgba(73,216,106,.65);background:#10271b;color:#9cffb0;box-shadow:0 0 10px rgba(73,216,106,.14)}
+#notesPage .dailyViewEditText{display:none;flex:1;min-height:0;width:100%;box-sizing:border-box;resize:none;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;background:#0d1b24;color:#fff;border:0;outline:none;font:inherit;font-size:18px;line-height:1.6;padding:18px;-webkit-overflow-scrolling:touch}
+#notesPage .dailyViewBox.editing .dailyViewText{display:none}
+#notesPage .dailyViewBox.editing .dailyViewEditText{display:block}
+#notesPage .dailyViewBox.editing .dailyViewBottom{grid-template-columns:1fr 1fr 1fr}
+#notesPage .dailyViewSaveBtn{border-color:rgba(73,216,106,.65)!important;background:#10271b!important;color:#9cffb0!important}
+@media(max-width:520px){#notesPage .dailyViewEditText{font-size:17px;padding:14px}}
 @media(max-width:520px){#notesPage .notesPageSwitch{width:100%;justify-content:stretch}.notesPageBtn{flex:1;min-width:0}.notesToolsRow{justify-content:stretch}.notesToolsRow .notesAddBtn{width:100%}
   #notesPage .dailyViewModal{padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px))}
   #notesPage .dailyViewBox{width:calc(100vw - 16px);height:calc(100dvh - 104px);max-height:calc(100dvh - 104px);border-radius:14px}
@@ -965,7 +971,8 @@ body.temo-android-app{
         <button type="button" class="dailyViewClose" onclick="closeDailyViewModal()" aria-label="დახურვა">✕</button>
       </div>
       <div id="dailyViewText" class="dailyViewText"></div>
-      <div class="dailyViewBottom"><button type="button" class="dailyAddMoreBtn" onclick="addMoreFromDailyView()">➕ კიდევ დაამატე</button><button type="button" onclick="closeDailyViewModal()">✕ დახურვა</button></div>
+      <textarea id="dailyViewEditText" class="dailyViewEditText" aria-label="ჩანაწერის გაგრძელება"></textarea>
+      <div class="dailyViewBottom"><button type="button" class="dailyAddMoreBtn" id="dailyContinueBtn" onclick="continueDailyEntry()">➕ ჩაამატე ჩანაწერი</button><button type="button" id="dailyViewSaveBtn" onclick="saveContinuedDailyEntry()" style="display:none">💾 შენახვა</button><button type="button" onclick="closeDailyViewModal()">✕ დახურვა</button></div>
     </div>
   </div>
 
@@ -1803,25 +1810,83 @@ function renderDailyEntries(){
     list.appendChild(card);
   });
 }
+let dailyViewId='';
 function openDailyViewModal(id){
   const entry=loadDailyEntries().find(e=>String(e.id)===String(id));
   if(!entry)return;
   const modal=document.getElementById('dailyViewModal');
+  const box=modal?.querySelector('.dailyViewBox');
   const text=document.getElementById('dailyViewText');
-  if(!modal||!text)return;
+  const edit=document.getElementById('dailyViewEditText');
+  const saveBtn=document.getElementById('dailyViewSaveBtn');
+  const continueBtn=document.getElementById('dailyContinueBtn');
+  if(!modal||!box||!text||!edit)return;
+  dailyViewId=String(id);
+  box.classList.remove('editing');
   text.textContent=entry.text||'';
+  edit.value=entry.text||'';
+  if(saveBtn)saveBtn.style.display='none';
+  if(continueBtn)continueBtn.style.display='';
   modal.classList.add('show');
   modal.setAttribute('aria-hidden','false');
   document.body.style.overflow='hidden';
 }
 function closeDailyViewModal(){
   const modal=document.getElementById('dailyViewModal');
+  const box=modal?.querySelector('.dailyViewBox');
+  const saveBtn=document.getElementById('dailyViewSaveBtn');
+  const continueBtn=document.getElementById('dailyContinueBtn');
   if(modal){modal.classList.remove('show');modal.setAttribute('aria-hidden','true');}
+  if(box)box.classList.remove('editing');
+  if(saveBtn)saveBtn.style.display='none';
+  if(continueBtn)continueBtn.style.display='';
+  dailyViewId='';
   document.body.style.overflow='';
 }
-function addMoreFromDailyView(){
-  closeDailyViewModal();
-  openDailyEditor();
+function continueDailyEntry(){
+  if(!dailyViewId)return;
+  const modal=document.getElementById('dailyViewModal');
+  const box=modal?.querySelector('.dailyViewBox');
+  const edit=document.getElementById('dailyViewEditText');
+  const saveBtn=document.getElementById('dailyViewSaveBtn');
+  const continueBtn=document.getElementById('dailyContinueBtn');
+  if(!box||!edit)return;
+  const entry=loadDailyEntries().find(e=>String(e.id)===dailyViewId);
+  if(!entry)return;
+  edit.value=entry.text||'';
+  box.classList.add('editing');
+  if(continueBtn)continueBtn.style.display='none';
+  if(saveBtn)saveBtn.style.display='';
+  edit.focus();
+  try{edit.setSelectionRange(edit.value.length,edit.value.length);}catch(e){}
+}
+async function saveContinuedDailyEntry(){
+  if(!dailyViewId)return;
+  const edit=document.getElementById('dailyViewEditText');
+  if(!edit)return;
+  const value=edit.value.trim();
+  if(!value){edit.focus();return;}
+  const entries=loadDailyEntries();
+  const i=entries.findIndex(e=>String(e.id)===dailyViewId);
+  if(i<0)return;
+  entries[i]={...entries[i],text:value,updatedAt:Date.now()};
+  dailyDeletes=loadDailyDeletes();
+  saveDailyEntries(entries);saveDailyDeletes(dailyDeletes);
+  try{
+    await saveDailyRemote(entries,dailyDeletes);
+    const text=document.getElementById('dailyViewText');
+    if(text)text.textContent=value;
+    const box=document.querySelector('#dailyViewModal .dailyViewBox');
+    const saveBtn=document.getElementById('dailyViewSaveBtn');
+    const continueBtn=document.getElementById('dailyContinueBtn');
+    if(box)box.classList.remove('editing');
+    if(saveBtn)saveBtn.style.display='none';
+    if(continueBtn)continueBtn.style.display='';
+    renderDailyEntries();
+  }catch(e){
+    alert('დღიური Firebase-ში ვერ შეინახა. შეამოწმე ინტერნეტი.');
+    syncDailyFromFirebase();
+  }
 }
 
 function openDailyDeleteModal(id){
