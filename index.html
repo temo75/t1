@@ -1197,7 +1197,7 @@ function enablePasswordOnlyLogin(){
   $('loginName').focus();
 }
 function enableNameLogin(){enablePasswordOnlyLogin()}
-function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');try{if(window.AndroidReminder&&typeof window.AndroidReminder.setNotesEndpoint==='function'){window.AndroidReminder.setNotesEndpoint(FIREBASE_DB_URL+'/notes/'+firebaseUserKey(currentUserId)+'.json');}}catch(e){}$('loginScreen').classList.add('hidden');if($('bottomNav'))$('bottomNav').style.display='grid';$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();startJobsSyncWatcher();startDailySyncWatcher();syncJobsFromFirebase().then(()=>{updateMonthFilter();render();renderList();renderMonths();renderReceivableModal();}).catch(e=>console.warn('Firebase jobs sync failed:',e));}
+function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');try{if(window.AndroidReminder&&typeof window.AndroidReminder.setNotesEndpoint==='function'){window.AndroidReminder.setNotesEndpoint(FIREBASE_DB_URL+'/notes/'+firebaseUserKey(currentUserId)+'.json');}}catch(e){}$('loginScreen').classList.add('hidden');if($('bottomNav'))$('bottomNav').style.display='grid';$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();startJobsSyncWatcher();startDailySyncWatcher();seedLegacyDailyForTemo();syncJobsFromFirebase().then(()=>{updateMonthFilter();render();renderList();renderMonths();renderReceivableModal();}).catch(e=>console.warn('Firebase jobs sync failed:',e));}
 function login(){const name=$('loginName').value.trim(),pass=$('loginPassword').value,users=getUsers(),u=users.find(x=>x.name===name&&x.password===pass);if(!u){$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus();return;}if(u.blocked===true||u.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';$('loginPassword').focus();return;}completeLogin(u);}
 function renderLoginUsers(){}
 window.addEventListener('DOMContentLoaded',async()=>{
@@ -1223,6 +1223,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
     if($('bottomNav'))$('bottomNav').style.display='grid';
     if(typeof window.loadNeonSettings==='function')window.loadNeonSettings();
     jobs=loadUserJobs();updateUserUI();render();
+    startDailySyncWatcher();seedLegacyDailyForTemo();
     startJobsSyncWatcher();
     syncJobsFromFirebase().then(()=>{updateMonthFilter();render();renderList();renderMonths();renderReceivableModal();}).catch(e=>console.warn('Firebase jobs sync failed:',e));
   }else{
@@ -1775,6 +1776,82 @@ async function syncDailyFromFirebase(){
   }catch(e){console.warn('Firebase daily sync failed:',e);}
   finally{dailySyncBusy=false;}
 }
+function seedLegacyDailyForTemo(){
+  if(currentUser!==ADMIN_USER||!currentUserId)return;
+  const seedKey='temoLegacyDiary2019_2020_v1';
+  if(localStorage.getItem(seedKey)==='done')return;
+  const legacy=[
+    ['2019-12-06','6 +m',''],
+    ['2019-12-07','7 +m','100'],
+    ['2019-12-13','13 +m',''],
+    ['2019-12-14','14 +m',''],
+    ['2019-12-15','15 +m','115-darcha 10m'],
+    ['2019-12-28','Ivlisi','450'],
+    ['2020-01-10','10 +m',''],
+    ['2020-01-11','11 +m',''],
+    ['2020-01-12','12 +m','150. Misacemi mak 5'],
+    ['2020-01-13','13 kvira',''],
+    ['2020-01-14','14 +m',''],
+    ['2020-01-15','15 +m',''],
+    ['2020-01-16','16 +m',''],
+    ['2020-01-17','17 +m.','140'],
+    ['2020-01-18','18 +m',''],
+    ['2020-01-19','19 +m.','90'],
+    ['2020-01-20','20 kvira',''],
+    ['2020-01-21','21 +m',''],
+    ['2020-01-22','22. Siderim.','50'],
+    ['2020-01-23','23 +m',''],
+    ['2020-01-24','24 +m',''],
+    ['2020-01-25','25 +m',''],
+    ['2020-01-26','26 +m.','220'],
+    ['2020-01-27','27 kvira',''],
+    ['2020-01-28','28 +m',''],
+    ['2020-01-29','29 +m',''],
+    ['2020-01-30','30 +m',''],
+    ['2020-01-31','31 +m',''],
+    ['2020-02-01','1 +m',''],
+    ['2020-02-02','2 +m.','270'],
+    ['2020-02-03','3 kvira',''],
+    ['2020-02-04','4 +m',''],
+    ['2020-02-05','5 +m',''],
+    ['2020-02-06','6 +m',''],
+    ['2020-02-07','7 +m',''],
+    ['2020-02-08','8 +m',''],
+    ['2020-02-09','9 +m.','270'],
+    ['2020-02-10','10 kvira',''],
+    ['2020-02-11','11',''],
+    ['2020-02-12','12+m',''],
+    ['2020-02-13','13',''],
+    ['2020-02-14','14 +m',''],
+    ['2020-02-15','15+m',''],
+    ['2020-02-16','16 + m','180'],
+    ['2020-02-17','17 kvira',''],
+    ['2020-02-18','18 +m',''],
+    ['2020-02-19','19 +m',''],
+    ['2020-02-20','20 +m',''],
+    ['2020-02-21','21+m.','150'],
+    ['2020-03-02','2 + m','50.'],
+    ['2020-03-05','5 + m',''],
+    ['2020-03-06','6+ m','80']
+  ];
+  const entries=loadDailyEntries();
+  const existing=new Set(entries.map(e=>String(e.id)));
+  legacy.forEach(([date,title,text])=>{
+    const id='legacy-'+date;
+    if(existing.has(id))return;
+    const [y,m,d]=date.split('-').map(Number);
+    const stamp=new Date(y,m-1,d,12,0,0,0).getTime();
+    entries.push({id,title,text:String(text),createdAt:stamp,updatedAt:stamp});
+  });
+  entries.sort((a,b)=>Number(a.createdAt||0)-Number(b.createdAt||0));
+  dailyDeletes=loadDailyDeletes();
+  saveDailyEntries(entries);saveDailyDeletes(dailyDeletes);
+  localStorage.setItem(seedKey,'done');
+  saveDailyRemote(entries,dailyDeletes).catch(e=>console.warn('Legacy diary seed sync failed:',e));
+  dailyPage=0;
+  renderDailyEntries();
+}
+
 function startDailySyncWatcher(){
   if(dailySyncTimer)clearInterval(dailySyncTimer);
   if(!currentUserId)return;
