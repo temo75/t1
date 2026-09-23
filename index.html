@@ -7,7 +7,7 @@
 <style>
 :root{--bg:#071117;--panel:#0d1b24;--panel2:#10232f;--text:#eef7f7;--muted:#9fb0b8;--red:#ef5b67;--blue:#2999df;--orange:#e6a24c;--line:#1e3542}
 *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#061015,#0a1821);color:var(--text)}button,input,select,textarea{font:inherit}.app{max-width:1100px;margin:auto;padding:18px}header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}h1{margin:0;font-size:28px;color:#eef7f7}header small{color:var(--muted)}#today{color:var(--muted);white-space:nowrap}.grid{display:grid;grid-template-columns:1fr;gap:12px}.card,.section,.toolbox{background:linear-gradient(145deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:18px;padding:18px}.card .label{color:var(--muted);font-size:14px}.amount{font-size:30px;font-weight:bold;margin-top:10px}.blue{border-color:#1b4d6c;position:relative}.green{border-color:#285269}.red{border-color:#6e2931}.grid .card.red{grid-column:1/-1;padding:26px 28px}.grid .card.red .label{font-size:18px}.grid .card.red .amount{font-size:42px;margin-top:12px}.grid .card.red .meta{font-size:15px;margin-top:8px}.grid .monthTotalHero{grid-column:1/-1;padding:26px 28px;border-color:#285269}.grid .monthTotalHero .label{font-size:18px}.grid .monthTotalHero .amount{font-size:42px;margin-top:12px}.miniReceivable{padding:13px}.miniReceivable b{font-size:20px}.miniReceivable small{display:block;color:var(--muted);font-size:12px;margin-top:4px}
-.card .temo-eye-btn{position:absolute;top:9px;right:9px;width:30px;height:30px;font-size:16px;line-height:28px}.add{width:52%;max-width:420px;margin:16px auto;padding:10px 14px;display:block;border:2px solid var(--neon-control);border-radius:14px;background:#102b3b;color:white;font-size:16px;font-weight:bold;cursor:pointer;box-shadow:0 0 8px var(--neon-control),0 0 18px var(--neon-control),0 0 30px rgba(var(--neon-control-rgb),.75);text-shadow:0 0 7px var(--neon-control)}.section{margin-top:14px}.section h2{margin:0 0 14px;font-size:17px}.toolbox{margin-top:14px}.tools{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px}.tools input,.tools select,.form input,.form textarea{width:100%;padding:13px;border-radius:10px;border:1px solid #29404c;background:#071117;color:white;font-size:16px}.tools input[type=file]{border-radius:16px;border-color:#1f75aa;box-shadow:0 0 10px #2f7d32,0 8px 20px rgba(46,125,50,.78),0 18px 34px rgba(46,125,50,.44),0 26px 42px rgba(46,125,50,.20);background:#0b1a24;cursor:pointer}.tools input[type=file]::file-selector-button{border:1px solid #2a86bb;border-radius:12px;padding:9px 14px;background:#183445;color:#eef7f7;cursor:pointer;box-shadow:0 0 5px #2999df55}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.mini{background:#09161e;border:1px solid var(--line);border-radius:14px;padding:13px}.mini b{display:block;font-size:20px;margin-top:5px}.mini span{color:var(--muted);font-size:13px}.userWelcomeUnderLogo{display:block;margin-top:5px;color:#eef7f7;font-size:13px;font-weight:bold;line-height:1.25;text-align:center;min-height:18px}.item{display:grid;grid-template-columns:1fr auto;gap:12px;padding:14px;margin:9px 0;background:#0a151d;border:1px solid #1a2c37;border-radius:14px}.meta{color:var(--muted);font-size:13px;margin-top:5px}.right{text-align:right}.status{font-size:13px;font-weight:bold;margin:7px 0}.paid{color:#62b8ff}.unpaid{color:#ff7c84}.actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:5px}.small,.backupBtn{background:#183445;color:white;border:1px solid #285269;border-radius:9px;padding:8px 10px;cursor:pointer}.edit{background:#26394a}.danger{background:#4a2228;border-color:#74333d}.empty{text-align:center;color:var(--muted);padding:28px}.modal{display:none;position:fixed;inset:0;background:#000a;align-items:center;justify-content:center;padding:10px;z-index:2147483646}.modal.show{display:flex}.form{width:min(410px,100%);max-height:none;overflow:visible;background:#0c1a23;border:1px solid #28404d;border-radius:18px;padding:14px}.form label{margin:7px 0 3px}.form input,.form textarea{padding:9px 11px}.form textarea{min-height:58px}.form .row{gap:8px;margin-top:10px}.form .save,.form .cancel{padding:10px 12px}.form h2{margin:0 0 8px}label{display:block;margin:12px 0 5px;color:#c7d4d8}.checkrow{display:flex;align-items:center;gap:9px;margin-top:14px;color:#c7d4d8}.checkrow input{width:auto}.row{display:flex;gap:10px;margin-top:18px}.save{flex:1;background:#2999df;border:0;border-radius:10px;padding:14px;color:white;font-weight:bold;font-size:16px;box-shadow:0 0 7px rgba(var(--neon-control-rgb),.45)}.cancel{background:#20323b;color:white;border:0;border-radius:10px;padding:14px}.backup{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.backupBtn{flex:1;min-width:150px}.adminButtons{display:flex;justify-content:center;gap:10px;align-items:center}.adminButtons .settingsBtn{width:42%;max-width:220px;margin-left:0;margin-right:0}.adminButtons .adminOnly{display:block!important}.adminButtons .adminOnly[style*="display: none"]{display:none!important}.settingsBtn{width:42%;max-width:220px;margin:22px auto 8px;padding:9px 12px;border:2px solid var(--neon-control);border-radius:12px;background:#102b3b;color:white;font-size:14px;font-weight:bold;cursor:pointer;box-shadow:0 0 7px var(--neon-control),0 0 16px var(--neon-control),0 0 28px rgba(var(--neon-control-rgb),.7);text-shadow:0 0 6px var(--neon-control)}.pageHidden{display:none}.settingsBack{margin-bottom:14px}.privacyEyeSlot{display:flex;align-items:flex-start;justify-content:flex-end;padding:9px;min-height:0;position:absolute;right:18px;z-index:2}.privacyEyeMain{width:30px;height:30px;font-size:16px;line-height:28px;border-radius:9px;border:1px solid #285269;background:#183445;color:#fff;cursor:pointer}
+.card .temo-eye-btn{position:absolute;top:9px;right:9px;width:30px;height:30px;font-size:16px;line-height:28px}.add{width:52%;max-width:420px;margin:16px auto;padding:10px 14px;display:block;border:2px solid #2999ff;border-radius:14px;background:#102b3b;color:white;font-size:16px;font-weight:bold;cursor:pointer;box-shadow:0 0 8px #2999ff,0 0 18px #2999ff,0 0 30px rgba(41,153,255,.75);text-shadow:0 0 7px #2999ff}.section{margin-top:14px}.section h2{margin:0 0 14px;font-size:17px}.toolbox{margin-top:14px}.tools{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px}.tools input,.tools select,.form input,.form textarea{width:100%;padding:13px;border-radius:10px;border:1px solid #29404c;background:#071117;color:white;font-size:16px}.tools input[type=file]{border-radius:16px;border-color:#1f75aa;box-shadow:0 0 10px #2f7d32,0 8px 20px rgba(46,125,50,.78),0 18px 34px rgba(46,125,50,.44),0 26px 42px rgba(46,125,50,.20);background:#0b1a24;cursor:pointer}.tools input[type=file]::file-selector-button{border:1px solid #2a86bb;border-radius:12px;padding:9px 14px;background:#183445;color:#eef7f7;cursor:pointer;box-shadow:0 0 5px #2999df55}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.mini{background:#09161e;border:1px solid var(--line);border-radius:14px;padding:13px}.mini b{display:block;font-size:20px;margin-top:5px}.mini span{color:var(--muted);font-size:13px}.userWelcomeUnderLogo{display:block;margin-top:5px;color:#eef7f7;font-size:13px;font-weight:bold;line-height:1.25;text-align:center;min-height:18px}.item{display:grid;grid-template-columns:1fr auto;gap:12px;padding:14px;margin:9px 0;background:#0a151d;border:1px solid #1a2c37;border-radius:14px}.meta{color:var(--muted);font-size:13px;margin-top:5px}.right{text-align:right}.status{font-size:13px;font-weight:bold;margin:7px 0}.paid{color:#62b8ff}.unpaid{color:#ff7c84}.actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:5px}.small,.backupBtn{background:#183445;color:white;border:1px solid #285269;border-radius:9px;padding:8px 10px;cursor:pointer}.edit{background:#26394a}.danger{background:#4a2228;border-color:#74333d}.empty{text-align:center;color:var(--muted);padding:28px}.modal{display:none;position:fixed;inset:0;background:#000a;align-items:center;justify-content:center;padding:10px;z-index:2147483646}.modal.show{display:flex}.form{width:min(410px,100%);max-height:none;overflow:visible;background:#0c1a23;border:1px solid #28404d;border-radius:18px;padding:14px}.form label{margin:7px 0 3px}.form input,.form textarea{padding:9px 11px}.form textarea{min-height:58px}.form .row{gap:8px;margin-top:10px}.form .save,.form .cancel{padding:10px 12px}.form h2{margin:0 0 8px}label{display:block;margin:12px 0 5px;color:#c7d4d8}.checkrow{display:flex;align-items:center;gap:9px;margin-top:14px;color:#c7d4d8}.checkrow input{width:auto}.row{display:flex;gap:10px;margin-top:18px}.save{flex:1;background:#2999df;border:0;border-radius:10px;padding:14px;color:white;font-weight:bold;font-size:16px;box-shadow:0 0 7px rgba(41,153,255,.45)}.cancel{background:#20323b;color:white;border:0;border-radius:10px;padding:14px}.backup{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.backupBtn{flex:1;min-width:150px}.adminButtons{display:flex;justify-content:center;gap:10px;align-items:center}.adminButtons .settingsBtn{width:42%;max-width:220px;margin-left:0;margin-right:0}.adminButtons .adminOnly{display:block!important}.adminButtons .adminOnly[style*="display: none"]{display:none!important}.settingsBtn{width:42%;max-width:220px;margin:22px auto 8px;padding:9px 12px;border:2px solid #2999ff;border-radius:12px;background:#102b3b;color:white;font-size:14px;font-weight:bold;cursor:pointer;box-shadow:0 0 7px #2999ff,0 0 16px #2999ff,0 0 28px rgba(41,153,255,.7);text-shadow:0 0 6px #2999ff}.pageHidden{display:none}.settingsBack{margin-bottom:14px}.privacyEyeSlot{display:flex;align-items:flex-start;justify-content:flex-end;padding:9px;min-height:0;position:absolute;right:18px;z-index:2}.privacyEyeMain{width:30px;height:30px;font-size:16px;line-height:28px;border-radius:9px;border:1px solid #285269;background:#183445;color:#fff;cursor:pointer}
 .deleteAuthModal{display:none;position:fixed;inset:0;background:#000a;align-items:center;justify-content:center;padding:16px;z-index:10001}
 .deleteAuthModal.show{display:flex}
 .deleteAuthBox{width:min(430px,100%);background:linear-gradient(145deg,#0c1a23,#10232f);border:1px solid #74333d;border-radius:20px;padding:22px;box-shadow:0 20px 60px #000b;text-align:center}
@@ -26,7 +26,7 @@
 .dayCell.empty{visibility:hidden;cursor:default}
 .dayCell .num{font-size:16px;font-weight:bold}
 .dayCell .jobCount{font-size:11px;color:#62b8ff;margin-top:5px}
-.dayCell.hasJobs{border-color:#17684d}.dayCell.today{border-color:var(--neon-control);box-shadow:0 0 6px var(--neon-control),0 0 14px rgba(var(--neon-control-rgb),.65);text-shadow:0 0 6px var(--neon-control)}
+.dayCell.hasJobs{border-color:#17684d}.dayCell.today{border-color:#2999ff;box-shadow:0 0 6px #2999ff,0 0 14px rgba(41,153,255,.65);text-shadow:0 0 6px #2999ff}
 .dayCell.selected{border-color:#2999df;box-shadow:0 0 0 1px #2999df inset;background:#102b3b}
 .dayJobsTitle{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .dayJobsTitle span{color:var(--muted);font-size:13px}
@@ -42,7 +42,7 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 .loginLanguageBox .languageMenu{right:0;left:auto;top:calc(100% + 6px)}
 .loginBox h2{margin:0 0 10px;color:#eef7f7}.loginBox p{color:#9fb0b8;margin:0 0 20px}
 .loginBox input{width:100%;padding:15px;border-radius:11px;border:1px solid #29404c;background:#071117;color:#fff;font-size:17px;text-align:center;margin-bottom:12px}
-.loginBox button{width:100%;padding:15px;border:1px solid var(--neon-control);border-radius:11px;background:#102b3b;color:#fff;font-weight:bold;font-size:17px;cursor:pointer;box-shadow:0 0 7px var(--neon-control),0 0 16px var(--neon-control)}
+.loginBox button{width:100%;padding:15px;border:1px solid #2999ff;border-radius:11px;background:#102b3b;color:#fff;font-weight:bold;font-size:17px;cursor:pointer;box-shadow:0 0 7px #2999ff,0 0 16px #2999ff}
 .loginSelect{width:100%;padding:15px;border-radius:11px;border:1px solid #29404c;background:#071117;color:#fff;font-size:17px;text-align:center;margin-bottom:12px}
 .userManage{margin-top:14px}.userManage input{margin-bottom:8px!important}.userRow{display:grid;grid-template-columns:minmax(0,1fr) 1fr 1fr;gap:7px;margin:7px 0;width:100%}.userRow button{padding:9px;font-size:14px;min-width:0;width:100%}.userRow .userNameBtn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.userRow .lockBtn{background:#183445;border-color:#2999df}.userRow .lockBtn.locked{background:#4a2228;border-color:#74333d;color:#ff8c8c}.adminOnly{display:block}@media(max-width:700px){.userRow{grid-template-columns:minmax(0,1fr) 1fr 1fr;gap:5px}.userRow button{font-size:12px;padding:9px 5px}}
 #loginError{min-height:20px;color:#ff7c84;font-size:14px;margin-top:10px}
@@ -52,16 +52,16 @@ footer{text-align:center;color:#71838c;font-size:12px;margin:22px 0 5px}@media(m
 #uploadOverlay{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.72);align-items:center;justify-content:center}
 #uploadOverlay.show{display:flex}
 .uploadBox{width:180px;height:180px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative}
-.uploadSpinner{width:92px;height:92px;border:7px solid #183445;border-top-color:var(--neon-control);border-right-color:var(--neon-control);border-radius:50%;animation:uploadSpin 1s linear infinite;box-shadow:0 0 10px var(--neon-control),0 0 25px rgba(var(--neon-control-rgb),.8)}
+.uploadSpinner{width:92px;height:92px;border:7px solid #183445;border-top-color:#2999ff;border-right-color:#2999ff;border-radius:50%;animation:uploadSpin 1s linear infinite;box-shadow:0 0 10px #2999ff,0 0 25px rgba(41,153,255,.8)}
 .uploadCheck{display:none;font-size:58px;color:#62ff9a;text-shadow:0 0 10px #62ff9a,0 0 25px #62ff9a;animation:checkPop .45s ease-out}
 .uploadBurst{display:none;position:absolute;inset:0;pointer-events:none}
-.uploadBurst i{position:absolute;left:50%;top:50%;width:9px;height:9px;border-radius:50%;background:var(--neon-control);box-shadow:0 0 8px var(--neon-control);animation:burst .8s ease-out forwards}
+.uploadBurst i{position:absolute;left:50%;top:50%;width:9px;height:9px;border-radius:50%;background:#2999ff;box-shadow:0 0 8px #2999ff;animation:burst .8s ease-out forwards}
 @keyframes uploadSpin{to{transform:rotate(360deg)}}
 @keyframes checkPop{0%{transform:scale(.2);opacity:0}70%{transform:scale(1.25);opacity:1}100%{transform:scale(1)}}
 @keyframes burst{to{transform:translate(var(--x),var(--y)) scale(.2);opacity:0}}
 
 /* TEMO privacy eye */
-.temo-eye-btn{width:38px;height:38px;padding:0;border:1px solid var(--neon-control);border-radius:50%;background:#102b3b;color:#fff;font-size:20px;line-height:36px;cursor:pointer;box-shadow:0 0 6px var(--neon-control),0 0 14px rgba(var(--neon-control-rgb),.65);display:flex;align-items:center;justify-content:center}
+.temo-eye-btn{width:38px;height:38px;padding:0;border:1px solid #2999ff;border-radius:50%;background:#102b3b;color:#fff;font-size:20px;line-height:36px;cursor:pointer;box-shadow:0 0 6px #2999ff,0 0 14px rgba(41,153,255,.65);display:flex;align-items:center;justify-content:center}
 .temo-eye-btn:active{transform:scale(.94)}
 .privacy-hidden .amount,.privacy-hidden .mini b,.privacy-hidden #dayJobs .right > b{visibility:hidden}
 
@@ -134,12 +134,12 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{display:none !important;}
 footer{display:none!important;}
 /* მხოლოდ „📁 აირჩიე ფაილი“ ღილაკის დამატებითი ნეონი */
 #siteFileBtn{
-  border-color:var(--neon-control);
+  border-color:#49a84d;
   box-shadow:
-    0 0 8px rgba(var(--neon-control-rgb),.75),
-    0 0 18px rgba(var(--neon-control-rgb),.65),
-    0 0 30px rgba(var(--neon-control-rgb),.48),
-    0 10px 22px rgba(var(--neon-control-rgb),.55) !important;
+    0 0 8px rgba(73,168,77,.75),
+    0 0 18px rgba(73,168,77,.65),
+    0 0 30px rgba(73,168,77,.48),
+    0 10px 22px rgba(47,125,50,.55) !important;
   text-shadow:0 0 7px rgba(120,220,120,.85);
 }
 
@@ -148,18 +148,16 @@ footer{display:none!important;}
 .neonControlled{border-color:var(--neon-control)!important;}
 .neonControlled .label,.neonControlled span{color:#dfffe6!important;}
 .neonControlled .amount,.neonControlled b{ }
-.neonModernBox{margin-top:14px;padding:18px;border:1px solid rgba(73,216,106,.45);border-radius:20px;background:linear-gradient(145deg,#0c1b24,#102732);box-shadow:0 0 18px rgba(73,216,106,.10),inset 0 0 24px rgba(73,216,106,.05)}
-.neonModernTitle{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px}.neonModernTitle b{display:block;font-size:17px;color:#fff}.neonModernTitle small{display:block;margin-top:4px;color:var(--muted);font-size:12px}
-.neonCurrentSwatch{width:48px;height:48px;flex:0 0 48px;border-radius:14px;background:#49d86a;border:2px solid rgba(255,255,255,.65);box-shadow:0 0 10px rgba(73,216,106,.75),0 0 24px rgba(73,216,106,.35)}
-.neonPalette{display:grid;grid-template-columns:repeat(6,1fr);gap:9px}.neonSwatch{height:42px;border:1px solid rgba(255,255,255,.28);border-radius:11px;background:var(--sw);cursor:pointer;box-shadow:inset 0 0 8px rgba(255,255,255,.18),0 3px 8px rgba(0,0,0,.25);transition:transform .12s ease,box-shadow .12s ease}.neonSwatch:active{transform:scale(.94)}.neonSwatch.active{border:2px solid #fff;box-shadow:0 0 8px var(--sw),0 0 18px var(--sw),inset 0 0 8px rgba(255,255,255,.35)}
-.neonCustomRow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding:11px 12px;border:1px solid var(--line);border-radius:13px;background:#09161e;color:#fff;font-size:14px}.neonHexWrap{display:flex;align-items:center;gap:7px}.neonHexWrap input{width:92px;padding:8px 9px;border:1px solid #29404c;border-radius:9px;background:#071117;color:#fff;text-align:center;font-weight:bold;text-transform:uppercase}.neonHexWrap button{padding:8px 10px;border:1px solid var(--neon-control);border-radius:9px;background:#10271b;color:#dfffe6;font-weight:bold;cursor:pointer}
-.neonStrengthHead{display:flex;justify-content:space-between;align-items:center;margin-top:16px;color:#fff;font-weight:bold}.neonStrengthTrack{margin-top:7px}.neonStrengthTrack input[type=range]{width:100%;accent-color:var(--neon-control)}.neonValue{font-weight:bold;color:var(--neon-control);text-shadow:0 0 8px rgba(var(--neon-control-rgb),.8);min-width:48px;text-align:right}
-@media(max-width:520px){.neonPalette{grid-template-columns:repeat(4,1fr)}.neonCustomRow{align-items:stretch;flex-direction:column;width:100%;box-sizing:border-box}.neonHexWrap{width:100%;max-width:100%;box-sizing:border-box;display:flex}.neonHexWrap input{flex:1 1 auto;width:0;min-width:0;box-sizing:border-box}.neonHexWrap button{flex:0 0 88px;width:88px;min-width:88px;max-width:88px;box-sizing:border-box;white-space:nowrap}}
+.neonControlBox{margin-top:14px;padding:16px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(145deg,var(--panel),var(--panel2))}
+.neonControlRow{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;margin-top:12px}
+.neonControlRow input[type=color]{width:58px;height:42px;padding:2px;border-radius:10px;border:1px solid var(--line);background:#071117;cursor:pointer}
+.neonControlRow input[type=range]{width:100%}
+.neonValue{font-weight:bold;color:var(--neon-control);text-shadow:0 0 8px rgba(var(--neon-control-rgb),.8);min-width:48px;text-align:right}
 </style>
 </style>
 
 <style id="temo-3d-title">
-.temo-3d{font-size:32px !important;font-weight:900;letter-spacing:3px;color:#eef7f7;text-shadow:1px 1px 0 #b9c7cc,2px 2px 0 #8fa1a8,3px 3px 0 #667980,4px 4px 0 #43545b,0 0 8px var(--neon-control),0 0 18px rgba(var(--neon-control-rgb),.8);transform:perspective(220px) rotateX(4deg);display:inline-block;}
+.temo-3d{font-size:32px !important;font-weight:900;letter-spacing:3px;color:#eef7f7;text-shadow:1px 1px 0 #b9c7cc,2px 2px 0 #8fa1a8,3px 3px 0 #667980,4px 4px 0 #43545b,0 0 8px #2999ff,0 0 18px rgba(41,153,255,.8);transform:perspective(220px) rotateX(4deg);display:inline-block;}
 </style>
 
 <style id="temo-calendar-neon-fix">
@@ -180,15 +178,15 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 
 <style id="temo-logo-inline">
 .temo-logo{width:72px;height:72px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;overflow:hidden;border-radius:50%}.temo-logo img{width:72px;height:72px;display:block;object-fit:contain}
-.temo-logo svg{width:72px;height:72px;display:block;filter:drop-shadow(0 0 6px rgba(var(--neon-control-rgb),.55))}
+.temo-logo svg{width:72px;height:72px;display:block;filter:drop-shadow(0 0 6px rgba(41,153,255,.55))}
 </style>
 <style id="temo-calendar-note">
 .calendarNoteRow{display:flex;justify-content:flex-end;margin-top:10px}
-.calendarNoteBtn{padding:7px 12px;border-radius:10px;border:1px solid var(--neon-control);background:#102b3b;color:#fff;font-size:13px;cursor:pointer;box-shadow:0 0 6px rgba(var(--neon-control-rgb),.45)}
+.calendarNoteBtn{padding:7px 12px;border-radius:10px;border:1px solid #2999ff;background:#102b3b;color:#fff;font-size:13px;cursor:pointer;box-shadow:0 0 6px rgba(41,153,255,.45)}
 .calendarNoteBtn:active{transform:scale(.96)}
 .noteModal{position:fixed;inset:0;z-index:10001;display:none;align-items:center;justify-content:center;padding:18px;background:#000b}
 .noteModal.show{display:flex}
-.noteBox{width:min(430px,100%);height:min(75vh,600px);display:flex;flex-direction:column;background:linear-gradient(145deg,#0c1a23,#10232f);border:1px solid var(--neon-control);border-radius:20px;padding:20px;box-shadow:0 20px 60px #000c}
+.noteBox{width:min(430px,100%);height:min(75vh,600px);display:flex;flex-direction:column;background:linear-gradient(145deg,#0c1a23,#10232f);border:1px solid #2999ff;border-radius:20px;padding:20px;box-shadow:0 20px 60px #000c}
 .noteBox h2{margin:0 0 14px;color:#ff8c00;font-size:20px}
 .noteEntry{padding:12px;margin-bottom:9px;border-radius:12px;background:#09161e;border:1px solid #1e3542;color:#eaf5f7;line-height:1.5}
 .noteEntry .noteDate{color:#62b8ff;font-size:12px}
@@ -208,8 +206,8 @@ color:#ff8c00;box-shadow:0 0 6px rgba(41,169,255,.35);text-align:center}
 .receivableHeader h2{margin:0;color:#fff;font-size:20px}
 .receivableClose{width:38px;height:38px;border-radius:50%;border:1px solid #ff3b3b;background:rgba(70,0,0,.45);color:#ff5b5b;font-size:24px;font-weight:900;cursor:pointer;box-shadow:0 0 7px rgba(255,59,59,.8),0 0 16px rgba(255,59,59,.45)}
 .receivableSummary{margin:12px 0;padding:12px;border-radius:12px;background:#09161e;border:1px solid #1e3542;color:#c7d4d8}
-.receivableAll{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:13px;border-radius:12px;border:1px solid #2f7d32;background:#0c2113;color:#fff;font-weight:bold;box-shadow:0 0 8px rgba(var(--neon-control-rgb),.35)}
-.receivableAll input,.receivableCheck input{width:22px;height:22px;accent-color:var(--neon-control)}
+.receivableAll{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:13px;border-radius:12px;border:1px solid #2f7d32;background:#0c2113;color:#fff;font-weight:bold;box-shadow:0 0 8px rgba(47,125,50,.35)}
+.receivableAll input,.receivableCheck input{width:22px;height:22px;accent-color:#49a84d}
 .receivableList{overflow:auto;min-height:0}
 .receivableRow{display:flex;align-items:center;gap:12px;padding:13px;margin:8px 0;border-radius:12px;background:#09161e;border:1px solid #1e3542}
 .receivableCheck{display:flex;align-items:center;gap:10px;flex:1;cursor:pointer}
@@ -293,9 +291,9 @@ body:has(#loginScreen:not(.hidden)) #bottomNav{
 <style id="temo-orange-bottom-glow">
 #bottomNav > button{
   box-shadow: inset 0 -2px 12px rgba(255,165,0,.46),
-              0 0 9px rgba(var(--neon-control-rgb),.52),
-              0 0 19px rgba(var(--neon-control-rgb),.36),
-              0 0 28px rgba(var(--neon-control-rgb),.18),
+              0 0 9px rgba(41,153,255,.52),
+              0 0 19px rgba(41,153,255,.36),
+              0 0 28px rgba(41,153,255,.18),
               0 2px 11px rgba(255,165,0,.34) !important;
   text-shadow:0 0 8px rgba(255,255,255,.68);
 }
@@ -523,9 +521,9 @@ body.neon-global .userName{
 .loginBox .forgotPasswordBtn{position:absolute;top:10px;right:12px;width:auto;margin:0;padding:5px 9px;border:1px solid #285269;border-radius:8px;background:#10232f;color:#9fb0b8;font-size:11px;line-height:1.2;box-shadow:none}
 #forgotPasswordModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:18px;z-index:70000}
 #forgotPasswordModal.show{display:flex}
-.forgotPasswordBox{width:min(410px,100%);box-sizing:border-box;background:linear-gradient(145deg,#0b1821,#102936 72%,#0b1a23);border:1px solid #36b8ff;border-radius:24px;padding:25px 22px 22px;box-shadow:0 0 12px rgba(var(--neon-control-rgb),.45),0 0 35px rgba(var(--neon-control-rgb),.22),0 24px 70px rgba(0,0,0,.7);animation:forgotPop .18s ease-out}
+.forgotPasswordBox{width:min(410px,100%);box-sizing:border-box;background:linear-gradient(145deg,#0b1821,#102936 72%,#0b1a23);border:1px solid #36b8ff;border-radius:24px;padding:25px 22px 22px;box-shadow:0 0 12px rgba(41,153,255,.45),0 0 35px rgba(41,153,255,.22),0 24px 70px rgba(0,0,0,.7);animation:forgotPop .18s ease-out}
 @keyframes forgotPop{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
-.forgotPasswordIcon{width:58px;height:58px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;border:1px solid #39c1ff;border-radius:18px;background:#0a202d;font-size:28px;box-shadow:0 0 10px rgba(var(--neon-control-rgb),.35),inset 0 0 18px rgba(var(--neon-control-rgb),.12)}
+.forgotPasswordIcon{width:58px;height:58px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;border:1px solid #39c1ff;border-radius:18px;background:#0a202d;font-size:28px;box-shadow:0 0 10px rgba(41,153,255,.35),inset 0 0 18px rgba(41,153,255,.12)}
 .forgotPasswordBox h2{margin:0;text-align:center;color:#fff;font-size:21px}
 .forgotPasswordBox p{margin:7px 0 20px;text-align:center;color:#9fb5bf;font-size:13px;line-height:1.45}
 .forgotPasswordBox label{display:block;margin:0 0 7px;color:#dce8ec;font-size:13px;font-weight:bold}
@@ -533,7 +531,7 @@ body.neon-global .userName{
 .forgotPasswordBox input:focus{border-color:#36b8ff;box-shadow:0 0 0 2px rgba(54,184,255,.12),0 0 13px rgba(54,184,255,.22)}
 .forgotPasswordRow{display:flex;gap:10px;margin-top:5px}
 .forgotPasswordRow button{flex:1;padding:13px;border-radius:12px;font-size:15px;font-weight:bold;cursor:pointer}
-#forgotPasswordSubmit{border:1px solid #36b8ff;background:#123b52;color:#fff;box-shadow:0 0 8px rgba(var(--neon-control-rgb),.35)}
+#forgotPasswordSubmit{border:1px solid #36b8ff;background:#123b52;color:#fff;box-shadow:0 0 8px rgba(41,153,255,.35)}
 #forgotPasswordCancel{border:1px solid #314650;background:#172831;color:#b9c7cc}
 .forgotPasswordError{min-height:19px;margin:1px 0 5px;color:#ff7781;text-align:center;font-size:13px;font-weight:bold}
 .forgotPasswordHint{margin-top:2px!important;margin-bottom:0!important}
@@ -852,26 +850,11 @@ body.temo-android-app{
 
 <div class="section" id="neonControlSection" style="display:none">
 <h2>✨ ნეონის მართვა</h2>
-<div class="neonModernBox">
-<div class="neonModernTitle"><div><b>🎨 ფერის არჩევა</b><small>აირჩიე ნეონის ფერი</small></div><div class="neonCurrentSwatch" id="neonCurrentSwatch" aria-label="არჩეული ფერი"></div></div>
-<div class="neonPalette" id="neonPalette">
-<button type="button" class="neonSwatch" style="--sw:#49d86a" data-color="#49d86a" aria-label="მწვანე"></button>
-<button type="button" class="neonSwatch" style="--sw:#00e5ff" data-color="#00e5ff" aria-label="ცისფერი"></button>
-<button type="button" class="neonSwatch" style="--sw:#2999ff" data-color="#2999ff" aria-label="ლურჯი"></button>
-<button type="button" class="neonSwatch" style="--sw:#7c4dff" data-color="#7c4dff" aria-label="იისფერი"></button>
-<button type="button" class="neonSwatch" style="--sw:#ff00e5" data-color="#ff00e5" aria-label="ვარდისფერი"></button>
-<button type="button" class="neonSwatch" style="--sw:#ff3b30" data-color="#ff3b30" aria-label="წითელი"></button>
-<button type="button" class="neonSwatch" style="--sw:#ff8a00" data-color="#ff8a00" aria-label="ნარინჯისფერი"></button>
-<button type="button" class="neonSwatch" style="--sw:#ffe600" data-color="#ffe600" aria-label="ყვითელი"></button>
-<button type="button" class="neonSwatch" style="--sw:#ffffff" data-color="#ffffff" aria-label="თეთრი"></button>
-<button type="button" class="neonSwatch" style="--sw:#b000ff" data-color="#b000ff" aria-label="იისფერი 2"></button>
-<button type="button" class="neonSwatch" style="--sw:#00ff88" data-color="#00ff88" aria-label="მწვანე 2"></button>
-<button type="button" class="neonSwatch" style="--sw:#ff0055" data-color="#ff0055" aria-label="ვარდისფერი 2"></button>
-</div>
-<div class="neonCustomRow"><span>მორგებული ფერი</span><div class="neonHexWrap"><input id="neonHex" type="text" value="#49D86A" maxlength="7" inputmode="text" aria-label="მორგებული ფერი"><button type="button" id="neonCustomApply">დაყენება</button></div></div>
-<input id="neonColor" type="color" value="#49d86a" aria-hidden="true" tabindex="-1" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
-<div class="neonStrengthHead"><span>სიმძლავრე</span><span id="neonStrengthValue" class="neonValue">65%</span></div>
-<div class="neonStrengthTrack"><input id="neonStrength" type="range" min="0" max="100" value="65" step="1" aria-label="ნეონის სიმძლავრე"></div>
+<div class="neonControlBox">
+<div>ფერი</div>
+<div class="neonControlRow"><input id="neonColor" type="color" value="#49d86a" aria-label="ნეონის ფერი"></div>
+<div style="margin-top:14px">სიმძლავრე</div>
+<div class="neonControlRow"><input id="neonStrength" type="range" min="0" max="100" value="65" step="1" aria-label="ნეონის სიმძლავრე"><span id="neonStrengthValue" class="neonValue">65%</span></div>
 </div>
 </div>
 
@@ -1484,24 +1467,6 @@ function loadNeonSettings(){
  r.value=localStorage.getItem('temoNeonStrength')||'65';
  c.addEventListener('input',applyNeonSettings);r.addEventListener('input',applyNeonSettings);applyNeonSettings();
 }
-
-function setNeonColorValue(color,saveRemote=true){
- const value=String(color||'').trim().toLowerCase();
- if(!/^#[0-9a-f]{6}$/i.test(value))return false;
- const c=document.getElementById('neonColor'),h=document.getElementById('neonHex'),sw=document.getElementById('neonCurrentSwatch');
- if(c)c.value=value;if(h)h.value=value.toUpperCase();
- if(sw){sw.style.background=value;sw.style.boxShadow=`0 0 10px ${value},0 0 24px ${value}55`;}
- document.querySelectorAll('#neonPalette .neonSwatch').forEach(b=>b.classList.toggle('active',String(b.dataset.color).toLowerCase()===value));
- if(typeof window.applyNeonSettings==='function')window.applyNeonSettings(saveRemote);
- return true;
-}
-function initModernNeonPicker(){
- const p=document.getElementById('neonPalette'),h=document.getElementById('neonHex'),a=document.getElementById('neonCustomApply'),c=document.getElementById('neonColor');
- if(p&&!p.dataset.bound){p.dataset.bound='1';p.onclick=e=>{const b=e.target.closest('.neonSwatch');if(b)setNeonColorValue(b.dataset.color,true);};}
- if(a&&!a.dataset.bound){a.dataset.bound='1';a.onclick=()=>{if(!setNeonColorValue(h?.value,true)&&h)h.value=c?.value||'#49D86A';};}
- setNeonColorValue(c?.value||localStorage.getItem('temoNeonColor')||'#49d86a',false);
-}
-
 function updateUserUI(){
  const isAdmin=currentUser===ADMIN_USER;
  const site=$('websiteUpdateSection'); if(site)site.style.display=isAdmin?'':'none';
@@ -2107,51 +2072,6 @@ async function registerNewUser(){
     padding:5px 1px !important;
   }
 }
-<style id="temo-global-neon-universal">
-/* ერთი მთავარი ნეონი — ყველა უკვე არსებული ნეონის ელემენტი მიჰყვება Settings-ის ფერს */
-body.neon-global .neonControlled,
-body.neon-global .neonAll,
-body.neon-global .add,
-body.neon-global .settingsBtn,
-body.neon-global .loginBox button,
-body.neon-global .loginModeBtn,
-body.neon-global .calendarNav,
-body.neon-global .calendarNoteBtn,
-body.neon-global .temo-eye-btn,
-body.neon-global .privacyEyeMain,
-body.neon-global .receivableClose,
-body.neon-global .noteClose,
-body.neon-global #siteFileBtn,
-body.neon-global #bottomNav > button,
-body.neon-global .uploadSpinner,
-body.neon-global .noteModal,
-body.neon-global .dayCell.today {
-  border-color:var(--neon-control)!important;
-  box-shadow:0 0 8px rgba(var(--neon-control-rgb),.55),0 0 20px rgba(var(--neon-control-rgb),.30),inset 0 0 10px rgba(var(--neon-control-rgb),.08)!important;
-}
-body.neon-global .neonControlled,
-body.neon-global .neonAll,
-body.neon-global .add,
-body.neon-global .settingsBtn,
-body.neon-global .loginBox button,
-body.neon-global .loginModeBtn,
-body.neon-global .calendarNav,
-body.neon-global .calendarNoteBtn,
-body.neon-global .temo-eye-btn,
-body.neon-global .privacyEyeMain,
-body.neon-global .receivableClose,
-body.neon-global .noteClose,
-body.neon-global #siteFileBtn,
-body.neon-global .uploadSpinner,
-body.neon-global .noteModal,
-body.neon-global .dayCell.today {
-  text-shadow:0 0 7px rgba(var(--neon-control-rgb),.65),0 0 16px rgba(var(--neon-control-rgb),.30)!important;
-}
-body.neon-global .neonAll *,
-body.neon-global .neonControlled * {
-  --active-neon:var(--neon-control);
-}
-</style>
 </style>
 <script id="temo-global-neon-controller">
 (function(){
@@ -2238,7 +2158,6 @@ body.neon-global .neonControlled * {
 
     c.oninput=()=>applyGlobalNeon(true);
     r.oninput=()=>applyGlobalNeon(true);
-    initModernNeonPicker();
 
     applyGlobalNeon(false);
 
