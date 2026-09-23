@@ -1663,7 +1663,7 @@ function temoNavigatePage(pageId){
 }
 function goHome(){temoNavigatePage('mainPage')}
 function goSettings(){temoNavigatePage('settingsPage');if(typeof window.loadNeonSettings==='function')window.loadNeonSettings()}
-function goUsers(){if(currentUser===ADMIN_USER)temoNavigatePage('userManagementPage')}
+function goUsers(){temoNavigatePage('userManagementPage')}
 function goWallet(){temoNavigatePage('walletPage')}
 function showNotesSubPage(which){
   const reminders=document.getElementById('notesRemindersPage');
