@@ -480,6 +480,11 @@ body.neon-global .userName{
 #notesPage .dailyCardDate{margin-top:auto;color:#aaa;font-size:12px;flex:0 0 auto}
 #notesPage .dailyEmpty{grid-column:1/-1;padding:22px 14px;text-align:center;color:var(--muted);border:1px dashed #29404c;border-radius:14px}
 @media(max-width:520px){#notesPage .dailyList{grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;width:calc(100% + 20px);margin-left:-10px}#notesPage .dailyCard{height:230px;min-height:230px;max-height:230px;aspect-ratio:auto;padding:10px 8px}#notesPage .dailyCardTitle{font-size:16px;min-height:34px;padding:6px 7px}#notesPage .dailyCardText{font-size:11px;line-height:1.25;-webkit-line-clamp:7;line-clamp:7}}
+#notesPage .dailyCalendarTools{display:flex;align-items:center;gap:8px;margin-top:8px;margin-bottom:8px;flex-wrap:wrap}
+#notesPage .dailyCalendarBtn,#notesPage .dailyCalendarClear{border:1px solid #29404c;border-radius:10px;background:#101820;color:#fff;padding:10px 14px;font-weight:800;cursor:pointer;box-sizing:border-box}
+#notesPage .dailyCalendarBtn{border-color:rgba(73,216,106,.65);background:#10271b;color:#9cffb0;box-shadow:0 0 10px rgba(73,216,106,.14)}
+#notesPage .dailyCalendarInput{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+#notesPage .dailyCalendarLabel{color:#aaa;font-size:13px;font-weight:700;min-height:20px;display:flex;align-items:center}
 #notesPage .dailyEditor{display:flex;flex-direction:column;min-height:calc(100vh - 250px);gap:12px}
 #notesPage .dailyTitleInput{width:100%;height:52px;box-sizing:border-box;background:#071017;color:#fff;border:1px solid #29404c;border-radius:14px;padding:12px 14px;font:inherit;font-size:20px;font-weight:800;outline:none}
 #notesPage .dailySaveBtn{width:100%;border:1px solid rgba(73,216,106,.65);background:#10271b;color:#9cffb0;border-radius:12px;padding:13px 16px;font-weight:800;cursor:pointer;box-shadow:0 0 12px rgba(73,216,106,.16)}
@@ -959,6 +964,12 @@ body.temo-android-app{
     <div id="dailyListPage">
       <div class="notesToolsRow">
         <button type="button" class="notesAddBtn" onclick="openDailyEditor()">➕ დამატე</button>
+      </div>
+      <div class="dailyCalendarTools">
+        <button type="button" class="dailyCalendarBtn" onclick="openDailyCalendar()">📅 კალენდარი</button>
+        <button type="button" class="dailyCalendarClear" onclick="clearDailyCalendar()">ყველა ჩანაწერი</button>
+        <span id="dailyCalendarLabel" class="dailyCalendarLabel">ყველა თარიღი</span>
+        <input id="dailyCalendarInput" class="dailyCalendarInput" type="date" onchange="applyDailyCalendar(this.value)" aria-label="ჩანაწერის თარიღი">
       </div>
       <div id="dailyList" class="dailyList"></div>
     </div>
@@ -1669,6 +1680,7 @@ let dailySyncTimer=null;
 let dailySyncBusy=false;
 let dailySyncEventsBound=false;
 let dailyDeletes={};
+let dailyCalendarDate='';
 
 function dailyUserKey(){
   const raw=String(currentUserId||currentUser||'').trim();
@@ -1766,6 +1778,40 @@ function startDailySyncWatcher(){
   run();
 }
 
+function getDailyDateKey(timestamp){
+  if(!timestamp)return '';
+  const d=new Date(Number(timestamp));
+  if(Number.isNaN(d.getTime()))return '';
+  const y=d.getFullYear();
+  const m=String(d.getMonth()+1).padStart(2,'0');
+  const day=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
+function updateDailyCalendarLabel(){
+  const label=document.getElementById('dailyCalendarLabel');
+  if(!label)return;
+  if(!dailyCalendarDate){label.textContent='ყველა თარიღი';return;}
+  const parts=dailyCalendarDate.split('-');
+  label.textContent=parts.length===3?parts[2]+'.'+parts[1]+'.'+parts[0]:dailyCalendarDate;
+}
+function openDailyCalendar(){
+  const input=document.getElementById('dailyCalendarInput');
+  if(!input)return;
+  try{if(typeof input.showPicker==='function')input.showPicker();else input.click();}
+  catch(e){input.click();}
+}
+function applyDailyCalendar(value){
+  dailyCalendarDate=String(value||'');
+  updateDailyCalendarLabel();
+  renderDailyEntries();
+}
+function clearDailyCalendar(){
+  dailyCalendarDate='';
+  const input=document.getElementById('dailyCalendarInput');
+  if(input)input.value='';
+  updateDailyCalendarLabel();
+  renderDailyEntries();
+}
 function renderDailyEntries(){
   const list=document.getElementById('dailyList');
   const listPage=document.getElementById('dailyListPage');
@@ -1774,12 +1820,13 @@ function renderDailyEntries(){
   listPage.style.display='';
   editor.style.display='none';
   const entries=loadDailyEntries();
-  if(!entries.length){
-    list.innerHTML='<div class="dailyEmpty">ჯერ ჩანაწერი არ არის.</div>';
+  const filteredEntries=dailyCalendarDate?entries.filter(e=>getDailyDateKey(e.createdAt)===dailyCalendarDate):entries;
+  if(!filteredEntries.length){
+    list.innerHTML=dailyCalendarDate?'<div class="dailyEmpty">ამ თარიღზე ჩანაწერი არ არის.</div>':'<div class="dailyEmpty">ჯერ ჩანაწერი არ არის.</div>';
     return;
   }
   list.innerHTML='';
-  entries.forEach(e=>{
+  filteredEntries.forEach(e=>{
     const card=document.createElement('div');
     card.className='dailyCard';
     card.dataset.dailyId=e.id;
