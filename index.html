@@ -1134,7 +1134,7 @@ function enablePasswordOnlyLogin(){
   $('loginName').focus();
 }
 function enableNameLogin(){enablePasswordOnlyLogin()}
-function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');try{if(window.AndroidReminder&&typeof window.AndroidReminder.setNotesEndpoint==='function'){window.AndroidReminder.setNotesEndpoint(FIREBASE_DB_URL+'/notes/'+firebaseUserKey(currentUserId)+'.json');}}catch(e){}$('loginScreen').classList.add('hidden');if($('bottomNav'))$('bottomNav').style.display='grid';$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();startJobsSyncWatcher();syncJobsFromFirebase().then(()=>{updateMonthFilter();render();renderList();renderMonths();renderReceivableModal();}).catch(e=>console.warn('Firebase jobs sync failed:',e));}
+function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');try{if(window.AndroidReminder&&typeof window.AndroidReminder.setNotesEndpoint==='function'){window.AndroidReminder.setNotesEndpoint(FIREBASE_DB_URL+'/notes/'+firebaseUserKey(currentUserId)+'.json');}}catch(e){}$('loginScreen').classList.add('hidden');if($('bottomNav'))$('bottomNav').style.display='grid';$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();startJobsSyncWatcher();startDailySyncWatcher();syncJobsFromFirebase().then(()=>{updateMonthFilter();render();renderList();renderMonths();renderReceivableModal();}).catch(e=>console.warn('Firebase jobs sync failed:',e));}
 function login(){const name=$('loginName').value.trim(),pass=$('loginPassword').value,users=getUsers(),u=users.find(x=>x.name===name&&x.password===pass);if(!u){$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus();return;}if(u.blocked===true||u.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';$('loginPassword').focus();return;}completeLogin(u);}
 function renderLoginUsers(){}
 window.addEventListener('DOMContentLoaded',async()=>{
@@ -1613,11 +1613,33 @@ function showNotesSubPage(which){
   second.style.display=isReminders?'none':'';
   remindersBtn.classList.toggle('active',isReminders);
   secondBtn.classList.toggle('active',!isReminders);
-  if(!isReminders)renderDailyEntries();
+  if(!isReminders){
+    renderDailyEntries();
+    syncDailyFromFirebase();
+  }
 }
 
+const DAILY_ROOT='/daily/';
+let dailyDeleteId='';
+let dailyLongPressTimer=null;
+let dailySyncTimer=null;
+let dailySyncBusy=false;
+let dailySyncEventsBound=false;
+let dailyDeletes={};
+
+function dailyUserKey(){
+  const raw=String(currentUserId||currentUser||'').trim();
+  return raw ? encodeURIComponent(raw).replace(/%/g,'_') : '';
+}
+function dailyUrl(){
+  const key=dailyUserKey();
+  return key ? FIREBASE_DB_URL+DAILY_ROOT+key+'.json' : '';
+}
 function dailyStorageKey(){
   return 'temoDaily_'+String(currentUserId||currentUser||'guest');
+}
+function dailyDeleteStorageKey(){
+  return 'temoDailyDeletes_'+String(currentUserId||currentUser||'guest');
 }
 function loadDailyEntries(){
   try{
@@ -1629,8 +1651,77 @@ function loadDailyEntries(){
 function saveDailyEntries(data){
   localStorage.setItem(dailyStorageKey(),JSON.stringify(data));
 }
-let dailyDeleteId='';
-let dailyLongPressTimer=null;
+function loadDailyDeletes(){
+  try{
+    const raw=localStorage.getItem(dailyDeleteStorageKey());
+    const data=raw?JSON.parse(raw):{};
+    return data&&typeof data==='object'&&!Array.isArray(data)?data:{};
+  }catch(e){return {};}
+}
+function saveDailyDeletes(data){
+  localStorage.setItem(dailyDeleteStorageKey(),JSON.stringify(data||{}));
+}
+function normalizeDailyEntry(e){
+  return {id:String(e?.id||''),text:String(e?.text||''),createdAt:Number(e?.createdAt||0),updatedAt:Number(e?.updatedAt||e?.createdAt||0)};
+}
+function mergeDailyState(localEntries,remoteEntries,localDel,remoteDel){
+  const byId=new Map();
+  [...(Array.isArray(localEntries)?localEntries:[]),...(Array.isArray(remoteEntries)?remoteEntries:[])].forEach(raw=>{
+    const e=normalizeDailyEntry(raw); if(!e.id||!e.text)return;
+    const old=byId.get(e.id); if(!old || e.updatedAt>=old.updatedAt)byId.set(e.id,e);
+  });
+  const deletes={...(localDel||{}),...(remoteDel||{})};
+  Object.keys(deletes).forEach(id=>{
+    const delAt=Number(deletes[id]||0), e=byId.get(id);
+    if(e && delAt>=Number(e.updatedAt||0))byId.delete(id);
+  });
+  const entries=[...byId.values()].sort((a,b)=>Number(a.createdAt||0)-Number(b.createdAt||0));
+  return {entries,deletes};
+}
+async function saveDailyRemote(entries,deletes){
+  const url=dailyUrl();
+  if(!url)return false;
+  const payload={entries:Array.isArray(entries)?entries:[],deletes:deletes&&typeof deletes==='object'?deletes:{}};
+  const r=await fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),keepalive:true});
+  if(!r.ok)throw new Error('Firebase HTTP '+r.status);
+  return true;
+}
+async function syncDailyFromFirebase(){
+  const url=dailyUrl();
+  if(!url||dailySyncBusy)return;
+  dailySyncBusy=true;
+  try{
+    const localEntries=loadDailyEntries();
+    const localDel=loadDailyDeletes();
+    const r=await fetch(url,{cache:'no-store'});
+    if(!r.ok)throw new Error('Firebase HTTP '+r.status);
+    const data=await r.json();
+    const remoteEntries=Array.isArray(data)?data:(Array.isArray(data?.entries)?data.entries:[]);
+    const remoteDel=(!Array.isArray(data)&&data?.deletes&&typeof data.deletes==='object')?data.deletes:{};
+    const merged=mergeDailyState(localEntries,remoteEntries,localDel,remoteDel);
+    const localChanged=JSON.stringify(localEntries)!==JSON.stringify(merged.entries)||JSON.stringify(localDel)!==JSON.stringify(merged.deletes);
+    const remoteWasLegacyArray=Array.isArray(data);
+    const remoteChanged=remoteWasLegacyArray || JSON.stringify(remoteEntries)!==JSON.stringify(merged.entries)||JSON.stringify(remoteDel)!==JSON.stringify(merged.deletes);
+    saveDailyEntries(merged.entries); dailyDeletes=merged.deletes; saveDailyDeletes(dailyDeletes);
+    if(remoteChanged)await saveDailyRemote(merged.entries,merged.deletes);
+    if(localChanged)renderDailyEntries();
+  }catch(e){console.warn('Firebase daily sync failed:',e);}
+  finally{dailySyncBusy=false;}
+}
+function startDailySyncWatcher(){
+  if(dailySyncTimer)clearInterval(dailySyncTimer);
+  if(!currentUserId)return;
+  const run=()=>{if(!document.hidden)syncDailyFromFirebase().catch(e=>console.warn('Firebase daily sync failed:',e));};
+  dailySyncTimer=setInterval(run,1000);
+  if(!dailySyncEventsBound){
+    window.addEventListener('focus',run);
+    window.addEventListener('pageshow',run);
+    window.addEventListener('online',run);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)run()});
+    dailySyncEventsBound=true;
+  }
+  run();
+}
 
 function renderDailyEntries(){
   const list=document.getElementById('dailyList');
@@ -1685,12 +1776,16 @@ function closeDailyDeleteModal(){
   const modal=document.getElementById('dailyDeleteModal');
   if(modal){modal.classList.remove('show');modal.setAttribute('aria-hidden','true');}
 }
-function confirmDeleteDailyEntry(){
+async function confirmDeleteDailyEntry(){
   if(!dailyDeleteId)return;
-  const entries=loadDailyEntries().filter(e=>String(e.id)!==String(dailyDeleteId));
-  saveDailyEntries(entries);
+  const id=String(dailyDeleteId);
+  const entries=loadDailyEntries().filter(e=>String(e.id)!==id);
+  dailyDeletes=loadDailyDeletes();
+  dailyDeletes[id]=Date.now();
+  saveDailyEntries(entries);saveDailyDeletes(dailyDeletes);
   closeDailyDeleteModal();
   renderDailyEntries();
+  try{await saveDailyRemote(entries,dailyDeletes);}catch(e){console.warn('Firebase daily delete sync failed:',e);}
 }
 function openDailyEditor(){
   const listPage=document.getElementById('dailyListPage');
@@ -1702,18 +1797,27 @@ function openDailyEditor(){
   text.value='';
   setTimeout(()=>text.focus(),50);
 }
-function saveDailyEntry(){
+async function saveDailyEntry(){
   const text=document.getElementById('dailyText');
   if(!text)return;
   const value=text.value.trim();
   if(!value){text.focus();return;}
+  const now=Date.now();
   const entries=loadDailyEntries();
-  entries.push({id:'d'+Date.now()+Math.random().toString(36).slice(2,8),text:value,createdAt:Date.now()});
-  saveDailyEntries(entries);
-  renderDailyEntries();
+  entries.push({id:'d'+now+Math.random().toString(36).slice(2,8),text:value,createdAt:now,updatedAt:now});
+  dailyDeletes=loadDailyDeletes();
+  saveDailyEntries(entries);saveDailyDeletes(dailyDeletes);
+  try{
+    await saveDailyRemote(entries,dailyDeletes);
+    renderDailyEntries();
+  }catch(e){
+    alert('დღიური Firebase-ში ვერ შეინახა. შეამოწმე ინტერნეტი.');
+    renderDailyEntries();
+  }
 }
 
 function goNotes(){temoNavigatePage('notesPage');showNotesSubPage('reminders')}
+startDailySyncWatcher();
 
 
 function togglePrivacy(){
@@ -2123,7 +2227,7 @@ async function registerNewUser(){
   if(saved!==true){alert('მომხმარებელი ვერ შეინახა Firebase-ში. შეამოწმე ინტერნეტი ან Firebase-ის წვდომა.');return;}
 
   localStorage.setItem(USERS_KEY,JSON.stringify(users));
-  markFreshUser(user.id);currentUser=user.name;currentUserId=user.id;localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');nameEl.value='';emailEl.value='';passEl.value='';document.getElementById('newUserAuthModal').classList.remove('show');$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();startJobsSyncWatcher();syncJobsFromFirebase().catch(e=>console.warn('Firebase jobs sync failed:',e));
+  markFreshUser(user.id);currentUser=user.name;currentUserId=user.id;localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');nameEl.value='';emailEl.value='';passEl.value='';document.getElementById('newUserAuthModal').classList.remove('show');$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();startJobsSyncWatcher();startDailySyncWatcher();syncJobsFromFirebase().catch(e=>console.warn('Firebase jobs sync failed:',e));
 }
 </script>
 
