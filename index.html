@@ -146,6 +146,29 @@ footer{display:none!important;}
 /* NEON CONTROLLER */
 :root{--neon-control:#49d86a;--neon-control-rgb:73,216,106;--neon-power:0.65}
 .neonControlled{border-color:var(--neon-control)!important;}
+/* Global neon color: every site control using the neon controller follows one color. */
+.neon-global .neonAll{
+  border-color:var(--neon-control)!important;
+  box-shadow:0 0 7px rgba(var(--neon-control-rgb),.28),
+             0 0 16px rgba(var(--neon-control-rgb),.20),
+             inset 0 0 10px rgba(var(--neon-control-rgb),.06)!important;
+}
+.neon-global .neonAll,
+.neon-global .neonAll .label,
+.neon-global .neonAll .amount,
+.neon-global .neonAll span,
+.neon-global .neonAll b,
+.neon-global .neonAll h2,
+.neon-global .neonAll h3{
+  text-shadow:0 0 7px rgba(var(--neon-control-rgb),.55),
+              0 0 15px rgba(var(--neon-control-rgb),.25)!important;
+}
+.neon-global .neonAll button,
+.neon-global button.neonAll{
+  border-color:var(--neon-control)!important;
+  box-shadow:0 0 7px rgba(var(--neon-control-rgb),.55),
+             0 0 17px rgba(var(--neon-control-rgb),.32)!important;
+}
 .neonControlled .label,.neonControlled span{color:#dfffe6!important;}
 .neonControlled .amount,.neonControlled b{ }
 .neonModernBox{margin-top:14px;padding:18px;border:1px solid rgba(73,216,106,.45);border-radius:20px;background:linear-gradient(145deg,#0c1b24,#102732);box-shadow:0 0 18px rgba(73,216,106,.10),inset 0 0 24px rgba(73,216,106,.05)}
@@ -2116,7 +2139,12 @@ async function registerNewUser(){
     '.yearPickerGrid button','.calendarTitle','.temo-eye-btn','.privacyEyeMain',
     '#siteFileBtn','#bottomNav > button','.receivableClose','.noteClose',
     '.credentialsBox','.form','.section','.toolbox','.card','.mini',
-    '.dayCell.today','.dayCell.selected','.jobStatusMark.paid'
+    '.dayCell.today','.dayCell.selected','.jobStatusMark.paid',
+    'button','.section h2','.section h3','.section .label','.section .amount',
+    '.section .meta','.tools button','.actions button','.monthRow',
+    '.monthRow b','.monthRow span','.item','.item .status','.item .meta',
+    '.modal .form','.modal .form h2','.modal .form label',
+    '.modal .form input','.modal .form textarea'
   ];
 
   const FIREBASE_NEON_URL='https://temo-75-default-rtdb.europe-west1.firebasedatabase.app/settings/neon.json';
