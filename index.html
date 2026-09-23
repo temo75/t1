@@ -951,6 +951,30 @@ body.neon-global #notesPage .noteClose{
 }
 </style>
 
+
+<style id="temo-online-chat">
+#userChatSection,#adminMessagesSection{margin-top:14px}
+.chatHint{color:var(--muted);font-size:13px;margin:-5px 0 10px}
+.chatText{width:100%;min-height:110px;resize:vertical;padding:12px;border-radius:12px;border:1px solid var(--neon-control,#49d86a);background:#071117;color:#fff;font-size:16px;box-sizing:border-box;outline:none}
+.chatText:focus{box-shadow:0 0 8px rgba(var(--neon-control-rgb,73,216,106),.35)}
+.chatBottomRow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}
+.chatCount{color:var(--muted);font-size:12px}
+.chatSendBtn{border:1px solid var(--neon-control,#49d86a);border-radius:10px;background:#102b3b;color:#fff;padding:10px 14px;font-weight:bold;cursor:pointer;box-shadow:0 0 8px rgba(var(--neon-control-rgb,73,216,106),.28)}
+.chatMessages{display:grid;gap:10px;margin-top:12px}
+.chatMessage{background:#09161e;border:1px solid var(--neon-control,#49d86a);border-radius:12px;padding:12px}
+.chatMessageHead{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:7px}
+.chatMessageHead b{color:#fff}
+.chatMessageTime{color:var(--muted);font-size:11px}
+.chatMessageText{color:#fff;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.4}
+.chatReply{margin-top:9px;padding:10px;border-radius:10px;border:1px solid #29404c;background:#071117;color:#fff;width:100%;min-height:70px;resize:vertical;box-sizing:border-box}
+.chatReplyRow{display:flex;justify-content:flex-end;gap:8px;margin-top:7px}
+.chatReplyBtn{border:1px solid var(--neon-control,#49d86a);border-radius:9px;background:#102b3b;color:#fff;padding:8px 12px;font-weight:bold;cursor:pointer}
+.chatReplyBox{margin-top:10px;padding-top:9px;border-top:1px solid #1e3542}
+.chatReplyLabel{color:var(--muted);font-size:12px;margin-bottom:5px}
+.chatEmpty{color:var(--muted);text-align:center;padding:18px}
+.chatError{color:#ff7c84;font-size:13px;margin-top:8px}
+@media(max-width:600px){.chatBottomRow{align-items:flex-end}.chatSendBtn{padding:9px 12px}.chatText{min-height:95px}}
+</style>
 <style id="temo-index3-requested-fixes">
 /* მხოლოდ მოთხოვნილი: ფერების არჩევის ფანჯარა ყოველთვის წინა ფენაზე */
 .neonPickerModal{z-index:2147483647 !important;}
@@ -1159,7 +1183,19 @@ body.neon-global #notesPage .noteClose{
 <div class="section adminOnly" id="userManagementSection">
 <h2>👥 მომხმარებლები</h2>
 <div id="userManagementList"></div>
+</div>
 
+<div class="section" id="userChatSection">
+<h2>💬 ადმინისტრატორს შენიშვნა</h2>
+<div class="chatHint">დაწერე ადმინისტრატორს შეტყობინება. მაქსიმუმ 100 სიტყვა.</div>
+<textarea id="userChatText" class="chatText" placeholder="ჩაწერე შეტყობინება..." maxlength="1000"></textarea>
+<div class="chatBottomRow"><span id="userChatCount" class="chatCount">0 / 100 სიტყვა</span><button type="button" class="chatSendBtn" onclick="sendAdminMessage()">📨 გაგზავნა</button></div>
+<div id="userChatMessages" class="chatMessages"></div>
+</div>
+
+<div class="section adminOnly" id="adminMessagesSection">
+<h2>📨 მიღებული მესიჯები</h2>
+<div id="adminMessagesList" class="chatMessages"></div>
 </div>
 </div>
 
@@ -1315,12 +1351,18 @@ window.addEventListener('DOMContentLoaded',async()=>{
   $('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
   updateUserUI();
   if(currentUser===ADMIN_USER)renderManagedUsers();
+  const chatText=$('userChatText');
+  if(chatText){chatText.addEventListener('input',updateUserChatCount);updateUserChatCount();}
   setInterval(async()=>{
     if(currentUser===ADMIN_USER){
       await syncUsersFromFirebase();
       await renderManagedUsers();
     }
   },1000);
+  setInterval(async()=>{
+    if(currentUser===ADMIN_USER)await renderAdminMessages();
+    else if(currentUser)await loadAndRenderUserChat();
+  },3000);
 });
 
 let jobs=[];
@@ -1755,11 +1797,12 @@ function temoNavigatePage(pageId){
   });
   if(pageId==='mainPage')render();
   if(pageId==='notesPage' && typeof loadNotes==='function')loadNotes();
+  if(pageId==='userManagementPage'){if(currentUser===ADMIN_USER)renderAdminMessages();else loadAndRenderUserChat();}
   updateUserUI();
 }
 function goHome(){temoNavigatePage('mainPage')}
 function goSettings(){temoNavigatePage('settingsPage');if(typeof window.loadNeonSettings==='function')window.loadNeonSettings()}
-function goUsers(){if(currentUser===ADMIN_USER)temoNavigatePage('userManagementPage')}
+function goUsers(){if(currentUser)temoNavigatePage('userManagementPage')}
 function goWallet(){temoNavigatePage('walletPage')}
 function showNotesSubPage(which){
   const reminders=document.getElementById('notesRemindersPage');
@@ -2278,10 +2321,106 @@ function updateUserUI(){
  const isAdmin=currentUser===ADMIN_USER;
  const site=$('websiteUpdateSection'); if(site)site.style.display=isAdmin?'':'none';
  const users=$('userManagementSection'); if(users)users.style.display=isAdmin?'':'none'; const neon=$('neonControlSection'); if(neon)neon.style.display=currentUser?'':'none';
+ const chat=$('userChatSection'); if(chat)chat.style.display=currentUser&&!isAdmin?'':'none';
+ const adminMessages=$('adminMessagesSection'); if(adminMessages)adminMessages.style.display=isAdmin?'':'none';
  const manageBtn=$('userManagementOpenBtn'); if(manageBtn)manageBtn.style.display=isAdmin?'block':'none';
  const label=$('currentUserLabel'); if(label){label.textContent=currentUser?'👤 შენ შეხვედი... '+currentUser:'';label.style.display=currentUser?'block':'none';}
  if(isAdmin)renderManagedUsers();
+ if(isAdmin)renderAdminMessages();
+ else if(currentUser)loadAndRenderUserChat();
 }
+
+const CHAT_ROOT='/adminMessages/';
+let userChatRenderKey='';
+let adminChatRenderKey='';
+function chatUserKey(id){return encodeURIComponent(String(id||'')).replace(/%/g,'_');}
+function chatWordCount(text){const words=String(text||'').trim().match(/\S+/gu);return words?words.length:0;}
+function chatEscape(text){return String(text??'').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));}
+function chatFormatTime(ts){try{return new Date(Number(ts)).toLocaleString()}catch(e){return ''}}
+async function loadChatThread(userId){
+  const key=chatUserKey(userId);
+  if(!key)return [];
+  try{
+    const r=await fetch(FIREBASE_DB_URL+CHAT_ROOT+key+'.json',{cache:'no-store'});
+    if(!r.ok)throw new Error('Firebase HTTP '+r.status);
+    const data=await r.json();
+    if(!data)return [];
+    const arr=Array.isArray(data)?data.filter(Boolean):Object.entries(data).map(([id,m])=>({...m,id:String(m?.id||id)})).filter(Boolean);
+    return arr.map(m=>({id:String(m.id||''),userId:String(m.userId||userId),userName:String(m.userName||''),text:String(m.text||''),createdAt:Number(m.createdAt||0),reply:String(m.reply||''),replyAt:Number(m.replyAt||0)})).sort((a,b)=>a.createdAt-b.createdAt);
+  }catch(e){console.warn('Firebase chat read failed:',e);return null}
+}
+async function saveChatThread(userId,thread){
+  const key=chatUserKey(userId);
+  if(!key)throw new Error('მომხმარებელი ჯერ არ არის ავტორიზებული');
+  const r=await fetch(FIREBASE_DB_URL+CHAT_ROOT+key+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(thread)});
+  if(!r.ok)throw new Error('Firebase HTTP '+r.status);
+}
+function updateUserChatCount(){
+  const el=$('userChatCount'),ta=$('userChatText');if(!el||!ta)return;
+  const n=chatWordCount(ta.value);el.textContent=n+' / 100 სიტყვა';el.style.color=n>100?'#ff7c84':'var(--muted)';
+}
+async function sendAdminMessage(){
+  if(!currentUser||currentUser===ADMIN_USER)return;
+  const ta=$('userChatText');if(!ta)return;
+  const text=String(ta.value||'').trim(),count=chatWordCount(text);
+  if(!text){ta.focus();return;}
+  if(count>100){alert('შეტყობინება მაქსიმუმ 100 სიტყვა უნდა იყოს.');return;}
+  const thread=await loadChatThread(currentUserId);
+  if(thread===null){alert('შეტყობინება Firebase-ში ვერ ჩაიტვირთა.');return;}
+  thread.push({id:(window.crypto&&crypto.randomUUID)?crypto.randomUUID():'m_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8),userId:String(currentUserId),userName:String(currentUser),text,createdAt:Date.now(),reply:'',replyAt:0});
+  try{
+    await saveChatThread(currentUserId,thread);
+    ta.value='';updateUserChatCount();renderUserChatMessages(thread);
+  }catch(e){alert('შეტყობინება ვერ გაიგზავნა.\
+\
+'+(e?.message||''));}
+}
+function renderUserChatMessages(thread){
+  const box=$('userChatMessages');if(!box)return;
+  if(!Array.isArray(thread)||!thread.length){box.innerHTML='<div class="chatEmpty">ჯერ შეტყობინება არ არის.</div>';return;}
+  const key=JSON.stringify(thread.map(m=>[m.id,m.text,m.reply,m.createdAt,m.replyAt]));
+  if(key===userChatRenderKey&&box.children.length)return;userChatRenderKey=key;
+  box.innerHTML=thread.map(m=>`<div class="chatMessage"><div class="chatMessageHead"><b>📨 შენ</b><span class="chatMessageTime">${chatEscape(chatFormatTime(m.createdAt))}</span></div><div class="chatMessageText">${chatEscape(m.text)}</div>${m.reply?`<div class="chatReplyBox"><div class="chatReplyLabel">↩️ ადმინისტრატორის პასუხი · ${chatEscape(chatFormatTime(m.replyAt))}</div><div class="chatMessageText">${chatEscape(m.reply)}</div></div>`:''}</div>`).join('');
+}
+async function loadAndRenderUserChat(){
+  if(!currentUser||currentUser===ADMIN_USER)return;
+  const thread=await loadChatThread(currentUserId);if(thread!==null)renderUserChatMessages(thread);
+}
+async function loadAllAdminChats(){
+  try{
+    const r=await fetch(FIREBASE_DB_URL+CHAT_ROOT.slice(0,-1)+'.json',{cache:'no-store'});
+    if(!r.ok)throw new Error('Firebase HTTP '+r.status);
+    const data=await r.json();return data&&typeof data==='object'&&!Array.isArray(data)?data:{};
+  }catch(e){console.warn('Firebase admin chat read failed:',e);return null}
+}
+async function renderAdminMessages(){
+  if(currentUser!==ADMIN_USER)return;
+  const box=$('adminMessagesList');if(!box)return;
+  const all=await loadAllAdminChats();if(all===null)return;
+  const rows=[];
+  Object.entries(all).forEach(([key,thread])=>{
+    const arr=Array.isArray(thread)?thread.filter(Boolean):Object.entries(thread||{}).map(([id,m])=>({...m,id:String(m?.id||id)}));
+    arr.forEach(m=>{if(m&&m.text)rows.push({id:String(m.id||''),userId:String(m.userId||''),userName:String(m.userName||key),text:String(m.text||''),createdAt:Number(m.createdAt||0),reply:String(m.reply||''),replyAt:Number(m.replyAt||0)});});
+  });
+  rows.sort((a,b)=>b.createdAt-a.createdAt);
+  const key=JSON.stringify(rows.map(m=>[m.userId,m.id,m.text,m.reply,m.createdAt,m.replyAt]));
+  if(key===adminChatRenderKey&&box.children.length)return;adminChatRenderKey=key;
+  if(!rows.length){box.innerHTML='<div class="chatEmpty">მიღებული მესიჯები ჯერ არ არის.</div>';return;}
+  box.innerHTML=rows.map(m=>`<div class="chatMessage"><div class="chatMessageHead"><b>👤 ${chatEscape(m.userName)}</b><span class="chatMessageTime">${chatEscape(chatFormatTime(m.createdAt))}</span></div><div class="chatMessageText">${chatEscape(m.text)}</div><div class="chatReplyBox"><div class="chatReplyLabel">${m.reply?'↩️ გაცემული პასუხი':'✍️ პასუხი'}</div><textarea class="chatReply" id="chatReply_${chatEscape(m.userId)}_${chatEscape(m.id)}" maxlength="1000" placeholder="დაწერე პასუხი...">${chatEscape(m.reply)}</textarea><div class="chatReplyRow"><button type="button" class="chatReplyBtn" onclick="replyToUser('${chatEscape(m.userId)}','${chatEscape(m.id)}')">↩️ ${m.reply?'შეცვლა':'პასუხი'}</button></div></div></div>`).join('');
+}
+async function replyToUser(userId,messageId){
+  if(currentUser!==ADMIN_USER)return;
+  const id='chatReply_'+chatEscape(userId)+'_'+chatEscape(messageId),ta=document.getElementById(id);if(!ta)return;
+  const reply=String(ta.value||'').trim();if(!reply){ta.focus();return;}
+  if(chatWordCount(reply)>100){alert('პასუხი მაქსიმუმ 100 სიტყვა უნდა იყოს.');return;}
+  const thread=await loadChatThread(userId);if(thread===null){alert('მესიჯი Firebase-ში ვერ ჩაიტვირთა.');return;}
+  const m=thread.find(x=>String(x.id)===String(messageId));if(!m){alert('მესიჯი ვერ მოიძებნა.');return;}
+  m.reply=reply;m.replyAt=Date.now();
+  try{await saveChatThread(userId,thread);adminChatRenderKey='';await renderAdminMessages();}catch(e){alert('პასუხი ვერ შეინახა.\
+\
+'+(e?.message||''));}
+}
+
 let managedUsersRenderKey='';
 async function renderManagedUsers(){
   const box=$('userManagementList');
