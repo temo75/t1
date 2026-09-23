@@ -157,7 +157,7 @@ footer{display:none!important;}
 .neonColorOpen{width:58px;height:42px;padding:3px;border-radius:10px;border:1px solid var(--line);background:#071117;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .neonColorOpen span{display:block;width:100%;height:100%;border-radius:7px;background:var(--neon-control);box-shadow:0 0 12px rgba(var(--neon-control-rgb),.65)}
 #neonColor{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
-.neonPickerModal{position:fixed;inset:0;z-index:10050;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:18px}
+.neonPickerModal{position:fixed;inset:0;z-index:2147483647;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:18px}
 .neonPickerModal.show{display:flex}
 .neonPickerBox{width:min(88vw,430px);max-height:calc(100vh - 36px);overflow:hidden;border-radius:22px;background:#f1f1f7;color:#20212a;box-shadow:0 20px 70px rgba(0,0,0,.65);padding:16px 14px 14px}
 .neonPickerBox h2{text-align:center;font-size:clamp(22px,5.5vw,32px);margin:0 0 12px;font-weight:800}
@@ -1704,7 +1704,16 @@ function editJob(id){const j=jobs.find(x=>x.id===id);if(!j)return;editingId=id;$
 function saveJob(){const amount=Number($('money').value);if(!amount||amount<=0){alert('თანხა მიუთითე');return}const data={date:$('date').value,place:$('place').value.trim(),money:amount,note:$('note').value.trim(),paid:$('paidCheck').checked};if(!data.date){alert('თარიღი მიუთითე');return}const now=Date.now();if(editingId){const i=jobs.findIndex(x=>x.id===editingId);if(i<0)return;jobs[i]={...jobs[i],...data,updatedAt:now}}else jobs.push({id:Date.now().toString()+Math.random().toString(16).slice(2),...data,updatedAt:now});save();closeForm();render()}
 function togglePaid(id){const j=jobs.find(x=>x.id===id);if(j){j.paid=!j.paid;j.updatedAt=Date.now();save();render();renderList();renderMonths();}}
 function delJob(id){if(confirm('წავშალოთ ეს ჩანაწერი?')){if(currentUser!==ADMIN_USER){const d=getLocalJobDeletes();d[String(id)]=Date.now();setLocalJobDeletes(d)}jobs=jobs.filter(x=>x.id!==id);save();render()}}
+function closeOpenModalsForNavigation(){
+  document.querySelectorAll('.modal.show,.notesModal.show,.noteModal.show,.neonPickerModal.show,.yearPickerModal.show,.credentialsModal.show,.deleteAuthModal.show,.receivableModal.show').forEach(m=>{
+    m.classList.remove('show');
+    if(m.hasAttribute('aria-hidden'))m.setAttribute('aria-hidden','true');
+  });
+  if(typeof editingNoteId!=='undefined')editingNoteId='';
+  if(typeof dailyViewId!=='undefined')dailyViewId='';
+}
 function temoNavigatePage(pageId){
+  closeOpenModalsForNavigation();
   const ids=['mainPage','settingsPage','userManagementPage','walletPage','notesPage'];
   ids.forEach(id=>{
     const p=document.getElementById(id);
