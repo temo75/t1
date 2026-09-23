@@ -472,6 +472,12 @@ body.neon-global .userName{
 #notesPage .notesToolsRow .notesAddBtn{margin:0}
 #notesPage .notesSubPage{padding:14px;border:1px solid #29404c;border-radius:14px;background:linear-gradient(145deg,#0d1b24,#0a151d);min-height:180px}
 #notesPage .notesSubPageTitle{font-size:20px;font-weight:800;color:#fff}
+#notesPage .dailyList{display:grid;gap:12px}
+#notesPage .dailyCard{background:linear-gradient(145deg,#0d1b24,#0a151d);border:1px solid #29404c;border-radius:14px;padding:14px;box-shadow:0 4px 18px rgba(0,0,0,.18);white-space:pre-wrap;word-break:break-word}
+#notesPage .dailyEmpty{padding:22px 14px;text-align:center;color:var(--muted);border:1px dashed #29404c;border-radius:14px}
+#notesPage .dailyEditor{display:flex;flex-direction:column;min-height:calc(100vh - 250px);gap:12px}
+#notesPage .dailyEditor textarea{flex:1;width:100%;min-height:300px;resize:none;box-sizing:border-box;background:#071017;color:#fff;border:1px solid #29404c;border-radius:14px;padding:14px;font:inherit;line-height:1.5;outline:none}
+#notesPage .dailySaveBtn{width:100%;border:1px solid rgba(73,216,106,.65);background:#10271b;color:#9cffb0;border-radius:12px;padding:13px 16px;font-weight:800;cursor:pointer;box-shadow:0 0 12px rgba(73,216,106,.16)}
 @media(max-width:520px){#notesPage .notesPageSwitch{width:100%;justify-content:stretch}.notesPageBtn{flex:1;min-width:0}.notesToolsRow{justify-content:stretch}.notesToolsRow .notesAddBtn{width:100%}}
 </style>
 <style id="temo-notes-style">
@@ -905,7 +911,7 @@ body.temo-android-app{
     </div>
     <div class="notesPageSwitch">
       <button type="button" class="notesPageBtn active" id="notesRemindersBtn" onclick="showNotesSubPage('reminders')">🔔 დააყენე შეტყობინება</button>
-      <button type="button" class="notesPageBtn" id="notesSecondBtn" onclick="showNotesSubPage('second')">📄 მეორე გვერდი</button>
+      <button type="button" class="notesPageBtn" id="notesSecondBtn" onclick="showNotesSubPage('daily')">📖 დღიური</button>
     </div>
   </div>
 
@@ -917,7 +923,16 @@ body.temo-android-app{
   </div>
 
   <div id="notesSecondPage" class="notesSubPage" style="display:none">
-    <div class="notesSubPageTitle">📄 მეორე გვერდი</div>
+    <div id="dailyListPage">
+      <div class="notesToolsRow">
+        <button type="button" class="notesAddBtn" onclick="openDailyEditor()">➕ დამატე</button>
+      </div>
+      <div id="dailyList" class="dailyList"></div>
+    </div>
+    <div id="dailyEditorPage" class="dailyEditor" style="display:none">
+      <textarea id="dailyText" placeholder="ჩაწერე შენი ჩანაწერი..."></textarea>
+      <button type="button" class="dailySaveBtn" onclick="saveDailyEntry()">💾 შენახვა</button>
+    </div>
   </div>
 
   <div id="noteModal" class="notesModal" onclick="if(event.target===this)closeNoteModal()">
@@ -1578,11 +1593,60 @@ function showNotesSubPage(which){
   const remindersBtn=document.getElementById('notesRemindersBtn');
   const secondBtn=document.getElementById('notesSecondBtn');
   if(!reminders||!second||!remindersBtn||!secondBtn)return;
-  const isReminders=which!=='second';
+  const isReminders=which!=='daily';
   reminders.style.display=isReminders?'':'none';
   second.style.display=isReminders?'none':'';
   remindersBtn.classList.toggle('active',isReminders);
   secondBtn.classList.toggle('active',!isReminders);
+  if(!isReminders)renderDailyEntries();
+}
+
+function dailyStorageKey(){
+  return 'temoDaily_'+String(currentUserId||currentUser||'guest');
+}
+function loadDailyEntries(){
+  try{
+    const raw=localStorage.getItem(dailyStorageKey());
+    const data=raw?JSON.parse(raw):[];
+    return Array.isArray(data)?data.filter(x=>x&&typeof x.text==='string'):[];
+  }catch(e){return [];}
+}
+function saveDailyEntries(data){
+  localStorage.setItem(dailyStorageKey(),JSON.stringify(data));
+}
+function renderDailyEntries(){
+  const list=document.getElementById('dailyList');
+  const listPage=document.getElementById('dailyListPage');
+  const editor=document.getElementById('dailyEditorPage');
+  if(!list||!listPage||!editor)return;
+  listPage.style.display='';
+  editor.style.display='none';
+  const entries=loadDailyEntries();
+  if(!entries.length){
+    list.innerHTML='<div class="dailyEmpty">ჯერ ჩანაწერი არ არის.</div>';
+    return;
+  }
+  list.innerHTML=entries.map(e=>`<div class="dailyCard">${noteEsc(e.text)}</div>`).join('');
+}
+function openDailyEditor(){
+  const listPage=document.getElementById('dailyListPage');
+  const editor=document.getElementById('dailyEditorPage');
+  const text=document.getElementById('dailyText');
+  if(!listPage||!editor||!text)return;
+  listPage.style.display='none';
+  editor.style.display='flex';
+  text.value='';
+  setTimeout(()=>text.focus(),50);
+}
+function saveDailyEntry(){
+  const text=document.getElementById('dailyText');
+  if(!text)return;
+  const value=text.value.trim();
+  if(!value){text.focus();return;}
+  const entries=loadDailyEntries();
+  entries.push({id:'d'+Date.now()+Math.random().toString(36).slice(2,8),text:value,createdAt:Date.now()});
+  saveDailyEntries(entries);
+  renderDailyEntries();
 }
 
 function goNotes(){temoNavigatePage('notesPage');showNotesSubPage('reminders')}
