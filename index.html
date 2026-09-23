@@ -393,6 +393,15 @@ body.neon-global .neonAll{
 body.neon-global .neonAll{
   text-shadow:0 0 calc(4px + 8px*var(--neon-power)) rgba(var(--neon-control-rgb),calc(.18 + .62*var(--neon-power)));
 }
+body.neon-global #userManagementList .userRow button.neonAll{
+  border-color:var(--neon-control)!important;
+  color:#fff!important;
+  box-shadow:
+    0 0 7px rgba(var(--neon-control-rgb),.55),
+    0 0 16px rgba(var(--neon-control-rgb),.30),
+    inset 0 0 10px rgba(var(--neon-control-rgb),.22)!important;
+  text-shadow:0 0 7px rgba(var(--neon-control-rgb),.55)!important;
+}
 </style>
 
 <style id="temo-user-four-blocks-inner-sensor">
@@ -2861,6 +2870,7 @@ async function registerNewUser(){
     '.yearPickerGrid button','.calendarTitle','.temo-eye-btn','.privacyEyeMain',
     '#siteFileBtn','#bottomNav > button','.receivableClose','.noteClose',
     '.credentialsBox','.form','.section','.toolbox','.card','.mini',
+    '#walletPage .card','#userManagementList .userRow button',
     '.dayCell.today','.dayCell.selected','.jobStatusMark.paid'
   ];
 
