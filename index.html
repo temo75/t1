@@ -482,16 +482,26 @@ body.neon-global .userName{
 #notesPage .dailyEditor{display:flex;flex-direction:column;min-height:calc(100vh - 250px);gap:12px}
 #notesPage .dailyEditor textarea{flex:1;width:100%;min-height:300px;resize:none;box-sizing:border-box;background:#071017;color:#fff;border:1px solid #29404c;border-radius:14px;padding:14px;font:inherit;line-height:1.5;outline:none}
 #notesPage .dailySaveBtn{width:100%;border:1px solid rgba(73,216,106,.65);background:#10271b;color:#9cffb0;border-radius:12px;padding:13px 16px;font-weight:800;cursor:pointer;box-shadow:0 0 12px rgba(73,216,106,.16)}
-#notesPage .dailyViewModal{position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;align-items:center;justify-content:center;padding:12px;z-index:2147483647}
+#notesPage .dailyViewModal{position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;align-items:center;justify-content:center;padding:12px;z-index:2147483647;box-sizing:border-box}
 #notesPage .dailyViewModal.show{display:flex}
-#notesPage .dailyViewBox{width:min(620px,100%);height:min(82vh,760px);display:flex;flex-direction:column;background:#0d1b24;border:1px solid #315061;border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.55);overflow:hidden}
-#notesPage .dailyViewHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;border-bottom:1px solid #29404c}
+#notesPage .dailyViewBox{width:min(620px,calc(100vw - 24px));height:min(760px,calc(100dvh - 120px));max-height:calc(100dvh - 120px);display:flex;flex-direction:column;background:#0d1b24;border:1px solid #315061;border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.55);overflow:hidden;box-sizing:border-box}
+#notesPage .dailyViewHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;border-bottom:1px solid #29404c;flex:0 0 auto}
 #notesPage .dailyViewHeader h2{margin:0;color:#fff;font-size:20px}
-#notesPage .dailyViewText{flex:1;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;color:#fff;font-size:18px;line-height:1.6;padding:18px}
-#notesPage .dailyViewClose{width:40px;height:40px;border:1px solid #ff3b3b;border-radius:50%;background:rgba(70,0,0,.45);color:#ff5b5b;font-size:23px;font-weight:900;cursor:pointer;box-shadow:0 0 7px rgba(255,59,59,.6)}
-#notesPage .dailyViewBottom{padding:12px;border-top:1px solid #29404c}
-#notesPage .dailyViewBottom button{width:100%;padding:12px;border:1px solid #29404c;border-radius:10px;background:#172631;color:#fff;font-weight:700;cursor:pointer}
-@media(max-width:520px){#notesPage .notesPageSwitch{width:100%;justify-content:stretch}.notesPageBtn{flex:1;min-width:0}.notesToolsRow{justify-content:stretch}.notesToolsRow .notesAddBtn{width:100%}}
+#notesPage .dailyViewText{flex:1;min-height:0;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;color:#fff;font-size:18px;line-height:1.6;padding:18px;-webkit-overflow-scrolling:touch}
+#notesPage .dailyViewClose{width:40px;height:40px;flex:0 0 40px;border:1px solid #ff3b3b;border-radius:50%;background:rgba(70,0,0,.45);color:#ff5b5b;font-size:23px;font-weight:900;cursor:pointer;box-shadow:0 0 7px rgba(255,59,59,.6)}
+#notesPage .dailyViewBottom{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;border-top:1px solid #29404c;flex:0 0 auto}
+#notesPage .dailyViewBottom button{width:100%;padding:12px;border:1px solid #29404c;border-radius:10px;background:#172631;color:#fff;font-weight:700;cursor:pointer;min-height:44px}
+#notesPage .dailyViewBottom .dailyAddMoreBtn{border-color:rgba(73,216,106,.65);background:#10271b;color:#9cffb0;box-shadow:0 0 10px rgba(73,216,106,.14)}
+@media(max-width:520px){#notesPage .notesPageSwitch{width:100%;justify-content:stretch}.notesPageBtn{flex:1;min-width:0}.notesToolsRow{justify-content:stretch}.notesToolsRow .notesAddBtn{width:100%}
+  #notesPage .dailyViewModal{padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px))}
+  #notesPage .dailyViewBox{width:calc(100vw - 16px);height:calc(100dvh - 104px);max-height:calc(100dvh - 104px);border-radius:14px}
+  #notesPage .dailyViewHeader{padding:10px 11px}
+  #notesPage .dailyViewHeader h2{font-size:19px}
+  #notesPage .dailyViewText{font-size:17px;padding:14px}
+  #notesPage .dailyViewBottom{padding:9px;gap:7px}
+  #notesPage .dailyViewBottom button{padding:10px 7px;font-size:15px}
+}
+@media(max-height:650px){#notesPage .dailyViewBox{height:calc(100dvh - 92px);max-height:calc(100dvh - 92px)}#notesPage .dailyViewText{font-size:16px;padding:12px}}
 </style>
 <style id="temo-notes-style">
 #notesPage .notesHeader{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
@@ -955,7 +965,7 @@ body.temo-android-app{
         <button type="button" class="dailyViewClose" onclick="closeDailyViewModal()" aria-label="დახურვა">✕</button>
       </div>
       <div id="dailyViewText" class="dailyViewText"></div>
-      <div class="dailyViewBottom"><button type="button" onclick="closeDailyViewModal()">✕ დახურვა</button></div>
+      <div class="dailyViewBottom"><button type="button" class="dailyAddMoreBtn" onclick="addMoreFromDailyView()">➕ კიდევ დაამატე</button><button type="button" onclick="closeDailyViewModal()">✕ დახურვა</button></div>
     </div>
   </div>
 
@@ -1808,6 +1818,10 @@ function closeDailyViewModal(){
   const modal=document.getElementById('dailyViewModal');
   if(modal){modal.classList.remove('show');modal.setAttribute('aria-hidden','true');}
   document.body.style.overflow='';
+}
+function addMoreFromDailyView(){
+  closeDailyViewModal();
+  openDailyEditor();
 }
 
 function openDailyDeleteModal(id){
