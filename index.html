@@ -880,10 +880,19 @@ body.temo-android-app{
 .neonPickerActions .confirm{padding:8px 14px!important}
 }
 </style>
-<style id="temo-notes-page-global-neon">
-/* Notes Book — იყენებს Admin Neon Manager-ის ფერსა და სიმძლავრეს */
+<style id="temo-index3-exact-neon-white">
+/* მხოლოდ მოთხოვნილი ცვლილება: ნეონის ფერი ჩარჩოებზე; ტექსტი და რიცხვები თეთრი */
+body.neon-global .neonControlled .label,
+body.neon-global .neonControlled span,
+body.neon-global .neonControlled b,
+body.neon-global .neonControlled .amount,
+body.neon-global .neonAll,
+body.neon-global .neonAll *{
+  color:#fff !important;
+}
+
+/* Notes Book — არსებული ჩარჩოები იღებს მიმდინარე ნეონის ფერს */
 body.neon-global #notesPage .notesPageBtn,
-body.neon-global #notesPage .notesAddBtn,
 body.neon-global #notesPage .notesSubPage,
 body.neon-global #notesPage .dailyCard,
 body.neon-global #notesPage .dailyCardTitle,
@@ -891,36 +900,40 @@ body.neon-global #notesPage .dailyCalendarBtn,
 body.neon-global #notesPage .dailyCalendarClear,
 body.neon-global #notesPage .dailyPageBtn,
 body.neon-global #notesPage .dailyTitleInput,
-body.neon-global #notesPage .dailySaveBtn,
+body.neon-global #notesPage .dailyViewBox,
+body.neon-global #notesPage .dailyViewHeader,
+body.neon-global #notesPage .dailyViewTitleEdit,
+body.neon-global #notesPage .dailyViewBottom,
+body.neon-global #notesPage .dailyViewBottom button,
+body.neon-global #notesPage .notesAddBtn,
 body.neon-global #notesPage .noteCard,
 body.neon-global #notesPage .noteActions button,
-body.neon-global #notesPage .noteEmpty,
 body.neon-global #notesPage .notesModalBox,
 body.neon-global #notesPage .notesField input,
-body.neon-global #notesPage .notesField textarea{
-  border-color:var(--neon-control)!important;
-  box-shadow:
-    0 0 7px rgba(var(--neon-control-rgb),calc(.22 + .28*var(--neon-power))),
-    0 0 16px rgba(var(--neon-control-rgb),calc(.10 + .20*var(--neon-power))),
-    inset 0 0 10px rgba(var(--neon-control-rgb),calc(.08 + .18*var(--neon-power))) !important;
+body.neon-global #notesPage .notesField textarea,
+body.neon-global #notesPage .notesModalActions button{
+  border-color:var(--neon-control) !important;
 }
-
-body.neon-global #notesPage .notesPageBtn,
-body.neon-global #notesPage .notesAddBtn,
-body.neon-global #notesPage .dailyCalendarBtn,
-body.neon-global #notesPage .dailyCalendarClear,
-body.neon-global #notesPage .dailyPageBtn,
-body.neon-global #notesPage .dailySaveBtn{
-  color:var(--neon-control)!important;
-  text-shadow:0 0 6px rgba(var(--neon-control-rgb),calc(.25 + .55*var(--neon-power)))!important;
-}
-
 body.neon-global #notesPage .dailyCard{
-  border-top-color:var(--neon-control)!important;
+  border-top-color:var(--neon-control) !important;
 }
-
-body.neon-global #notesPage .notesPageBtn.active{
-  background:rgba(var(--neon-control-rgb),.12)!important;
+body.neon-global #notesPage .notesPageBtn.active,
+body.neon-global #notesPage .dailyCalendarBtn,
+body.neon-global #notesPage .dailySaveBtn,
+body.neon-global #notesPage .notesAddBtn,
+body.neon-global #notesPage .notesModalActions .primary,
+body.neon-global #notesPage .dailyViewBottom .dailyAddMoreBtn,
+body.neon-global #notesPage .dailyViewSaveBtn{
+  border-color:var(--neon-control) !important;
+  color:#fff !important;
+  box-shadow:0 0 10px rgba(var(--neon-control-rgb),.22) !important;
+}
+body.neon-global #notesPage .dailyViewClose,
+body.neon-global #notesPage .noteClose{
+  border-color:var(--neon-control) !important;
+  color:#fff !important;
+  text-shadow:none !important;
+  box-shadow:0 0 7px rgba(var(--neon-control-rgb),.55) !important;
 }
 </style>
 </head>
