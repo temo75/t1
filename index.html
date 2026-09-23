@@ -972,8 +972,10 @@ body.neon-global #notesPage .noteClose{
 .chatReplyBtn{border:1px solid var(--neon-control,#49d86a);border-radius:9px;background:#102b3b;color:#fff;padding:8px 12px;font-weight:bold;cursor:pointer}
 .chatReplyBox{margin-top:10px;padding-top:9px;border-top:1px solid #1e3542}
 .chatReplyLabel{color:var(--muted);font-size:12px;margin-bottom:5px}
+.chatAdminLabel{color:#78e08f;font-size:12px;margin-bottom:5px;font-weight:bold}
+.chatAdminMessageText{color:#78e08f;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.4}
 .chatDeleteRow{display:flex;justify-content:flex-end;margin-top:9px}
-.chatDeleteBtn{border:1px solid #ff5b66;border-radius:9px;background:#2a1115;color:#fff;padding:8px 12px;font-weight:bold;cursor:pointer}
+.chatDeleteBtn{border:1px solid #ff5b66;border-radius:9px;background:#2a1115;color:#fff;padding:1px 8px;font-size:11px;line-height:16px;height:19px;min-height:19px;font-weight:bold;cursor:pointer;white-space:nowrap;box-sizing:border-box}
 .chatEmpty{color:var(--muted);text-align:center;padding:18px}
 .chatError{color:#ff7c84;font-size:13px;margin-top:8px}
 @media(max-width:600px){.chatBottomRow{align-items:flex-end}.chatSendBtn{padding:9px 12px}.chatText{min-height:95px}}
@@ -2415,7 +2417,7 @@ async function renderAdminMessages(){
   if(!groups.length){box.innerHTML='<div class="chatEmpty">მიღებული მესიჯები ჯერ არ არის.</div>';return;}
   box.innerHTML=groups.map(g=>{
     const latest=g.messages[g.messages.length-1];
-    const messagesHtml=g.messages.map(m=>`<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.12)"><div class="chatMessageHead"><b>📨 მესიჯი</b><span class="chatMessageTime">${chatEscape(chatFormatTime(m.createdAt))}</span></div><div class="chatMessageText">${chatEscape(m.text)}</div>${m.reply?`<div class="chatReplyBox"><div class="chatReplyLabel">↩️ ადმინისტრატორის პასუხი · ${chatEscape(chatFormatTime(m.replyAt))}</div><div class="chatMessageText">${chatEscape(m.reply)}</div></div>`:''}</div>`).join('');
+    const messagesHtml=g.messages.map(m=>`<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.12)"><div class="chatMessageHead"><span class="chatMessageTime">${chatEscape(chatFormatTime(m.createdAt))}</span></div><div class="chatMessageText">${chatEscape(m.text)}</div>${m.reply?`<div class="chatReplyBox"><div class="chatAdminLabel">ადმინი · ${chatEscape(chatFormatTime(m.replyAt))}</div><div class="chatAdminMessageText">${chatEscape(m.reply)}</div></div>`:''}</div>`).join('');
     return `<div class="chatMessage"><div class="chatMessageHead"><b>👤 ${chatEscape(g.userName)}</b><span class="chatMessageTime">${chatEscape(chatFormatTime(g.latestAt))}</span></div>${messagesHtml}<div class="chatReplyBox"><textarea class="chatReply" id="chatReply_${chatEscape(g.userId)}" maxlength="1000" placeholder="ჩემი მინაწერი"></textarea><div class="chatReplyRow"><button type="button" class="chatReplyBtn" onclick="replyToUser('${chatEscape(g.userId)}','${chatEscape(latest.id)}')">↩️ პასუხი</button></div></div><div class="chatDeleteRow"><button type="button" class="chatDeleteBtn" onclick="deleteChatDialog('${chatEscape(g.userId)}')">🗑️ მთელი დიალოგის წაშლა</button></div></div>`;
   }).join('');
 }
