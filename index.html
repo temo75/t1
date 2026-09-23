@@ -485,6 +485,10 @@ body.neon-global .userName{
 #notesPage .dailyCalendarBtn{border-color:rgba(73,216,106,.65);background:#10271b;color:#9cffb0;box-shadow:0 0 10px rgba(73,216,106,.14)}
 #notesPage .dailyCalendarInput{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 #notesPage .dailyCalendarLabel{color:#aaa;font-size:13px;font-weight:700;min-height:20px;display:flex;align-items:center}
+#notesPage .dailyPagination{display:flex;align-items:center;justify-content:center;gap:8px;margin:10px 0 2px;flex-wrap:wrap}
+#notesPage .dailyPageBtn{border:1px solid #29404c;border-radius:10px;background:#101820;color:#fff;padding:9px 14px;font-weight:800;cursor:pointer;min-width:92px}
+#notesPage .dailyPageBtn:disabled{opacity:.35;cursor:default}
+#notesPage .dailyPageInfo{color:#aaa;font-size:13px;font-weight:800;min-width:90px;text-align:center}
 #notesPage .dailyEditor{display:flex;flex-direction:column;min-height:calc(100vh - 250px);gap:12px}
 #notesPage .dailyTitleInput{width:100%;height:52px;box-sizing:border-box;background:#071017;color:#fff;border:1px solid #29404c;border-radius:14px;padding:12px 14px;font:inherit;font-size:20px;font-weight:800;outline:none}
 #notesPage .dailySaveBtn{width:100%;border:1px solid rgba(73,216,106,.65);background:#10271b;color:#9cffb0;border-radius:12px;padding:13px 16px;font-weight:800;cursor:pointer;box-shadow:0 0 12px rgba(73,216,106,.16)}
@@ -972,6 +976,11 @@ body.temo-android-app{
         <input id="dailyCalendarInput" class="dailyCalendarInput" type="date" onchange="applyDailyCalendar(this.value)" aria-label="ჩანაწერის თარიღი">
       </div>
       <div id="dailyList" class="dailyList"></div>
+      <div id="dailyPagination" class="dailyPagination" style="display:none">
+        <button type="button" class="dailyPageBtn" id="dailyPrevPageBtn" onclick="dailyGoPage(-1)">‹ წინა</button>
+        <span id="dailyPageInfo" class="dailyPageInfo">1 / 1</span>
+        <button type="button" class="dailyPageBtn" id="dailyNextPageBtn" onclick="dailyGoPage(1)">შემდეგი ›</button>
+      </div>
     </div>
     <div id="dailyEditorPage" class="dailyEditor" style="display:none">
       <input id="dailyTitle" class="dailyTitleInput" type="text" maxlength="80" placeholder="ჩანაწერის სახელი">
@@ -1681,6 +1690,9 @@ let dailySyncBusy=false;
 let dailySyncEventsBound=false;
 let dailyDeletes={};
 let dailyCalendarDate='';
+let dailyPage=0;
+const DAILY_PAGE_SIZE=30;
+let dailySwipeBound=false;
 
 function dailyUserKey(){
   const raw=String(currentUserId||currentUser||'').trim();
@@ -1802,15 +1814,60 @@ function openDailyCalendar(){
 }
 function applyDailyCalendar(value){
   dailyCalendarDate=String(value||'');
+  dailyPage=0;
   updateDailyCalendarLabel();
   renderDailyEntries();
 }
 function clearDailyCalendar(){
   dailyCalendarDate='';
+  dailyPage=0;
   const input=document.getElementById('dailyCalendarInput');
   if(input)input.value='';
   updateDailyCalendarLabel();
   renderDailyEntries();
+}
+function updateDailyPagination(totalPages){
+  const wrap=document.getElementById('dailyPagination');
+  const prev=document.getElementById('dailyPrevPageBtn');
+  const next=document.getElementById('dailyNextPageBtn');
+  const info=document.getElementById('dailyPageInfo');
+  if(!wrap)return;
+  if(totalPages<=1){wrap.style.display='none';return;}
+  wrap.style.display='flex';
+  if(info)info.textContent=(dailyPage+1)+' / '+totalPages;
+  if(prev)prev.disabled=dailyPage<=0;
+  if(next)next.disabled=dailyPage>=totalPages-1;
+}
+function dailyGoPage(direction){
+  const entries=loadDailyEntries();
+  const filtered=dailyCalendarDate?entries.filter(e=>getDailyDateKey(e.createdAt)===dailyCalendarDate):entries;
+  const totalPages=Math.max(1,Math.ceil(filtered.length/DAILY_PAGE_SIZE));
+  dailyPage=Math.max(0,Math.min(totalPages-1,dailyPage+Number(direction||0)));
+  renderDailyEntries();
+}
+function bindDailySwipe(){
+  if(dailySwipeBound)return;
+  const list=document.getElementById('dailyList');
+  if(!list)return;
+  dailySwipeBound=true;
+  let startX=0,startY=0,startTime=0;
+  list.addEventListener('touchstart',ev=>{
+    if(ev.touches.length!==1)return;
+    startX=ev.touches[0].clientX; startY=ev.touches[0].clientY; startTime=Date.now();
+  },{passive:true});
+  list.addEventListener('touchend',ev=>{
+    if(!startTime||!ev.changedTouches.length)return;
+    const dx=ev.changedTouches[0].clientX-startX;
+    const dy=ev.changedTouches[0].clientY-startY;
+    const dt=Date.now()-startTime;
+    startTime=0;
+    if(dt>700||Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.2)return;
+    const entries=loadDailyEntries();
+    const filtered=dailyCalendarDate?entries.filter(e=>getDailyDateKey(e.createdAt)===dailyCalendarDate):entries;
+    const totalPages=Math.max(1,Math.ceil(filtered.length/DAILY_PAGE_SIZE));
+    if(dx<0 && dailyPage<totalPages-1){dailyPage++;renderDailyEntries();}
+    else if(dx>0 && dailyPage>0){dailyPage--;renderDailyEntries();}
+  },{passive:true});
 }
 function renderDailyEntries(){
   const list=document.getElementById('dailyList');
@@ -1822,11 +1879,17 @@ function renderDailyEntries(){
   const entries=loadDailyEntries();
   const filteredEntries=dailyCalendarDate?entries.filter(e=>getDailyDateKey(e.createdAt)===dailyCalendarDate):entries;
   if(!filteredEntries.length){
+    dailyPage=0;
     list.innerHTML=dailyCalendarDate?'<div class="dailyEmpty">ამ თარიღზე ჩანაწერი არ არის.</div>':'<div class="dailyEmpty">ჯერ ჩანაწერი არ არის.</div>';
+    updateDailyPagination(0);
     return;
   }
+  const totalPages=Math.max(1,Math.ceil(filteredEntries.length/DAILY_PAGE_SIZE));
+  dailyPage=Math.max(0,Math.min(totalPages-1,dailyPage));
+  const start=dailyPage*DAILY_PAGE_SIZE;
+  const pageEntries=filteredEntries.slice(start,start+DAILY_PAGE_SIZE);
   list.innerHTML='';
-  filteredEntries.forEach(e=>{
+  pageEntries.forEach(e=>{
     const card=document.createElement('div');
     card.className='dailyCard';
     card.dataset.dailyId=e.id;
@@ -1866,7 +1929,10 @@ function renderDailyEntries(){
     card.addEventListener('contextmenu',ev=>ev.preventDefault());
     list.appendChild(card);
   });
+  updateDailyPagination(totalPages);
+  bindDailySwipe();
 }
+
 let dailyViewId='';
 function openDailyViewModal(id){
   const entry=loadDailyEntries().find(e=>String(e.id)===String(id));
@@ -2051,6 +2117,7 @@ async function saveDailyEntry(){
   const now=Date.now();
   const entries=loadDailyEntries();
   entries.push({id:'d'+now+Math.random().toString(36).slice(2,8),title:titleValue,text:value,createdAt:now,updatedAt:now});
+  dailyPage=Math.max(0,Math.ceil(entries.length/DAILY_PAGE_SIZE)-1);
   dailyDeletes=loadDailyDeletes();
   saveDailyEntries(entries);saveDailyDeletes(dailyDeletes);
   try{
