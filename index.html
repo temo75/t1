@@ -722,6 +722,14 @@ body.temo-android-app{
 }
 </style>
 
+<style id="temo-neon-color-block-fix">
+.neonColorRow{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;position:relative}
+.neonColorOpenBtn{width:100%;min-width:0;min-height:42px;padding:9px 12px;white-space:nowrap;border:1px solid var(--neon-control,#49d86a);border-radius:10px;background:#102b3b;color:#fff;font-weight:bold;cursor:pointer;box-shadow:0 0 7px rgba(var(--neon-control-rgb,73,216,106),.55),0 0 15px rgba(var(--neon-control-rgb,73,216,106),.28)}
+.neonSelectedColorBlock{min-height:42px;min-width:0;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:#071117;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px;font-weight:bold}
+.neonColorPreview{width:28px;height:28px;min-width:28px;border-radius:7px;background:#49d86a;border:1px solid rgba(255,255,255,.5);box-shadow:0 0 8px rgba(73,216,106,.7)}
+.neonHiddenColor{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important}
+@media(max-width:520px){.neonColorRow{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.neonColorOpenBtn{padding:9px 7px;font-size:13px}.neonSelectedColorBlock{padding:7px 7px;font-size:13px}.neonSelectedColorBlock span:first-child{white-space:nowrap}}
+</style>
 </head>
 <body>
 <nav id="bottomNav" aria-label="მთავარი მენიუ">
@@ -852,7 +860,11 @@ body.temo-android-app{
 <h2>✨ ნეონის მართვა</h2>
 <div class="neonControlBox">
 <div>ფერი</div>
-<div class="neonControlRow"><input id="neonColor" type="color" value="#49d86a" aria-label="ნეონის ფერი"></div>
+<div class="neonControlRow neonColorRow">
+<button type="button" id="neonColorOpenBtn" class="neonColorOpenBtn" onclick="document.getElementById('neonColor').click()">🎨 აირჩიე ფერი...</button>
+<div class="neonSelectedColorBlock"><span>არჩეული ფერი</span><span id="neonColorPreview" class="neonColorPreview"></span></div>
+<input id="neonColor" type="color" value="#49d86a" aria-label="ნეონის ფერი" class="neonHiddenColor">
+</div>
 <div style="margin-top:14px">სიმძლავრე</div>
 <div class="neonControlRow"><input id="neonStrength" type="range" min="0" max="100" value="65" step="1" aria-label="ნეონის სიმძლავრე"><span id="neonStrengthValue" class="neonValue">65%</span></div>
 </div>
@@ -2115,7 +2127,7 @@ async function registerNewUser(){
     document.querySelectorAll(BASE_SELECTORS.join(',')).forEach(el=>el.classList.add('neonAll'));
 
     const v=document.getElementById('neonStrengthValue');
-    if(v)v.textContent=Math.round(strength)+'%';
+    if(v)v.textContent=Math.round(strength)+'%'; const preview=document.getElementById('neonColorPreview');if(preview){preview.style.background=color;preview.style.boxShadow=`0 0 8px ${color},0 0 14px ${color}66`;}
 
     localStorage.setItem('temoNeonColor',color);
     localStorage.setItem('temoNeonStrength',String(strength));
