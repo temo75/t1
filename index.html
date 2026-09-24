@@ -1024,6 +1024,31 @@ body.neon-global #notesPage .noteClose{
   .stats .add{grid-column:1;grid-row:3;width:78%;max-width:180px;margin:0 auto;padding:8px 9px;font-size:13px;}
 }
 </style>
+
+<style id="temo-equal-four-stat-cards">
+/* მხოლოდ მთავარი გვერდის 4 პატარა ბლოკის ერთნაირი ზომა */
+.stats .mini{
+  height:150px !important;
+  min-height:150px !important;
+  max-height:150px !important;
+  overflow:hidden !important;
+}
+@media(min-width:701px){
+  .stats .mini{height:150px !important;min-height:150px !important;max-height:150px !important;}
+}
+@media(max-width:700px){
+  .stats .mini{
+    height:150px !important;
+    min-height:150px !important;
+    max-height:150px !important;
+    padding:11px !important;
+  }
+  .stats .mini span{font-size:12px !important;line-height:1.25 !important;}
+  .stats .mini b{font-size:19px !important;line-height:1.15 !important;margin-top:5px !important;}
+  .stats .mini small{font-size:11px !important;line-height:1.2 !important;}
+  .stats .add{width:60% !important;max-width:140px !important;padding:6px 7px !important;font-size:12px !important;line-height:1.2 !important;}
+}
+</style>
 </head>
 <body>
 <nav id="bottomNav" aria-label="მთავარი მენიუ">
