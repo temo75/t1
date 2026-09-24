@@ -2065,6 +2065,12 @@ window.addEventListener('DOMContentLoaded',async()=>{
     syncJobsFromFirebase().then(()=>{updateMonthFilter();render();renderList();renderMonths();renderReceivableModal();}).catch(e=>console.warn('Firebase jobs sync failed:',e));
   }else{
     localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);localStorage.removeItem(SESSION_USER_ID_KEY);currentUser='';currentUserId='';
+    // ავტორიზაციის გვერდზეც შევინარჩუნოთ ბოლოს არჩეული ფონის ფერი.
+    // მომხმარებლის ID-მდე ხელმისაწვდომია მოწყობილობის საერთო fallback.
+    const savedBackground=localStorage.getItem('temoSiteBackground');
+    if(savedBackground==='white' || savedBackground==='black'){
+      document.body.classList.toggle('site-white-theme',savedBackground==='white');
+    }
   }
   $('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
   updateUserUI();
