@@ -1090,6 +1090,24 @@ body.neon-global #notesPage .noteClose{
   .stats .add{width:60% !important;max-width:140px !important;padding:6px 7px !important;font-size:12px !important;line-height:1.2 !important;}
 }
 </style>
+<style id="temo-white-theme-complete-text-fix">
+/* White background mode: every textual character and number becomes black.
+   Icons/emoji keep their own visual appearance; this only overrides text color. */
+html body.site-white-theme,
+html body.site-white-theme * {
+  color:#111 !important;
+}
+html body.site-white-theme input::placeholder,
+html body.site-white-theme textarea::placeholder,
+body.site-white-theme textarea::placeholder {
+  color:#111 !important;
+  opacity:.65 !important;
+}
+body.site-white-theme option {
+  color:#111 !important;
+  background:#fff !important;
+}
+</style>
 </head>
 <body>
 <nav id="bottomNav" aria-label="მთავარი მენიუ">
@@ -3714,17 +3732,18 @@ async function registerNewUser(){
 
 <script id="temo-white-text-numbers-only-js">
 (function(){
-  function keepTextWhite(){
+  function keepTextColor(){
+    const white=document.body&&document.body.classList.contains('site-white-theme');
     document.querySelectorAll(
       '.stats .mini *, .grid .monthTotalHero *, .calendar *, ' +
       '.workText, .amount, .username, .userName'
     ).forEach(function(el){
-      el.style.color='#fff';
+      el.style.color=white?'#111':'#fff';
     });
   }
-  window.addEventListener('DOMContentLoaded',keepTextWhite);
-  new MutationObserver(keepTextWhite).observe(document.documentElement,{
-    subtree:true,childList:true
+  window.addEventListener('DOMContentLoaded',keepTextColor);
+  new MutationObserver(keepTextColor).observe(document.documentElement,{
+    subtree:true,childList:true,attributes:true,attributeFilter:['class']
   });
 })();
 </script>
