@@ -1518,6 +1518,111 @@ html body.site-white-theme [style*="background:#101820"] {
 }
 </style>
 
+
+<style id="temo-white-mode-all-surfaces-final">
+/* WHITE MODE: every dark content surface/card/list/popup becomes white. */
+html body.site-white-theme .item,
+html body.site-white-theme .receivableRow,
+html body.site-white-theme .receivableSummary,
+html body.site-white-theme .receivableAll,
+html body.site-white-theme .receivableEmpty,
+html body.site-white-theme #dayJobsSection,
+html body.site-white-theme #dayJobs,
+html body.site-white-theme #list,
+html body.site-white-theme .noteEntry,
+html body.site-white-theme .noteCard,
+html body.site-white-theme .dailyCard,
+html body.site-white-theme .dailyViewBox,
+html body.site-white-theme .chatMessage,
+html body.site-white-theme .chatReplyBox,
+html body.site-white-theme .userRow,
+html body.site-white-theme .userManagementBox,
+html body.site-white-theme .userManagementListWrap,
+html body.site-white-theme .expenseRow,
+html body.site-white-theme .monthRow,
+html body.site-white-theme .mini,
+html body.site-white-theme .card,
+html body.site-white-theme .section,
+html body.site-white-theme .toolbox,
+html body.site-white-theme .neonControlBox,
+html body.site-white-theme .expenseQuickCard,
+html body.site-white-theme .calendar,
+html body.site-white-theme .calendarGrid,
+html body.site-white-theme .dayCell,
+html body.site-white-theme .dayCell.selected,
+html body.site-white-theme .dayCell.today,
+html body.site-white-theme .expenseCategoryMenu,
+html body.site-white-theme .expenseCategoryOption,
+html body.site-white-theme .expenseCategoryCurrent,
+html body.site-white-theme .modal .form,
+html body.site-white-theme .yearPickerBox,
+html body.site-white-theme .credentialsBox,
+html body.site-white-theme .deleteAuthBox,
+html body.site-white-theme .noteBox,
+html body.site-white-theme .receivableBox,
+html body.site-white-theme .newUserAuthBox,
+html body.site-white-theme .notesModalBox,
+html body.site-white-theme .neonPickerBox,
+html body.site-white-theme .forgotPasswordBox,
+html body.site-white-theme .forgotSuccessBox {
+  background:#fff !important;
+  background-image:none !important;
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+}
+
+/* Inner controls/cards that were still dark in screenshots. */
+html body.site-white-theme .item button,
+html body.site-white-theme .receivableRow button,
+html body.site-white-theme .receivableBox .receivableClose,
+html body.site-white-theme .actions button,
+html body.site-white-theme .small,
+html body.site-white-theme .edit,
+html body.site-white-theme .danger,
+html body.site-white-theme .backupBtn,
+html body.site-white-theme .calendarNav button,
+html body.site-white-theme .yearPickerGrid button,
+html body.site-white-theme .noteActions button,
+html body.site-white-theme .notesActions button,
+html body.site-white-theme .dailyViewBottom button {
+  background:#fff !important;
+  background-image:none !important;
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+  text-shadow:none !important;
+}
+
+/* All descendants of the affected dark surfaces keep black text in white mode. */
+html body.site-white-theme .item *,
+html body.site-white-theme .receivableRow *,
+html body.site-white-theme #dayJobsSection *,
+html body.site-white-theme .noteEntry *,
+html body.site-white-theme .noteCard *,
+html body.site-white-theme .dailyCard *,
+html body.site-white-theme .chatMessage *,
+html body.site-white-theme .userRow *,
+html body.site-white-theme .expenseRow *,
+html body.site-white-theme .monthRow * {
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+}
+
+/* Preserve the selected-day/paid-status neon border and glow, but not dark fills. */
+html body.site-white-theme .dayCell.selected,
+html body.site-white-theme .dayCell.today,
+html body.site-white-theme .receivablePaid,
+html body.site-white-theme .jobStatusMark.paid {
+  background:#fff !important;
+}
+
+/* Native checkbox/radio controls must not inherit a dark text color. */
+html body.site-white-theme input[type="checkbox"],
+html body.site-white-theme input[type="radio"] {
+  background:#fff !important;
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+}
+</style>
 </head>
 <body>
 <nav id="bottomNav" aria-label="მთავარი მენიუ">
