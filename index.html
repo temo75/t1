@@ -1278,6 +1278,21 @@ html body:not(.site-white-theme) .forgotSuccessBox p {
 }
 </style>
 
+<style id="temo-white-calendar-surface-fix">
+/* თეთრ რეჟიმში კალენდრის უჯრებიც თეთრია, რათა შავი ტექსტი/რიცხვები მკაფიოდ ჩანდეს. */
+html body.site-white-theme .dayCell,
+html body.site-white-theme .dayCell.selected,
+html body.site-white-theme .dayCell.today {
+  background:#fff !important;
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+}
+html body.site-white-theme .dayCell .num,
+html body.site-white-theme .dayCell .jobCount {
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+}
+</style>
 </head>
 <body>
 <nav id="bottomNav" aria-label="მთავარი მენიუ">
