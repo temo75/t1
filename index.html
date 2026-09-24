@@ -4634,6 +4634,9 @@ startNotesReminderWatcher();
     if(w)w.classList.toggle('active',mode==='white');
     if(b)b.classList.toggle('active',mode==='black');
     const k=key();
+    // ვინახავთ ფერს როგორც მომხმარებლისთვის, ისე მოწყობილობის საერთო fallback-ად.
+    // ეს უზრუნველყოფს, რომ Refresh/Settings/ხელახლა გახსნისას არჩეული ფერი არ დაიკარგოს.
+    localStorage.setItem('temoSiteBackground',mode);
     if(k)localStorage.setItem('temoSiteBackground_'+k,mode);
     if(saveRemote && window.currentUser && url()){
       fetch(url(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:mode,userId:String(window.currentUserId||''),user:String(window.currentUser||''),updatedAt:Date.now()})}).catch(()=>{});
@@ -4670,10 +4673,6 @@ startNotesReminderWatcher();
     }
     loading=false;
   };
-  window.addEventListener('DOMContentLoaded',()=>{
-    const k=key();
-    apply(k?(localStorage.getItem('temoSiteBackground_'+k)||'black'):'black',false);
-  });
 })();
 </script>
 <script id="temo-language-system">
