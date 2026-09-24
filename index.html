@@ -1116,8 +1116,8 @@ html body.site-white-theme *::after {
   color:#111 !important;
   -webkit-text-fill-color:#111 !important;
 }
-html body.site-white-theme input::placeholder,
-html body.site-white-theme textarea::placeholder {
+html body.site-white-theme.neon-global input::placeholder,
+html body.site-white-theme.neon-global textarea::placeholder {
   color:#111 !important;
   -webkit-text-fill-color:#111 !important;
   opacity:.65 !important;
@@ -1129,6 +1129,155 @@ html body.site-white-theme optgroup {
   background:#fff !important;
 }
 </style>
+
+<style id="temo-white-theme-ultimate-text-fix">
+/* FINAL WHITE MODE: all textual content on white surfaces is black. */
+html body.site-white-theme.neon-global,
+html body.site-white-theme.neon-global h1,
+html body.site-white-theme.neon-global h2,
+html body.site-white-theme.neon-global h3,
+html body.site-white-theme.neon-global h4,
+html body.site-white-theme.neon-global h5,
+html body.site-white-theme.neon-global h6,
+html body.site-white-theme.neon-global p,
+html body.site-white-theme.neon-global label,
+html body.site-white-theme.neon-global span,
+html body.site-white-theme.neon-global b,
+html body.site-white-theme.neon-global strong,
+html body.site-white-theme.neon-global small,
+html body.site-white-theme.neon-global div,
+html body.site-white-theme.neon-global a,
+html body.site-white-theme.neon-global li,
+html body.site-white-theme.neon-global td,
+html body.site-white-theme.neon-global th,
+html body.site-white-theme.neon-global .amount,
+html body.site-white-theme.neon-global input,
+html body.site-white-theme.neon-global select,
+html body.site-white-theme.neon-global textarea,
+html body.site-white-theme.neon-global option {
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+}
+html body.site-white-theme.neon-global input::placeholder,
+html body.site-white-theme.neon-global textarea::placeholder {
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+  opacity:.65 !important;
+}
+
+/* Popup/modal boxes also use the white-mode surface. */
+html body.site-white-theme .modal .form,
+html body.site-white-theme .yearPickerBox,
+html body.site-white-theme .credentialsBox,
+html body.site-white-theme .deleteAuthBox,
+html body.site-white-theme .noteBox,
+html body.site-white-theme .receivableBox,
+html body.site-white-theme .newUserAuthBox,
+html body.site-white-theme #notesPage .dailyViewBox,
+html body.site-white-theme #notesPage .notesModalBox,
+html body.site-white-theme .forgotPasswordBox,
+html body.site-white-theme .forgotSuccessBox {
+  background:#fff !important;
+}
+
+/* Keep coloured action buttons readable; the surrounding white surfaces stay black-text. */
+html body.site-white-theme .modal .form button,
+html body.site-white-theme .yearPickerBox button,
+html body.site-white-theme .credentialsBox button,
+html body.site-white-theme .deleteAuthBox button,
+html body.site-white-theme .noteBox button,
+html body.site-white-theme .receivableBox button,
+html body.site-white-theme .newUserAuthBox button,
+html body.site-white-theme #notesPage .dailyViewBox button,
+html body.site-white-theme #notesPage .notesModalBox button,
+html body.site-white-theme .forgotPasswordBox button,
+html body.site-white-theme .forgotSuccessBox button {
+  -webkit-text-fill-color:currentColor !important;
+}
+</style>
+
+
+<style id="temo-theme-popup-final-fix">
+/* FINAL POPUP THEME FIX: popup surfaces and their text follow the selected site background. */
+html body.site-white-theme .modal .form,
+html body.site-white-theme .yearPickerBox,
+html body.site-white-theme .credentialsBox,
+html body.site-white-theme .deleteAuthBox,
+html body.site-white-theme .noteBox,
+html body.site-white-theme .receivableBox,
+html body.site-white-theme .newUserAuthBox,
+html body.site-white-theme .dailyViewBox,
+html body.site-white-theme .notesModalBox,
+html body.site-white-theme .neonPickerBox,
+html body.site-white-theme .forgotPasswordBox,
+html body.site-white-theme .forgotSuccessBox {
+  background:#fff !important;
+  color:#111 !important;
+}
+html body.site-white-theme .modal .form *,
+html body.site-white-theme .yearPickerBox *,
+html body.site-white-theme .credentialsBox *,
+html body.site-white-theme .deleteAuthBox *,
+html body.site-white-theme .noteBox *,
+html body.site-white-theme .receivableBox *,
+html body.site-white-theme .newUserAuthBox *,
+html body.site-white-theme .dailyViewBox *,
+html body.site-white-theme .notesModalBox *,
+html body.site-white-theme .neonPickerBox *,
+html body.site-white-theme .forgotPasswordBox *,
+html body.site-white-theme .forgotSuccessBox * {
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+}
+html body:not(.site-white-theme) .modal .form,
+html body:not(.site-white-theme) .yearPickerBox,
+html body:not(.site-white-theme) .credentialsBox,
+html body:not(.site-white-theme) .deleteAuthBox,
+html body:not(.site-white-theme) .noteBox,
+html body:not(.site-white-theme) .receivableBox,
+html body:not(.site-white-theme) .newUserAuthBox,
+html body:not(.site-white-theme) .dailyViewBox,
+html body:not(.site-white-theme) .notesModalBox,
+html body:not(.site-white-theme) .neonPickerBox,
+html body:not(.site-white-theme) .forgotPasswordBox,
+html body:not(.site-white-theme) .forgotSuccessBox {
+  color:#fff !important;
+}
+html body:not(.site-white-theme) .modal .form h1,
+html body:not(.site-white-theme) .modal .form h2,
+html body:not(.site-white-theme) .modal .form h3,
+html body:not(.site-white-theme) .modal .form p,
+html body:not(.site-white-theme) .modal .form label,
+html body:not(.site-white-theme) .modal .form span,
+html body:not(.site-white-theme) .modal .form b,
+html body:not(.site-white-theme) .modal .form strong,
+html body:not(.site-white-theme) .modal .form small,
+html body:not(.site-white-theme) .yearPickerBox h2,
+html body:not(.site-white-theme) .credentialsBox h2,
+html body:not(.site-white-theme) .credentialsBox label,
+html body:not(.site-white-theme) .deleteAuthBox h2,
+html body:not(.site-white-theme) .deleteAuthBox p,
+html body:not(.site-white-theme) .noteBox h2,
+html body:not(.site-white-theme) .noteBox label,
+html body:not(.site-white-theme) .receivableBox h2,
+html body:not(.site-white-theme) .receivableBox label,
+html body:not(.site-white-theme) .newUserAuthBox h2,
+html body:not(.site-white-theme) .newUserAuthBox label,
+html body:not(.site-white-theme) .dailyViewBox h2,
+html body:not(.site-white-theme) .dailyViewBox p,
+html body:not(.site-white-theme) .notesModalBox h2,
+html body:not(.site-white-theme) .notesModalBox label,
+html body:not(.site-white-theme) .neonPickerBox h2,
+html body:not(.site-white-theme) .forgotPasswordBox h2,
+html body:not(.site-white-theme) .forgotPasswordBox p,
+html body:not(.site-white-theme) .forgotPasswordBox label,
+html body:not(.site-white-theme) .forgotSuccessBox h2,
+html body:not(.site-white-theme) .forgotSuccessBox p {
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+}
+</style>
+
 </head>
 <body>
 <nav id="bottomNav" aria-label="მთავარი მენიუ">
@@ -3752,17 +3901,21 @@ async function registerNewUser(){
 <script id="temo-white-theme-final-text-fix">
 (function(){
   function forceWhiteThemeText(){
-    const white=document.body && document.body.classList.contains('site-white-theme');
     if(!document.body) return;
-    document.querySelectorAll('body.site-white-theme *').forEach(function(el){
-      if(white){
+    const white=document.body.classList.contains('site-white-theme');
+    if(white){
+      document.querySelectorAll('body.site-white-theme *').forEach(function(el){
+        el.setAttribute('data-temo-white-text-fix','1');
         el.style.setProperty('color','#111','important');
         el.style.setProperty('-webkit-text-fill-color','#111','important');
-      }else{
+      });
+    }else{
+      document.querySelectorAll('[data-temo-white-text-fix="1"]').forEach(function(el){
         el.style.removeProperty('color');
         el.style.removeProperty('-webkit-text-fill-color');
-      }
-    });
+        el.removeAttribute('data-temo-white-text-fix');
+      });
+    }
   }
   window.addEventListener('DOMContentLoaded',forceWhiteThemeText);
   new MutationObserver(function(){
@@ -4065,6 +4218,15 @@ startNotesReminderWatcher();
   function apply(mode,saveRemote){
     mode=mode==='white'?'white':'black';
     document.body.classList.toggle('site-white-theme',mode==='white');
+    if(mode==='white' && typeof window.forceWhiteThemeText==='function') window.forceWhiteThemeText();
+    if(mode==='black'){
+      const popupSelector='.modal .form, .yearPickerBox, .credentialsBox, .deleteAuthBox, .noteBox, .receivableBox, .newUserAuthBox, .dailyViewBox, .notesModalBox, .neonPickerBox, .forgotPasswordBox, .forgotSuccessBox';
+      document.querySelectorAll(popupSelector+' [data-temo-white-text-fix]').forEach(function(el){
+        el.style.removeProperty('color');
+        el.style.removeProperty('-webkit-text-fill-color');
+        el.removeAttribute('data-temo-white-text-fix');
+      });
+    }
     const w=document.getElementById('backgroundWhiteBtn'),b=document.getElementById('backgroundBlackBtn');
     if(w)w.classList.toggle('active',mode==='white');
     if(b)b.classList.toggle('active',mode==='black');
