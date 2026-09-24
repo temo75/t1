@@ -4643,15 +4643,29 @@ startNotesReminderWatcher();
   window.loadSiteBackgroundSettings=async function(){
     if(loading)return; loading=true;
     const k=key();
-    // Settings-ში შესვლისას მიმდინარე თეთრი რეჟიმი არ უნდა შეიცვალოს შავად.
-    // თუ შენახული მომხმარებლის რეჟიმი ჯერ არ არის ხელმისაწვდომი, მიმდინარე body class იყოს fallback.
+    // მომხმარებლის მიერ ამ მოწყობილობაზე ბოლოს არჩეული ფერი პრიორიტეტულია.
+    // Settings-ში შესვლა ან გვერდის ხელახლა გახსნა მას სხვა ფერზე აღარ გადაიყვანს.
     const currentMode=document.body.classList.contains('site-white-theme')?'white':'black';
-    let mode=k?(localStorage.getItem('temoSiteBackground_'+k)||currentMode):currentMode;
+    const localKey=k?'temoSiteBackground_'+k:'';
+    const localMode=localKey?localStorage.getItem(localKey):null;
+    if(localMode==='white'||localMode==='black'){
+      apply(localMode,false);
+      loading=false;
+      return;
+    }
+
+    // ახალ მოწყობილობაზე, სადაც ადგილობრივი ჩანაწერი ჯერ არ არსებობს,
+    // ავიღოთ მომხმარებლის ბოლო შენახული ფერი Firebase-იდან.
+    let mode=currentMode;
     apply(mode,false);
     if(window.currentUser&&url()){
       try{
         const r=await fetch(url()+'?t='+Date.now(),{cache:'no-store'});
-        if(r.ok){const d=await r.json(); if(d&&d.mode)apply(d.mode,false); else apply(mode,true);}
+        if(r.ok){
+          const d=await r.json();
+          if(d&&d.mode)apply(d.mode,false);
+          else apply(mode,false);
+        }
       }catch(e){}
     }
     loading=false;
