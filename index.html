@@ -487,6 +487,24 @@ body.neon-global .userName{
 .expenseRow b{font-size:16px}.expenseRow .expenseMeta{color:var(--muted);font-size:13px;margin-top:4px}.expenseRow .expenseAmount{font-size:18px;font-weight:bold;text-align:right}.expenseActions{display:flex;gap:5px;justify-content:flex-end;margin-top:7px}
 @media(max-width:700px){.expenseRow{grid-template-columns:1fr}.expenseRow .expenseAmount{text-align:left}.expenseActions{justify-content:flex-start}}
 </style>
+<style id="temo-expense-category-custom">
+.expenseCategorySelect{position:relative;width:100%;cursor:pointer;outline:none}
+.expenseCategoryCurrent{width:100%;min-height:44px;padding:9px 12px;border-radius:10px;border:1px solid var(--neon-control,#49d86a);background:#071117;color:#fff;display:flex;align-items:center;gap:10px;box-shadow:inset 0 0 8px rgba(var(--neon-control-rgb,73,216,106),var(--neon-inner-a,.95)),inset 0 0 18px rgba(var(--neon-control-rgb,73,216,106),var(--neon-inner-b,.72));transition:.18s}
+.expenseCategorySelect.open .expenseCategoryCurrent{box-shadow:0 0 7px var(--neon-control,#49d86a),0 0 18px rgba(var(--neon-control-rgb,73,216,106),.55),inset 0 0 12px rgba(var(--neon-control-rgb,73,216,106),.65)}
+.expenseCategoryIcon{width:30px;min-width:30px;text-align:center;font-size:21px;line-height:1}
+.expenseCategoryText{flex:1;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.expenseCategoryCheck{font-size:20px;font-weight:900;color:var(--neon-control,#49d86a);text-shadow:0 0 7px var(--neon-control,#49d86a)}
+.expenseCategoryMenu{display:none;position:absolute;left:0;right:0;top:calc(100% + 5px);z-index:2147483647;max-height:250px;overflow:auto;padding:5px;border:1px solid var(--neon-control,#49d86a);border-radius:12px;background:#0b1821;box-shadow:0 0 8px var(--neon-control,#49d86a),0 0 22px rgba(var(--neon-control-rgb,73,216,106),.45);}
+.expenseCategorySelect.open .expenseCategoryMenu{display:block}
+.expenseCategoryOption{display:flex;align-items:center;gap:10px;width:100%;padding:10px 9px;border:0;border-radius:9px;background:transparent;color:#fff;text-align:left;cursor:pointer}
+.expenseCategoryOption:hover,.expenseCategoryOption.selected{background:rgba(var(--neon-control-rgb,73,216,106),.15);box-shadow:inset 0 0 10px rgba(var(--neon-control-rgb,73,216,106),.22)}
+.expenseCategoryOption .catIcon{width:30px;min-width:30px;text-align:center;font-size:20px}
+.expenseCategoryOption .catText{flex:1}
+.expenseCategoryOption .catCheck{width:20px;text-align:center;color:var(--neon-control,#49d86a);font-weight:900;opacity:0}
+.expenseCategoryOption.selected .catCheck{opacity:1}
+#expenseCategory{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important}
+</style>
+
 <style id="temo-notes-page-switch">
 #notesPage .notesPageSwitch{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
 #notesPage .notesPageBtn{border:1px solid #29404c;background:#111f29;color:#fff;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer;box-shadow:none}
@@ -1098,7 +1116,7 @@ body.neon-global #notesPage .noteClose{
 
 <div class="modal" id="expenseModal"><div class="form">
 <h2 id="expenseFormTitle">ახალი გასავალი</h2>
-<label>კატეგორია</label><select id="expenseCategory"></select>
+<label>კატეგორია</label><div class="expenseCategorySelect" id="expenseCategorySelect" tabindex="0" role="combobox" aria-expanded="false" aria-label="კატეგორია"><div class="expenseCategoryCurrent" id="expenseCategoryCurrent"><span class="expenseCategoryIcon" id="expenseCategoryIcon">✓</span><span class="expenseCategoryText" id="expenseCategoryText">აირჩიეთ კატეგორია</span><span class="expenseCategoryCheck">✓</span></div><div class="expenseCategoryMenu" id="expenseCategoryMenu"></div></div><select id="expenseCategory" aria-hidden="true" tabindex="-1"></select>
 <label>სად</label><input id="expensePlace" type="text" maxlength="100" placeholder="მაგ: Lidl">
 <label>თანხა (€)</label><input id="expenseAmount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="მაგ: 120">
 <label>თარიღი</label><input id="expenseDate" type="date">
@@ -1875,9 +1893,14 @@ function loadLocalExpenses(){try{const raw=JSON.parse(localStorage.getItem(expen
 function saveLocalExpenses(){localStorage.setItem(expenseStorageKey(),JSON.stringify(expenses));}
 async function saveExpensesToFirebase(){const url=expenseFirebaseUrl();if(!url)return false;try{const r=await fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(expenses)});if(!r.ok)throw new Error('Firebase HTTP '+r.status);return true;}catch(e){console.warn('Firebase expenses write failed:',e);return false;}}
 async function syncExpensesFromFirebase(){const url=expenseFirebaseUrl();if(!url)return;try{const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error('Firebase HTTP '+r.status);const data=await r.json();if(data!==null){const arr=Array.isArray(data)?data.filter(Boolean):Object.entries(data||{}).map(([id,e])=>({...e,id:String(e?.id||id)}));expenses=arr.map(normalizeExpense).filter(e=>e.amount>0&&e.date);saveLocalExpenses();renderExpenses();}}catch(e){console.warn('Firebase expenses read failed:',e);}}
-function fillExpenseCategories(){const s=document.getElementById('expenseCategory');if(!s)return;s.innerHTML=EXPENSE_CATEGORIES.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');}
-function openExpenseForm(id=''){const m=document.getElementById('expenseModal');if(!m)return;fillExpenseCategories();expenseEditingId=id||'';const e=id?expenses.find(x=>x.id===id):null;document.getElementById('expenseFormTitle').textContent=e?'გასავლის შეცვლა':'ახალი გასავალი';document.getElementById('expenseCategory').value=e?.category||EXPENSE_CATEGORIES[0];document.getElementById('expensePlace').value=e?.place||'';document.getElementById('expenseAmount').value=e?String(e.amount):'';document.getElementById('expenseDate').value=e?.date||new Date().toISOString().slice(0,10);m.classList.add('show');}
+function expenseCategoryParts(c){const m=String(c||'').match(/^(\S+)\s*(.*)$/);return {icon:m?.[1]||'✓',text:m?.[2]||String(c||'')};}
+function fillExpenseCategories(selected=''){const s=document.getElementById('expenseCategory'),menu=document.getElementById('expenseCategoryMenu');if(!s||!menu)return;s.innerHTML=EXPENSE_CATEGORIES.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');menu.innerHTML=EXPENSE_CATEGORIES.map(c=>{const p=expenseCategoryParts(c);return `<button type="button" class="expenseCategoryOption${String(c)===String(selected)?' selected':''}" data-value="${esc(c)}"><span class="catIcon">${esc(p.icon)}</span><span class="catText">${esc(p.text)}</span><span class="catCheck">✓</span></button>`;}).join('');menu.querySelectorAll('.expenseCategoryOption').forEach(b=>b.addEventListener('click',()=>selectExpenseCategory(b.dataset.value)));updateExpenseCategoryDisplay(selected);}
+function updateExpenseCategoryDisplay(value=''){const s=document.getElementById('expenseCategory'),icon=document.getElementById('expenseCategoryIcon'),text=document.getElementById('expenseCategoryText'),menu=document.getElementById('expenseCategoryMenu');if(!s||!icon||!text)return;const c=String(value||'');s.value=c;if(!c){icon.textContent='✓';text.textContent='აირჩიეთ კატეგორია';menu?.querySelectorAll('.expenseCategoryOption').forEach(b=>b.classList.remove('selected'));return;}const p=expenseCategoryParts(c);icon.textContent=p.icon;text.textContent=p.text;menu?.querySelectorAll('.expenseCategoryOption').forEach(b=>b.classList.toggle('selected',b.dataset.value===c));}
+function selectExpenseCategory(value){updateExpenseCategoryDisplay(value);toggleExpenseCategoryMenu(false);}
+function toggleExpenseCategoryMenu(force){const box=document.getElementById('expenseCategorySelect');if(!box)return;const open=typeof force==='boolean'?force:!box.classList.contains('open');box.classList.toggle('open',open);box.setAttribute('aria-expanded',open?'true':'false');}
+function openExpenseForm(id=''){const m=document.getElementById('expenseModal');if(!m)return;expenseEditingId=id||'';const e=id?expenses.find(x=>x.id===id):null;document.getElementById('expenseFormTitle').textContent=e?'გასავლის შეცვლა':'ახალი გასავალი';fillExpenseCategories(e?.category||'');document.getElementById('expensePlace').value=e?.place||'';document.getElementById('expenseAmount').value=e?String(e.amount):'';document.getElementById('expenseDate').value=e?.date||new Date().toISOString().slice(0,10);toggleExpenseCategoryMenu(false);m.classList.add('show');}
 function closeExpenseForm(){document.getElementById('expenseModal')?.classList.remove('show');expenseEditingId='';}
+document.addEventListener('click',e=>{const box=document.getElementById('expenseCategorySelect');if(box&&!box.contains(e.target))toggleExpenseCategoryMenu(false);});
 async function saveExpense(){const category=String(document.getElementById('expenseCategory')?.value||'').trim();const place=String(document.getElementById('expensePlace')?.value||'').trim();const amount=Number(document.getElementById('expenseAmount')?.value||0);const date=String(document.getElementById('expenseDate')?.value||'').trim();if(!category||!place||!(amount>0)||!date){alert('კატეგორია, ადგილი, თანხა და თარიღი აუცილებელია.');return;}if(expenseEditingId){const e=expenses.find(x=>x.id===expenseEditingId);if(e){e.category=category;e.place=place;e.amount=amount;e.date=date;}}else expenses.push(normalizeExpense({id:makeUserId(),category,place,amount,date,createdAt:Date.now()}));expenses.sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt-a.createdAt);saveLocalExpenses();closeExpenseForm();renderExpenses();await saveExpensesToFirebase();}
 async function deleteExpense(id){const e=expenses.find(x=>x.id===id);if(!e)return;if(!confirm('ეს გასავალი წავშალოთ?'))return;expenses=expenses.filter(x=>x.id!==id);saveLocalExpenses();renderExpenses();await saveExpensesToFirebase();}
 function expenseMonthKey(){return expenseCalendarDate.getFullYear()+'-'+String(expenseCalendarDate.getMonth()+1).padStart(2,'0');}
