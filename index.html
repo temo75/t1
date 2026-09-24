@@ -150,6 +150,21 @@ footer{display:none!important;}
 .neonControlled .label,.neonControlled span{color:#dfffe6!important;}
 .neonControlled .amount,.neonControlled b{ }
 .neonControlBox{margin-top:14px;padding:16px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(145deg,var(--panel),var(--panel2))}
+.backgroundControlRow{display:flex;gap:12px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.backgroundColorBtn{width:42px;height:42px;border-radius:9px;border:2px solid #777;cursor:pointer;padding:0;position:relative;box-shadow:0 0 6px rgba(255,255,255,.18)}
+.backgroundColorBtn.white{background:#fff;border-color:#222}
+.backgroundColorBtn.black{background:#071117;border-color:#fff}
+.backgroundColorBtn.active{box-shadow:0 0 0 2px var(--neon-control),0 0 12px rgba(var(--neon-control-rgb),.75)}
+body.site-white-theme{background:#fff !important;color:#111 !important}
+body.site-white-theme h1,body.site-white-theme header small,body.site-white-theme #today,body.site-white-theme .card .label,body.site-white-theme .amount,body.site-white-theme .section h2,body.site-white-theme .section,body.site-white-theme .toolbox,body.site-white-theme .meta,body.site-white-theme .mini span,body.site-white-theme .mini b,body.site-white-theme .mini small,body.site-white-theme .calendarTitle,body.site-white-theme .calendarWeek,body.site-white-theme .calendarDay,body.site-white-theme .calendar .dayCell,body.site-white-theme .calendarNav,body.site-white-theme .calendarNoteBtn{color:#111 !important}
+body.site-white-theme .card,body.site-white-theme .section,body.site-white-theme .toolbox,body.site-white-theme .mini,body.site-white-theme .monthTotalHero,body.site-white-theme .expenseHero,body.site-white-theme .expenseRow,body.site-white-theme #expenseDaySection,body.site-white-theme #expenseCategoryTotals .monthRow{background:#fff !important}
+body.site-white-theme .neonControlBox{background:#fff !important}
+body.site-white-theme input,body.site-white-theme select,body.site-white-theme textarea{background:#fff !important;color:#111 !important}
+body.site-white-theme .calendarNav,body.site-white-theme .calendarNoteBtn{background:#fff !important}
+body.site-white-theme #bottomNav{background:#fff !important}
+body.site-white-theme #bottomNav > button{color:#111 !important}
+body.site-white-theme .mini .miniActionIcon{color:#111 !important}
+
 .neonControlRow{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;margin-top:12px}
 .neonControlRow input[type=color]{width:58px;height:42px;padding:2px;border-radius:10px;border:1px solid var(--line);background:#071117;cursor:pointer}
 .neonControlRow input[type=range]{width:100%}
@@ -1297,6 +1312,11 @@ body.neon-global #notesPage .noteClose{
 <div class="neonControlRow"><button type="button" class="neonColorOpen" id="neonColorOpen" onclick="openNeonPicker()" aria-label="ნეონის ფერის არჩევა"><span id="neonColorPreview"></span></button><input id="neonColor" type="color" value="#49d86a" aria-label="ნეონის ფერი"></div>
 <div style="margin-top:14px">სიმძლავრე</div>
 <div class="neonControlRow"><input id="neonStrength" type="range" min="0" max="100" value="65" step="1" aria-label="ნეონის სიმძლავრე"><span id="neonStrengthValue" class="neonValue">65%</span></div>
+<div style="margin-top:14px">ფონის ფერი</div>
+<div class="backgroundControlRow" aria-label="ფონის ფერი">
+<button type="button" class="backgroundColorBtn white" id="backgroundWhiteBtn" onclick="setSiteBackground('white')" aria-label="თეთრი ფონი" title="თეთრი"> </button>
+<button type="button" class="backgroundColorBtn black" id="backgroundBlackBtn" onclick="setSiteBackground('black')" aria-label="შავი ფონი" title="შავი"> </button>
+</div>
 </div>
 </div>
 
@@ -3396,6 +3416,7 @@ async function registerNewUser(){
     c.oninput=()=>applyGlobalNeon(true);
     r.oninput=()=>applyGlobalNeon(true);
     applyGlobalNeon(false);
+    if(typeof window.loadSiteBackgroundSettings==='function')window.loadSiteBackgroundSettings();
 
     if(currentUser)loadRemoteNeon();
 
@@ -3964,6 +3985,47 @@ function startNotesReminderWatcher(){
 startNotesReminderWatcher();
 </script>
 
+<script id="temo-background-controller">
+(function(){
+  const FIREBASE_BACKGROUND_USERS_URL='https://temo-75-default-rtdb.europe-west1.firebasedatabase.app/settings/background/users';
+  let loading=false;
+  function key(){
+    const id=String(window.currentUserId||'').trim();
+    return id?encodeURIComponent(id).replace(/%/g,'_'):'';
+  }
+  function url(){const k=key();return k?FIREBASE_BACKGROUND_USERS_URL+'/'+k+'.json':'';}
+  function apply(mode,saveRemote){
+    mode=mode==='white'?'white':'black';
+    document.body.classList.toggle('site-white-theme',mode==='white');
+    const w=document.getElementById('backgroundWhiteBtn'),b=document.getElementById('backgroundBlackBtn');
+    if(w)w.classList.toggle('active',mode==='white');
+    if(b)b.classList.toggle('active',mode==='black');
+    const k=key();
+    if(k)localStorage.setItem('temoSiteBackground_'+k,mode);
+    if(saveRemote && window.currentUser && url()){
+      fetch(url(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:mode,userId:String(window.currentUserId||''),user:String(window.currentUser||''),updatedAt:Date.now()})}).catch(()=>{});
+    }
+  }
+  window.setSiteBackground=function(mode){apply(mode,true);};
+  window.loadSiteBackgroundSettings=async function(){
+    if(loading)return; loading=true;
+    const k=key();
+    let mode=k?(localStorage.getItem('temoSiteBackground_'+k)||'black'):'black';
+    apply(mode,false);
+    if(window.currentUser&&url()){
+      try{
+        const r=await fetch(url()+'?t='+Date.now(),{cache:'no-store'});
+        if(r.ok){const d=await r.json(); if(d&&d.mode)apply(d.mode,false); else apply(mode,true);}
+      }catch(e){}
+    }
+    loading=false;
+  };
+  window.addEventListener('DOMContentLoaded',()=>{
+    const k=key();
+    apply(k?(localStorage.getItem('temoSiteBackground_'+k)||'black'):'black',false);
+  });
+})();
+</script>
 <script id="temo-language-system">
 (function(){
   const GLOBAL_KEY='temoLanguage';
@@ -4061,6 +4123,9 @@ startNotesReminderWatcher();
     'ნეონის ფერი':['Neon color','Χρώμα neon'],
     'სიმძლავრე':['Strength','Ένταση'],
     'ნეონის სიმძლავრე':['Neon strength','Ένταση neon'],
+    'ფონის ფერი':['Background color','Χρώμα φόντου'],
+    'თეთრი':['White','Λευκό'],
+    'შავი':['Black','Μαύρο'],
     'ჩემი ავტორიზაცია':['My authorization','Η εξουσιοδότησή μου'],
     'მომხმარებელი':['User','Χρήστης'],
     'ელფოსტა':['Email','Email'],
