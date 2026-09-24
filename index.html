@@ -1116,7 +1116,7 @@ body.neon-global #notesPage .noteClose{
 
 <div class="modal" id="expenseModal"><div class="form">
 <h2 id="expenseFormTitle">ახალი გასავალი</h2>
-<label>კატეგორია</label><div class="expenseCategorySelect" id="expenseCategorySelect" tabindex="0" role="combobox" aria-expanded="false" aria-label="კატეგორია"><div class="expenseCategoryCurrent" id="expenseCategoryCurrent"><span class="expenseCategoryIcon" id="expenseCategoryIcon">🛒</span><span class="expenseCategoryText" id="expenseCategoryText">აირჩიეთ კატეგორია</span><span class="expenseCategoryCheck">✓</span></div><div class="expenseCategoryMenu" id="expenseCategoryMenu"></div></div><select id="expenseCategory" aria-hidden="true" tabindex="-1"></select>
+<label>კატეგორია</label><div class="expenseCategorySelect" id="expenseCategorySelect" tabindex="0" role="combobox" aria-expanded="false" aria-label="კატეგორია" onclick="toggleExpenseCategoryMenu()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleExpenseCategoryMenu()}"><div class="expenseCategoryCurrent" id="expenseCategoryCurrent"><span class="expenseCategoryIcon" id="expenseCategoryIcon">🛒</span><span class="expenseCategoryText" id="expenseCategoryText">აირჩიეთ კატეგორია</span><span class="expenseCategoryCheck">✓</span></div><div class="expenseCategoryMenu" id="expenseCategoryMenu"></div></div><select id="expenseCategory" aria-hidden="true" tabindex="-1"></select>
 <label>სად</label><input id="expensePlace" type="text" maxlength="100" placeholder="მაგ: Lidl">
 <label>თანხა (€)</label><input id="expenseAmount" type="number" inputmode="decimal" min="0.01" step="0.01" placeholder="მაგ: 120">
 <label>თარიღი</label><input id="expenseDate" type="date">
