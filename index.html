@@ -4614,7 +4614,7 @@ startNotesReminderWatcher();
   const FIREBASE_BACKGROUND_USERS_URL='https://temo-75-default-rtdb.europe-west1.firebasedatabase.app/settings/background/users';
   let loading=false;
   function key(){
-    const id=String(window.currentUserId||'').trim();
+    const id=String(currentUserId||'').trim();
     return id?encodeURIComponent(id).replace(/%/g,'_'):'';
   }
   function url(){const k=key();return k?FIREBASE_BACKGROUND_USERS_URL+'/'+k+'.json':'';}
@@ -4638,8 +4638,8 @@ startNotesReminderWatcher();
     // ეს უზრუნველყოფს, რომ Refresh/Settings/ხელახლა გახსნისას არჩეული ფერი არ დაიკარგოს.
     localStorage.setItem('temoSiteBackground',mode);
     if(k)localStorage.setItem('temoSiteBackground_'+k,mode);
-    if(saveRemote && window.currentUser && url()){
-      fetch(url(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:mode,userId:String(window.currentUserId||''),user:String(window.currentUser||''),updatedAt:Date.now()})}).catch(()=>{});
+    if(saveRemote && currentUser && url()){
+      fetch(url(),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:mode,userId:String(currentUserId||''),user:String(currentUser||''),updatedAt:Date.now()})}).catch(()=>{});
     }
   }
   window.setSiteBackground=function(mode){apply(mode,true);};
@@ -4661,7 +4661,7 @@ startNotesReminderWatcher();
     // ავიღოთ მომხმარებლის ბოლო შენახული ფერი Firebase-იდან.
     let mode=currentMode;
     apply(mode,false);
-    if(window.currentUser&&url()){
+    if(currentUser&&url()){
       try{
         const r=await fetch(url()+'?t='+Date.now(),{cache:'no-store'});
         if(r.ok){
