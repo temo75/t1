@@ -1197,6 +1197,18 @@ html body.site-white-theme .forgotSuccessBox button {
 </style>
 
 
+<style id="temo-white-action-button-text-fix">
+/* White-mode action buttons: all button text stays black, including inline-styled controls. */
+html body.site-white-theme button,
+html body.site-white-theme button *,
+html body.site-white-theme input[type="button"],
+html body.site-white-theme input[type="submit"],
+html body.site-white-theme input[type="reset"] {
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+}
+</style>
+
 <style id="temo-theme-popup-final-fix">
 /* FINAL POPUP THEME FIX: popup surfaces and their text follow the selected site background. */
 html body.site-white-theme .modal .form,
