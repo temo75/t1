@@ -1025,6 +1025,32 @@ body.neon-global #notesPage .noteClose{
 }
 </style>
 
+<style id="temo-mini-action-icons">
+/* მისაღები და გასავალი — პატარა თეთრი წრე/ზემოთ ისარი ქვედა მარჯვენა კუთხეში */
+.stats .mini .miniActionIcon{
+  position:absolute !important;
+  right:9px !important;
+  bottom:9px !important;
+  width:24px !important;
+  height:24px !important;
+  min-width:24px !important;
+  border:2px solid #fff !important;
+  border-radius:50% !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  color:#fff !important;
+  background:transparent !important;
+  font-size:17px !important;
+  font-weight:bold !important;
+  line-height:1 !important;
+  text-shadow:none !important;
+  box-shadow:0 0 5px rgba(255,255,255,.55) !important;
+  pointer-events:none !important;
+  z-index:3 !important;
+}
+</style>
+
 <style id="temo-equal-four-stat-cards">
 /* მხოლოდ მთავარი გვერდის 4 პატარა ბლოკის ერთნაირი ზომა */
 .stats .mini{
@@ -1087,9 +1113,9 @@ body.neon-global #notesPage .noteClose{
 
 <div class="stats">
 <div class="mini neonControlled"><span>📅 დღიური საშუალო</span><b id="average">€0</b></div>
-<div class="mini miniReceivable neonControlled" id="receivableCard" onclick="openReceivableModal()" role="button" tabindex="0" title="მისაღები თანხების ნახვა"><span>⏳ მისაღები</span><b id="unpaid">€0</b><small id="unpaidDays">0 გადასახდელი</small></div>
+<div class="mini miniReceivable neonControlled" id="receivableCard" onclick="openReceivableModal()" role="button" tabindex="0" title="მისაღები თანხების ნახვა"><span>⏳ მისაღები</span><b id="unpaid">€0</b><small id="unpaidDays">0 გადასახდელი</small><span class="miniActionIcon" aria-hidden="true">↑</span></div>
 <div class="mini neonControlled"><span>📊 ამ თვის სამუშაოები</span><b id="monthDays">0 დღე</b></div>
-<div class="mini neonControlled expenseQuickCard" id="expenseQuickCard" onclick="goExpenses()" role="button" tabindex="0" title="გასავალი"><span>💸 გასავალი</span><b id="expenseMonthTotal">€0</b><small>ამ თვის გასავალი</small></div>
+<div class="mini neonControlled expenseQuickCard" id="expenseQuickCard" onclick="goExpenses()" role="button" tabindex="0" title="გასავალი"><span>💸 გასავალი</span><b id="expenseMonthTotal">€0</b><small>ამ თვის გასავალი</small><span class="miniActionIcon" aria-hidden="true">↑</span></div>
 <button class="add" onclick="openForm()">＋ სამუშაოს დამატება</button>
 </div>
 <div class="section">
