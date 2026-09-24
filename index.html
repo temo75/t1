@@ -523,7 +523,7 @@ body.neon-global .userName{
 
 <style id="temo-notes-page-switch">
 #notesPage .notesPageSwitch{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
-#notesPage .notesPageBtn{border:1px solid #29404c;background:#111f29;color:#fff;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer;box-shadow:none}
+#notesPage .notesPageBtn{border:1px solid #29404c;background:#111f29;color:#fff;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer;box-shadow:none;pointer-events:auto;position:relative;z-index:20}
 #notesPage .notesPageBtn.active{border-color:#49d86a;background:#123a21;color:#a8ffb8;box-shadow:0 0 10px rgba(73,216,106,.18)}
 #notesPage .notesToolsRow{display:flex;justify-content:flex-end;margin-bottom:12px}
 #notesPage .notesToolsRow .notesAddBtn{margin:0}
@@ -1088,6 +1088,32 @@ body.neon-global #notesPage .noteClose{
   .stats .mini b{font-size:19px !important;line-height:1.15 !important;margin-top:5px !important;}
   .stats .mini small{font-size:11px !important;line-height:1.2 !important;}
   .stats .add{width:60% !important;max-width:140px !important;padding:6px 7px !important;font-size:12px !important;line-height:1.2 !important;}
+}
+</style>
+<style id="temo-white-theme-language-fix">
+html body.site-white-theme .languageMenu,
+html body.site-white-theme .loginLanguageBox .languageMenu {
+  background:#fff !important;
+  border-color:var(--neon-control,#2999ff) !important;
+  color:#111 !important;
+  box-shadow:0 0 14px rgba(41,153,255,.35) !important;
+}
+html body.site-white-theme .languageOption,
+html body.site-white-theme .loginLanguageBox .languageOption {
+  background:#fff !important;
+  color:#111 !important;
+}
+html body.site-white-theme .languageOption:hover,
+html body.site-white-theme .languageOption.active,
+html body.site-white-theme .loginLanguageBox .languageOption:hover,
+html body.site-white-theme .loginLanguageBox .languageOption.active {
+  background:#eef7ff !important;
+  color:#111 !important;
+}
+html body.site-white-theme .languageBtn,
+html body.site-white-theme .loginLanguageBox .languageBtn {
+  background:#fff !important;
+  color:#111 !important;
 }
 </style>
 <style id="temo-white-theme-complete-text-fix">
@@ -2546,7 +2572,11 @@ function showNotesSubPage(which){
   second.style.display=isReminders?'none':'';
   remindersBtn.classList.toggle('active',isReminders);
   secondBtn.classList.toggle('active',!isReminders);
-  if(!isReminders){
+  if(isReminders){
+    // „დააყენე შეტყობინება“ ღილაკზე დაჭერამ ყოველთვის უნდა მოახდინოს რეაგირება
+    // და აქტუალური შეხსენებების სია ხელახლა ჩაიტვირთოს.
+    if(typeof loadNotes==='function')loadNotes();
+  }else{
     renderDailyEntries();
     syncDailyFromFirebase();
   }
@@ -4613,7 +4643,10 @@ startNotesReminderWatcher();
   window.loadSiteBackgroundSettings=async function(){
     if(loading)return; loading=true;
     const k=key();
-    let mode=k?(localStorage.getItem('temoSiteBackground_'+k)||'black'):'black';
+    // Settings-ში შესვლისას მიმდინარე თეთრი რეჟიმი არ უნდა შეიცვალოს შავად.
+    // თუ შენახული მომხმარებლის რეჟიმი ჯერ არ არის ხელმისაწვდომი, მიმდინარე body class იყოს fallback.
+    const currentMode=document.body.classList.contains('site-white-theme')?'white':'black';
+    let mode=k?(localStorage.getItem('temoSiteBackground_'+k)||currentMode):currentMode;
     apply(mode,false);
     if(window.currentUser&&url()){
       try{
