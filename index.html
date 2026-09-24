@@ -3728,6 +3728,32 @@ async function registerNewUser(){
 })();
 </script>
 
+<script id="temo-white-theme-final-text-fix">
+(function(){
+  function forceWhiteThemeText(){
+    const white=document.body && document.body.classList.contains('site-white-theme');
+    if(!document.body) return;
+    document.querySelectorAll('body.site-white-theme *').forEach(function(el){
+      if(white){
+        el.style.setProperty('color','#111','important');
+      }else{
+        el.style.removeProperty('color');
+      }
+    });
+  }
+  window.addEventListener('DOMContentLoaded',forceWhiteThemeText);
+  new MutationObserver(function(){
+    if(document.body && document.body.classList.contains('site-white-theme')) forceWhiteThemeText();
+  }).observe(document.body || document.documentElement,{
+    subtree:true,
+    childList:true,
+    attributes:true,
+    attributeFilter:['class']
+  });
+  window.forceWhiteThemeText=forceWhiteThemeText;
+})();
+</script>
+
 <!-- index 4: authentication true/false logic normalized -->
 
 <script id="temo-white-text-numbers-only-js">
