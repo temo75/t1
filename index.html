@@ -5160,28 +5160,37 @@ startNotesReminderWatcher();
 </body>
 </html>
 <style id="temo-calendar-number-neon">
-/* კალენდრის რიცხვების ჩარჩოები: ნამუშევარი დღე — არჩეული ნეონის ფერი; ცარიელი დღე — წითელი ნეონი */
+/* კალენდრის რიცხვების ჩარჩოები: ნამუშევარი დღე — არჩეული ნეონის ფერი; წარსულის ცარიელი დღე — წითელი; მომავალი — ცარიელი; დღეს — სტაფილოსფერი */
 #calendarGrid .dayCell:not(.empty){
   border-color:var(--neon-control,#49d86a) !important;
   box-shadow:
-    inset 0 0 7px rgba(var(--neon-control-rgb,73,216,106),.72),
-    inset 0 0 16px rgba(var(--neon-control-rgb,73,216,106),.52),
-    inset 0 0 28px rgba(var(--neon-control-rgb,73,216,106),.30) !important;
-  text-shadow:0 0 7px rgba(var(--neon-control-rgb,73,216,106),.72);
+    inset 0 0 4px rgba(var(--neon-control-rgb,73,216,106),.42),
+    inset 0 0 9px rgba(var(--neon-control-rgb,73,216,106),.28) !important;
+  text-shadow:0 0 4px rgba(var(--neon-control-rgb,73,216,106),.42);
 }
-#calendarGrid .dayCell:not(.empty):not(.hasJobs){
+#calendarGrid .dayCell:not(.empty):not(.hasJobs):not(.today){
   border-color:#ff3030 !important;
   box-shadow:
-    inset 0 0 7px rgba(255,48,48,.78),
-    inset 0 0 16px rgba(255,48,48,.56),
-    inset 0 0 28px rgba(255,48,48,.34) !important;
-  text-shadow:0 0 7px rgba(255,48,48,.78);
+    inset 0 0 4px rgba(255,48,48,.46),
+    inset 0 0 9px rgba(255,48,48,.30) !important;
+  text-shadow:0 0 4px rgba(255,48,48,.46);
+}
+#calendarGrid .dayCell.today{
+  border-color:#ff9d2e !important;
+  box-shadow:
+    inset 0 0 4px rgba(255,157,46,.58),
+    inset 0 0 10px rgba(255,157,46,.36) !important;
+  text-shadow:0 0 5px rgba(255,157,46,.58);
 }
 #calendarGrid .dayCell.hasJobs .num,
 #calendarGrid .dayCell.hasJobs .jobCount{
-  text-shadow:0 0 7px rgba(var(--neon-control-rgb,73,216,106),.72);
+  text-shadow:0 0 4px rgba(var(--neon-control-rgb,73,216,106),.42);
 }
-#calendarGrid .dayCell:not(.empty):not(.hasJobs) .num{
-  text-shadow:0 0 7px rgba(255,48,48,.78);
+#calendarGrid .dayCell:not(.empty):not(.hasJobs):not(.today) .num{
+  text-shadow:0 0 4px rgba(255,48,48,.46);
+}
+#calendarGrid .dayCell.today .num,
+#calendarGrid .dayCell.today .jobCount{
+  text-shadow:0 0 5px rgba(255,157,46,.58);
 }
 </style>
