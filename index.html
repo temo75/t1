@@ -1293,6 +1293,231 @@ html body.site-white-theme .dayCell .jobCount {
   -webkit-text-fill-color:#111 !important;
 }
 </style>
+
+<style id="temo-white-theme-root-deep-fix">
+/* ROOT WHITE THEME: every visible content surface becomes white; text stays black. */
+html body.site-white-theme,
+html body.site-white-theme .app,
+html body.site-white-theme #mainPage,
+html body.site-white-theme #settingsPage,
+html body.site-white-theme #userManagementPage,
+html body.site-white-theme #walletPage,
+html body.site-white-theme #expensesPage,
+html body.site-white-theme #notesPage,
+html body.site-white-theme #bottomNav {
+  background:#fff !important;
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+}
+
+/* Main cards, sections and lists */
+html body.site-white-theme .card,
+html body.site-white-theme .section,
+html body.site-white-theme .toolbox,
+html body.site-white-theme .mini,
+html body.site-white-theme .item,
+html body.site-white-theme .monthRow,
+html body.site-white-theme .monthTotalHero,
+html body.site-white-theme .expenseHero,
+html body.site-white-theme .expenseRow,
+html body.site-white-theme .expenseQuickCard,
+html body.site-white-theme .neonControlBox,
+html body.site-white-theme #dayJobsSection,
+html body.site-white-theme #websiteUpdateSection,
+html body.site-white-theme #neonControlSection,
+html body.site-white-theme #userManagementSection,
+html body.site-white-theme #userChatSection,
+html body.site-white-theme #adminMessagesSection,
+html body.site-white-theme .userManagementBox,
+html body.site-white-theme .userManagementListWrap,
+html body.site-white-theme .userRow,
+html body.site-white-theme .chatMessage,
+html body.site-white-theme .chatReplyBox,
+html body.site-white-theme .notesSubPage,
+html body.site-white-theme .noteCard,
+html body.site-white-theme .dailyCard,
+html body.site-white-theme .dailyEmpty,
+html body.site-white-theme .notesEmpty,
+html body.site-white-theme .calendar,
+html body.site-white-theme .receivableSummary,
+html body.site-white-theme .receivableRow,
+html body.site-white-theme .receivableAll,
+html body.site-white-theme .receivableEmpty {
+  background:#fff !important;
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+}
+
+/* Calendar and every calendar cell */
+html body.site-white-theme .calendarGrid,
+html body.site-white-theme .calendarWeek,
+html body.site-white-theme .calendarHead,
+html body.site-white-theme .calendarNav,
+html body.site-white-theme .dayCell,
+html body.site-white-theme .dayCell.empty,
+html body.site-white-theme .dayCell.selected,
+html body.site-white-theme .dayCell.today,
+html body.site-white-theme .calendarDay,
+html body.site-white-theme .calendarTitle,
+html body.site-white-theme .calendarNoteRow {
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+}
+html body.site-white-theme .dayCell,
+html body.site-white-theme .dayCell.selected,
+html body.site-white-theme .dayCell.today {
+  background:#fff !important;
+}
+
+/* Notes / daily pages */
+html body.site-white-theme #notesPage .notesHeader,
+html body.site-white-theme #notesPage .notesSub,
+html body.site-white-theme #notesPage .notesPageSwitch,
+html body.site-white-theme #notesPage .notesToolsRow,
+html body.site-white-theme #notesPage .dailyList,
+html body.site-white-theme #notesPage .dailyPagination,
+html body.site-white-theme #notesPage .dailyEditor,
+html body.site-white-theme #notesPage .dailyViewHeader,
+html body.site-white-theme #notesPage .dailyViewBottom,
+html body.site-white-theme #notesPage .notesModalActions {
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+}
+html body.site-white-theme #notesPage .dailyCard,
+html body.site-white-theme #notesPage .dailyCardTitle,
+html body.site-white-theme #notesPage .dailyViewBox,
+html body.site-white-theme #notesPage .dailyViewEditText,
+html body.site-white-theme #notesPage .dailyTitleInput,
+html body.site-white-theme #notesPage .notesModalBox,
+html body.site-white-theme #notesPage .notesField input,
+html body.site-white-theme #notesPage .notesField textarea,
+html body.site-white-theme #notesPage .notesPageBtn,
+html body.site-white-theme #notesPage .dailyCalendarBtn,
+html body.site-white-theme #notesPage .dailyCalendarClear,
+html body.site-white-theme #notesPage .dailyPageBtn,
+html body.site-white-theme #notesPage .dailyViewBottom button,
+html body.site-white-theme #notesPage .notesActions button,
+html body.site-white-theme #notesPage .noteActions button {
+  background:#fff !important;
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+}
+
+/* Expense page and category dropdown */
+html body.site-white-theme .expenseCategoryCurrent,
+html body.site-white-theme .expenseCategoryMenu,
+html body.site-white-theme .expenseCategoryOption,
+html body.site-white-theme .expenseRow,
+html body.site-white-theme .expenseMeta,
+html body.site-white-theme .expenseAmount {
+  background:#fff !important;
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+}
+
+/* Every form control in white mode */
+html body.site-white-theme input,
+html body.site-white-theme select,
+html body.site-white-theme textarea,
+html body.site-white-theme option,
+html body.site-white-theme button {
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+}
+html body.site-white-theme input,
+html body.site-white-theme select,
+html body.site-white-theme textarea,
+html body.site-white-theme option {
+  background:#fff !important;
+}
+html body.site-white-theme input::placeholder,
+html body.site-white-theme textarea::placeholder {
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+  opacity:.65 !important;
+}
+
+/* All modal/popup surfaces, including popups that were previously missed. */
+html body.site-white-theme .modal .form,
+html body.site-white-theme .yearPickerBox,
+html body.site-white-theme .credentialsBox,
+html body.site-white-theme .deleteAuthBox,
+html body.site-white-theme .noteBox,
+html body.site-white-theme .receivableBox,
+html body.site-white-theme .newUserAuthBox,
+html body.site-white-theme .dailyViewBox,
+html body.site-white-theme .notesModalBox,
+html body.site-white-theme .neonPickerBox,
+html body.site-white-theme .forgotPasswordBox,
+html body.site-white-theme .forgotSuccessBox,
+html body.site-white-theme .loginBox {
+  background:#fff !important;
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+}
+html body.site-white-theme .modal .form *,
+html body.site-white-theme .yearPickerBox *,
+html body.site-white-theme .credentialsBox *,
+html body.site-white-theme .deleteAuthBox *,
+html body.site-white-theme .noteBox *,
+html body.site-white-theme .receivableBox *,
+html body.site-white-theme .newUserAuthBox *,
+html body.site-white-theme .dailyViewBox *,
+html body.site-white-theme .notesModalBox *,
+html body.site-white-theme .neonPickerBox *,
+html body.site-white-theme .forgotPasswordBox *,
+html body.site-white-theme .forgotSuccessBox *,
+html body.site-white-theme .loginBox * {
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+}
+
+/* Popup inputs and selects must also be white, not just their text. */
+html body.site-white-theme .modal .form input,
+html body.site-white-theme .modal .form select,
+html body.site-white-theme .modal .form textarea,
+html body.site-white-theme .yearPickerBox button,
+html body.site-white-theme .credentialsBox input,
+html body.site-white-theme .deleteAuthBox input,
+html body.site-white-theme .newUserAuthBox input,
+html body.site-white-theme .forgotPasswordBox input {
+  background:#fff !important;
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+}
+
+/* Keep the dimmed modal backdrops dark; only the popup itself becomes white. */
+html body.site-white-theme .modal,
+html body.site-white-theme .yearPickerModal,
+html body.site-white-theme .credentialsModal,
+html body.site-white-theme .deleteAuthModal,
+html body.site-white-theme .receivableModal,
+html body.site-white-theme .noteModal,
+html body.site-white-theme .neonPickerModal,
+html body.site-white-theme .notesModal,
+html body.site-white-theme .dailyViewModal,
+html body.site-white-theme #forgotPasswordModal,
+html body.site-white-theme #forgotPasswordSuccess {
+  color:#111 !important;
+}
+
+/* Bottom navigation in white mode: white surface, black text/icons where applicable. */
+html body.site-white-theme #bottomNav {
+  background:#fff !important;
+}
+
+/* Existing inline/old dark backgrounds cannot override the white mode. */
+html body.site-white-theme [style*="background:#071117"],
+html body.site-white-theme [style*="background:#09161e"],
+html body.site-white-theme [style*="background:#0d1b24"],
+html body.site-white-theme [style*="background:#10232f"],
+html body.site-white-theme [style*="background:#0c1a23"],
+html body.site-white-theme [style*="background:#111f29"],
+html body.site-white-theme [style*="background:#101820"] {
+  background:#fff !important;
+}
+</style>
+
 </head>
 <body>
 <nav id="bottomNav" aria-label="მთავარი მენიუ">
