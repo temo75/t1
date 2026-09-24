@@ -3757,8 +3757,10 @@ async function registerNewUser(){
     document.querySelectorAll('body.site-white-theme *').forEach(function(el){
       if(white){
         el.style.setProperty('color','#111','important');
+        el.style.setProperty('-webkit-text-fill-color','#111','important');
       }else{
         el.style.removeProperty('color');
+        el.style.removeProperty('-webkit-text-fill-color');
       }
     });
   }
