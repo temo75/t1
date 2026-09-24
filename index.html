@@ -4670,8 +4670,10 @@ startNotesReminderWatcher();
     document.body.classList.toggle('site-white-theme',mode==='white');
     if(mode==='white' && typeof window.forceWhiteThemeText==='function') window.forceWhiteThemeText();
     if(mode==='black'){
-      const popupSelector='.modal .form, .yearPickerBox, .credentialsBox, .deleteAuthBox, .noteBox, .receivableBox, .newUserAuthBox, .dailyViewBox, .notesModalBox, .neonPickerBox, .forgotPasswordBox, .forgotSuccessBox';
-      document.querySelectorAll(popupSelector+' [data-temo-white-text-fix]').forEach(function(el){
+      // თეთრი რეჟიმიდან შავზე გადასვლისას მოვაშოროთ თეთრი რეჟიმის მიერ
+      // ელემენტებზე დატოვებული inline text-color-ები, რათა შავი რეჟიმის
+      // ჩვეულებრივი ღილაკის/ტექსტის ფერები სრულად აღდგეს.
+      document.querySelectorAll('[data-temo-white-text-fix="1"]').forEach(function(el){
         el.style.removeProperty('color');
         el.style.removeProperty('-webkit-text-fill-color');
         el.removeAttribute('data-temo-white-text-fix');
