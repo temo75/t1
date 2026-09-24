@@ -4046,6 +4046,24 @@ async function registerNewUser(){
 // ახალი მომხმარებლის ავტორიზაციისას მთავარი ავტორიზაციის ფანჯარა იმალება, რათა ორი ფანჯარა ერთმანეთს არ დაეფაროს.
 // გაუქმებისას მთავარი ავტორიზაციის ფანჯარა ისევ გამოჩნდება.
 </script>
+<style id="temo-white-theme-auth-screen-fix">
+/* ავტორიზაციის გვერდებიც მიჰყვება არჩეულ თეთრ/შავ ფონს. */
+html body.site-white-theme #loginScreen{background:#fff !important;color:#111 !important;}
+html body.site-white-theme #loginScreen .loginBox{background:#fff !important;color:#111 !important;-webkit-text-fill-color:#111 !important;}
+html body.site-white-theme #loginScreen .loginBox h2,
+html body.site-white-theme #loginScreen .loginBox p,
+html body.site-white-theme #loginScreen .loginBox input,
+html body.site-white-theme #loginScreen .loginBox select,
+html body.site-white-theme #loginScreen .loginBox button{color:#111 !important;-webkit-text-fill-color:#111 !important;}
+html body.site-white-theme #loginScreen .loginBox input,
+html body.site-white-theme #loginScreen .loginBox select{background:#fff !important;}
+html body.site-white-theme #newUserAuthModal .newUserAuthBox,
+html body.site-white-theme #forgotPasswordModal .forgotPasswordBox{background:#fff !important;color:#111 !important;-webkit-text-fill-color:#111 !important;}
+html body.site-white-theme #newUserAuthModal .newUserAuthBox *,
+html body.site-white-theme #forgotPasswordModal .forgotPasswordBox *{color:#111 !important;-webkit-text-fill-color:#111 !important;}
+html body.site-white-theme #newUserAuthModal .newUserAuthBox input,
+html body.site-white-theme #forgotPasswordModal .forgotPasswordBox input{background:#fff !important;color:#111 !important;-webkit-text-fill-color:#111 !important;}
+</style>
 <style id="temo-swipe-navigation-style">
 /*
   Stable swipe stage:
@@ -4650,7 +4668,7 @@ startNotesReminderWatcher();
     // Settings-ში შესვლა ან გვერდის ხელახლა გახსნა მას სხვა ფერზე აღარ გადაიყვანს.
     const currentMode=document.body.classList.contains('site-white-theme')?'white':'black';
     const localKey=k?'temoSiteBackground_'+k:'';
-    const localMode=localKey?localStorage.getItem(localKey):null;
+    const localMode=localKey?(localStorage.getItem(localKey)||localStorage.getItem('temoSiteBackground')):localStorage.getItem('temoSiteBackground');
     if(localMode==='white'||localMode==='black'){
       apply(localMode,false);
       loading=false;
