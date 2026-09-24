@@ -1661,6 +1661,29 @@ html body.site-white-theme input[type="radio"] {
   -webkit-text-fill-color:#111 !important;
 }
 </style>
+<style id="temo-white-mode-button-surface-fix">
+/* WHITE MODE: action buttons use the same white surface with black text. */
+html body.site-white-theme button,
+html body.site-white-theme input[type="button"],
+html body.site-white-theme input[type="submit"],
+html body.site-white-theme input[type="reset"] {
+  background:#fff !important;
+  background-image:none !important;
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+  text-shadow:none !important;
+}
+
+/* Keep the neon border/glow while removing the dark blue fill. */
+html body.site-white-theme button:hover,
+html body.site-white-theme button:focus,
+html body.site-white-theme button:active {
+  background:#fff !important;
+  background-image:none !important;
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+}
+</style>
 </head>
 <body>
 <nav id="bottomNav" aria-label="მთავარი მენიუ">
