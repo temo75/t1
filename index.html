@@ -1844,7 +1844,7 @@ html body.site-white-theme .backgroundColorBtn.black:active {
     </div>
     <div class="notesPageSwitch">
       <button type="button" class="notesPageBtn" id="notesNewBtn" onclick="openNoteModal()">🔔 შეტყობინების დაყენება</button>
-      <button type="button" class="notesPageBtn" id="notesSecondBtn" onclick="showNotesSubPage('daily')">📖 დღიური</button>
+      <button type="button" class="notesPageBtn" id="notesSecondBtn" onclick="showNotesSubPage('daily')">📖 დღიური ჩანაწერები</button>
     </div>
   </div>
 
@@ -4635,7 +4635,7 @@ function renderNotes(){
   const list=$('notesList');
   if(!list)return;
   if(!notesCache.length){
-    list.innerHTML='<div class="noteEmpty">'+t('📖 ჯერ ჩანაწერები არ გაქვს.')+'<br>'+t('დააჭირე „🔔 შეტყობინების დაყენება“-ს.')+'<button type="button" class="notesFramePlus" aria-label="ახალი შეტყობინება" onclick="openNoteModal()">＋</button></div>';
+    list.innerHTML='<div class="noteEmpty">'+t('📖 ჯერ ჩანაწერები არ გაქვს.')+'<br>'+t('დააჭირე „🔔 შეტყობინების დაყენება“-ს.')+'</div>';
     return;
   }
   list.innerHTML=notesCache.map(n=>{
@@ -4898,6 +4898,7 @@ startNotesReminderWatcher();
     'სამუშაოები':['jobs','εργασίες'],
     'დააყენე შეტყობინება':['Set reminder','Ορισμός υπενθύμισης'],
     'დღიური':['Diary','Ημερολόγιο'],
+    '📖 დღიური ჩანაწერები':['📖 Diary entries','📖 Καταχωρίσεις ημερολογίου'],
     '➕ დამატე':['➕ Add','➕ Προσθήκη'],
     'ყველა ჩანაწერი':['All notes','Όλες οι σημειώσεις'],
     'ყველა თარიღი':['All dates','Όλες οι ημερομηνίες'],
