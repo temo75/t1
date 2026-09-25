@@ -2718,7 +2718,7 @@ function exportMyDataExcel(){
 function exportMyDataPdf(){
   const d=exportDataRows();
   const lang=typeof window.getCurrentLanguage==='function'?String(window.getCurrentLanguage()||'ka'):'ka';
-  const L={
+  const labels={
     ka:{
       title:(String(window.currentUser||'TEMO').trim()||'TEMO')+' სამუშაო ანგარიში',
       summary:'ჯამური მონაცემები',
@@ -2744,7 +2744,7 @@ function exportMyDataPdf(){
       popup:'PDF-ის ფანჯარა ვერ გაიხსნა.'
     },
     en:{
-      title:'TEMO Work Tracker',
+      title:'',
       summary:'Summary',
       totalJobs:'Total jobs',
       totalEarned:'Total earned',
@@ -2768,7 +2768,7 @@ function exportMyDataPdf(){
       popup:'The PDF window could not be opened.'
     },
     el:{
-      title:'TEMO Εργασίες',
+      title:'',
       summary:'Σύνοψη',
       totalJobs:'Σύνολο εργασιών',
       totalEarned:'Συνολικά κερδισμένα',
@@ -2791,15 +2791,12 @@ function exportMyDataPdf(){
       print:'Εκτύπωση / Αποθήκευση ως PDF',
       popup:'Δεν ήταν δυνατό να ανοίξει το παράθυρο PDF.'
     }
-  }[lang]||null;
-  const t=L||({
-    title:'TEMO Work Tracker',summary:'Summary',totalJobs:'Total jobs',totalEarned:'Total earned',
-    received:'Received payments',receivable:'Still receivable',totalExpenses:'Total expenses',
-    balance:'Balance',workData:'Work data',expenseData:'Expense data',date:'Date',
-    workplace:'Workplace',amount:'Amount',status:'Status',note:'Note',category:'Category',
-    where:'Where',paid:'Paid',unpaid:'Unpaid',noData:'No data',
-    print:'Print / Save as PDF',popup:'The PDF window could not be opened.'
-  });
+  };
+  const accountName=String(currentUser||'TEMO').trim()||'TEMO';
+  labels.ka.title=accountName+' სამუშაო ანგარიში';
+  labels.en.title=accountName+' Work Tracker';
+  labels.el.title=accountName+' Εργασίες';
+  const t=labels[lang]||labels.en;
 
   const locale=lang==='ka'?'ka-GE':lang==='el'?'el-GR':'en-US';
   const dateText=new Date().toLocaleDateString(locale);
