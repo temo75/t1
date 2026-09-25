@@ -1841,14 +1841,13 @@ html body.site-white-theme .backgroundColorBtn.black:active {
       <div class="notesSub">შენი პირადი ჩანაწერები და შეხსენებები</div>
     </div>
     <div class="notesPageSwitch">
-      <button type="button" class="notesPageBtn active" id="notesRemindersBtn" onclick="showNotesSubPage('reminders')">🔔 დააყენე შეტყობინება</button>
+      <button type="button" class="notesPageBtn" id="notesNewBtn" onclick="openNoteModal()">➕ ახალი ჩანაწერი</button>
       <button type="button" class="notesPageBtn" id="notesSecondBtn" onclick="showNotesSubPage('daily')">📖 დღიური</button>
     </div>
   </div>
 
   <div id="notesRemindersPage">
     <div class="notesToolsRow">
-      <button type="button" class="notesAddBtn" onclick="openNoteModal()">➕ ახალი ჩანაწერი</button>
     </div>
   <div id="notesList" class="notesList"></div>
   </div>
