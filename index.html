@@ -1808,8 +1808,7 @@ html body.site-white-theme .backgroundColorBtn.black:active {
 <div id="expensesPage" class="pageHidden">
 <header><div><h1>💸 გასავალი</h1><small>ამ თვის ხარჯები</small></div></header>
 <div class="expenseHero neonControlled"><div class="label">💸 ამ თვის გასავალი</div><div class="amount" id="expensesTotal">€0</div></div>
-<button class="add expenseAddBtn" onclick="openExpenseForm()">＋ ახალი გასავალი</button>
-<div class="section">
+<div class="section expenseCalendarSection">
 <h2>📅 კალენდარი</h2>
 <div class="calendarHead">
 <button class="calendarNav" onclick="prevExpenseCalendarMonth()">‹</button>
@@ -1818,6 +1817,7 @@ html body.site-white-theme .backgroundColorBtn.black:active {
 </div>
 <div class="calendarWeek"><div>ორშ</div><div>სამ</div><div>ოთხ</div><div>ხუთ</div><div>პარ</div><div>შაბ</div><div>კვი</div></div>
 <div id="expenseCalendarGrid" class="calendarGrid"></div>
+<button class="add expenseAddBtn expenseCalendarAddBtn" onclick="openExpenseForm()">＋ ახალი გასავალი</button>
 </div>
 <div class="section" id="expenseDaySection" style="display:none">
 <div class="dayJobsTitle"><h2 id="expenseDayTitle">აირჩიე თარიღი</h2><span id="expenseDayTotal"></span></div>
@@ -5356,6 +5356,23 @@ startNotesReminderWatcher();
 #expensesPage #expenseCalendarGrid .dayCell.today .num,
 #expensesPage #expenseCalendarGrid .dayCell.today .jobCount{
   text-shadow:0 0 7px rgba(var(--neon-control-rgb,73,216,106),.85) !important;
+}
+</style>
+
+
+<style id="temo-expense-calendar-add-position">
+/* ახალი გასავალი — პატარა ღილაკი კალენდრის ბლოკის ქვედა მარჯვენა კუთხეში */
+#expensesPage .expenseCalendarSection{
+  position:relative;
+}
+#expensesPage .expenseCalendarSection .expenseCalendarAddBtn{
+  width:auto;
+  max-width:none;
+  margin:10px 0 0 auto;
+  padding:7px 11px;
+  font-size:13px;
+  line-height:1.15;
+  display:block;
 }
 </style>
 
