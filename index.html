@@ -529,7 +529,11 @@ html body.site-white-theme .expenseDayPopup{background:#fff;color:#111;border-co
 
 <style id="temo-notes-page-switch">
 #notesPage .notesPageSwitch{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
-#notesPage .notesPageBtn{border:1px solid #29404c;background:#111f29;color:#fff;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer;box-shadow:none;pointer-events:auto;position:relative;z-index:20}
+#notesPage .notesPageBtn{border:1px solid #29404c;background:#111f29;color:#fff;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer;box-shadow:none;pointer-events:auto;position:relative;z-index:20;flex:1 1 0;min-width:180px;box-sizing:border-box;text-align:center}
+#notesPage #notesRemindersPage,#notesPage #notesSecondPage{position:relative}
+#notesPage #notesRemindersPage{min-height:250px}
+#notesPage .notesFrameAddBtn{position:absolute;right:12px;bottom:12px;width:48px;height:48px;border:1px solid var(--neon-control,#49d86a);border-radius:50%;background:var(--panel2,#101820);color:var(--neon-control,#49d86a);font-size:34px;line-height:42px;font-weight:500;padding:0;cursor:pointer;z-index:30;box-sizing:border-box;box-shadow:0 0 8px var(--neon-control,#49d86a),inset 0 0 10px rgba(var(--neon-control-rgb,73,216,106),.22)}
+#notesPage .notesFrameAddBtn:active{transform:scale(.94)}
 #notesPage .notesPageBtn.active{border-color:#49d86a;background:#123a21;color:#a8ffb8;box-shadow:0 0 10px rgba(73,216,106,.18)}
 #notesPage .notesToolsRow{display:flex;justify-content:flex-end;margin-bottom:12px}
 #notesPage .notesToolsRow .notesAddBtn{margin:0}
@@ -574,7 +578,7 @@ html body.site-white-theme .expenseDayPopup{background:#fff;color:#111;border-co
 #notesPage .dailyViewBox.editing .dailyViewBottom{grid-template-columns:1fr 1fr 1fr}
 #notesPage .dailyViewSaveBtn{border-color:rgba(73,216,106,.65)!important;background:#10271b!important;color:#9cffb0!important}
 @media(max-width:520px){#notesPage .dailyViewEditText{font-size:17px;padding:14px}}
-@media(max-width:520px){#notesPage .notesPageSwitch{width:100%;justify-content:stretch}.notesPageBtn{flex:1;min-width:0}.notesToolsRow{justify-content:stretch}.notesToolsRow .notesAddBtn{width:100%}
+@media(max-width:520px){#notesPage .notesPageSwitch{width:100%;justify-content:stretch}.notesPageBtn{flex:1 1 0;min-width:0}.notesToolsRow{justify-content:stretch}.notesToolsRow .notesAddBtn{width:100%}
   #notesPage .dailyViewModal{padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px))}
   #notesPage .dailyViewBox{width:calc(100vw - 16px);height:calc(100dvh - 104px);max-height:calc(100dvh - 104px);border-radius:14px}
   #notesPage .dailyViewHeader{padding:10px 11px}
@@ -1841,7 +1845,7 @@ html body.site-white-theme .backgroundColorBtn.black:active {
       <div class="notesSub">შენი პირადი ჩანაწერები და შეხსენებები</div>
     </div>
     <div class="notesPageSwitch">
-      <button type="button" class="notesPageBtn" id="notesNewBtn" onclick="openNoteModal()">➕ ახალი ჩანაწერი</button>
+      <button type="button" class="notesPageBtn" id="notesNewBtn" onclick="openNoteModal()">🔔 შეტყობინების დაყენება</button>
       <button type="button" class="notesPageBtn" id="notesSecondBtn" onclick="showNotesSubPage('daily')">📖 დღიური</button>
     </div>
   </div>
@@ -1849,7 +1853,8 @@ html body.site-white-theme .backgroundColorBtn.black:active {
   <div id="notesRemindersPage">
     <div class="notesToolsRow">
     </div>
-  <div id="notesList" class="notesList"></div>
+    <div id="notesList" class="notesList"></div>
+    <button type="button" class="notesFrameAddBtn" aria-label="ახალი ჩანაწერი" onclick="openNoteModal()">＋</button>
   </div>
 
   <div id="notesSecondPage" class="notesSubPage" style="display:none">
@@ -1864,6 +1869,7 @@ html body.site-white-theme .backgroundColorBtn.black:active {
         <input id="dailyCalendarInput" class="dailyCalendarInput" type="date" onchange="applyDailyCalendar(this.value)" aria-label="ჩანაწერის თარიღი">
       </div>
       <div id="dailyList" class="dailyList"></div>
+      <button type="button" class="notesFrameAddBtn" aria-label="ახალი დღიური ჩანაწერი" onclick="openDailyEditor()">＋</button>
       <div id="dailyPagination" class="dailyPagination" style="display:none">
         <button type="button" class="dailyPageBtn" id="dailyPrevPageBtn" onclick="dailyGoPage(-1)">‹ წინა</button>
         <span id="dailyPageInfo" class="dailyPageInfo">1 / 1</span>
