@@ -2717,12 +2717,103 @@ function exportMyDataExcel(){
 }
 function exportMyDataPdf(){
   const d=exportDataRows();
-  const rowsWork=d.work.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(j=>`<tr><td>${esc(j.date)}</td><td>${esc(j.place||'')}</td><td>€${Number(j.money||0).toFixed(2)}</td><td>${esc(j.paid?'გადახდილი':'გადაუხდელი')}</td><td>${esc(j.note||'')}</td></tr>`).join('');
-  const rowsExp=d.exp.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(e=>`<tr><td>${esc(e.date)}</td><td>${esc(expenseTranslate(e.category))}</td><td>${esc(e.place||'')}</td><td>€${Number(e.amount||0).toFixed(2)}</td></tr>`).join('');
+  const lang=typeof window.getCurrentLanguage==='function'?String(window.getCurrentLanguage()||'ka'):'ka';
+  const L={
+    ka:{
+      title:'TEMO სამუშაო ანგარიში',
+      summary:'ჯამური მონაცემები',
+      totalJobs:'სულ სამუშაოები',
+      totalEarned:'სულ ნამუშევარი',
+      received:'მიღებული თანხები',
+      receivable:'ჯერ მისაღები',
+      totalExpenses:'სულ გასავალი',
+      balance:'დარჩენილი',
+      workData:'სამუშაოების მონაცემები',
+      expenseData:'გასავლის მონაცემები',
+      date:'თარიღი',
+      workplace:'სამუშაო ადგილი',
+      amount:'თანხა',
+      status:'სტატუსი',
+      note:'შენიშვნა',
+      category:'კატეგორია',
+      where:'სად',
+      paid:'გადახდილი',
+      unpaid:'გადაუხდელი',
+      noData:'მონაცემები არ არის',
+      print:'ბეჭდვა / PDF-ად შენახვა',
+      popup:'PDF-ის ფანჯარა ვერ გაიხსნა.'
+    },
+    en:{
+      title:'TEMO Work Tracker',
+      summary:'Summary',
+      totalJobs:'Total jobs',
+      totalEarned:'Total earned',
+      received:'Received payments',
+      receivable:'Still receivable',
+      totalExpenses:'Total expenses',
+      balance:'Balance',
+      workData:'Work data',
+      expenseData:'Expense data',
+      date:'Date',
+      workplace:'Workplace',
+      amount:'Amount',
+      status:'Status',
+      note:'Note',
+      category:'Category',
+      where:'Where',
+      paid:'Paid',
+      unpaid:'Unpaid',
+      noData:'No data',
+      print:'Print / Save as PDF',
+      popup:'The PDF window could not be opened.'
+    },
+    el:{
+      title:'TEMO Εργασίες',
+      summary:'Σύνοψη',
+      totalJobs:'Σύνολο εργασιών',
+      totalEarned:'Συνολικά κερδισμένα',
+      received:'Εισπραχθέντα ποσά',
+      receivable:'Προς είσπραξη',
+      totalExpenses:'Σύνολο εξόδων',
+      balance:'Υπόλοιπο',
+      workData:'Δεδομένα εργασίας',
+      expenseData:'Δεδομένα εξόδων',
+      date:'Ημερομηνία',
+      workplace:'Τόπος εργασίας',
+      amount:'Ποσό',
+      status:'Κατάσταση',
+      note:'Σημείωση',
+      category:'Κατηγορία',
+      where:'Πού',
+      paid:'Πληρωμένο',
+      unpaid:'Απλήρωτο',
+      noData:'Δεν υπάρχουν δεδομένα',
+      print:'Εκτύπωση / Αποθήκευση ως PDF',
+      popup:'Δεν ήταν δυνατό να ανοίξει το παράθυρο PDF.'
+    }
+  }[lang]||null;
+  const t=L||({
+    title:'TEMO Work Tracker',summary:'Summary',totalJobs:'Total jobs',totalEarned:'Total earned',
+    received:'Received payments',receivable:'Still receivable',totalExpenses:'Total expenses',
+    balance:'Balance',workData:'Work data',expenseData:'Expense data',date:'Date',
+    workplace:'Workplace',amount:'Amount',status:'Status',note:'Note',category:'Category',
+    where:'Where',paid:'Paid',unpaid:'Unpaid',noData:'No data',
+    print:'Print / Save as PDF',popup:'The PDF window could not be opened.'
+  });
+
+  const locale=lang==='ka'?'ka-GE':lang==='el'?'el-GR':'en-US';
+  const dateText=new Date().toLocaleDateString(locale);
+  const rowsWork=d.work.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(j=>
+    `<tr><td>${esc(j.date)}</td><td>${esc(j.place||'')}</td><td>€${Number(j.money||0).toFixed(2)}</td><td>${esc(j.paid?t.paid:t.unpaid)}</td><td>${esc(j.note||'')}</td></tr>`
+  ).join('');
+  const rowsExp=d.exp.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(e=>
+    `<tr><td>${esc(e.date)}</td><td>${esc(expenseTranslate(e.category))}</td><td>${esc(e.place||'')}</td><td>€${Number(e.amount||0).toFixed(2)}</td></tr>`
+  ).join('');
+
   const w=window.open('','_blank');
-  if(!w){alert('PDF-ის ფანჯარა ვერ გაიხსნა.');return;}
+  if(!w){alert(t.popup);return;}
   w.document.open();
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>TEMO Work Tracker</title>
+  w.document.write(`<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><title>${esc(t.title)}</title>
   <style>
   body{font-family:Arial,sans-serif;padding:24px;color:#111}
   h1,h2{margin:0 0 14px}h2{margin-top:24px}
@@ -2733,26 +2824,27 @@ function exportMyDataPdf(){
   th{background:#eee}
   @media print{body{padding:10px}.noPrint{display:none}}
   </style></head><body>
-  <h1>TEMO Work Tracker — ${new Date().toLocaleDateString()}</h1>
-  <h2>Summary</h2>
+  <h1>${esc(t.title)} — ${esc(dateText)}</h1>
+  <h2>${esc(t.summary)}</h2>
   <div class="summary">
-    <div class="box">Total jobs<br><b>${d.work.length}</b></div>
-    <div class="box">Total earned<br><b>€${d.totalWork.toFixed(2)}</b></div>
-    <div class="box">Received<br><b>€${d.received.toFixed(2)}</b></div>
-    <div class="box">Still receivable<br><b>€${d.receivable.toFixed(2)}</b></div>
-    <div class="box">Total expenses<br><b>€${d.totalExpenses.toFixed(2)}</b></div>
-    <div class="box">Balance<br><b>€${d.balance.toFixed(2)}</b></div>
+    <div class="box">${esc(t.totalJobs)}<br><b>${d.work.length}</b></div>
+    <div class="box">${esc(t.totalEarned)}<br><b>€${d.totalWork.toFixed(2)}</b></div>
+    <div class="box">${esc(t.received)}<br><b>€${d.received.toFixed(2)}</b></div>
+    <div class="box">${esc(t.receivable)}<br><b>€${d.receivable.toFixed(2)}</b></div>
+    <div class="box">${esc(t.totalExpenses)}<br><b>€${d.totalExpenses.toFixed(2)}</b></div>
+    <div class="box">${esc(t.balance)}<br><b>€${d.balance.toFixed(2)}</b></div>
   </div>
-  <h2>Work data</h2>
-  <table><thead><tr><th>Date</th><th>Workplace</th><th>Amount</th><th>Status</th><th>Note</th></tr></thead><tbody>${rowsWork||'<tr><td colspan="5">No data</td></tr>'}</tbody></table>
-  <h2>Expense data</h2>
-  <table><thead><tr><th>Date</th><th>Category</th><th>Where</th><th>Amount</th></tr></thead><tbody>${rowsExp||'<tr><td colspan="4">No data</td></tr>'}</tbody></table>
-  <button class="noPrint" onclick="window.print()" style="margin-top:20px;padding:10px 16px">Print / Save as PDF</button>
+  <h2>${esc(t.workData)}</h2>
+  <table><thead><tr><th>${esc(t.date)}</th><th>${esc(t.workplace)}</th><th>${esc(t.amount)}</th><th>${esc(t.status)}</th><th>${esc(t.note)}</th></tr></thead>
+  <tbody>${rowsWork||`<tr><td colspan="5">${esc(t.noData)}</td></tr>`}</tbody></table>
+  <h2>${esc(t.expenseData)}</h2>
+  <table><thead><tr><th>${esc(t.date)}</th><th>${esc(t.category)}</th><th>${esc(t.where)}</th><th>${esc(t.amount)}</th></tr></thead>
+  <tbody>${rowsExp||`<tr><td colspan="4">${esc(t.noData)}</td></tr>`}</tbody></table>
+  <button class="noPrint" onclick="window.print()" style="margin-top:20px;padding:10px 16px">${esc(t.print)}</button>
   </body></html>`);
   w.document.close();
   w.focus();
 }
-
 const EXPENSE_ROOT='/expenses/';
 const EXPENSE_CATEGORIES=['🛒 მაღაზია','💊 აფთიაქი','⚡ დენის გადასახადი','🏠 ბინის ქირა','🚗 მანქანის გადასახადი','⛽ საწვავი','📱 ტელეფონი / ინტერნეტი','🍽️ რესტორანი / კაფე','🛠️ რემონტი','👕 ტანსაცმელი','💧 წყალი','🅿️ პარკინგი','👨‍⚕️ ექიმი','🧾 სხვა'];
 let expenses=[];
