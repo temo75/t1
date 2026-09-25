@@ -5305,3 +5305,23 @@ startNotesReminderWatcher();
   }
 }
 </style>
+
+<style id="temo-bottom-menu-logo-smaller-final">
+/* მხოლოდ ქვედა მენიუს 6 ლოგოს დაპატარავება — ჩარჩოს ზომა უცვლელია */
+#bottomNav > button .navLogo{
+  font-size:48px !important;
+}
+@media(max-width:700px){
+  #bottomNav > button .navLogo{
+    font-size:39px !important;
+  }
+}
+@media(max-width:390px){
+  #bottomNav > button .navLogo{
+    font-size:34px !important;
+  }
+}
+body.temo-android-app #bottomNav > button .navLogo{
+  font-size:28px !important;
+}
+</style>
