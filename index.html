@@ -531,6 +531,7 @@ html body.site-white-theme .expenseDayPopup{background:#fff;color:#111;border-co
 #notesPage .notesPageSwitch{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
 #notesPage .notesPageBtn{border:1px solid #29404c;background:#111f29;color:#fff;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer;box-shadow:none;pointer-events:auto;position:relative;z-index:20}
 #notesPage .notesPageBtn.active{border-color:#49d86a;background:#123a21;color:#a8ffb8;box-shadow:0 0 10px rgba(73,216,106,.18)}
+#notesPage.notes-modal-open > :not(#noteModal){display:none !important;}
 #notesPage .notesToolsRow{display:flex;justify-content:flex-end;margin-bottom:12px}
 #notesPage .notesToolsRow .notesAddBtn{margin:0}
 #notesPage .notesSubPage{padding:14px;border:1px solid #29404c;border-radius:14px;background:linear-gradient(145deg,#0d1b24,#0a151d);min-height:180px}
@@ -1844,7 +1845,7 @@ html body.site-white-theme .backgroundColorBtn.black:active {
     </div>
     <div class="notesPageSwitch">
       <button type="button" class="notesPageBtn" id="notesNewBtn" onclick="openNoteModal()">🔔 შეტყობინების დაყენება</button>
-      <button type="button" class="notesPageBtn" id="notesSecondBtn" onclick="goNotesDaily()">📖 დღიური ჩანაწერები</button>
+      <button type="button" class="notesPageBtn" id="notesSecondBtn" onclick="showNotesSubPage('daily')">📖 დღიური ჩანაწერები</button>
     </div>
   </div>
 
@@ -2699,7 +2700,7 @@ expenses=loadLocalExpenses();
 function showNotesSubPage(which){
   const reminders=document.getElementById('notesRemindersPage');
   const second=document.getElementById('notesSecondPage');
-  const remindersBtn=document.getElementById('notesNewBtn');
+  const remindersBtn=document.getElementById('notesRemindersBtn');
   const secondBtn=document.getElementById('notesSecondBtn');
   if(!reminders||!second||!remindersBtn||!secondBtn)return;
   const isReminders=which!=='daily';
@@ -3165,7 +3166,6 @@ async function saveDailyEntry(){
 }
 
 function goNotes(){temoNavigatePage('notesPage');showNotesSubPage('reminders')}
-function goNotesDaily(){temoNavigatePage('notesPage');showNotesSubPage('daily')}
 startDailySyncWatcher();
 
 
@@ -4573,11 +4573,13 @@ function openNoteModal(note){
   $('noteTime').value=note?.time||localTime();
   $('noteReminder').checked=note?.reminder!==false;
   toggleNoteReminderFields();
+  $('notesPage').classList.add('notes-modal-open');
   $('noteModal').classList.add('show');
   setTimeout(()=>$('noteText').focus(),50);
 }
 function closeNoteModal(){
   $('noteModal').classList.remove('show');
+  $('notesPage').classList.remove('notes-modal-open');
   editingNoteId='';
 }
 
