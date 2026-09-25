@@ -2720,7 +2720,7 @@ function exportMyDataPdf(){
   const lang=typeof window.getCurrentLanguage==='function'?String(window.getCurrentLanguage()||'ka'):'ka';
   const L={
     ka:{
-      title:'TEMO სამუშაო ანგარიში',
+      title:(String(window.currentUser||'TEMO').trim()||'TEMO')+' სამუშაო ანგარიში',
       summary:'ჯამური მონაცემები',
       totalJobs:'სულ სამუშაოები',
       totalEarned:'სულ ნამუშევარი',
