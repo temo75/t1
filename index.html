@@ -529,6 +529,12 @@ html body.site-white-theme .expenseDayPopup{background:#fff;color:#111;border-co
 
 <style id="temo-notes-page-switch">
 #notesPage .notesPageSwitch{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+#notesPage .notesPageBtn{flex:1 1 0;min-width:0;box-sizing:border-box;text-align:center}
+#notesPage .notesFrame{position:relative}
+#notesPage .notesFrameAdd{position:absolute;right:12px;bottom:12px;width:46px;height:46px;border:1px solid var(--neon-control);border-radius:50%;background:#10271b;color:#fff;font-size:28px;font-weight:900;line-height:1;cursor:pointer;box-shadow:0 0 9px rgba(var(--neon-control-rgb),.7),0 0 20px rgba(var(--neon-control-rgb),.3);display:flex;align-items:center;justify-content:center;z-index:10}
+#notesPage .notesFrameAdd:active{transform:scale(.93)}
+#notesPage .notesRemindersFrame{min-height:180px;padding-bottom:70px}
+#notesPage .notesDailyFrame{position:relative;padding-bottom:70px}
 #notesPage .notesPageBtn{border:1px solid #29404c;background:#111f29;color:#fff;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer;box-shadow:none;pointer-events:auto;position:relative;z-index:20}
 #notesPage .notesPageBtn.active{border-color:#49d86a;background:#123a21;color:#a8ffb8;box-shadow:0 0 10px rgba(73,216,106,.18)}
 #notesPage .notesToolsRow{display:flex;justify-content:flex-end;margin-bottom:12px}
@@ -1841,22 +1847,20 @@ html body.site-white-theme .backgroundColorBtn.black:active {
       <div class="notesSub">შენი პირადი ჩანაწერები და შეხსენებები</div>
     </div>
     <div class="notesPageSwitch">
-      <button type="button" class="notesPageBtn" id="notesNewBtn" onclick="openNoteModal()">➕ ახალი ჩანაწერი</button>
+      <button type="button" class="notesPageBtn" id="notesNewBtn" onclick="openNoteModal()">🔔 შეტყობინების დაყენება</button>
       <button type="button" class="notesPageBtn" id="notesSecondBtn" onclick="showNotesSubPage('daily')">📖 დღიური</button>
     </div>
   </div>
 
-  <div id="notesRemindersPage">
-    <div class="notesToolsRow">
-    </div>
-  <div id="notesList" class="notesList"></div>
+  <div id="notesRemindersPage" class="notesFrame notesRemindersFrame">
+    <div class="notesToolsRow"></div>
+    <div id="notesList" class="notesList"></div>
+    <button type="button" class="notesFrameAdd" onclick="openNoteModal()" aria-label="ახალი ჩანაწერი">+</button>
   </div>
 
-  <div id="notesSecondPage" class="notesSubPage" style="display:none">
+  <div id="notesSecondPage" class="notesSubPage notesDailyFrame" style="display:none">
     <div id="dailyListPage">
-      <div class="notesToolsRow">
-        <button type="button" class="notesAddBtn" onclick="openDailyEditor()">➕ დამატე</button>
-      </div>
+      <div class="notesToolsRow"></div>
       <div class="dailyCalendarTools">
         <button type="button" class="dailyCalendarBtn" onclick="openDailyCalendar()">📅 კალენდარი</button>
         <button type="button" class="dailyCalendarClear" onclick="clearDailyCalendar()">ყველა ჩანაწერი</button>
@@ -1870,6 +1874,7 @@ html body.site-white-theme .backgroundColorBtn.black:active {
         <button type="button" class="dailyPageBtn" id="dailyNextPageBtn" onclick="dailyGoPage(1)">შემდეგი ›</button>
       </div>
     </div>
+    <button type="button" class="notesFrameAdd" onclick="openDailyEditor()" aria-label="ახალი ჩანაწერი">+</button>
     <div id="dailyEditorPage" class="dailyEditor" style="display:none">
       <input id="dailyTitle" class="dailyTitleInput" type="text" maxlength="80" placeholder="ჩანაწერის სახელი">
       <textarea id="dailyText" placeholder="ჩაწერე შენი ჩანაწერი..."></textarea>
