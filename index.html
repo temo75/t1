@@ -2837,7 +2837,8 @@ function exportMyDataPdf(){
   <h2>${esc(t.expenseData)}</h2>
   <table><thead><tr><th>${esc(t.date)}</th><th>${esc(t.category)}</th><th>${esc(t.where)}</th><th>${esc(t.amount)}</th></tr></thead>
   <tbody>${rowsExp||`<tr><td colspan="4">${esc(t.noData)}</td></tr>`}</tbody></table>
-  <button class="noPrint" onclick="window.print()" style="margin-top:20px;padding:10px 16px">${esc(t.print)}</button>
+  <button type="button" class="noPrint" id="temoPdfPrintBtn" style="margin-top:20px;padding:10px 16px">${esc(t.print)}</button>
+  <script>document.getElementById("temoPdfPrintBtn").addEventListener("click",function(){setTimeout(function(){window.focus();window.print();},50);});<\/script>
   </body></html>`);
   w.document.close();
   w.focus();
