@@ -1946,6 +1946,15 @@ html body.site-white-theme .backgroundColorBtn.black:active {
 <div class="meta" style="margin-top:12px">ატვირთული ფაილი უნდა იყოს index.html. Token მხოლოდ ამ ტელეფონში ინახება.</div>
 </div>
 
+<div class="section" id="dataExportSection">
+<h2>📥 ჩემი მონაცემების ჩამოტვირთვა</h2>
+<div class="tools">
+<button type="button" class="backupBtn" onclick="exportMyDataExcel()">📊 Excel</button>
+<button type="button" class="backupBtn" onclick="exportMyDataPdf()">📄 PDF</button>
+</div>
+<div class="meta" style="margin-top:12px">სამუშაოები, მიღებული თანხები, გასავლები და ჯამები.</div>
+</div>
+
 <div class="section" id="neonControlSection">
 <h2>✨ ნეონის მართვა</h2>
 <div class="neonControlBox">
@@ -2657,6 +2666,93 @@ function goSettings(){temoNavigatePage('settingsPage');if(typeof window.loadNeon
 function goUsers(){if(currentUser)temoNavigatePage('userManagementPage')}
 function goWallet(){temoNavigatePage('walletPage')}
 function goExpenses(){if(currentUser)temoNavigatePage('expensesPage')}
+
+function exportDataRows(){
+  const work=Array.isArray(jobs)?jobs.slice():[];
+  const exp=Array.isArray(expenses)?expenses.slice():[];
+  const totalWork=work.reduce((s,j)=>s+Number(j.money||0),0);
+  const received=work.filter(j=>j.paid).reduce((s,j)=>s+Number(j.money||0),0);
+  const receivable=totalWork-received;
+  const totalExpenses=exp.reduce((s,e)=>s+Number(e.amount||0),0);
+  const balance=received-totalExpenses;
+  return {work,exp,totalWork,received,receivable,totalExpenses,balance};
+}
+function exportCsvCell(v){
+  const s=String(v??'');
+  return '"'+s.replace(/"/g,'""')+'"';
+}
+function exportMyDataExcel(){
+  const d=exportDataRows();
+  const lang=String(document.documentElement.lang||'ka').toLowerCase();
+  const paidText=lang.startsWith('en')?'Paid':lang.startsWith('el')?'Πληρωμένο':'გადახდილი';
+  const unpaidText=lang.startsWith('en')?'Unpaid':lang.startsWith('el')?'Απλήρωτο':'გადაუხდელი';
+  const rows=[
+    ['TEMO Work Tracker'],
+    [],
+    ['Summary','Amount (€)'],
+    ['Total jobs',d.work.length],
+    ['Total earned',d.totalWork.toFixed(2)],
+    ['Received',d.received.toFixed(2)],
+    ['Still receivable',d.receivable.toFixed(2)],
+    ['Total expenses',d.totalExpenses.toFixed(2)],
+    ['Balance',d.balance.toFixed(2)],
+    [],
+    ['Work data'],
+    ['Date','Workplace','Amount (€)','Status','Note']
+  ];
+  d.work.sort((a,b)=>String(b.date).localeCompare(String(a.date))).forEach(j=>{
+    rows.push([j.date,j.place,j.money, j.paid?paidText:unpaidText,j.note||'']);
+  });
+  rows.push([],['Expense data'],['Date','Category','Where','Amount (€)']);
+  d.exp.sort((a,b)=>String(b.date).localeCompare(String(a.date))).forEach(e=>{
+    rows.push([e.date,expenseTranslate(e.category),e.place||'',e.amount]);
+  });
+  const csv='\uFEFF'+rows.map(r=>r.map(exportCsvCell).join(',')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='temo-my-data.csv';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function exportMyDataPdf(){
+  const d=exportDataRows();
+  const rowsWork=d.work.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(j=>`<tr><td>${esc(j.date)}</td><td>${esc(j.place||'')}</td><td>€${Number(j.money||0).toFixed(2)}</td><td>${esc(j.paid?'გადახდილი':'გადაუხდელი')}</td><td>${esc(j.note||'')}</td></tr>`).join('');
+  const rowsExp=d.exp.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(e=>`<tr><td>${esc(e.date)}</td><td>${esc(expenseTranslate(e.category))}</td><td>${esc(e.place||'')}</td><td>€${Number(e.amount||0).toFixed(2)}</td></tr>`).join('');
+  const w=window.open('','_blank');
+  if(!w){alert('PDF-ის ფანჯარა ვერ გაიხსნა.');return;}
+  w.document.open();
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>TEMO Work Tracker</title>
+  <style>
+  body{font-family:Arial,sans-serif;padding:24px;color:#111}
+  h1,h2{margin:0 0 14px}h2{margin-top:24px}
+  .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 20px}
+  .box{border:1px solid #777;padding:10px;border-radius:8px}
+  table{width:100%;border-collapse:collapse;margin-top:8px}
+  th,td{border:1px solid #aaa;padding:7px;text-align:left;font-size:12px}
+  th{background:#eee}
+  @media print{body{padding:10px}.noPrint{display:none}}
+  </style></head><body>
+  <h1>TEMO Work Tracker — ${new Date().toLocaleDateString()}</h1>
+  <h2>Summary</h2>
+  <div class="summary">
+    <div class="box">Total jobs<br><b>${d.work.length}</b></div>
+    <div class="box">Total earned<br><b>€${d.totalWork.toFixed(2)}</b></div>
+    <div class="box">Received<br><b>€${d.received.toFixed(2)}</b></div>
+    <div class="box">Still receivable<br><b>€${d.receivable.toFixed(2)}</b></div>
+    <div class="box">Total expenses<br><b>€${d.totalExpenses.toFixed(2)}</b></div>
+    <div class="box">Balance<br><b>€${d.balance.toFixed(2)}</b></div>
+  </div>
+  <h2>Work data</h2>
+  <table><thead><tr><th>Date</th><th>Workplace</th><th>Amount</th><th>Status</th><th>Note</th></tr></thead><tbody>${rowsWork||'<tr><td colspan="5">No data</td></tr>'}</tbody></table>
+  <h2>Expense data</h2>
+  <table><thead><tr><th>Date</th><th>Category</th><th>Where</th><th>Amount</th></tr></thead><tbody>${rowsExp||'<tr><td colspan="4">No data</td></tr>'}</tbody></table>
+  <button class="noPrint" onclick="window.print()" style="margin-top:20px;padding:10px 16px">Print / Save as PDF</button>
+  </body></html>`);
+  w.document.close();
+  w.focus();
+}
+
 const EXPENSE_ROOT='/expenses/';
 const EXPENSE_CATEGORIES=['🛒 მაღაზია','💊 აფთიაქი','⚡ დენის გადასახადი','🏠 ბინის ქირა','🚗 მანქანის გადასახადი','⛽ საწვავი','📱 ტელეფონი / ინტერნეტი','🍽️ რესტორანი / კაფე','🛠️ რემონტი','👕 ტანსაცმელი','💧 წყალი','🅿️ პარკინგი','👨‍⚕️ ექიმი','🧾 სხვა'];
 let expenses=[];
@@ -4942,6 +5038,32 @@ startNotesReminderWatcher();
     'საიტის განახლება':['Website update','Ενημέρωση ιστοσελίδας'],
     'აირჩიე ფაილი':['Choose file','Επίλεξε αρχείο'],
     'ატვირთული ფაილი უნდა იყოს index.html. Token მხოლოდ ამ ტელეფონში ინახება.':['Uploaded file must be index.html. Token is stored only on this device.','Το αρχείο πρέπει να είναι index.html. Το Token αποθηκεύεται μόνο σε αυτή τη συσκευή.'],
+    '📥 ჩემი მონაცემების ჩამოტვირთვა':['📥 Download my data','📥 Λήψη των δεδομένων μου'],
+    '📊 Excel':['📊 Excel','📊 Excel'],
+    '📄 PDF':['📄 PDF','📄 PDF'],
+    'სამუშაოები, მიღებული თანხები, გასავლები და ჯამები.':['Work, received payments, expenses and totals.','Εργασία, εισπράξεις, έξοδα και σύνολα.'],
+    'სულ სამუშაოები':['Total jobs','Σύνολο εργασιών'],
+    'მიღებული':['Received','Εισπραχθέντα'],
+    'ჯერ მისაღები':['Still receivable','Προς είσπραξη'],
+    'სულ გასავალი':['Total expenses','Σύνολο εξόδων'],
+    'დარჩენილი':['Balance','Υπόλοιπο'],
+    'სამუშაოების მონაცემები':['Work data','Δεδομένα εργασίας'],
+    'გასავლის მონაცემები':['Expense data','Δεδομένα εξόδων'],
+    'თარიღი':['Date','Ημερομηνία'],
+    'სამუშაო ადგილი':['Workplace','Τόπος εργασίας'],
+    'თანხა':['Amount','Ποσό'],
+    'სტატუსი':['Status','Κατάσταση'],
+    'გადახდილი':['Paid','Πληρωμένο'],
+    'გადაუხდელი':['Unpaid','Απλήρωτο'],
+    'კატეგორია':['Category','Κατηγορία'],
+    'სად':['Where','Πού'],
+    'სულ':['Total','Σύνολο'],
+    'მონაცემების ექსპორტი':['Data export','Εξαγωγή δεδομένων'],
+    'ჩემი მონაცემები':['My data','Τα δεδομένα μου'],
+    'მიღებული თანხები':['Received payments','Εισπραχθέντα ποσά'],
+    'გასავლები':['Expenses','Έξοδα'],
+    'ნაშთი':['Balance','Υπόλοιπο'],
+    'ჯამური მონაცემები':['Summary','Σύνοψη'],
     'გასავალი':['Expenses','Έξοδα'],
     'ამ თვის ხარჯები':['This month’s expenses','Έξοδα αυτού του μήνα'],
     '💸 ამ თვის გასავალი':['💸 This month’s expenses','💸 Έξοδα αυτού του μήνα'],
