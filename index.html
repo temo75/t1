@@ -4216,8 +4216,8 @@ html body.site-white-theme .small.edit { border-color:#2999df !important; }
   let sx=0,sy=0,dx=0,tracking=false,locked=false;
   let current=null,next=null,currentIndex=-1;
 
-  const LOCK=12;
-  const THRESHOLD=72;
+  const LOCK=8;
+  const THRESHOLD=18;
 
   function pages(){
     return NAV.map(id=>document.getElementById(id)).filter(Boolean);
@@ -4254,11 +4254,11 @@ html body.site-white-theme .small.edit { border-color:#2999df !important; }
     if(!current){reset();return;}
     const c=current,n=next;
 
-    c.style.transition='transform 170ms ease-out';
+    c.style.transition='transform 320ms cubic-bezier(.16,1,.3,1)';
     c.style.transform='translate3d(0,0,0)';
 
     if(n){
-      n.style.transition='transform 170ms ease-out';
+      n.style.transition='transform 320ms cubic-bezier(.16,1,.3,1)';
       n.style.transform='translate3d('+
         (dx<0?innerWidth:-innerWidth)+'px,0,0)';
     }
@@ -4273,7 +4273,7 @@ html body.site-white-theme .small.edit { border-color:#2999df !important; }
       c.style.transform='translate3d(0,0,0)';
       c.style.zIndex='';
       reset();
-    },180);
+    },330);
   }
 
   document.addEventListener('touchstart',e=>{
@@ -4372,9 +4372,9 @@ html body.site-white-theme .small.edit { border-color:#2999df !important; }
     const w=innerWidth;
 
     old.style.transition=
-      'transform 190ms cubic-bezier(.22,.61,.36,1)';
+      'transform 360ms cubic-bezier(.16,1,.3,1)';
     target.style.transition=
-      'transform 190ms cubic-bezier(.22,.61,.36,1)';
+      'transform 360ms cubic-bezier(.16,1,.3,1)';
 
     old.style.transform=
       'translate3d('+(dx<0?-w:w)+'px,0,0)';
@@ -4410,7 +4410,7 @@ html body.site-white-theme .small.edit { border-color:#2999df !important; }
       updateUserUI();
 
       reset();
-    },195);
+    },365);
   },{passive:true});
 
   document.addEventListener('touchcancel',cancel,{passive:true});
