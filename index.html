@@ -2432,9 +2432,36 @@ function renderCalendar(){
   for(let i=0;i<start;i++)out+='<div class="dayCell empty"></div>';
   for(let d=1;d<=days;d++){
     const key=dateKey(y,m,d), count=jobMap[key]||0; const now=new Date(); const todayKey=dateKey(now.getFullYear(),now.getMonth(),now.getDate());
-    out+=`<div class="dayCell ${count?'hasJobs ':''}${key===todayKey?'today ':''}${key<todayKey&&!count?'past-empty ':''}${selectedDate===key?'selected':''}" onclick="selectCalendarDate('${key}')"><div class="num">${d}</div>${count?`<div class="jobCount">${count}</div>`:''}</div>`;
+    out+=`<div class="dayCell ${count?'hasJobs ':''}${key===todayKey?'today ':''}${key<todayKey&&!count?'past-empty ':''}${selectedDate===key?'selected':''}" data-calendar-date="${key}"><div class="num">${d}</div>${count?`<div class="jobCount">${count}</div>`:''}</div>`;
   }
   $('calendarGrid').innerHTML=out;
+}
+let calendarLongPressTimer=null;
+function bindCalendarLongPress(){
+  const grid=$('calendarGrid');
+  if(!grid)return;
+  grid.querySelectorAll('.dayCell:not(.empty)').forEach(cell=>{
+    const key=cell.getAttribute('data-calendar-date');
+    if(!key)return;
+    const [yy,mm,dd]=key.split('-').map(Number);
+    const now=new Date();now.setHours(0,0,0,0);
+    const dayDate=new Date(yy,mm-1,dd);dayDate.setHours(0,0,0,0);
+    if(dayDate<now)return;
+    const start=e=>{
+      if(e.button!==undefined&&e.button!==0)return;
+      clearTimeout(calendarLongPressTimer);
+      calendarLongPressTimer=setTimeout(()=>{
+        calendarLongPressTimer=null;
+        openNoteModal({date:key,time:'09:00',reminder:true});
+      },550);
+    };
+    const cancel=()=>{clearTimeout(calendarLongPressTimer);calendarLongPressTimer=null;};
+    cell.addEventListener('pointerdown',start);
+    cell.addEventListener('pointerup',cancel);
+    cell.addEventListener('pointercancel',cancel);
+    cell.addEventListener('pointerleave',cancel);
+    cell.addEventListener('contextmenu',e=>e.preventDefault());
+  });
 }
 function selectCalendarDate(key){
   selectedDate=key;
@@ -2873,19 +2900,7 @@ function closeExpenseDayPopup(){document.getElementById('expenseDayPopup')?.remo
 document.addEventListener('pointerdown',function(e){const pop=document.getElementById('expenseDayPopup');if(pop&&!e.target.closest('#expenseDayPopup')&&!e.target.closest('.dayCell'))closeExpenseDayPopup();});
 let expenseSelectedDate='';
 function showExpenseDayPopup(date,anchor){closeExpenseDayPopup();const arr=expenses.filter(e=>e.date===date).sort((a,b)=>b.createdAt-a.createdAt);if(!arr.length)return;const pop=document.createElement('div');pop.id='expenseDayPopup';pop.className='expenseDayPopup';pop.innerHTML=arr.map(e=>{const p=expenseCategoryParts(expenseTranslate(e.category));return `<div class="expensePopupLine">${esc(p.text)}-${euro(e.amount)}</div>`;}).join('');document.body.appendChild(pop);const r=anchor.getBoundingClientRect(),w=pop.offsetWidth,h=pop.offsetHeight,gap=8;let left=r.left+(r.width/2)-(w/2),top=r.bottom+gap;if(left<8)left=8;if(left+w>window.innerWidth-8)left=window.innerWidth-w-8;if(top+h>window.innerHeight-8)top=r.top-h-gap;if(top<8)top=8;pop.style.left=left+'px';pop.style.top=top+'px';}
-function calendarReminderTime(date){
-  const now=new Date();
-  const todayKey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-  if(date!==todayKey)return '09:00';
-  const future=new Date(now.getTime()+5*60*1000);
-  return String(future.getHours()).padStart(2,'0')+':'+String(future.getMinutes()).padStart(2,'0');
-}
-function openCalendarReminder(date){
-  if(typeof goNotes!=='function'||typeof openNoteModal!=='function')return;
-  goNotes();
-  openNoteModal({date:date,time:calendarReminderTime(date),reminder:true});
-}
-function renderExpenseCalendar(){closeExpenseDayPopup();const grid=document.getElementById('expenseCalendarGrid'),title=document.getElementById('expenseCalendarTitle');if(!grid||!title)return;const y=expenseCalendarDate.getFullYear(),m=expenseCalendarDate.getMonth(),first=new Date(y,m,1),start=(first.getDay()+6)%7,days=new Date(y,m+1,0).getDate(),today=new Date();const todayKey=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');grid.innerHTML='';for(let i=0;i<start;i++){const d=document.createElement('div');d.className='dayCell empty';grid.appendChild(d);}for(let day=1;day<=days;day++){const date=y+'-'+String(m+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');const dayExpenses=expenses.filter(e=>e.date===date);const total=dayExpenses.reduce((s,e)=>s+e.amount,0);const d=document.createElement('div');d.className='dayCell'+(dayExpenses.length?' hasJobs':'');if(today.getFullYear()===y&&today.getMonth()===m&&today.getDate()===day)d.classList.add('today');d.innerHTML=`<div class="num">${day}</div>${total>0?`<div class="jobCount">€${total.toFixed(2)}</div>`:''}`;let pressTimer=null,pressTriggered=false;const startPress=e=>{if(date<todayKey)return;pressTriggered=false;clearTimeout(pressTimer);pressTimer=setTimeout(()=>{pressTriggered=true;openCalendarReminder(date);},550);};const cancelPress=()=>{clearTimeout(pressTimer);pressTimer=null;};d.addEventListener('pointerdown',startPress);d.addEventListener('pointerup',cancelPress);d.addEventListener('pointercancel',cancelPress);d.addEventListener('pointerleave',cancelPress);d.addEventListener('pointermove',()=>{if(pressTimer)clearTimeout(pressTimer);});d.addEventListener('contextmenu',e=>e.preventDefault());d.addEventListener('click',()=>{if(pressTriggered){pressTriggered=false;return;}if(date<todayKey){expenseSelectedDate=date;showExpenseDayPopup(date,d);showExpenseDay(date);}});grid.appendChild(d);}}
+function renderExpenseCalendar(){closeExpenseDayPopup();const grid=document.getElementById('expenseCalendarGrid'),title=document.getElementById('expenseCalendarTitle');if(!grid||!title)return;const y=expenseCalendarDate.getFullYear(),m=expenseCalendarDate.getMonth(),first=new Date(y,m,1),start=(first.getDay()+6)%7,days=new Date(y,m+1,0).getDate(),today=new Date();grid.innerHTML='';for(let i=0;i<start;i++){const d=document.createElement('div');d.className='dayCell empty';grid.appendChild(d);}for(let day=1;day<=days;day++){const date=y+'-'+String(m+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');const dayExpenses=expenses.filter(e=>e.date===date);const total=dayExpenses.reduce((s,e)=>s+e.amount,0);const d=document.createElement('div');d.className='dayCell'+(dayExpenses.length?' hasJobs':'');if(today.getFullYear()===y&&today.getMonth()===m&&today.getDate()===day)d.classList.add('today');d.innerHTML=`<div class="num">${day}</div>${total>0?`<div class="jobCount">€${total.toFixed(2)}</div>`:''}`;d.onclick=()=>{expenseSelectedDate=date;showExpenseDayPopup(date,d);showExpenseDay(date);};grid.appendChild(d);}}
 function showExpenseDay(date){const sec=document.getElementById('expenseDaySection'),title=document.getElementById('expenseDayTitle'),totalEl=document.getElementById('expenseDayTotal'),list=document.getElementById('expenseDayList');if(!sec||!title||!totalEl||!list)return;const arr=expenses.filter(e=>e.date===date).sort((a,b)=>b.createdAt-a.createdAt);sec.style.display='';title.textContent=formatDate(date);const total=arr.reduce((s,e)=>s+e.amount,0);totalEl.textContent=expenseTranslate('დღის ჯამი')+' '+euro(total);list.innerHTML=arr.length?arr.map(e=>`<div class="expenseRow"><div><b>${esc(expenseTranslate(e.category))}${e.place?' · '+esc(e.place):''}</b><div class="expenseMeta">${formatDate(e.date)}</div><div class="expenseActions"><button class="small edit" onclick="openExpenseForm('${esc(e.id)}')">${expenseTranslate('✎ შეცვლა')}</button><button class="small danger" onclick="deleteExpense('${esc(e.id)}')">${expenseTranslate('✕ წაშლა')}</button></div></div><div class="expenseAmount">${euro(e.amount)}</div></div>`).join(''):`<div class="empty">${expenseTranslate('ამ დღეს გასავალი არ არის')}</div>`;}
 function renderExpenseDay(){const sec=document.getElementById('expenseDaySection');if(!sec)return;const key=expenseMonthKey();const selected=String(expenseSelectedDate||'');if(selected&&selected.slice(0,7)===key&&expenses.some(e=>e.date===selected))showExpenseDay(selected);else sec.style.display='none';}
 function renderExpenseCategories(){const box=document.getElementById('expenseCategoryTotals');if(!box)return;const key=expenseMonthKey(),map={};expenses.filter(e=>e.date.slice(0,7)===key).forEach(e=>{map[e.category]=(map[e.category]||0)+e.amount;});const rows=Object.entries(map).sort((a,b)=>b[1]-a[1]);box.innerHTML=rows.length?rows.map(([c,v])=>`<div class="monthRow"><div><b>${esc(expenseTranslate(c))}</b></div><b>${euro(v)}</b></div>`).join(''):`<div class="empty">${expenseTranslate('ამ თვეში გასავალი ჯერ არ არის')}</div>`;}
