@@ -3299,8 +3299,17 @@ async function renderManagedUsers(){
   });
   box.replaceChildren(frag);
 }
+function closeUserDetailsPopovers(){
+  document.querySelectorAll('#userManagementList .userRow.detailsOpen').forEach(r=>r.classList.remove('detailsOpen'));
+}
+document.addEventListener('pointerdown',function(e){
+  const openRow=e.target.closest('#userManagementList .userRow.detailsOpen');
+  if(openRow && e.target.closest('.userDetailsPopover'))return;
+  if(openRow && e.target.closest('.userNameBtn'))return;
+  if(document.querySelector('#userManagementList .userRow.detailsOpen'))closeUserDetailsPopovers();
+});
 function toggleUserDetails(row,u){
-  document.querySelectorAll('#userManagementList .userRow.detailsOpen').forEach(r=>{if(r!==row)r.classList.remove('detailsOpen');});
+  closeUserDetailsPopovers();
   const open=!row.classList.contains('detailsOpen');
   row.classList.toggle('detailsOpen',open);
   if(open){
