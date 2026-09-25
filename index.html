@@ -1715,6 +1715,20 @@ html body.site-white-theme .backgroundColorBtn.black:active {
   background:#071117 !important;
 }
 </style>
+
+<style id="temo-active-nav-neon">
+/* Active page: neon frame around the active navigation logo, using the selected neon color. */
+#bottomNav > button.active .navLogo{
+  border:2px solid var(--neon-control,#2999ff) !important;
+  border-radius:12px !important;
+  background:transparent !important;
+  box-shadow:
+    0 0 5px var(--neon-control,#2999ff),
+    0 0 12px rgba(var(--neon-control-rgb,41,153,255),.72),
+    inset 0 0 6px rgba(var(--neon-control-rgb,41,153,255),.78),
+    inset 0 0 13px rgba(var(--neon-control-rgb,41,153,255),.38) !important;
+}
+</style>
 </head>
 <body>
 <nav id="bottomNav" aria-label="მთავარი მენიუ">
@@ -2569,7 +2583,7 @@ function temoNavigatePage(pageId){
     p.style.zIndex=id===pageId?'20000':'';
   });
   window.scrollTo(0,0);
-  const navIndex={mainPage:0,settingsPage:1,userManagementPage:2,walletPage:3,notesPage:4};
+  const navIndex={mainPage:0,settingsPage:1,userManagementPage:2,walletPage:3,expensesPage:3,notesPage:4};
   const buttons=[...document.querySelectorAll('#bottomNav > button')];
   buttons.forEach((b,i)=>{
     const active=navIndex[pageId]===i;
