@@ -2658,7 +2658,7 @@ function goUsers(){if(currentUser)temoNavigatePage('userManagementPage')}
 function goWallet(){temoNavigatePage('walletPage')}
 function goExpenses(){if(currentUser)temoNavigatePage('expensesPage')}
 const EXPENSE_ROOT='/expenses/';
-const EXPENSE_CATEGORIES=['🛒 მაღაზია','💊 აფთიაქი','⚡ დენის გადასახადი','🏠 ბინის ქირა','🚗 მანქანის გადასახადი','⛽ საწვავი','📱 ტელეფონი / ინტერნეტი','🍽️ რესტორანი / კაფე','🛠️ რემონტი','👕 ტანსაცმელი','🧾 სხვა'];
+const EXPENSE_CATEGORIES=['🛒 მაღაზია','💊 აფთიაქი','⚡ დენის გადასახადი','🏠 ბინის ქირა','🚗 მანქანის გადასახადი','⛽ საწვავი','📱 ტელეფონი / ინტერნეტი','🍽️ რესტორანი / კაფე','🛠️ რემონტი','👕 ტანსაცმელი','💧 წყალი','🅿️ პარკინგი','👨‍⚕️ ექიმი','🧾 სხვა'];
 let expenses=[];
 let expenseCalendarDate=new Date();
 let expenseEditingId='';
@@ -4976,6 +4976,9 @@ startNotesReminderWatcher();
     '🍽️ რესტორანი / კაფე':['🍽️ Restaurant / Cafe','🍽️ Εστιατόριο / Καφέ'],
     '🛠️ რემონტი':['🛠️ Repairs','🛠️ Επισκευές'],
     '👕 ტანსაცმელი':['👕 Clothing','👕 Ρούχα'],
+    '💧 წყალი':['💧 Water','💧 Νερό'],
+    '🅿️ პარკინგი':['🅿️ Parking','🅿️ Πάρκινγκ'],
+    '👨‍⚕️ ექიმი':['👨‍⚕️ Doctor','👨‍⚕️ Γιατρός'],
     '🧾 სხვა':['🧾 Other','🧾 Άλλο'],
     'ნეონის მართვა':['Neon control','Έλεγχος neon'],
     'ფერი':['Color','Χρώμα'],
