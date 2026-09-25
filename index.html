@@ -5343,6 +5343,23 @@ startNotesReminderWatcher();
 }
 </style>
 
+
+<style id="temo-expense-calendar-today-neon">
+/* მხოლოდ დღევანდელი რიცხვი — მომხმარებლის არჩეული ნეონის ფერით */
+#expensesPage #expenseCalendarGrid .dayCell.today{
+  border-color:var(--neon-control,#49d86a) !important;
+  box-shadow:
+    inset 0 0 4px rgba(var(--neon-control-rgb,73,216,106),.48),
+    0 0 6px rgba(var(--neon-control-rgb,73,216,106),.72),
+    0 0 16px rgba(var(--neon-control-rgb,73,216,106),.42) !important;
+  text-shadow:0 0 7px rgba(var(--neon-control-rgb,73,216,106),.85) !important;
+}
+#expensesPage #expenseCalendarGrid .dayCell.today .num,
+#expensesPage #expenseCalendarGrid .dayCell.today .jobCount{
+  text-shadow:0 0 7px rgba(var(--neon-control-rgb,73,216,106),.85) !important;
+}
+</style>
+
 </body>
 </html>
 <style id="temo-calendar-number-neon">
