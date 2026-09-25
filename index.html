@@ -1844,7 +1844,7 @@ html body.site-white-theme .backgroundColorBtn.black:active {
     </div>
     <div class="notesPageSwitch">
       <button type="button" class="notesPageBtn" id="notesNewBtn" onclick="openNoteModal()">🔔 შეტყობინების დაყენება</button>
-      <button type="button" class="notesPageBtn" id="notesSecondBtn" onclick="showNotesSubPage('daily')">📖 დღიური ჩანაწერები</button>
+      <button type="button" class="notesPageBtn" id="notesSecondBtn" onclick="goNotesDaily()">📖 დღიური ჩანაწერები</button>
     </div>
   </div>
 
@@ -3165,6 +3165,7 @@ async function saveDailyEntry(){
 }
 
 function goNotes(){temoNavigatePage('notesPage');showNotesSubPage('reminders')}
+function goNotesDaily(){temoNavigatePage('notesPage');showNotesSubPage('daily')}
 startDailySyncWatcher();
 
 
