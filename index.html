@@ -1690,6 +1690,31 @@ html body.site-white-theme button:active {
   -webkit-text-fill-color:#111 !important;
 }
 </style>
+
+<style id="temo-white-mode-background-buttons-fix">
+/* Keep the two background-color buttons visible in white mode.
+   The general white-mode button rule must not erase their actual colors. */
+html body.site-white-theme .backgroundColorBtn.white {
+  background:#fff !important;
+  background-image:none !important;
+  border-color:#222 !important;
+}
+html body.site-white-theme .backgroundColorBtn.black {
+  background:#071117 !important;
+  background-image:none !important;
+  border-color:#fff !important;
+}
+html body.site-white-theme .backgroundColorBtn.white:hover,
+html body.site-white-theme .backgroundColorBtn.white:focus,
+html body.site-white-theme .backgroundColorBtn.white:active {
+  background:#fff !important;
+}
+html body.site-white-theme .backgroundColorBtn.black:hover,
+html body.site-white-theme .backgroundColorBtn.black:focus,
+html body.site-white-theme .backgroundColorBtn.black:active {
+  background:#071117 !important;
+}
+</style>
 </head>
 <body>
 <nav id="bottomNav" aria-label="მთავარი მენიუ">
