@@ -2479,15 +2479,16 @@ function openCalendarNote(){
 }
 function closeCalendarNote(){$('calendarNoteModal').classList.remove('show')}
 
-let receivableSelectedIds=new Set();
 function openReceivableModal(){
-  receivableSelectedIds=new Set();
   renderReceivableModal();
   $('receivableModal').classList.add('show');
 }
 function closeReceivableModal(){
+  save();
+  render();
+  renderList();
+  renderMonths();
   $('receivableModal').classList.remove('show');
-  receivableSelectedIds=new Set();
 }
 function renderReceivableModal(){
   const list=$('receivableList'), summary=$('receivableSummary'), all=$('receivableAllCheck');
@@ -2499,31 +2500,36 @@ function renderReceivableModal(){
   const unpaid=total-paid;
   const unpaidCount=unpaidData.length;
   summary.innerHTML=`სულ სამუშაოები: <b>${data.length}</b> • მიღებული: <b>${euro(paid)}</b> • ჯერ მისაღები: <b>${euro(unpaid)}</b> • ${unpaidCount} გადაუხდელი`;
-  all.checked=unpaidData.length>0 && unpaidData.every(j=>receivableSelectedIds.has(String(j.id)));
+  all.checked=data.length>0 && unpaidCount===0;
   list.innerHTML='';
-  if(!unpaidData.length){
-    list.innerHTML='<div class="receivableEmpty">ყველა თანხა მიღებულია.</div>';
+  if(!data.length){
+    list.innerHTML='<div class="receivableEmpty">ჯერ ჩანაწერები არ არის.</div>';
     return;
   }
-  unpaidData.forEach(j=>{
-    const id=String(j.id);
-    const selected=receivableSelectedIds.has(id);
+  data.forEach(j=>{
     const row=document.createElement('div');
-    row.className=`receivableRow ${selected?'receivablePaid':'receivableUnpaid'}`;
-    row.innerHTML=`<label class="receivableCheck"><input type="checkbox" ${selected?'checked':''} onchange="setReceivablePaid('${j.id}',this.checked)"><div class="receivableInfo"><div class="receivablePlace">${esc(j.place||'სამუშაო')}</div><div class="receivableDate">${formatDate(j.date)}${j.note?' • '+esc(j.note):''}</div></div></label><div class="receivableAmount">${euro(j.money)}</div>`;
+    row.className=`receivableRow ${j.paid?'receivablePaid':'receivableUnpaid'}`;
+    row.innerHTML=`<label class="receivableCheck"><input type="checkbox" ${j.paid?'checked':''} onchange="setReceivablePaid('${j.id}',this.checked)"><div class="receivableInfo"><div class="receivablePlace">${esc(j.place||'სამუშაო')}</div><div class="receivableDate">${formatDate(j.date)}${j.note?' • '+esc(j.note):''}</div></div></label><div class="receivableAmount">${euro(j.money)}</div>`;
     list.appendChild(row);
   });
 }
 function setReceivablePaid(id,checked){
-  const key=String(id);
-  if(checked)receivableSelectedIds.add(key);
-  else receivableSelectedIds.delete(key);
+  const j=jobs.find(x=>x.id===id);
+  if(!j)return;
+  j.paid=checked;j.updatedAt=Date.now();
+  save();
+  render();
+  renderList();
+  renderMonths();
   renderReceivableModal();
 }
 function toggleAllReceivable(checked){
-  const data=jobs.filter(j=>!j.paid);
-  if(checked)data.forEach(j=>receivableSelectedIds.add(String(j.id)));
-  else data.forEach(j=>receivableSelectedIds.delete(String(j.id)));
+  const now=Date.now();
+  jobs.forEach(j=>{j.paid=checked;j.updatedAt=now});
+  save();
+  render();
+  renderList();
+  renderMonths();
   renderReceivableModal();
 }
 function openForm(){
