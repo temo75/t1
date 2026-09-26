@@ -2503,11 +2503,13 @@ async function closeReceivableModal(){
     const key=currentUserId?'temoJobsId_'+currentUserId:'temoJobs_'+(currentUser||ADMIN_USER);
     localStorage.setItem(key,JSON.stringify(jobs));
     if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs));
-    await saveJobsToFirebase(jobs);
+    // მთავარი გვერდი ჯერ კიდევ ფანჯრის დახურვისასვე განახლდეს;
+    // Firebase-ის ქსელურ შენახვას UI არ დაელოდოს.
     updateMonthFilter();
     render();
     renderList();
     renderMonths();
+    void saveJobsToFirebase(jobs);
   }
   $('receivableModal').classList.remove('show');
   receivableSelectedIds=new Set();
