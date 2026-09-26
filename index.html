@@ -1802,6 +1802,7 @@ html body.site-white-theme .backgroundColorBtn.black:active {
 <div class="grid">
 <div class="card blue"><div class="label">🔨 სულ ნამუშევარი</div><div class="amount" id="total">€0</div><div class="meta" id="days">0 სამუშაო</div></div>
 <div class="card green"><div class="label">💶 მიღებული</div><div class="amount" id="paid">€0</div><div class="meta" id="paidDays">0 გადახდილი</div></div>
+<div class="card monthTotalHero neonControlled"><div class="label" id="walletMonthTotalLabel">📆 ამ თვის ნამუშევარი</div><div class="amount" id="walletMonthTotal">€0</div></div>
 </div>
 </div>
 
@@ -2387,6 +2388,8 @@ function render(){
  const monthAll=mj.reduce((a,j)=>a+Number(j.money||0),0);
  const monthUnpaid=monthAll-monthTotal;
  $('monthTotal').textContent=euro(monthTotal);
+ const walletMonthTotal=$('walletMonthTotal');if(walletMonthTotal)walletMonthTotal.textContent=euro(monthTotal);
+ const walletMonthTotalLabel=$('walletMonthTotalLabel');if(walletMonthTotalLabel)walletMonthTotalLabel.textContent='📆 '+monthName(calendarKey)+' '+(window.t?window.t('ნამუშევარი'):'ნამუშევარი');
  $('average').textContent=euro(mj.length?monthAll/mj.length:0);
  $('unpaid').textContent=euro(monthUnpaid);
  $('unpaidDays').textContent=mj.filter(j=>!j.paid).length+' გადასახდელი';
