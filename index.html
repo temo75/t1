@@ -2330,7 +2330,19 @@ async function syncJobsFromFirebase(){
     await firebaseJobsWriteQueue;
     const remoteState=await loadJobsFromFirebase();if(remoteState===null)return;
     if(currentUser===ADMIN_USER){
-      jobs=remoteState.jobs.map(normalizeJobRecord);localStorage.setItem('temoJobsId_'+id,JSON.stringify(jobs));localStorage.setItem('temoJobs',JSON.stringify(jobs));return;
+      // ადმინისტრატორისთვისაც შევადაროთ მოწყობილობის ბოლო ცვლილება Firebase-ისას.
+      // თუ ამ მოწყობილობაზე უკვე მიღებულად მოვნიშნეთ თანხა, ძველმა Firebase ჩანაწერმა
+      // Refresh-ისას ეს ცვლილება აღარ უნდა დააბრუნოს უკან.
+      const localJobs=jobs.map(normalizeJobRecord);
+      const merged=mergeJobSyncState(localJobs,remoteState.jobs,{},{});
+      const localWasNewer=!sameJobArrays(merged.jobs,remoteState.jobs);
+      const changed=!sameJobArrays(merged.jobs,jobs);
+      jobs=merged.jobs;
+      localStorage.setItem('temoJobsId_'+id,JSON.stringify(jobs));
+      localStorage.setItem('temoJobs',JSON.stringify(jobs));
+      if(localWasNewer) await saveJobsToFirebase(jobs);
+      if(changed){updateMonthFilter();render();renderList();renderMonths();renderReceivableModal();}
+      return;
     }
     const localDeletes=getLocalJobDeletes();
     /* თუ მოწყობილობაზე პირველად გაიხსნა უკვე არსებული ანგარიში, Firebase-ის მონაცემები არის წყარო და არა ადგილობრივი საწყისი ცარიელი/საბაზისო მდგომარეობა. */
@@ -2485,10 +2497,7 @@ function openReceivableModal(){
   renderReceivableModal();
   $('receivableModal').classList.add('show');
 }
-let receivableClosing=false;
-function closeReceivableModal(){
-  if(receivableClosing)return;
-  receivableClosing=true;
+async function closeReceivableModal(){
   const selectedIds=[...receivableSelectedIds];
   let changed=false;
   if(selectedIds.length){
@@ -2502,26 +2511,20 @@ function closeReceivableModal(){
       return j;
     });
   }
-
-  // ერთი დაჭერითვე დავხუროთ ფანჯარა.
-  $('receivableModal').classList.remove('show');
-  receivableSelectedIds=new Set();
-
   if(changed){
     const key=currentUserId?'temoJobsId_'+currentUserId:'temoJobs_'+(currentUser||ADMIN_USER);
     localStorage.setItem(key,JSON.stringify(jobs));
     if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs));
-
-    // მთავარი გვერდი განახლდეს დაუყოვნებლივ; Firebase-ის ქსელურ პასუხს არ დაველოდოთ.
+    // მთავარი გვერდი ჯერ კიდევ ფანჯრის დახურვისასვე განახლდეს;
+    // Firebase-ის ქსელურ შენახვას UI არ დაელოდოს.
     updateMonthFilter();
     render();
     renderList();
     renderMonths();
-
-    // Firebase-ში შენახვა ფონურად გაგრძელდეს.
     void saveJobsToFirebase(jobs);
   }
-  receivableClosing=false;
+  $('receivableModal').classList.remove('show');
+  receivableSelectedIds=new Set();
 }
 function renderReceivableModal(){
   const list=$('receivableList'), summary=$('receivableSummary'), all=$('receivableAllCheck');
