@@ -2537,6 +2537,9 @@ function toggleAllReceivable(checked){
   renderList();
   renderMonths();
   renderReceivableModal();
+  document.querySelectorAll('#receivableList .receivableCheck input[type=checkbox]').forEach(cb=>{cb.checked=checked});
+  const all=document.getElementById('receivableAllCheck');
+  if(all)all.checked=checked;
 }
 function openForm(){
   /* სამუშაოს დამატება ყოველთვის იწყება მთავარ გვერდზე.
