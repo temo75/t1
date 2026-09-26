@@ -1773,6 +1773,7 @@ html body.site-white-theme .backgroundColorBtn.black:active {
 <div class="mini miniReceivable neonControlled" id="receivableCard" onclick="openReceivableModal()" role="button" tabindex="0" title="მისაღები თანხების ნახვა"><span>⏳ მისაღები</span><b id="unpaid">€0</b><small id="unpaidDays">0 გადასახდელი</small><span class="miniActionIcon" aria-hidden="true">↑</span></div>
 <div class="mini neonControlled"><span>📊 ამ თვის სამუშაოები</span><b id="monthDays">0 დღე</b></div>
 <div class="mini neonControlled expenseQuickCard" id="expenseQuickCard" onclick="goExpenses()" role="button" tabindex="0" title="გასავალი"><span>💸 გასავალი</span><b id="expenseMonthTotal">€0</b><small>ამ თვის გასავალი</small><span class="miniActionIcon" aria-hidden="true">↑</span></div>
+<button class="add" onclick="openForm()">＋ სამუშაოს დამატება</button>
 </div>
 <div class="section">
 <h2>📅 კალენდარი</h2>
@@ -1785,7 +1786,6 @@ html body.site-white-theme .backgroundColorBtn.black:active {
   <div>ორშ</div><div>სამ</div><div>ოთხ</div><div>ხუთ</div><div>პარ</div><div>შაბ</div><div>კვი</div>
 </div>
 <div id="calendarGrid" class="calendarGrid"></div>
-<button class="add calendarAddBtn" onclick="openForm()">＋ სამუშაოს დამატება</button>
 <div class="calendarNoteRow"><button class="calendarNoteBtn" onclick="openCalendarNote()">📝 ნოუთი</button></div>
 </div>
 
@@ -2432,9 +2432,36 @@ function renderCalendar(){
   for(let i=0;i<start;i++)out+='<div class="dayCell empty"></div>';
   for(let d=1;d<=days;d++){
     const key=dateKey(y,m,d), count=jobMap[key]||0; const now=new Date(); const todayKey=dateKey(now.getFullYear(),now.getMonth(),now.getDate());
-    out+=`<div class="dayCell ${count?'hasJobs ':''}${key===todayKey?'today ':''}${key<todayKey&&!count?'past-empty ':''}${selectedDate===key?'selected':''}" onclick="selectCalendarDate('${key}')"><div class="num">${d}</div>${count?`<div class="jobCount">${count}</div>`:''}</div>`;
+    out+=`<div class="dayCell ${count?'hasJobs ':''}${key===todayKey?'today ':''}${key<todayKey&&!count?'past-empty ':''}${selectedDate===key?'selected':''}" data-calendar-date="${key}"><div class="num">${d}</div>${count?`<div class="jobCount">${count}</div>`:''}</div>`;
   }
   $('calendarGrid').innerHTML=out;
+}
+let calendarLongPressTimer=null;
+function bindCalendarLongPress(){
+  const grid=$('calendarGrid');
+  if(!grid)return;
+  grid.querySelectorAll('.dayCell:not(.empty)').forEach(cell=>{
+    const key=cell.getAttribute('data-calendar-date');
+    if(!key)return;
+    const [yy,mm,dd]=key.split('-').map(Number);
+    const now=new Date();now.setHours(0,0,0,0);
+    const dayDate=new Date(yy,mm-1,dd);dayDate.setHours(0,0,0,0);
+    if(dayDate<now)return;
+    const start=e=>{
+      if(e.button!==undefined&&e.button!==0)return;
+      clearTimeout(calendarLongPressTimer);
+      calendarLongPressTimer=setTimeout(()=>{
+        calendarLongPressTimer=null;
+        openNoteModal({date:key,time:'09:00',reminder:true});
+      },550);
+    };
+    const cancel=()=>{clearTimeout(calendarLongPressTimer);calendarLongPressTimer=null;};
+    cell.addEventListener('pointerdown',start);
+    cell.addEventListener('pointerup',cancel);
+    cell.addEventListener('pointercancel',cancel);
+    cell.addEventListener('pointerleave',cancel);
+    cell.addEventListener('contextmenu',e=>e.preventDefault());
+  });
 }
 function selectCalendarDate(key){
   selectedDate=key;
@@ -2529,13 +2556,8 @@ function setReceivablePaid(id,checked){
   renderReceivableModal();
 }
 function toggleAllReceivable(checked){
-  const now=Date.now();
-  jobs.forEach(j=>{j.paid=checked;j.updatedAt=now});
-  save();
-  render();
-  renderList();
-  renderMonths();
-  renderReceivableModal();
+  const checkboxes=document.querySelectorAll('#receivableList .receivableCheck input[type="checkbox"]');
+  checkboxes.forEach(cb=>{cb.checked=checked;});
 }
 function openForm(){
   /* სამუშაოს დამატება ყოველთვის იწყება მთავარ გვერდზე.
@@ -5540,22 +5562,6 @@ startNotesReminderWatcher();
 #notesPage .notesFramePlus{position:absolute;right:12px;bottom:10px;width:42px;height:42px;border-radius:50%;border:2px solid var(--neon-control,#49d86a);background:transparent;color:var(--neon-control,#49d86a);font-size:30px;font-weight:700;line-height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 0 8px rgba(var(--neon-control-rgb,73,216,106),.55),inset 0 0 8px rgba(var(--neon-control-rgb,73,216,106),.12);padding:0}
 #notesPage .notesFramePlus:active{transform:scale(.92)}
 @media(max-width:520px){#notesPage .notesFramePlus{right:10px;bottom:9px;width:40px;height:40px;font-size:28px;line-height:34px}}
-</style>
-
-<style id="temo-work-calendar-add-position">
-/* სამუშაოს დამატება — კალენდრის ბლოკის ქვედა მარჯვენა კუთხეში */
-#mainPage .section:has(#calendarGrid){
-  position:relative;
-}
-#mainPage .section:has(#calendarGrid) .calendarAddBtn{
-  width:auto;
-  max-width:none;
-  margin:10px 0 0 auto;
-  padding:7px 11px;
-  font-size:13px;
-  line-height:1.15;
-  display:block;
-}
 </style>
 
 <style id="temo-expense-calendar-red-neon">
