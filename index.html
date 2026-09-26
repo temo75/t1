@@ -2620,66 +2620,22 @@ function temoNavigatePage(pageId){
   const ids=['mainPage','settingsPage','userManagementPage','walletPage','expensesPage','notesPage'];
   const target=document.getElementById(pageId);
   if(!target)return;
-  const current=ids.map(id=>document.getElementById(id)).find(p=>p && !p.classList.contains('pageHidden'));
 
-  /* Bottom navigation: the old page gently disappears while the new page
-     softly slides in. The actual page content and all existing logic stay unchanged. */
-  if(current && current!==target){
-    ids.forEach(id=>{
-      const p=document.getElementById(id);
-      if(!p)return;
-      p.style.transition='none';
-      p.style.transform='translate3d(0,0,0)';
-      p.style.opacity=id===current?'1':'1';
-      p.style.zIndex=id===current?'20000':'';
-    });
+  /* გვერდებს შორის გადასვლა ხდება სუფთად და პირდაპირ.
+     ძველი fade/slide ანიმაცია არ ტოვებს წინა გვერდს ეკრანზე. */
+  ids.forEach(id=>{
+    const p=document.getElementById(id);
+    if(!p)return;
+    const isTarget=p===target;
+    p.classList.toggle('pageHidden',!isTarget);
+    p.style.transition='none';
+    p.style.transform='none';
+    p.style.opacity=isTarget?'1':'';
+    p.style.zIndex=isTarget?'20000':'';
+    if(isTarget)p.scrollTop=0;
+  });
 
-    target.classList.remove('pageHidden');
-    target.scrollTop=0;
-    target.style.zIndex='20001';
-    target.style.transition='none';
-    target.style.opacity='0';
-    target.style.transform='translate3d(22px,0,0)';
-
-    requestAnimationFrame(()=>{
-      requestAnimationFrame(()=>{
-        current.style.transition='opacity 430ms ease, transform 430ms cubic-bezier(.22,.85,.25,1)';
-        current.style.opacity='0';
-        current.style.transform='translate3d(-18px,0,0)';
-
-        target.style.transition='opacity 500ms ease, transform 500ms cubic-bezier(.22,.85,.25,1)';
-        target.style.opacity='1';
-        target.style.transform='translate3d(0,0,0)';
-      });
-    });
-
-    setTimeout(()=>{
-      ids.forEach(id=>{
-        const p=document.getElementById(id);
-        if(!p)return;
-        const isTarget=p===target;
-        p.classList.toggle('pageHidden',!isTarget);
-        p.style.transform='translate3d(0,0,0)';
-        p.style.opacity=isTarget?'1':'';
-        p.style.transition='none';
-        p.style.zIndex=isTarget?'20000':'';
-      });
-      window.scrollTo(0,0);
-    },520);
-  }else{
-    ids.forEach(id=>{
-      const p=document.getElementById(id);
-      if(!p)return;
-      const isTarget=p===target;
-      p.classList.toggle('pageHidden',!isTarget);
-      p.scrollTop=0;
-      p.style.transform='translate3d(0,0,0)';
-      p.style.opacity=isTarget?'1':'';
-      p.style.transition='none';
-      p.style.zIndex=isTarget?'20000':'';
-    });
-    window.scrollTo(0,0);
-  }
+  window.scrollTo(0,0);
 
   const navIndex={mainPage:0,settingsPage:1,userManagementPage:2,walletPage:3,expensesPage:3,notesPage:4};
   const buttons=[...document.querySelectorAll('#bottomNav > button')];
@@ -2688,12 +2644,14 @@ function temoNavigatePage(pageId){
     b.classList.toggle('active',active);
     b.setAttribute('aria-current',active?'page':'false');
   });
+
   if(pageId==='mainPage')render();
   if(pageId==='expensesPage'){renderExpenses();syncExpensesFromFirebase();}
   if(pageId==='notesPage' && typeof loadNotes==='function')loadNotes();
   if(pageId==='userManagementPage'){if(currentUser===ADMIN_USER)renderAdminMessages();else loadAndRenderUserChat();}
   updateUserUI();
 }
+
 function goHome(){temoNavigatePage('mainPage')}
 function goSettings(){temoNavigatePage('settingsPage');if(typeof window.loadNeonSettings==='function')window.loadNeonSettings()}
 function goUsers(){if(currentUser)temoNavigatePage('userManagementPage')}
