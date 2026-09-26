@@ -2518,19 +2518,54 @@ function renderReceivableModal(){
     list.appendChild(row);
   });
 }
+async function saveReceivablePaidToFirebase(snapshot){
+  const id=String(currentUserId||'').trim();
+  if(!id)return false;
+  const data=Array.isArray(snapshot)?snapshot.map(normalizeJobRecord):[];
+  firebaseJobsWriteQueue=firebaseJobsWriteQueue.then(async()=>{
+    try{
+      const r=await fetch(FIREBASE_DB_URL+'/jobs/'+firebaseUserKey(id)+'.json',{
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(data),
+        keepalive:true
+      });
+      if(!r.ok)throw new Error('Firebase HTTP '+r.status);
+      jobs=data.map(normalizeJobRecord);
+      localStorage.setItem('temoJobsId_'+id,JSON.stringify(jobs));
+      if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs));
+      return true;
+    }catch(e){
+      console.warn('Firebase receivable save failed:',e);
+      return false;
+    }
+  });
+  return firebaseJobsWriteQueue;
+}
 function setReceivablePaid(id,checked){
   const j=jobs.find(x=>x.id===id);
   if(!j)return;
-  j.paid=checked;j.updatedAt=Date.now();
-  save();
+  j.paid=checked;
+  j.updatedAt=Date.now();
+  try{
+    const key=currentUserId?'temoJobsId_'+currentUserId:'temoJobs_'+(currentUser||ADMIN_USER);
+    localStorage.setItem(key,JSON.stringify(jobs));
+    if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs));
+  }catch(e){}
+  saveReceivablePaidToFirebase(jobs).catch(e=>console.warn('Firebase receivable save failed:',e));
   render();
   renderList();
   renderMonths();
   renderReceivableModal();
 }
 function toggleAllReceivable(checked){
-  const checkboxes=document.querySelectorAll('#receivableList .receivableCheck input[type="checkbox"]');
-  checkboxes.forEach(cb=>{cb.checked=checked;});
+  const now=Date.now();
+  jobs.forEach(j=>{j.paid=checked;j.updatedAt=now});
+  save();
+  render();
+  renderList();
+  renderMonths();
+  renderReceivableModal();
 }
 function openForm(){
   /* სამუშაოს დამატება ყოველთვის იწყება მთავარ გვერდზე.
