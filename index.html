@@ -2485,7 +2485,10 @@ function openReceivableModal(){
   renderReceivableModal();
   $('receivableModal').classList.add('show');
 }
-async function closeReceivableModal(){
+let receivableClosing=false;
+function closeReceivableModal(){
+  if(receivableClosing)return;
+  receivableClosing=true;
   const selectedIds=[...receivableSelectedIds];
   let changed=false;
   if(selectedIds.length){
@@ -2499,20 +2502,26 @@ async function closeReceivableModal(){
       return j;
     });
   }
+
+  // ერთი დაჭერითვე დავხუროთ ფანჯარა.
+  $('receivableModal').classList.remove('show');
+  receivableSelectedIds=new Set();
+
   if(changed){
     const key=currentUserId?'temoJobsId_'+currentUserId:'temoJobs_'+(currentUser||ADMIN_USER);
     localStorage.setItem(key,JSON.stringify(jobs));
     if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs));
-    // მთავარი გვერდი ჯერ კიდევ ფანჯრის დახურვისასვე განახლდეს;
-    // Firebase-ის ქსელურ შენახვას UI არ დაელოდოს.
+
+    // მთავარი გვერდი განახლდეს დაუყოვნებლივ; Firebase-ის ქსელურ პასუხს არ დაველოდოთ.
     updateMonthFilter();
     render();
     renderList();
     renderMonths();
+
+    // Firebase-ში შენახვა ფონურად გაგრძელდეს.
     void saveJobsToFirebase(jobs);
   }
-  $('receivableModal').classList.remove('show');
-  receivableSelectedIds=new Set();
+  receivableClosing=false;
 }
 function renderReceivableModal(){
   const list=$('receivableList'), summary=$('receivableSummary'), all=$('receivableAllCheck');
