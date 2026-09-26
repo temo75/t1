@@ -2511,10 +2511,10 @@ function renderReceivableModal(){
     list.innerHTML='<div class="receivableEmpty">ყველასგან მიღებულია თანხა. 🎉</div>';
     return;
   }
-  unpaidData.forEach(j=>{
+  data.forEach(j=>{
     const row=document.createElement('div');
-    row.className='receivableRow receivableUnpaid';
-    row.innerHTML=`<label class="receivableCheck"><input type="checkbox" onchange="setReceivablePaid('${j.id}',this.checked)"><div class="receivableInfo"><div class="receivablePlace">${esc(j.place||'სამუშაო')}</div><div class="receivableDate">${formatDate(j.date)}${j.note?' • '+esc(j.note):''}</div></div></label><div class="receivableAmount">${euro(j.money)}</div>`;
+    row.className='receivableRow'+(j.paid?' receivablePaid':' receivableUnpaid');
+    row.innerHTML=`<label class="receivableCheck"><input type="checkbox" ${j.paid?'checked':''} onchange="setReceivablePaid('${j.id}',this.checked)"><div class="receivableInfo"><div class="receivablePlace">${esc(j.place||'სამუშაო')}</div><div class="receivableDate">${formatDate(j.date)}${j.note?' • '+esc(j.note):''}</div></div></label><div class="receivableAmount">${euro(j.money)}</div>`;
     list.appendChild(row);
   });
 }
@@ -2536,10 +2536,6 @@ function toggleAllReceivable(checked){
   renderList();
   renderMonths();
   renderReceivableModal();
-  const checks=document.querySelectorAll('#receivableList input[type="checkbox"]');
-  checks.forEach(cb=>{cb.checked=checked});
-  const all=document.getElementById('receivableAllCheck');
-  if(all)all.checked=checked;
 }
 function openForm(){
   /* სამუშაოს დამატება ყოველთვის იწყება მთავარ გვერდზე.
