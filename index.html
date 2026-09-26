@@ -1772,7 +1772,8 @@ html body.site-white-theme .backgroundColorBtn.black:active {
 <div class="mini neonControlled"><span>📅 დღიური საშუალო</span><b id="average">€0</b></div>
 <div class="mini miniReceivable neonControlled" id="receivableCard" onclick="openReceivableModal()" role="button" tabindex="0" title="მისაღები თანხების ნახვა"><span>⏳ მისაღები</span><b id="unpaid">€0</b><small id="unpaidDays">0 გადასახდელი</small><span class="miniActionIcon" aria-hidden="true">↑</span></div>
 <div class="mini neonControlled"><span>📊 ამ თვის სამუშაოები</span><b id="monthDays">0 დღე</b></div>
-<div class="mini neonControlled expenseQuickCard" id="expenseQuickCard" onclick="goExpenses()" role="button" tabindex="0" title="გასავალი"><span>💸 გასავალი</span><b id="expenseMonthTotal">€0</b><small>ამ თვის გასავალი</small><span class="miniActionIcon" aria-hidden="true">↑</span></div>
+<div class="mini neonControlled expenseQuickCard" id="expenseQuickCardMain" onclick="goExpenses()" role="button" tabindex="0" title="გასავალი"><span>💸 გასავალი</span><b id="expenseMonthTotalMain">€0</b><small>ამ თვის გასავალი</small><span class="miniActionIcon" aria-hidden="true">↑</span></div>
+
 </div>
 <div class="section">
 <h2>📅 კალენდარი</h2>
@@ -1802,7 +1803,7 @@ html body.site-white-theme .backgroundColorBtn.black:active {
 <div class="grid">
 <div class="card blue"><div class="label">🔨 სულ ნამუშევარი</div><div class="amount" id="total">€0</div><div class="meta" id="days">0 სამუშაო</div></div>
 <div class="card green"><div class="label">💶 მიღებული</div><div class="amount" id="paid">€0</div><div class="meta" id="paidDays">0 გადახდილი</div></div>
-<div class="card monthTotalHero neonControlled"><div class="label" id="walletMonthTotalLabel">📆 ამ თვის ნამუშევარი</div><div class="amount" id="walletMonthTotal">€0</div></div>
+<div class="mini neonControlled expenseQuickCard" id="expenseQuickCard" onclick="goExpenses()" role="button" tabindex="0" title="გასავალი"><span>💸 გასავალი</span><b id="expenseMonthTotal">€0</b><small>ამ თვის გასავალი</small><span class="miniActionIcon" aria-hidden="true">↑</span></div>
 </div>
 </div>
 
@@ -2388,17 +2389,16 @@ function render(){
  const monthAll=mj.reduce((a,j)=>a+Number(j.money||0),0);
  const monthUnpaid=monthAll-monthTotal;
  $('monthTotal').textContent=euro(monthTotal);
- const walletMonthTotal=$('walletMonthTotal');if(walletMonthTotal)walletMonthTotal.textContent=euro(monthTotal);
- const walletMonthTotalLabel=$('walletMonthTotalLabel');if(walletMonthTotalLabel)walletMonthTotalLabel.textContent='📆 '+monthName(calendarKey)+' '+(window.t?window.t('ნამუშევარი'):'ნამუშევარი');
  $('average').textContent=euro(mj.length?monthAll/mj.length:0);
  $('unpaid').textContent=euro(monthUnpaid);
  $('unpaidDays').textContent=mj.filter(j=>!j.paid).length+' გადასახდელი';
  $('monthDays').textContent=mj.length+' დღე';
  const expenseMonthKeyNow=calendarKey;const expenseTotalNow=expenses.filter(e=>e.date.slice(0,7)===expenseMonthKeyNow).reduce((a,e)=>a+Number(e.amount||0),0);const expenseQuick=$('expenseMonthTotal');if(expenseQuick)expenseQuick.textContent=euro(expenseTotalNow);
+ const expenseQuickMain=$('expenseMonthTotalMain');if(expenseQuickMain)expenseQuickMain.textContent=euro(expenseTotalNow);
  const selectedMonthName=monthName(calendarKey);
  const monthTotalLabel=document.querySelector('.monthTotalHero .label');
  if(monthTotalLabel)monthTotalLabel.textContent='📆 '+selectedMonthName+' '+(window.t?window.t('ნამუშევარი'):'ნამუშევარი');
- const monthDaysLabel=document.querySelector('.stats .mini:last-child span');
+ const monthDaysLabel=document.querySelector('#expenseQuickCard span');
  if(monthDaysLabel)monthDaysLabel.textContent='📊 '+selectedMonthName+' '+(window.t?window.t('სამუშაოები'):'სამუშაოები');
  renderCalendar();renderDayJobs();
 }
