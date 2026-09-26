@@ -2047,7 +2047,7 @@ html body.site-white-theme .backgroundColorBtn.black:active {
 </div></div>
 <div class="receivableModal" id="receivableModal" onclick="if(event.target===this)closeReceivableModal()">
 <div class="receivableBox">
-  <div class="receivableHeader"><h2>💶 მისაღები თანხები</h2><button class="receivableClose" onclick="closeReceivableModal()" aria-label="დახურვა">✕</button></div>
+  <div class="receivableHeader"><h2>💶 მისაღები თანხები</h2><button type="button" class="receivableClose" onclick="event.preventDefault();event.stopPropagation();closeReceivableModal();return false;" aria-label="დახურვა">✕</button></div>
   <div class="receivableSummary" id="receivableSummary"></div>
   <label class="receivableAll"><input id="receivableAllCheck" type="checkbox" onchange="toggleAllReceivable(this.checked)"> ყველამ მომცა ფული ვისაც ემართა</label>
   <div class="receivableList" id="receivableList"></div>
@@ -2330,19 +2330,7 @@ async function syncJobsFromFirebase(){
     await firebaseJobsWriteQueue;
     const remoteState=await loadJobsFromFirebase();if(remoteState===null)return;
     if(currentUser===ADMIN_USER){
-      // ადმინისტრატორისთვისაც შევადაროთ მოწყობილობის ბოლო ცვლილება Firebase-ისას.
-      // თუ ამ მოწყობილობაზე უკვე მიღებულად მოვნიშნეთ თანხა, ძველმა Firebase ჩანაწერმა
-      // Refresh-ისას ეს ცვლილება აღარ უნდა დააბრუნოს უკან.
-      const localJobs=jobs.map(normalizeJobRecord);
-      const merged=mergeJobSyncState(localJobs,remoteState.jobs,{},{});
-      const localWasNewer=!sameJobArrays(merged.jobs,remoteState.jobs);
-      const changed=!sameJobArrays(merged.jobs,jobs);
-      jobs=merged.jobs;
-      localStorage.setItem('temoJobsId_'+id,JSON.stringify(jobs));
-      localStorage.setItem('temoJobs',JSON.stringify(jobs));
-      if(localWasNewer) await saveJobsToFirebase(jobs);
-      if(changed){updateMonthFilter();render();renderList();renderMonths();renderReceivableModal();}
-      return;
+      jobs=remoteState.jobs.map(normalizeJobRecord);localStorage.setItem('temoJobsId_'+id,JSON.stringify(jobs));localStorage.setItem('temoJobs',JSON.stringify(jobs));return;
     }
     const localDeletes=getLocalJobDeletes();
     /* თუ მოწყობილობაზე პირველად გაიხსნა უკვე არსებული ანგარიში, Firebase-ის მონაცემები არის წყარო და არა ადგილობრივი საწყისი ცარიელი/საბაზისო მდგომარეობა. */
@@ -2497,12 +2485,16 @@ function openReceivableModal(){
   renderReceivableModal();
   $('receivableModal').classList.add('show');
 }
-async function closeReceivableModal(){
+let receivableClosing=false;
+function closeReceivableModal(){
+  if(receivableClosing)return;
+  receivableClosing=true;
   const selectedIds=[...receivableSelectedIds];
   let changed=false;
   if(selectedIds.length){
     const selectedSet=new Set(selectedIds.map(String));
-    const now=Date.now();
+    const maxUpdated=jobs.reduce((m,j)=>Math.max(m,Number(j.updatedAt||0)),0);
+    const now=Math.max(Date.now(),maxUpdated+1);
     jobs=jobs.map(j=>{
       if(selectedSet.has(String(j.id)) && !j.paid){
         changed=true;
@@ -2511,20 +2503,23 @@ async function closeReceivableModal(){
       return j;
     });
   }
+
+  // ერთხელ დაჭერაზე ჯერვე ვინახავთ ადგილობრივად და ვხურავთ ფანჯარას.
+  // ამიტომ UI არ ელოდება Firebase-ის ქსელურ პასუხს.
   if(changed){
     const key=currentUserId?'temoJobsId_'+currentUserId:'temoJobs_'+(currentUser||ADMIN_USER);
     localStorage.setItem(key,JSON.stringify(jobs));
     if(currentUser===ADMIN_USER)localStorage.setItem('temoJobs',JSON.stringify(jobs));
-    // მთავარი გვერდი ჯერ კიდევ ფანჯრის დახურვისასვე განახლდეს;
-    // Firebase-ის ქსელურ შენახვას UI არ დაელოდოს.
     updateMonthFilter();
     render();
     renderList();
     renderMonths();
-    void saveJobsToFirebase(jobs);
+    const snapshot=jobs.map(normalizeJobRecord);
+    Promise.resolve(saveJobsToFirebase(snapshot)).catch(e=>console.warn('Firebase jobs save failed:',e));
   }
   $('receivableModal').classList.remove('show');
   receivableSelectedIds=new Set();
+  setTimeout(()=>{receivableClosing=false;},0);
 }
 function renderReceivableModal(){
   const list=$('receivableList'), summary=$('receivableSummary'), all=$('receivableAllCheck');
