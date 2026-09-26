@@ -2489,14 +2489,15 @@ function closeReceivableModal(){
 function renderReceivableModal(){
   const list=$('receivableList'), summary=$('receivableSummary'), all=$('receivableAllCheck');
   if(!list||!summary||!all)return;
-  const data=[...jobs].sort((a,b)=>(b.date||'').localeCompare(a.date||'')||String(b.id).localeCompare(String(a.id)));
-  const unpaidData=data.filter(j=>!j.paid);
-  const total=data.reduce((s,j)=>s+Number(j.money||0),0);
+  const allData=[...jobs].sort((a,b)=>(b.date||'').localeCompare(a.date||'')||String(b.id).localeCompare(String(a.id)));
+  const unpaidData=allData.filter(j=>!j.paid);
+  const data=unpaidData;
+  const total=allData.reduce((s,j)=>s+Number(j.money||0),0);
   const paid=data.filter(j=>j.paid).reduce((s,j)=>s+Number(j.money||0),0);
   const unpaid=total-paid;
   const unpaidCount=unpaidData.length;
   summary.innerHTML=`სულ სამუშაოები: <b>${data.length}</b> • მიღებული: <b>${euro(paid)}</b> • ჯერ მისაღები: <b>${euro(unpaid)}</b> • ${unpaidCount} გადაუხდელი`;
-  all.checked=data.length>0 && unpaidCount===0;
+  all.checked=unpaidCount===0 && allData.length>0;
   list.innerHTML='';
   if(!data.length){
     list.innerHTML='<div class="receivableEmpty">ჯერ ჩანაწერები არ არის.</div>';
@@ -2521,7 +2522,11 @@ function setReceivablePaid(id,checked){
 }
 function toggleAllReceivable(checked){
   const now=Date.now();
-  jobs.forEach(j=>{j.paid=checked;j.updatedAt=now});
+  if(checked){
+    jobs.forEach(j=>{if(!j.paid){j.paid=true;j.updatedAt=now}});
+  }else{
+    jobs.forEach(j=>{if(j.paid){j.paid=false;j.updatedAt=now}});
+  }
   save();
   render();
   renderList();
