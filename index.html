@@ -3,15 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>TEMO</title>
-<script id="temo-initial-background-preload">
+<style id="temo-auth-boot-style">
+html.auth-booting,html.auth-booting body{visibility:hidden!important}
+html.auth-booting{background:#071117!important}
+html.auth-booting body.site-white-theme{background:#fff!important}
+</style>
+<script id="temo-auth-boot-script">
 (function(){
   try{
     var mode=localStorage.getItem('temoSiteBackground');
-    if(mode==='white'||mode==='black') document.documentElement.setAttribute('data-temo-initial-bg',mode);
+    document.documentElement.style.background=mode==='white'?'#fff':'#071117';
   }catch(e){}
+  document.documentElement.classList.add('auth-booting');
 })();
 </script>
+<title>TEMO</title>
 <style>
 :root{--bg:#071117;--panel:#0d1b24;--panel2:#10232f;--text:#eef7f7;--muted:#9fb0b8;--red:#ef5b67;--blue:#2999df;--orange:#e6a24c;--line:#1e3542}
 *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#061015,#0a1821);color:var(--text)}button,input,select,textarea{font:inherit}.app{max-width:1100px;margin:auto;padding:18px}header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}h1{margin:0;font-size:28px;color:#eef7f7}header small{color:var(--muted)}#today{color:var(--muted);white-space:nowrap}.grid{display:grid;grid-template-columns:1fr;gap:12px}.card,.section,.toolbox{background:linear-gradient(145deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:18px;padding:18px}.card .label{color:var(--muted);font-size:14px}.amount{font-size:30px;font-weight:bold;margin-top:10px}.blue{border-color:#1b4d6c;position:relative}.green{border-color:#285269}.red{border-color:#6e2931}.grid .card.red{grid-column:1/-1;padding:26px 28px}.grid .card.red .label{font-size:18px}.grid .card.red .amount{font-size:42px;margin-top:12px}.grid .card.red .meta{font-size:15px;margin-top:8px}.grid .monthTotalHero{grid-column:1/-1;padding:26px 28px;border-color:#285269}.grid .monthTotalHero .label{font-size:18px}.grid .monthTotalHero .amount{font-size:42px;margin-top:12px}.miniReceivable{padding:13px}.miniReceivable b{font-size:20px}.miniReceivable small{display:block;color:var(--muted);font-size:12px;margin-top:4px}
@@ -701,31 +707,6 @@ html body.site-white-theme .expenseDayPopup{background:#fff;color:#111;border-co
 }
 @media (max-width:600px){
   #bottomNav{grid-template-columns:repeat(6,minmax(0,1fr)) !important;}
-}
-
-html[data-temo-initial-bg="white"] body{
-  background:#fff !important;
-  color:#111 !important;
-}
-html[data-temo-initial-bg="white"] #loginScreen{
-  background:#fff !important;
-  color:#111 !important;
-}
-html[data-temo-initial-bg="white"] #loginScreen .loginBox{
-  background:#fff !important;
-  color:#111 !important;
-}
-html[data-temo-initial-bg="white"] #loginScreen .loginBox h2,
-html[data-temo-initial-bg="white"] #loginScreen .loginBox p,
-html[data-temo-initial-bg="white"] #loginScreen .loginBox input,
-html[data-temo-initial-bg="white"] #loginScreen .loginBox select,
-html[data-temo-initial-bg="white"] #loginScreen .loginBox button{
-  color:#111 !important;
-  -webkit-text-fill-color:#111 !important;
-}
-html[data-temo-initial-bg="white"] #loginScreen .loginBox input,
-html[data-temo-initial-bg="white"] #loginScreen .loginBox select{
-  background:#fff !important;
 }
 </style>
 <style id="forgot-password-restored-style">
@@ -2190,6 +2171,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
     }
   }
   $('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
+  document.documentElement.classList.remove('auth-booting');
   updateUserUI();
   if(currentUser===ADMIN_USER)renderManagedUsers();
   const chatText=$('userChatText');
