@@ -4,16 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <style id="temo-auth-boot-style">
+html.auth-booting body{visibility:hidden!important}
 html.auth-booting{background:#071117!important}
-html.auth-booting body.site-white-theme{background:#fff!important}
-html.auth-booting body{opacity:0!important}
-html body{opacity:1;transition:opacity .08s linear}
+html.auth-booting.site-white-boot{background:#fff!important}
 </style>
 <script id="temo-auth-boot-script">
 (function(){
   try{
     var mode=localStorage.getItem('temoSiteBackground');
-    document.documentElement.style.background=mode==='white'?'#fff':'#071117';
+    if(mode==='white'){
+      document.documentElement.classList.add('site-white-boot');
+      document.documentElement.style.background='#fff';
+    }else{
+      document.documentElement.style.background='#071117';
+    }
   }catch(e){}
   document.documentElement.classList.add('auth-booting');
 })();
@@ -2173,6 +2177,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
   }
   $('loginPassword').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
   document.documentElement.classList.remove('auth-booting');
+  document.documentElement.classList.remove('site-white-boot');
   updateUserUI();
   if(currentUser===ADMIN_USER)renderManagedUsers();
   const chatText=$('userChatText');
