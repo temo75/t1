@@ -149,8 +149,8 @@ footer{display:none!important;}
 .neonControlled{border-color:var(--neon-control)!important;}
 .neonControlled .label,.neonControlled span{color:#dfffe6!important;}
 .neonControlled .amount,.neonControlled b{ }
-.neonControlBox{margin-top:14px;padding:16px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(145deg,var(--panel),var(--panel2))}
-.backgroundControlRow{display:flex;gap:12px;align-items:center;margin-top:12px;flex-wrap:wrap}
+.neonControlBox{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:13px;background:linear-gradient(145deg,var(--panel),var(--panel2))}
+.backgroundControlRow{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
 .backgroundColorBtn{width:42px;height:42px;border-radius:9px;border:2px solid #777;cursor:pointer;padding:0;position:relative;box-shadow:0 0 6px rgba(255,255,255,.18)}
 .backgroundColorBtn.white{background:#fff;border-color:#222}
 .backgroundColorBtn.black{background:#071117;border-color:#fff}
@@ -165,7 +165,7 @@ body.site-white-theme #bottomNav{background:#fff !important}
 body.site-white-theme #bottomNav > button{color:#111 !important}
 body.site-white-theme .mini .miniActionIcon{color:#111 !important}
 
-.neonControlRow{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;margin-top:12px}
+.neonControlRow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-top:8px}
 .neonControlRow input[type=color]{width:58px;height:42px;padding:2px;border-radius:10px;border:1px solid var(--line);background:#071117;cursor:pointer}
 .neonControlRow input[type=range]{width:100%}
  .neonValue{font-weight:bold;color:var(--neon-control);text-shadow:0 0 8px rgba(var(--neon-control-rgb),.8);min-width:48px;text-align:right}
@@ -194,6 +194,13 @@ body.site-white-theme .mini .miniActionIcon{color:#111 !important}
 .neonPickerActions button{border:0;background:none;font-size:18px;font-weight:800;color:#50679a;cursor:pointer;padding:7px 4px}
 .neonPickerActions .confirm{background:#4d8cf5;color:#fff;border-radius:24px;padding:10px 20px;box-shadow:0 5px 16px rgba(77,140,245,.35)}
 @media(max-width:430px){.neonPickerBox{padding:14px 12px 12px;border-radius:22px}.neonPresetGrid{gap:7px}.neonPreset{height:44px;border-width:4px}.neonWheelWrap{width:min(58vw,220px);height:min(58vw,220px)}.neonPickerActions{gap:14px}.neonPickerActions button{font-size:17px}}
+
+<style id="neon-control-compact">
+/* მხოლოდ ნეონების მართვის ბლოკის დაპატარავება */
+#neonControlSection .neonControlBox > div[style*="margin-top:14px"]{margin-top:8px!important}
+#neonControlSection .neonControlBox .neonControlRow + div[style*="margin-top:14px"]{margin-top:8px!important}
+#neonControlSection .neonControlBox .backgroundControlRow{margin-top:8px!important}
+</style>
 </style>
 </style>
 
