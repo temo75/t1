@@ -4,39 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>TEMO</title>
-<script id="temo-no-theme-flash-fix">
+<script id="temo-initial-background-preload">
 (function(){
   try{
-    var id=localStorage.getItem('temoWorkTrackerUserId')||'';
-    var key=id?'temoSiteBackground_'+encodeURIComponent(id).replace(/%/g,'_'):'';
-    var mode=key?localStorage.getItem(key):null;
-    if(mode!=='white'&&mode!=='black') mode=localStorage.getItem('temoSiteBackground');
-    if(mode!=='white'&&mode!=='black') mode='black';
-    var root=document.documentElement;
-    root.setAttribute('data-temo-initial-background',mode);
-    root.classList.add('temo-pretheme');
-    root.style.background=mode==='white'?'#fff':'linear-gradient(135deg,#061015,#0a1821)';
-    root.style.color=mode==='white'?'#111':'#eef7f7';
+    var mode=localStorage.getItem('temoSiteBackground');
+    if(mode==='white'||mode==='black') document.documentElement.setAttribute('data-temo-initial-bg',mode);
   }catch(e){}
-})();
-</script>
-<style id="temo-no-theme-flash-style">
-html.temo-pretheme{overflow:hidden!important}
-html.temo-pretheme body{visibility:hidden!important}
-html[data-temo-initial-background="white"]{background:#fff!important;color:#111!important}
-html[data-temo-initial-background="white"] body{background:#fff!important;color:#111!important}
-html[data-temo-initial-background="white"] #loginScreen{background:#fff!important;color:#111!important}
-html[data-temo-initial-background="black"]{background:linear-gradient(135deg,#061015,#0a1821)!important;color:#eef7f7!important}
-html[data-temo-initial-background="black"] body{background:linear-gradient(135deg,#061015,#0a1821)!important;color:#eef7f7!important}
-html[data-temo-initial-background="black"] #loginScreen{background:linear-gradient(135deg,#061015,#0a1821)!important;color:#eef7f7!important}
-</style>
-<script>
-(function(){
-  function reveal(){
-    document.documentElement.classList.remove('temo-pretheme');
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',reveal,{once:true});
-  else reveal();
 })();
 </script>
 <style>
@@ -728,6 +701,31 @@ html body.site-white-theme .expenseDayPopup{background:#fff;color:#111;border-co
 }
 @media (max-width:600px){
   #bottomNav{grid-template-columns:repeat(6,minmax(0,1fr)) !important;}
+}
+
+html[data-temo-initial-bg="white"] body{
+  background:#fff !important;
+  color:#111 !important;
+}
+html[data-temo-initial-bg="white"] #loginScreen{
+  background:#fff !important;
+  color:#111 !important;
+}
+html[data-temo-initial-bg="white"] #loginScreen .loginBox{
+  background:#fff !important;
+  color:#111 !important;
+}
+html[data-temo-initial-bg="white"] #loginScreen .loginBox h2,
+html[data-temo-initial-bg="white"] #loginScreen .loginBox p,
+html[data-temo-initial-bg="white"] #loginScreen .loginBox input,
+html[data-temo-initial-bg="white"] #loginScreen .loginBox select,
+html[data-temo-initial-bg="white"] #loginScreen .loginBox button{
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+}
+html[data-temo-initial-bg="white"] #loginScreen .loginBox input,
+html[data-temo-initial-bg="white"] #loginScreen .loginBox select{
+  background:#fff !important;
 }
 </style>
 <style id="forgot-password-restored-style">
