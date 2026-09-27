@@ -558,14 +558,16 @@ html body.site-white-theme .expenseDayPopup{background:#fff;color:#111;border-co
 #notesPage .dailySaveBtn{width:100%;border:1px solid rgba(73,216,106,.65);background:#10271b;color:#9cffb0;border-radius:12px;padding:13px 16px;font-weight:800;cursor:pointer;box-shadow:0 0 12px rgba(73,216,106,.16)}
 #notesPage .dailyViewModal{position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;align-items:center;justify-content:center;padding:12px;z-index:2147483647;box-sizing:border-box}
 #notesPage .dailyViewModal.show{display:flex}
-#notesPage .dailyViewBox{width:min(620px,calc(100vw - 24px));height:min(760px,calc(100dvh - 120px));max-height:calc(100dvh - 120px);display:flex;flex-direction:column;background:#0d1b24;border:1px solid #315061;border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.55);overflow:hidden;box-sizing:border-box}
+#notesPage .dailyViewBox{position:relative;width:min(620px,calc(100vw - 24px));height:min(760px,calc(100dvh - 120px));max-height:calc(100dvh - 120px);display:flex;flex-direction:column;background:#0d1b24;border:1px solid #315061;border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.55);overflow:hidden;box-sizing:border-box}
 #notesPage .dailyViewHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;border-bottom:1px solid #29404c;flex:0 0 auto}
 #notesPage .dailyViewHeader h2{margin:0;color:#fff;font-size:20px;user-select:none;-webkit-user-select:none}
 #notesPage .dailyViewTitleEdit{display:none;flex:1;min-width:0;width:100%;box-sizing:border-box;background:#071017;color:#fff;border:1px solid #29404c;border-radius:10px;padding:8px 10px;font:inherit;font-size:20px;font-weight:800;outline:none}
 #notesPage .dailyViewBox.editingTitle .dailyViewTitle{display:none}
 #notesPage .dailyViewBox.editingTitle .dailyViewTitleEdit{display:block}
-#notesPage .dailyViewText{flex:1;min-height:0;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;color:#fff;font-size:18px;line-height:1.6;padding:18px;-webkit-overflow-scrolling:touch}
+#notesPage .dailyViewText{flex:1;min-height:0;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;color:#fff;font-size:18px;line-height:1.6;padding:18px 18px 66px;-webkit-overflow-scrolling:touch}
 #notesPage .dailyViewClose{width:40px;height:40px;flex:0 0 40px;border:1px solid #ff3b3b;border-radius:50%;background:rgba(70,0,0,.45);color:#ff5b5b;font-size:23px;font-weight:900;cursor:pointer;box-shadow:0 0 7px rgba(255,59,59,.6)}
+#notesPage .dailyCopyBtn{position:absolute;right:14px;bottom:68px;z-index:5;width:auto;min-width:92px;min-height:34px;padding:6px 10px;border:1px solid #2999df;border-radius:9px;background:#102b3b;color:#fff;font-size:13px;font-weight:800;line-height:1.1;cursor:pointer;box-shadow:0 0 7px rgba(41,153,223,.55)}
+#notesPage .dailyCopyBtn:active{transform:scale(.96)}
 #notesPage .dailyViewBottom{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;border-top:1px solid #29404c;flex:0 0 auto}
 #notesPage .dailyViewBottom button{width:100%;padding:12px;border:1px solid #29404c;border-radius:10px;background:#172631;color:#fff;font-weight:700;cursor:pointer;min-height:44px}
 #notesPage .dailyViewBottom .dailyAddMoreBtn{border-color:rgba(73,216,106,.65);background:#10271b;color:#9cffb0;box-shadow:0 0 10px rgba(73,216,106,.14)}
@@ -1891,6 +1893,7 @@ html body.site-white-theme .backgroundColorBtn.black:active {
       </div>
       <div id="dailyViewText" class="dailyViewText"></div>
       <textarea id="dailyViewEditText" class="dailyViewEditText" aria-label="ჩანაწერის გაგრძელება"></textarea>
+      <button type="button" id="dailyCopyBtn" class="dailyCopyBtn" onclick="copyDailyViewPage()">📋 კოპირება</button>
       <div class="dailyViewBottom"><button type="button" class="dailyAddMoreBtn" id="dailyContinueBtn" onclick="continueDailyEntry()">➕ ჩაამატე ჩანაწერი</button><button type="button" id="dailyViewSaveBtn" onclick="saveContinuedDailyEntry()" style="display:none">💾 შენახვა</button><button type="button" onclick="closeDailyViewModal()">✕ დახურვა</button></div>
     </div>
   </div>
@@ -3170,6 +3173,36 @@ function openDailyViewModal(id){
   document.body.style.overflow='hidden';
   bindDailyLongPress(document.getElementById('dailyViewTitle'),'title');
   bindDailyLongPress(document.getElementById('dailyViewText'),'text');
+}
+async function copyDailyViewPage(){
+  const title=document.getElementById('dailyViewTitle');
+  const text=document.getElementById('dailyViewText');
+  const titleText=String(title?.textContent||'').trim();
+  const bodyText=String(text?.textContent||'').trim();
+  const value=[titleText,bodyText].filter(Boolean).join('\n\n');
+  if(!value)return;
+  try{
+    if(navigator.clipboard&&window.isSecureContext){
+      await navigator.clipboard.writeText(value);
+    }else{
+      const ta=document.createElement('textarea');
+      ta.value=value;
+      ta.setAttribute('readonly','');
+      ta.style.position='fixed';
+      ta.style.left='-9999px';
+      ta.style.top='0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      ta.setSelectionRange(0,ta.value.length);
+      const ok=document.execCommand('copy');
+      ta.remove();
+      if(!ok)throw new Error('copy failed');
+    }
+    alert(window.t?window.t('📋 ჩანაწერი დაკოპირდა'):'📋 ჩანაწერი დაკოპირდა');
+  }catch(e){
+    alert(window.t?window.t('კოპირება ვერ მოხერხდა'):'კოპირება ვერ მოხერხდა');
+  }
 }
 function closeDailyViewModal(){
   const modal=document.getElementById('dailyViewModal');
@@ -5088,6 +5121,9 @@ startNotesReminderWatcher();
     'ჩანაწერის სახელი':['Note title','Τίτλος σημείωσης'],
     'ჩაწერე შენი ჩანაწერი...':['Write your note...','Γράψε τη σημείωσή σου...'],
     '📖 ჩანაწერი':['📖 Note','📖 Σημείωση'],
+    '📋 კოპირება':['📋 Copy','📋 Αντιγραφή'],
+    '📋 ჩანაწერი დაკოპირდა':['📋 Note copied','📋 Η σημείωση αντιγράφηκε'],
+    'კოპირება ვერ მოხერხდა':['Copy failed','Η αντιγραφή απέτυχε'],
     'სათაურის შეცვლა':['Edit title','Επεξεργασία τίτλου'],
     'ჩანაწერის გაგრძელება':['Continue note','Συνέχεια σημείωσης'],
     '➕ ჩაამატე ჩანაწერი':['➕ Add to note','➕ Προσθήκη στη σημείωση'],
