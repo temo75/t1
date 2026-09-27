@@ -1938,6 +1938,19 @@ html body.site-white-theme .backgroundColorBtn.black:active {
 <header><div><h1>⚙️ სეთინგები</h1><small>მონაცემების მართვა</small></div></header>
 
 
+<div class="section" id="neonControlSection">
+<h2>✨ ნეონის მართვა</h2>
+<div class="neonControlBox">
+<div>ფერი</div>
+<div class="neonControlRow"><button type="button" class="neonColorOpen" id="neonColorOpen" onclick="openNeonPicker()" aria-label="ნეონის ფერის არჩევა"><span id="neonColorPreview"></span></button><input id="neonColor" type="color" value="#49d86a" aria-label="ნეონის ფერი"></div>
+<div style="margin-top:14px">სიმძლავრე</div>
+<div class="neonControlRow"><input id="neonStrength" type="range" min="0" max="100" value="65" step="1" aria-label="ნეონის სიმძლავრე"><span id="neonStrengthValue" class="neonValue">65%</span></div>
+<div style="margin-top:14px">ფონის ფერი</div>
+<div class="backgroundControlRow" aria-label="ფონის ფერი">
+<button type="button" class="backgroundColorBtn white" id="backgroundWhiteBtn" onclick="setSiteBackground('white')" aria-label="თეთრი ფონი" title="თეთრი"> </button>
+<button type="button" class="backgroundColorBtn black" id="backgroundBlackBtn" onclick="setSiteBackground('black')" aria-label="შავი ფონი" title="შავი"> </button>
+</div>
+</div>
 <div class="section" id="websiteUpdateSection">
 <h2>🔄 საიტის განახლება</h2>
 <div class="tools">
@@ -1960,19 +1973,6 @@ html body.site-white-theme .backgroundColorBtn.black:active {
 <div class="meta" style="margin-top:12px">სამუშაოები, მიღებული თანხები, გასავლები და ჯამები.</div>
 </div>
 
-<div class="section" id="neonControlSection">
-<h2>✨ ნეონის მართვა</h2>
-<div class="neonControlBox">
-<div>ფერი</div>
-<div class="neonControlRow"><button type="button" class="neonColorOpen" id="neonColorOpen" onclick="openNeonPicker()" aria-label="ნეონის ფერის არჩევა"><span id="neonColorPreview"></span></button><input id="neonColor" type="color" value="#49d86a" aria-label="ნეონის ფერი"></div>
-<div style="margin-top:14px">სიმძლავრე</div>
-<div class="neonControlRow"><input id="neonStrength" type="range" min="0" max="100" value="65" step="1" aria-label="ნეონის სიმძლავრე"><span id="neonStrengthValue" class="neonValue">65%</span></div>
-<div style="margin-top:14px">ფონის ფერი</div>
-<div class="backgroundControlRow" aria-label="ფონის ფერი">
-<button type="button" class="backgroundColorBtn white" id="backgroundWhiteBtn" onclick="setSiteBackground('white')" aria-label="თეთრი ფონი" title="თეთრი"> </button>
-<button type="button" class="backgroundColorBtn black" id="backgroundBlackBtn" onclick="setSiteBackground('black')" aria-label="შავი ფონი" title="შავი"> </button>
-</div>
-</div>
 </div>
 
 </div>
