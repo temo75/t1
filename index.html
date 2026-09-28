@@ -1780,9 +1780,9 @@ html body.site-white-theme .backgroundColorBtn.black:active {
 .aiChatBox button{color:#fff;}
 .aiChatBox .aiChatClose{color:#111;background:#fff;border-color:var(--neon-control,#49d86a);}
 .aiChatInputRow{position:relative;z-index:1;display:flex;gap:8px;padding:11px;border-top:1px solid var(--neon-control,#49d86a);background:rgba(4,12,17,.92);box-shadow:0 -4px 16px rgba(var(--neon-control-rgb,73,216,106),.10);}
-.aiChatInput{flex:1;resize:none;min-height:50px;max-height:120px;padding:12px 13px;border-radius:14px;border:2px solid var(--neon-control,#49d86a);background:#061017;color:#fff!important;font-size:16px;outline:none;box-shadow:inset 0 0 12px rgba(var(--neon-control-rgb,73,216,106),.10),0 0 6px rgba(var(--neon-control-rgb,73,216,106),.30);}
-.aiChatInput::placeholder{color:#aebdc2!important;opacity:1;}
-.aiChatInput:focus{box-shadow:0 0 8px var(--neon-control,#49d86a),0 0 18px rgba(var(--neon-control-rgb,73,216,106),.35),inset 0 0 12px rgba(var(--neon-control-rgb,73,216,106),.12);}
+.aiChatInput{flex:1;resize:none;min-height:50px;max-height:120px;padding:12px 13px;border-radius:14px;border:2px solid var(--neon-control,#49d86a);background:#fff;color:#000!important;-webkit-text-fill-color:#000;caret-color:#000;font-size:16px;outline:none;box-shadow:inset 0 0 12px rgba(var(--neon-control-rgb,73,216,106),.10),0 0 6px rgba(var(--neon-control-rgb,73,216,106),.30);}
+.aiChatInput::placeholder{color:#555!important;opacity:1;}
+.aiChatInput:focus{background:#fff;color:#000!important;-webkit-text-fill-color:#000;box-shadow:0 0 8px var(--neon-control,#49d86a),0 0 18px rgba(var(--neon-control-rgb,73,216,106),.35),inset 0 0 12px rgba(var(--neon-control-rgb,73,216,106),.12);}
 .aiChatSend{width:58px;min-width:58px;border:2px solid var(--neon-control,#49d86a);border-radius:14px;background:var(--neon-control,#49d86a);color:#06110a!important;font-size:24px;font-weight:900;cursor:pointer;box-shadow:0 0 8px var(--neon-control,#49d86a),0 0 20px rgba(var(--neon-control-rgb,73,216,106),.46);}
 .aiChatSend:disabled{opacity:.55;cursor:default;}
 @media(max-width:700px){.aiHeaderBtn{width:40px;height:40px;font-size:19px}.aiChatModal{padding:7px}.aiChatBox{width:100%;height:calc(100dvh - 14px);max-height:none;border-radius:20px}.aiChatMessages{padding:12px}.aiMsg{max-width:94%;font-size:16px}.aiChatInputRow{padding:9px}.aiChatSend{width:56px;min-width:56px}}
