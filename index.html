@@ -2323,7 +2323,7 @@ html body.site-white-theme #aiChatModal .aiChatClose{
   <div class="aiChatBox" role="dialog" aria-modal="true" aria-labelledby="aiChatTitle">
     <div class="aiChatHeader"><h2 id="aiChatTitle">🤖 TEMO AI</h2><button type="button" class="aiChatClose" onclick="closeAIChat()" aria-label="დახურვა">✕</button></div>
     <div class="aiChatMessages" id="aiChatMessages"></div>
-    <div class="aiChatInputRow"><textarea id="aiChatInput" class="aiChatInput" rows="1" placeholder="დამიწერე ან ჰკითხე რამე..."></textarea><button type="button" id="aiChatSend" class="aiChatSend" onclick="sendAIMessage()" aria-label="გაგზავნა">➤</button></div>
+    <div class="aiChatInputRow"><textarea id="aiChatInput" class="aiChatInput" rows="1" placeholder="ჰკითხე"></textarea><button type="button" id="aiChatSend" class="aiChatSend" onclick="sendAIMessage()" aria-label="გაგზავნა">➤</button></div>
   </div>
 </div>
 <div class="modal" id="modal"><div class="form">
@@ -3707,7 +3707,7 @@ function aiLangText(key){
   const lang=aiCurrentLanguage();
   const dict={
     ka:{
-      placeholder:'დამიწერე ან ჰკითხე რამე...',
+      placeholder:'ჰკითხე',
       greeting:'გამარჯობა! მე TEMO AI ვარ. მკითხე რაც გინდა.',
       connecting:'⏳ ვუკავშირდები TEMO AI-ს...',
       connectionError:'AI-სთან დაკავშირება ვერ მოხერხდა: ',
@@ -3729,7 +3729,7 @@ function aiLangText(key){
       saved:'✅ სამუშაო ჩანაწერი შენახულია.'
     },
     en:{
-      placeholder:'Write or ask me anything...',
+      placeholder:'ჰკითხე',
       greeting:'Hello! I am TEMO AI. Ask me anything.',
       connecting:'⏳ Connecting to TEMO AI...',
       connectionError:'Could not connect to AI: ',
@@ -3810,25 +3810,15 @@ function aiRenderWorkConfirmation(entry){
   box.appendChild(div);
   box.scrollTop=box.scrollHeight;
 }
-function aiUserContext(){
-  const clean=(value)=>String(value??'').slice(0,4000);
-  return {
-    userId:String(currentUserId||'').slice(0,200),
-    name:String(currentUser||'').slice(0,200),
-    jobs:Array.isArray(jobs)?jobs.slice(-200).map(j=>({date:j?.date||null,place:j?.place||null,money:j?.money??null,paid:j?.paid??null,note:clean(j?.note)})):[],
-    expenses:Array.isArray(expenses)?expenses.slice(-200).map(e=>({date:e?.date||null,category:e?.category||e?.type||null,amount:e?.amount??e?.money??null,note:clean(e?.note||e?.description)})):[],
-    notes:Array.isArray(notesCache)?notesCache.slice(-200).map(n=>({date:n?.date||null,title:clean(n?.title),text:clean(n?.text||n?.content||n?.note),done:Boolean(n?.done)})):[]
-  };
-}
 function openAIChat(){
-  if(!currentUser)return;
+  if(currentUser!==ADMIN_USER)return;
   const modal=document.getElementById('aiChatModal');
   if(!modal)return;
   modal.classList.add('show');
   const input=document.getElementById('aiChatInput');
   aiUpdateLanguageUI();
   if(!document.getElementById('aiChatMessages').children.length){
-    aiAddMessage('assistant',aiLangText('greeting').replace(/^([^!]+)!/,`$1, ${String(currentUser||'').trim()}!`));
+    aiAddMessage('assistant',aiLangText('greeting'));
   }
   setTimeout(()=>input?.focus(),80);
 }
@@ -3838,7 +3828,7 @@ function closeAIChat(){
 }
 function aiToday(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 async function sendAIMessage(){
-  if(!currentUser||aiBusy)return;
+  if(currentUser!==ADMIN_USER||aiBusy)return;
   const input=document.getElementById('aiChatInput');
   const send=document.getElementById('aiChatSend');
   const message=String(input?.value||'').trim();
@@ -3853,7 +3843,7 @@ async function sendAIMessage(){
     const response=await fetch(TEMO_AI_WORKER_URL,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({message,language,currentDate:aiToday(),history,userContext:aiUserContext()})
+      body:JSON.stringify({message,language,currentDate:aiToday(),history})
     });
     const raw=await response.text();
     let data={};
@@ -3899,7 +3889,7 @@ function confirmAIWorkEntry(){
 
 function updateUserUI(){
  const isAdmin=currentUser===ADMIN_USER;
- const aiBtn=$('aiHeaderBtn'); if(aiBtn)aiBtn.style.display=currentUser?'inline-flex':'none';
+ const aiBtn=$('aiHeaderBtn'); if(aiBtn)aiBtn.style.display=isAdmin?'inline-flex':'none';
  const site=$('websiteUpdateSection'); if(site)site.style.display=isAdmin?'':'none';
  const users=$('userManagementSection'); if(users)users.style.display=isAdmin?'':'none'; const neon=$('neonControlSection'); if(neon)neon.style.display=currentUser?'':'none';
  const chat=$('userChatSection'); if(chat)chat.style.display=currentUser&&!isAdmin?'':'none';
