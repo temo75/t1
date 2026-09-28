@@ -3811,7 +3811,7 @@ function aiRenderWorkConfirmation(entry){
   box.scrollTop=box.scrollHeight;
 }
 function openAIChat(){
-  if(currentUser!==ADMIN_USER)return;
+  if(!currentUser)return;
   const modal=document.getElementById('aiChatModal');
   if(!modal)return;
   modal.classList.add('show');
@@ -3828,7 +3828,7 @@ function closeAIChat(){
 }
 function aiToday(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 async function sendAIMessage(){
-  if(currentUser!==ADMIN_USER||aiBusy)return;
+  if(!currentUser||aiBusy)return;
   const input=document.getElementById('aiChatInput');
   const send=document.getElementById('aiChatSend');
   const message=String(input?.value||'').trim();
