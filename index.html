@@ -3840,10 +3840,32 @@ async function sendAIMessage(){
   try{
     const language=typeof window.getCurrentLanguage==='function'?String(window.getCurrentLanguage()||'ka'):'ka';
     const history=aiHistory.slice(-12);
+    const userContext={
+      name:String(currentUser||''),
+      jobs:Array.isArray(jobs)?jobs.slice(-200).map(j=>({
+        date:j?.date??null,
+        place:String(j?.place??''),
+        money:j?.money??null,
+        paid:j?.paid===true,
+        note:String(j?.note??'')
+      })) : [],
+      expenses:Array.isArray(expenses)?expenses.slice(-200).map(e=>({
+        date:e?.date??null,
+        category:String(e?.category??''),
+        amount:e?.amount??null,
+        note:String(e?.place??'')
+      })) : [],
+      notes:Array.isArray(notesCache)?notesCache.slice(-200).map(n=>({
+        date:String(n?.date??''),
+        title:'',
+        text:String(n?.text??''),
+        done:n?.done===true
+      })) : []
+    };
     const response=await fetch(TEMO_AI_WORKER_URL,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({message,language,currentDate:aiToday(),history})
+      body:JSON.stringify({message,language,currentDate:aiToday(),history,userContext})
     });
     const raw=await response.text();
     let data={};
