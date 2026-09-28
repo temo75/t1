@@ -3889,7 +3889,7 @@ function confirmAIWorkEntry(){
 
 function updateUserUI(){
  const isAdmin=currentUser===ADMIN_USER;
- const aiBtn=$('aiHeaderBtn'); if(aiBtn)aiBtn.style.display=isAdmin?'inline-flex':'none';
+ const aiBtn=$('aiHeaderBtn'); if(aiBtn)aiBtn.style.display=currentUser?'inline-flex':'none';
  const site=$('websiteUpdateSection'); if(site)site.style.display=isAdmin?'':'none';
  const users=$('userManagementSection'); if(users)users.style.display=isAdmin?'':'none'; const neon=$('neonControlSection'); if(neon)neon.style.display=currentUser?'':'none';
  const chat=$('userChatSection'); if(chat)chat.style.display=currentUser&&!isAdmin?'':'none';
