@@ -3810,15 +3810,25 @@ function aiRenderWorkConfirmation(entry){
   box.appendChild(div);
   box.scrollTop=box.scrollHeight;
 }
+function aiUserContext(){
+  const clean=(value)=>String(value??'').slice(0,4000);
+  return {
+    userId:String(currentUserId||'').slice(0,200),
+    name:String(currentUser||'').slice(0,200),
+    jobs:Array.isArray(jobs)?jobs.slice(-200).map(j=>({date:j?.date||null,place:j?.place||null,money:j?.money??null,paid:j?.paid??null,note:clean(j?.note)})):[],
+    expenses:Array.isArray(expenses)?expenses.slice(-200).map(e=>({date:e?.date||null,category:e?.category||e?.type||null,amount:e?.amount??e?.money??null,note:clean(e?.note||e?.description)})):[],
+    notes:Array.isArray(notesCache)?notesCache.slice(-200).map(n=>({date:n?.date||null,title:clean(n?.title),text:clean(n?.text||n?.content||n?.note),done:Boolean(n?.done)})):[]
+  };
+}
 function openAIChat(){
-  if(currentUser!==ADMIN_USER)return;
+  if(!currentUser)return;
   const modal=document.getElementById('aiChatModal');
   if(!modal)return;
   modal.classList.add('show');
   const input=document.getElementById('aiChatInput');
   aiUpdateLanguageUI();
   if(!document.getElementById('aiChatMessages').children.length){
-    aiAddMessage('assistant',aiLangText('greeting'));
+    aiAddMessage('assistant',aiLangText('greeting').replace(/^([^!]+)!/,`$1, ${String(currentUser||'').trim()}!`));
   }
   setTimeout(()=>input?.focus(),80);
 }
@@ -3828,7 +3838,7 @@ function closeAIChat(){
 }
 function aiToday(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 async function sendAIMessage(){
-  if(currentUser!==ADMIN_USER||aiBusy)return;
+  if(!currentUser||aiBusy)return;
   const input=document.getElementById('aiChatInput');
   const send=document.getElementById('aiChatSend');
   const message=String(input?.value||'').trim();
@@ -3843,7 +3853,7 @@ async function sendAIMessage(){
     const response=await fetch(TEMO_AI_WORKER_URL,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({message,language,currentDate:aiToday(),history})
+      body:JSON.stringify({message,language,currentDate:aiToday(),history,userContext:aiUserContext()})
     });
     const raw=await response.text();
     let data={};
@@ -3889,7 +3899,7 @@ function confirmAIWorkEntry(){
 
 function updateUserUI(){
  const isAdmin=currentUser===ADMIN_USER;
- const aiBtn=$('aiHeaderBtn'); if(aiBtn)aiBtn.style.display=isAdmin?'inline-flex':'none';
+ const aiBtn=$('aiHeaderBtn'); if(aiBtn)aiBtn.style.display=currentUser?'inline-flex':'none';
  const site=$('websiteUpdateSection'); if(site)site.style.display=isAdmin?'':'none';
  const users=$('userManagementSection'); if(users)users.style.display=isAdmin?'':'none'; const neon=$('neonControlSection'); if(neon)neon.style.display=currentUser?'':'none';
  const chat=$('userChatSection'); if(chat)chat.style.display=currentUser&&!isAdmin?'':'none';
