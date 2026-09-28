@@ -4965,6 +4965,8 @@ html body.site-white-theme .small.edit { border-color:#2999df !important; }
     const white=document.body.classList.contains('site-white-theme');
     if(white){
       document.querySelectorAll('body.site-white-theme *').forEach(function(el){
+        /* TEMO AI is isolated from the site's white-theme text forcing. */
+        if(el.closest && el.closest('#aiChatModal')) return;
         el.setAttribute('data-temo-white-text-fix','1');
         el.style.setProperty('color','#111','important');
         el.style.setProperty('-webkit-text-fill-color','#111','important');
