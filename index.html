@@ -1824,6 +1824,51 @@ html body #aiChatModal .aiChatClose {
   -webkit-text-fill-color:#111 !important;
 }
 </style>
+
+<style id="temo-ai-absolute-isolation">
+/* TEMO AI FINAL ISOLATION: white site theme must never recolor the AI window. */
+html body.site-white-theme #aiChatModal .aiChatBox,
+html body.site-white-theme #aiChatModal .aiChatHeader,
+html body.site-white-theme #aiChatModal .aiChatHeader h2,
+html body.site-white-theme #aiChatModal .aiChatMessages,
+html body.site-white-theme #aiChatModal .aiMsg,
+html body.site-white-theme #aiChatModal .aiMsg *,
+html body.site-white-theme #aiChatModal .aiWorkConfirm,
+html body.site-white-theme #aiChatModal .aiWorkConfirm *,
+html body.site-white-theme #aiChatModal .aiWorkRow,
+html body.site-white-theme #aiChatModal .aiWorkRow *,
+html body.site-white-theme #aiChatModal .aiChatBox label,
+html body.site-white-theme #aiChatModal .aiChatBox span,
+html body.site-white-theme #aiChatModal .aiChatBox b,
+html body.site-white-theme #aiChatModal .aiChatBox strong {
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+}
+html body.site-white-theme #aiChatModal .aiMsg.system {
+  color:#d6e0e3 !important;
+  -webkit-text-fill-color:#d6e0e3 !important;
+}
+html body.site-white-theme #aiChatModal .aiChatInput,
+html body.site-white-theme #aiChatModal .aiChatInput:focus {
+  background:#fff !important;
+  color:#000 !important;
+  -webkit-text-fill-color:#000 !important;
+  caret-color:#000 !important;
+}
+html body.site-white-theme #aiChatModal .aiChatInput::placeholder {
+  color:#555 !important;
+  -webkit-text-fill-color:#555 !important;
+  opacity:1 !important;
+}
+html body.site-white-theme #aiChatModal .aiChatClose {
+  background:#fff !important;
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+}
+html body.site-white-theme #aiChatModal .aiChatSend {
+  color:#001014 !important;
+  -webkit-text-fill-color:#001014 !important;
+}
 </style>
 </head>
 <body>
