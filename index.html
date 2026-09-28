@@ -1787,6 +1787,43 @@ html body.site-white-theme .backgroundColorBtn.black:active {
 #aiChatModal .aiChatSend{width:54px;min-width:54px;border:2px solid #00e5ff;border-radius:13px;background:#00e5ff;color:#001014!important;font-size:23px;font-weight:900;cursor:pointer;box-shadow:0 0 8px rgba(0,229,255,.82),0 0 18px rgba(0,229,255,.35);}
 .aiChatSend:disabled{opacity:.55;cursor:default;}
 @media(max-width:700px){.aiHeaderBtn{width:38px;height:38px;font-size:18px}.aiChatModal{padding:8px}.aiChatBox{width:calc(100% - 28px);height:72vh;max-height:620px;border-radius:18px}.aiChatHeader{padding:10px 11px}.aiChatMessages{padding:10px}#aiChatModal .aiMsg{max-width:94%;font-size:15px}.aiChatInputRow{padding:8px}#aiChatModal .aiChatSend{width:52px;min-width:52px}}
+
+<style id="temo-ai-final-text-fix">
+/* TEMO AI FINAL: AI text must stay white even when the site's global theme forces dark text. */
+html body #aiChatModal .aiChatBox,
+html body #aiChatModal .aiChatHeader,
+html body #aiChatModal .aiChatHeader h2,
+html body #aiChatModal .aiMsg,
+html body #aiChatModal .aiMsg *,
+html body #aiChatModal .aiWorkConfirm,
+html body #aiChatModal .aiWorkConfirm *,
+html body #aiChatModal .aiWorkRow,
+html body #aiChatModal .aiWorkRow * {
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+}
+html body #aiChatModal .aiMsg.system {
+  color:#d6e0e3 !important;
+  -webkit-text-fill-color:#d6e0e3 !important;
+}
+html body #aiChatModal .aiChatInput,
+html body #aiChatModal .aiChatInput:focus {
+  background:#fff !important;
+  color:#000 !important;
+  -webkit-text-fill-color:#000 !important;
+  caret-color:#000 !important;
+}
+html body #aiChatModal .aiChatInput::placeholder {
+  color:#555 !important;
+  -webkit-text-fill-color:#555 !important;
+  opacity:1 !important;
+}
+html body #aiChatModal .aiChatClose {
+  background:#fff !important;
+  color:#111 !important;
+  -webkit-text-fill-color:#111 !important;
+}
+</style>
 </style>
 </head>
 <body>
