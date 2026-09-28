@@ -2815,6 +2815,10 @@ function exportMyDataPdf(){
 
   const locale=lang==='ka'?'ka-GE':lang==='el'?'el-GR':'en-US';
   const dateText=new Date().toLocaleDateString(locale);
+  const now=new Date();
+  const currentMonthKey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const currentMonthPaid=d.work.filter(j=>(j.date||'').slice(0,7)===currentMonthKey && j.paid).reduce((sum,j)=>sum+Number(j.money||0),0);
+  const currentMonthLabel=monthName(currentMonthKey);
   const rowsWork=d.work.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(j=>
     `<tr><td>${esc(j.date)}</td><td>${esc(j.place||'')}</td><td>€${Number(j.money||0).toFixed(2)}</td><td>${esc(j.paid?t.paid:t.unpaid)}</td><td>${esc(j.note||'')}</td></tr>`
   ).join('');
@@ -2831,6 +2835,7 @@ function exportMyDataPdf(){
   h1,h2{margin:0 0 14px}h2{margin-top:24px}
   .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 20px}
   .box{border:1px solid #777;padding:10px;border-radius:8px}
+  .currentMonthBox{border:1px solid #777;padding:10px;border-radius:8px;margin:10px 0 20px;font-size:15px}
   table{width:100%;border-collapse:collapse;margin-top:8px}
   th,td{border:1px solid #aaa;padding:7px;text-align:left;font-size:12px}
   th{background:#eee}
@@ -2846,6 +2851,7 @@ function exportMyDataPdf(){
     <div class="box">${esc(t.totalExpenses)}<br><b>€${d.totalExpenses.toFixed(2)}</b></div>
     <div class="box">${esc(t.balance)}<br><b>€${d.balance.toFixed(2)}</b></div>
   </div>
+  <div class="currentMonthBox">${esc(currentMonthLabel)} ${now.getFullYear()} → <b>€${currentMonthPaid.toFixed(2)}</b></div>
   <h2>${esc(t.workData)}</h2>
   <table><thead><tr><th>${esc(t.date)}</th><th>${esc(t.workplace)}</th><th>${esc(t.amount)}</th><th>${esc(t.status)}</th><th>${esc(t.note)}</th></tr></thead>
   <tbody>${rowsWork||`<tr><td colspan="5">${esc(t.noData)}</td></tr>`}</tbody></table>
