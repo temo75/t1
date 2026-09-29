@@ -3698,6 +3698,7 @@ function loadNeonSettings(){
 const TEMO_AI_WORKER_URL='https://temo-ai.temo75elia.workers.dev';
 let aiHistory=[];
 let aiPendingWorkEntry=null;
+let aiPendingReminder=null;
 let aiBusy=false;
 let aiMemoryCache=[];
 
@@ -3866,6 +3867,32 @@ async function sendAIMessage(){
   const send=document.getElementById('aiChatSend');
   const message=String(input?.value||'').trim();
   if(!message)return;
+
+  // If TEMO AI is waiting for confirmation of a reminder, handle the confirmation locally.
+  // This prevents the same reminder from being sent to the Worker and saved twice.
+  if(aiPendingReminder){
+    const confirmWords=/^(კი|დიახ|ჰო|ხო|კარგი|გიდასტურებ|დაადასტურე|ვადასტურებ|დადასტურებულია|yes|yeah|yep|ok|okay|confirm|confirmed|ναι|εντάξει|οκ|επιβεβαιώνω|επιβεβαίωση)[.!\s]*$/iu;
+    const cancelWords=/^(არა|არ მინდა|გაუქმება|გააუქმე|no|nope|cancel|cancelled|όχι|ακύρωση|ακύρωσε)[.!\s]*$/iu;
+    if(confirmWords.test(message)){
+      aiAddMessage('user',message);
+      const pending={...aiPendingReminder};
+      aiPendingReminder=null;
+      const ok=await createAIChatReminder(pending.date,pending.time,pending.text);
+      aiAddMessage('system',ok?'🔔 '+(aiCurrentLanguage()==='el'?'Η υπενθύμιση αποθηκεύτηκε.':aiCurrentLanguage()==='en'?'Reminder saved.':'🔔 შეხსენება შენახულია.'):'⚠️ '+(aiCurrentLanguage()==='el'?'Η υπενθύμιση δεν αποθηκεύτηκε.':aiCurrentLanguage()==='en'?'Reminder could not be saved.':'შეხსენების შენახვა ვერ მოხერხდა.'));
+      input.value='';
+      input.focus();
+      return;
+    }
+    if(cancelWords.test(message)){
+      aiAddMessage('user',message);
+      aiPendingReminder=null;
+      input.value='';
+      aiAddMessage('system',aiCurrentLanguage()==='el'?'Η υπενθύμιση ακυρώθηκε.':aiCurrentLanguage()==='en'?'Reminder cancelled.':'🔕 შეხსენება გაუქმდა.');
+      input.focus();
+      return;
+    }
+  }
+
   aiBusy=true;if(send)send.disabled=true;
   aiAddMessage('system',aiLangText('connecting'));
   input.value='';
@@ -3916,8 +3943,8 @@ async function sendAIMessage(){
     }
     if(data.reminderRequest){
       if(data.reminderDate&&data.reminderTime&&data.reminderText){
-        const ok=await createAIChatReminder(data.reminderDate,data.reminderTime,data.reminderText);
-        aiAddMessage('system',ok?'🔔 '+(language==='el'?'Η υπενθύμιση αποθηκεύτηκε.':language==='en'?'Reminder saved.':'🔔 შეხსენება შენახულია.'):'⚠️ '+(language==='el'?'Η υπενθύμιση δεν αποθηκεύτηκε.':language==='en'?'Reminder could not be saved.':'შეხსენების შენახვა ვერ მოხერხდა.'));
+        // Do NOT save immediately. Keep it pending until the user explicitly confirms.
+        aiPendingReminder={date:String(data.reminderDate),time:String(data.reminderTime),text:String(data.reminderText)};
       }
     }
     if(data.isWorkEntry&&data.needsConfirmation&&data.workEntry){
