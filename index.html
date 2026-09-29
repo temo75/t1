@@ -2380,7 +2380,7 @@ function enablePasswordOnlyLogin(){
   $('loginName').focus();
 }
 function enableNameLogin(){enablePasswordOnlyLogin()}
-function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');try{if(window.AndroidReminder&&typeof window.AndroidReminder.setNotesEndpoint==='function'){window.AndroidReminder.setNotesEndpoint(FIREBASE_DB_URL+'/notes/'+firebaseUserKey(currentUserId)+'.json');}}catch(e){}$('loginScreen').classList.add('hidden');if($('bottomNav'))$('bottomNav').style.display='grid';$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();updateUserUI();render();startJobsSyncWatcher();startDailySyncWatcher();syncJobsFromFirebase().then(()=>{updateMonthFilter();render();renderList();renderMonths();renderReceivableModal();}).catch(e=>console.warn('Firebase jobs sync failed:',e));}
+function completeLogin(u){const user=normalizeUser(u);if(user.blocked===true||user.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';return;}currentUser=user.name;currentUserId=user.id;localStorage.setItem(USERS_KEY,JSON.stringify(getUsers()));localStorage.setItem(SESSION_USER_KEY,currentUser);localStorage.setItem(SESSION_USER_ID_KEY,currentUserId);localStorage.setItem(AUTH_KEY,'yes');try{if(window.AndroidReminder&&typeof window.AndroidReminder.setNotesEndpoint==='function'){window.AndroidReminder.setNotesEndpoint(FIREBASE_DB_URL+'/notes/'+firebaseUserKey(currentUserId)+'.json');}}catch(e){}$('loginScreen').classList.add('hidden');if($('bottomNav'))$('bottomNav').style.display='grid';$('loginPassword').value='';$('loginError').textContent='';jobs=loadUserJobs();loadAIMemory();updateUserUI();render();startJobsSyncWatcher();startDailySyncWatcher();syncJobsFromFirebase().then(()=>{updateMonthFilter();render();renderList();renderMonths();renderReceivableModal();}).catch(e=>console.warn('Firebase jobs sync failed:',e));}
 function login(){const name=$('loginName').value.trim(),pass=$('loginPassword').value,users=getUsers(),u=users.find(x=>x.name===name&&x.password===pass);if(!u){$('loginError').textContent='სახელი ან პაროლი არასწორია';$('loginPassword').value='';$('loginPassword').focus();return;}if(u.blocked===true||u.authorized!==true){$('loginError').textContent='ეს მომხმარებელი დაბლოკილია';$('loginPassword').value='';$('loginPassword').focus();return;}completeLogin(u);}
 function renderLoginUsers(){}
 window.addEventListener('DOMContentLoaded',async()=>{
@@ -2407,7 +2407,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
     $('loginScreen').classList.add('hidden');
     if($('bottomNav'))$('bottomNav').style.display='grid';
     if(typeof window.loadNeonSettings==='function')window.loadNeonSettings();
-    jobs=loadUserJobs();updateUserUI();render();
+    jobs=loadUserJobs();loadAIMemory();updateUserUI();render();
     startJobsSyncWatcher();
     syncJobsFromFirebase().then(()=>{updateMonthFilter();render();renderList();renderMonths();renderReceivableModal();}).catch(e=>console.warn('Firebase jobs sync failed:',e));
   }else{
@@ -3699,6 +3699,7 @@ const TEMO_AI_WORKER_URL='https://temo-ai.temo75elia.workers.dev';
 let aiHistory=[];
 let aiPendingWorkEntry=null;
 let aiBusy=false;
+let aiMemoryCache=[];
 
 function aiAddMessage(role,text){
   const box=document.getElementById('aiChatMessages');
@@ -3836,6 +3837,29 @@ function closeAIChat(){
   if(modal)modal.classList.remove('show');
 }
 function aiToday(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function aiMemoryUrl(){const key=firebaseUserKey(currentUserId);return key?FIREBASE_DB_URL+'/aiMemory/'+key+'.json':'';}
+async function loadAIMemory(){
+  const url=aiMemoryUrl();if(!url){aiMemoryCache=[];return;}
+  try{const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error('Firebase HTTP '+r.status);const data=await r.json();aiMemoryCache=Array.isArray(data)?data.filter(Boolean).map(x=>String(x).slice(0,1000)).slice(-50):[];}catch(e){console.warn('AI memory read failed:',e);aiMemoryCache=[];}
+}
+async function saveAIMemory(text){
+  const clean=String(text||'').trim();if(!clean)return false;
+  if(!aiMemoryCache.includes(clean))aiMemoryCache.push(clean);
+  aiMemoryCache=aiMemoryCache.slice(-50);
+  const url=aiMemoryUrl();if(!url)return false;
+  try{const r=await fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(aiMemoryCache)});if(!r.ok)throw new Error('Firebase HTTP '+r.status);return true;}catch(e){console.warn('AI memory write failed:',e);return false;}
+}
+async function createAIChatReminder(date,time,text){
+  const cleanText=String(text||'').trim(),d=String(date||'').trim(),t=String(time||'').trim();
+  if(!cleanText||!d||!t)return false;
+  const trigger=new Date(d+'T'+t).getTime();
+  if(!Number.isFinite(trigger)||trigger<=Date.now())return false;
+  await loadNotes();
+  if('Notification' in window && Notification.permission==='default'){try{await Notification.requestPermission();}catch(e){}}
+  const note={id:makeNoteId(),text:cleanText,date:d,time:t,reminder:true,done:false,notifiedAt:0,updatedAt:Date.now()};
+  notesCache.push(note);
+  try{await saveNotesRemote();scheduleNativeNoteReminder(note);renderNotes();return true;}catch(e){await loadNotes();return false;}
+}
 async function sendAIMessage(){
   if(!currentUser||aiBusy)return;
   const input=document.getElementById('aiChatInput');
@@ -3864,6 +3888,7 @@ async function sendAIMessage(){
         amount:e?.amount??null,
         note:String(e?.place??'')
       })) : [],
+      memory:Array.isArray(aiMemoryCache)?aiMemoryCache.slice(-50):[],
       notes:Array.isArray(notesCache)?notesCache.slice(-200).map(n=>({
         date:String(n?.date??''),
         title:'',
@@ -3885,6 +3910,16 @@ async function sendAIMessage(){
     const status=Array.from(document.querySelectorAll('#aiChatMessages .aiMsg.system')).find(x=>x.textContent.includes(aiLangText('connecting')));
     if(status)status.remove();
     aiAddMessage('assistant',reply);
+    if(data.memoryRequest&&data.memoryText){
+      const ok=await saveAIMemory(data.memoryText);
+      aiAddMessage('system',ok?'🧠 '+(language==='el'?'Η μνήμη αποθηκεύτηκε.':language==='en'?'🧠 Memory saved.':'🧠 მეხსიერებაში შევინახე.'):'⚠️ '+(language==='el'?'Η μνήμη δεν αποθηκεύτηκε.':language==='en'?'Memory could not be saved.':'მეხსიერებაში შენახვა ვერ მოხერხდა.'));
+    }
+    if(data.reminderRequest){
+      if(data.reminderDate&&data.reminderTime&&data.reminderText){
+        const ok=await createAIChatReminder(data.reminderDate,data.reminderTime,data.reminderText);
+        aiAddMessage('system',ok?'🔔 '+(language==='el'?'Η υπενθύμιση αποθηκεύτηκε.':language==='en'?'Reminder saved.':'🔔 შეხსენება შენახულია.'):'⚠️ '+(language==='el'?'Η υπενθύμιση δεν αποθηκεύτηκε.':language==='en'?'Reminder could not be saved.':'შეხსენების შენახვა ვერ მოხერხდა.'));
+      }
+    }
     if(data.isWorkEntry&&data.needsConfirmation&&data.workEntry){
       aiPendingWorkEntry={...data.workEntry};
       aiRenderWorkConfirmation(aiPendingWorkEntry);
