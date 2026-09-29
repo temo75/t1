@@ -3849,6 +3849,48 @@ async function saveAIMemory(text){
   const url=aiMemoryUrl();if(!url)return false;
   try{const r=await fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(aiMemoryCache)});if(!r.ok)throw new Error('Firebase HTTP '+r.status);return true;}catch(e){console.warn('AI memory write failed:',e);return false;}
 }
+function aiExtractReminderCommand(message){
+  const raw=String(message||'').trim();
+  if(!raw)return null;
+  const intent=/(შემახსენ|გამახსენ|შეხსენება|შეხსენების|შეგახსენ|დამიყენე\s+შეხსენება|დამიმზადე\s+შეხსენება)/iu;
+  if(!intent.test(raw))return null;
+
+  const now=new Date();
+  let d=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  if(/ზეგ/iu.test(raw)) d.setDate(d.getDate()+2);
+  else if(/ხვალ/iu.test(raw)) d.setDate(d.getDate()+1);
+  else if(/დღეს/iu.test(raw)){}
+  else {
+    const dm=raw.match(/\b(\d{1,2})[.\/-](\d{1,2})(?:[.\/-](\d{2,4}))?\b/);
+    if(dm){
+      let y=dm[3]?Number(dm[3]):d.getFullYear();
+      if(y<100)y+=2000;
+      d=new Date(y,Number(dm[2])-1,Number(dm[1]));
+    }
+  }
+
+  let hh=null,mm=null;
+  let tm=raw.match(/\b(\d{1,2})\s*[:.](\d{2})\b/);
+  if(tm){hh=Number(tm[1]);mm=Number(tm[2]);}
+  else {
+    tm=raw.match(/\b(\d{1,2})\s*(?:საათზე|საათი|სთ|-ზე)\b/iu);
+    if(tm){hh=Number(tm[1]);mm=0;}
+  }
+  if(hh===null||hh>23||mm>59)return null;
+
+  const date=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const time=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+  let text=raw
+    .replace(/^(?:ხვალ|დღეს|ზეგ)\s*/iu,'')
+    .replace(/(?:შემახსენ|გამახსენ|შეგახსენ|შეხსენების?|დამიყენე\s+შეხსენება|დამიმზადე\s+შეხსენება)/iu,'')
+    .replace(/\b\d{1,2}\s*[:.]\s*\d{2}\b/,'')
+    .replace(/\b\d{1,2}\s*(?:საათზე|საათი|სთ|-ზე)\b/iu,'')
+    .replace(/\s{2,}/g,' ')
+    .trim();
+  if(!text)text=raw;
+  return {reminderRequest:true,reminderDate:date,reminderTime:time,reminderText:text};
+}
+
 async function createAIChatReminder(date,time,text){
   const cleanText=String(text||'').trim(),d=String(date||'').trim(),t=String(time||'').trim();
   if(!cleanText||!d||!t)return false;
@@ -3856,6 +3898,8 @@ async function createAIChatReminder(date,time,text){
   if(!Number.isFinite(trigger)||trigger<=Date.now())return false;
   await loadNotes();
   if('Notification' in window && Notification.permission==='default'){try{await Notification.requestPermission();}catch(e){}}
+  const duplicate=notesCache.find(n=>n.reminder===true&&!n.done&&String(n.date)===d&&String(n.time)===t&&String(n.text||'').trim()===cleanText);
+  if(duplicate){scheduleNativeNoteReminder(duplicate);renderNotes();return true;}
   const note={id:makeNoteId(),text:cleanText,date:d,time:t,reminder:true,done:false,notifiedAt:0,updatedAt:Date.now()};
   notesCache.push(note);
   try{await saveNotesRemote();scheduleNativeNoteReminder(note);renderNotes();return true;}catch(e){await loadNotes();return false;}
@@ -3899,12 +3943,22 @@ async function sendAIMessage(){
     const response=await fetch(TEMO_AI_WORKER_URL,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({message,language,currentDate:aiToday(),history,userContext})
+      body:JSON.stringify({message,language,currentDate:aiToday(),currentTime:localTime(),currentDateTime:new Date().toISOString(),timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||'Europe/Athens',history,userContext})
     });
     const raw=await response.text();
     let data={};
     try{data=raw?JSON.parse(raw):{};}catch{data={ok:false,error:raw||aiLangText('invalidWorker')};}
     if(!response.ok||!data.ok)throw new Error(data.error||('HTTP '+response.status));
+
+    // შეხსენების ბრძანება ადგილზეც ამოვიცნოთ, რათა Worker-ის პასუხის ფორმაზე არ ვიყოთ დამოკიდებული.
+    const localReminder=aiExtractReminderCommand(message);
+    if(localReminder){
+      data.reminderRequest=true;
+      if(!data.reminderDate)data.reminderDate=localReminder.reminderDate;
+      if(!data.reminderTime)data.reminderTime=localReminder.reminderTime;
+      if(!data.reminderText)data.reminderText=localReminder.reminderText;
+    }
+
     const reply=String(data.reply||'');
     aiHistory.push({role:'user',content:message},{role:'assistant',content:reply});
     const status=Array.from(document.querySelectorAll('#aiChatMessages .aiMsg.system')).find(x=>x.textContent.includes(aiLangText('connecting')));
