@@ -3904,12 +3904,66 @@ async function createAIChatReminder(date,time,text){
   notesCache.push(note);
   try{await saveNotesRemote();scheduleNativeNoteReminder(note);renderNotes();return true;}catch(e){await loadNotes();return false;}
 }
+async function deleteAIChatReminderCommand(message){
+  const raw=String(message||'').trim();
+  const isDelete=/\b(?:წაშალე|წავშალოთ|წაშალეე)\b/iu.test(raw);
+  const isCancel=/\b(?:გააუქმე|გაუქმება|გააუქმოს)\b/iu.test(raw);
+  if(!isDelete&&!isCancel)return false;
+  if(!/\b(?:შეხსენებ|შეტყობინებ|რემინდერ|reminder)\w*/iu.test(raw) && !/(?:ეს|ის|ბოლო|ხვალ|დღეს|ზეგ|საათზე|ზე)/iu.test(raw))return false;
+
+  try{await loadNotes();}catch(e){return false;}
+  const active=notesCache.filter(n=>n && n.reminder===true && !n.done);
+  if(!active.length)return false;
+
+  let target=null;
+  const timeMatch=raw.match(/\b(\d{1,2})\s*(?:[:.]\s*(\d{2})|საათზე|სთ|-ზე)\b/iu);
+  if(timeMatch){
+    const hh=String(Math.min(23,Number(timeMatch[1]))).padStart(2,'0');
+    const mm=timeMatch[2]!==undefined?String(Math.min(59,Number(timeMatch[2]))).padStart(2,'0'):'00';
+    target=active.find(n=>String(n.time||'')===hh+':'+mm)||null;
+  }
+  if(!target){
+    const lowered=raw.toLocaleLowerCase();
+    target=active.find(n=>{
+      const text=String(n.text||'').trim().toLocaleLowerCase();
+      return text && lowered.includes(text.slice(0,80));
+    })||null;
+  }
+  if(!target && /(?:ბოლო|ეს|ის)/iu.test(raw)){
+    target=[...active].sort((a,b)=>String(b.updatedAt||0).localeCompare(String(a.updatedAt||0)))[0]||null;
+  }
+  if(!target && active.length===1)target=active[0];
+  if(!target)return false;
+
+  try{cancelNativeNoteReminder(target.id);}catch(e){}
+  notesCache=notesCache.filter(n=>String(n.id)!==String(target.id));
+  try{
+    await saveNotesRemote();
+    renderNotes();
+    return true;
+  }catch(e){
+    await loadNotes();
+    return false;
+  }
+}
+
 async function sendAIMessage(){
   if(!currentUser||aiBusy)return;
   const input=document.getElementById('aiChatInput');
   const send=document.getElementById('aiChatSend');
   const message=String(input?.value||'').trim();
   if(!message)return;
+
+  // „გააუქმე“ და „წაშალე“ ერთი მოქმედებაა: უკვე შენახული შეხსენებაც სრულად იშლება.
+  const deletedReminder=await deleteAIChatReminderCommand(message);
+  if(deletedReminder){
+    aiAddMessage('user',message);
+    aiAddMessage('system',aiCurrentLanguage()==='el'?'🔕 Η υπενθύμιση διαγράφηκε.':aiCurrentLanguage()==='en'?'🔕 Reminder deleted.':'🔕 შეხსენება გაუქმდა და წაიშალა.');
+    input.value='';
+    input.focus();
+    return;
+  }
+
   aiBusy=true;if(send)send.disabled=true;
   aiAddMessage('system',aiLangText('connecting'));
   input.value='';
