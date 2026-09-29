@@ -3698,7 +3698,6 @@ function loadNeonSettings(){
 const TEMO_AI_WORKER_URL='https://temo-ai.temo75elia.workers.dev';
 let aiHistory=[];
 let aiPendingWorkEntry=null;
-let aiPendingReminder=null;
 let aiBusy=false;
 let aiMemoryCache=[];
 
@@ -3856,45 +3855,43 @@ function scheduleBrowserAIReminder(note){
     if(!note||note.done||!note.reminder||!note.date||!note.time)return;
     const triggerAt=new Date(note.date+'T'+note.time).getTime();
     if(!Number.isFinite(triggerAt)||triggerAt<=Date.now())return;
-    const old=aiBrowserReminderTimers.get(String(note.id));
+    const key=String(note.id);
+    const old=aiBrowserReminderTimers.get(key);
     if(old)clearTimeout(old);
     const delay=Math.min(triggerAt-Date.now(),2147483647);
     const timer=setTimeout(async()=>{
-      aiBrowserReminderTimers.delete(String(note.id));
+      aiBrowserReminderTimers.delete(key);
       if('Notification' in window && Notification.permission==='granted'){
-        try{new Notification('🔔 TEMO AI — შეხსენება',{body:String(note.text||'შეხსენება'),tag:'temo-ai-reminder-'+String(note.id)});}catch(e){console.warn('AI browser notification failed:',e);}
+        try{new Notification('🔔 TEMO AI — შეხსენება',{body:String(note.text||'შეხსენება'),tag:'temo-ai-reminder-'+key});}catch(e){console.warn('AI browser notification failed:',e);}
       }else{
         try{alert('🔔 '+String(note.text||'შეხსენება'));}catch(e){}
       }
-      const n=notesCache.find(x=>String(x.id)===String(note.id));
+      const n=notesCache.find(x=>String(x.id)===key);
       if(n){n.notifiedAt=Date.now();try{await saveNotesRemote();}catch(e){console.warn('AI reminder state save failed:',e);}}
     },delay);
-    aiBrowserReminderTimers.set(String(note.id),timer);
+    aiBrowserReminderTimers.set(key,timer);
   }catch(e){console.warn('AI browser reminder schedule failed:',e);}
 }
-async function createAIChatReminder(date,time,text,permissionAlreadyHandled=false){
+async function createAIChatReminder(date,time,text){
   const cleanText=String(text||'').trim(),d=String(date||'').trim(),t=String(time||'').trim();
   if(!cleanText||!d||!t)return false;
   const trigger=new Date(d+'T'+t).getTime();
   if(!Number.isFinite(trigger)||trigger<=Date.now())return false;
+  await loadNotes();
+  const duplicate=notesCache.find(n=>n.reminder===true&&!n.done&&n.date===d&&n.time===t&&String(n.text||'').trim()===cleanText);
+  if(duplicate){scheduleNativeNoteReminder(duplicate);scheduleBrowserAIReminder(duplicate);renderNotes();return true;}
   const note={id:makeNoteId(),text:cleanText,date:d,time:t,reminder:true,done:false,notifiedAt:0,updatedAt:Date.now()};
+  notesCache.push(note);
   try{
-    await loadNotes();
-    if(!permissionAlreadyHandled && 'Notification' in window && Notification.permission==='default'){
-      try{await Notification.requestPermission();}catch(e){}
-    }
-    notesCache=notesCache.filter(n=>!(n.reminder===true&&!n.done&&n.date===d&&n.time===t&&String(n.text||'').trim()===cleanText));
-    notesCache.push(note);
     await saveNotesRemote();
     scheduleNativeNoteReminder(note);
     scheduleBrowserAIReminder(note);
     renderNotes();
     return true;
-  }catch(e){
-    console.warn('AI reminder save failed:',e);
-    await loadNotes();
-    return false;
-  }
+  }catch(e){await loadNotes();return false;}
+}
+function aiLooksLikeReminderCommand(text){
+  return /შემახსენე|შეხსენებ|შეტყობინებ|შემატყობინე|remind|reminder|notify me|alert me|υπενθύμ|ειδοποί/iu.test(String(text||''));
 }
 async function sendAIMessage(){
   if(!currentUser||aiBusy)return;
@@ -3902,36 +3899,10 @@ async function sendAIMessage(){
   const send=document.getElementById('aiChatSend');
   const message=String(input?.value||'').trim();
   if(!message)return;
-
-  // If TEMO AI is waiting for confirmation of a reminder, handle the confirmation locally.
-  // This prevents the same reminder from being sent to the Worker and saved twice.
-  if(aiPendingReminder){
-    const confirmWords=/^(კი|დიახ|ჰო|ხო|კარგი|გიდასტურებ|დაადასტურე|ვადასტურებ|დადასტურებულია|yes|yeah|yep|ok|okay|confirm|confirmed|ναι|εντάξει|οκ|επιβεβαιώνω|επιβεβαίωση)[.!\s]*$/iu;
-    const cancelWords=/^(არა|არ მინდა|გაუქმება|გააუქმე|no|nope|cancel|cancelled|όχι|ακύρωση|ακύρωσε)[.!\s]*$/iu;
-    if(confirmWords.test(message)){
-      aiAddMessage('user',message);
-      const pending={...aiPendingReminder};
-      aiPendingReminder=null;
-      let permissionHandled=false;
-      if('Notification' in window && Notification.permission==='default'){
-        try{await Notification.requestPermission();permissionHandled=true;}catch(e){}
-      }else{permissionHandled=true;}
-      const ok=await createAIChatReminder(pending.date,pending.time,pending.text,permissionHandled);
-      aiAddMessage('system',ok?'🔔 '+(aiCurrentLanguage()==='el'?'Η υπενθύμιση αποθηκεύτηκε.':aiCurrentLanguage()==='en'?'Reminder saved.':'🔔 შეხსენება შენახულია.'):'⚠️ '+(aiCurrentLanguage()==='el'?'Η υπενθύμιση δεν αποθηκεύτηκε.':aiCurrentLanguage()==='en'?'Reminder could not be saved.':'შეხსენების შენახვა ვერ მოხერხდა.'));
-      input.value='';
-      input.focus();
-      return;
-    }
-    if(cancelWords.test(message)){
-      aiAddMessage('user',message);
-      aiPendingReminder=null;
-      input.value='';
-      aiAddMessage('system',aiCurrentLanguage()==='el'?'Η υπενθύμιση ακυρώθηκε.':aiCurrentLanguage()==='en'?'Reminder cancelled.':'🔕 შეხსენება გაუქმდა.');
-      input.focus();
-      return;
-    }
+  // Request notification permission while the Send button click is still a user action.
+  if(aiLooksLikeReminderCommand(message) && 'Notification' in window && Notification.permission==='default'){
+    try{await Notification.requestPermission();}catch(e){console.warn('AI notification permission failed:',e);}
   }
-
   aiBusy=true;if(send)send.disabled=true;
   aiAddMessage('system',aiLangText('connecting'));
   input.value='';
@@ -3965,7 +3936,7 @@ async function sendAIMessage(){
     const response=await fetch(TEMO_AI_WORKER_URL,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({message,language,currentDate:aiToday(),history,userContext})
+      body:JSON.stringify({message,language,currentDate:aiToday(),currentTime:localTime(),currentDateTime:new Date().toISOString(),timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||'Europe/Athens',history,userContext})
     });
     const raw=await response.text();
     let data={};
@@ -3982,8 +3953,8 @@ async function sendAIMessage(){
     }
     if(data.reminderRequest){
       if(data.reminderDate&&data.reminderTime&&data.reminderText){
-        // Do NOT save immediately. Keep it pending until the user explicitly confirms.
-        aiPendingReminder={date:String(data.reminderDate),time:String(data.reminderTime),text:String(data.reminderText)};
+        const ok=await createAIChatReminder(data.reminderDate,data.reminderTime,data.reminderText);
+        aiAddMessage('system',ok?'🔔 '+(language==='el'?'Η υπενθύμιση αποθηκεύτηκε και ρυθμίστηκε.':language==='en'?'Reminder saved and scheduled.':'🔔 შეხსენება შენახული და დაყენებულია.'):'⚠️ '+(language==='el'?'Η υπενθύμιση δεν αποθηκεύτηκε.':language==='en'?'Reminder could not be saved.':'შეხსენების შენახვა ვერ მოხერხდა.'));
       }
     }
     if(data.isWorkEntry&&data.needsConfirmation&&data.workEntry){
@@ -5584,7 +5555,7 @@ async function saveNote(){
     await saveNotesRemote();
     cancelNativeNoteReminder(savedNoteId);
     const savedNote=notesCache.find(n=>n.id===savedNoteId);
-    if(savedNote)scheduleNativeNoteReminder(savedNote);
+    if(savedNote){scheduleNativeNoteReminder(savedNote);scheduleBrowserAIReminder(savedNote);}
     closeNoteModal();
     renderNotes();
     checkNoteReminders();
@@ -5599,7 +5570,7 @@ async function toggleNoteDone(id){
   try{
     await saveNotesRemote();
     if(n.done)cancelNativeNoteReminder(n.id);
-    else scheduleNativeNoteReminder(n);
+    else {scheduleNativeNoteReminder(n);scheduleBrowserAIReminder(n);}
     renderNotes();
   }catch(e){alert('ცვლილება ვერ შეინახა Firebase-ში.');await loadNotes();}
 }
