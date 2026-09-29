@@ -165,6 +165,9 @@ export default {
       const message = String(body.message || "").trim();
       const siteLanguage = String(body.language || "ka").trim();
       const currentDate = String(body.currentDate || "").trim();
+      const currentTime = String(body.currentTime || "").trim();
+      const currentDateTime = String(body.currentDateTime || "").trim();
+      const timezone = String(body.timezone || "").trim();
 
       const userContext =
         body.userContext && typeof body.userContext === "object"
@@ -251,7 +254,8 @@ TEMO AI SMART FEATURES:
 - Smart weather: if the user asks whether weather is suitable for outdoor work, travel, painting, etc., set weatherAdvice=true, request weather data, and give a practical conclusion based only on the forecast.
 - Duplicate protection: if a new work entry appears to duplicate an existing supplied entry (same date/place/amount), warn about the possible duplicate before saving.
 - Structured entry extraction: understand natural-language work, money, expense, note, and reminder messages and extract useful fields accurately.
-- Reminder creation: if the user clearly asks for a reminder and gives a future date/time, set reminderRequest=true and extract reminderDate, reminderTime, and reminderText. If date or time is missing, ask for it instead of inventing it.
+- Reminder creation: if the user clearly commands a reminder and gives a future date/time, set reminderRequest=true and extract reminderDate, reminderTime, and reminderText. The website will immediately save and schedule it after the Worker responds. If date or time is missing, ask only for the missing part instead of inventing it.
+- Time awareness: use the supplied current local date, local time, full ISO timestamp, and IANA timezone. Treat 'now', 'today', 'tomorrow', 'in 2 hours', 'in 30 minutes', morning/evening, and similar expressions relative to that supplied local time. Never assume UTC when a local timezone is supplied.
 - Never claim that a memory, reminder, work entry, or expense was saved until the website confirms it.
 
 CREATOR INFORMATION:
@@ -344,6 +348,9 @@ If the user explicitly asks for a reminder, set "reminderRequest" to true. Extra
 ${languageInstruction}
 
 ${currentDate ? `Current site date: ${currentDate}` : ""}
+${currentTime ? `Current local time: ${currentTime}` : ""}
+${currentDateTime ? `Current ISO timestamp: ${currentDateTime}` : ""}
+${timezone ? `Current IANA timezone: ${timezone}` : ""}
 `;
 
       const input = [
