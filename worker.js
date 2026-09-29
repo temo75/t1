@@ -221,17 +221,6 @@ export default {
         }), { status: 400, headers: corsHeaders });
       }
 
-      // DEPLOY TEST: this response is produced only by this uploaded worker.js.
-      if (message === "ღამე") {
-        return new Response(JSON.stringify({
-          ok: true,
-          reply: "🌙 ღამე — ახალი Worker ვერსია მუშაობს!",
-          isWorkEntry: false,
-          needsConfirmation: false,
-          workEntry: null
-        }), { status: 200, headers: corsHeaders });
-      }
-
       let languageInstruction;
       if (siteLanguage === "el") {
         languageInstruction = "Respond in Greek. Keep the conversation in Greek unless the user explicitly asks for another language.";
