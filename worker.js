@@ -165,6 +165,9 @@ export default {
       const message = String(body.message || "").trim();
       const siteLanguage = String(body.language || "ka").trim();
       const currentDate = String(body.currentDate || "").trim();
+      const currentTime = String(body.currentTime || "").trim();
+      const currentDateTime = String(body.currentDateTime || "").trim();
+      const timezone = String(body.timezone || "").trim();
 
       const userContext =
         body.userContext && typeof body.userContext === "object"
@@ -248,10 +251,14 @@ TEMO AI SMART FEATURES:
 - If the user asks to forget a saved memory, do not claim it was deleted; let the website handle deletion.
 - Finance analysis: use supplied work and expense data to calculate totals, paid/unpaid amounts, outstanding money, and daily/weekly/monthly summaries when asked.
 - Work reports: summarize supplied work by date, place, amount, paid status, and outstanding amount. Never invent missing records.
-- Smart weather: if the user asks whether weather is suitable for outdoor work, travel, painting, etc., request weather data and then give a practical conclusion based only on the forecast.
+- Smart weather: if the user asks whether weather is suitable for outdoor work, travel, painting, etc., set weatherAdvice=true, request weather data, and give a practical conclusion based only on the forecast.
 - Duplicate protection: if a new work entry appears to duplicate an existing supplied entry (same date/place/amount), warn about the possible duplicate before saving.
 - Structured entry extraction: understand natural-language work, money, expense, note, and reminder messages and extract useful fields accurately.
-- Reminder creation: if the user clearly asks for a reminder and gives a future date/time, set reminderRequest=true and extract reminderDate, reminderTime, and reminderText. If date or time is missing, ask for it instead of inventing it.
+- Reminder creation: if the user clearly commands a reminder and gives a future date/time, set reminderRequest=true and extract reminderDate, reminderTime, and reminderText. The website will immediately save and schedule it after the Worker responds. If date or time is missing, ask only for the missing part instead of inventing it.
+- Time awareness: use the supplied current local date, local time, full ISO timestamp, and IANA timezone as the authoritative clock for this conversation.
+- The website sends the real current phone/browser time. NEVER ask the user what time it is just to determine the current time; use the supplied Current local time / Current ISO timestamp instead.
+- Treat 'now', 'today', 'tomorrow', 'in 2 hours', 'in 30 minutes', morning/evening, and similar expressions relative to that supplied local time.
+- When calculating a reminder relative to now, calculate it from the supplied current date/time and timezone. Never assume UTC when a local timezone is supplied.
 - Never claim that a memory, reminder, work entry, or expense was saved until the website confirms it.
 
 CREATOR INFORMATION:
@@ -327,6 +334,7 @@ Return ONLY valid JSON with exactly this structure:
   },
   "weatherRequest": true or false,
   "weatherLocation": "city/place name or null",
+  "weatherAdvice": true or false,
   "memoryRequest": true or false,
   "memoryText": "short memory or null",
   "reminderRequest": true or false,
@@ -336,13 +344,21 @@ Return ONLY valid JSON with exactly this structure:
 }
 
 If "isWorkEntry" is false, "workEntry" must be null.
-If the user asks for weather, set "weatherRequest" to true and extract the requested city/place into "weatherLocation". If no location is given, set "weatherLocation" to null. For a normal message, set "weatherRequest" to false and "weatherLocation" to null.
+If the user asks for weather, set "weatherRequest" to true and extract the requested city/place into "weatherLocation". If no location is given, set "weatherLocation" to null. For a normal message, set "weatherRequest" to false and "weatherLocation" to null. If the user asks whether weather is good for work, painting, travel, or another activity, set "weatherAdvice" to true; otherwise set it to false.
 If the user explicitly asks you to remember something, set "memoryRequest" to true and put only the useful memory in "memoryText". Otherwise set them to false and null.
 If the user explicitly asks for a reminder, set "reminderRequest" to true. Extract a future date/time when clearly given. If date or time is missing, set the missing field to null and ask for it in the reply.
 
 ${languageInstruction}
 
 ${currentDate ? `Current site date: ${currentDate}` : ""}
+${currentTime ? `Current local time: ${currentTime}` : ""}
+${currentDateTime ? `Current ISO timestamp: ${currentDateTime}` : ""}
+${timezone ? `Current IANA timezone: ${timezone}` : ""}
+
+CURRENT CLOCK — DO NOT ASK THE USER FOR THIS:
+Date: ${currentDate || "unknown"}
+Time: ${currentTime || "unknown"}
+Timezone: ${timezone || "Europe/Athens"}
 `;
 
       const input = [
@@ -449,6 +465,23 @@ ${currentDate ? `Current site date: ${currentDate}` : ""}
                     : `🌤️ ადგილი «${weatherLocation}» ვერ ვიპოვე. დაწერე ქალაქი უფრო ზუსტად.`;
             } else {
               finalReply = formatWeatherReply(weatherResult, siteLanguage);
+              if (Boolean(parsed.weatherAdvice)) {
+                const d = weatherResult.weather?.daily || {};
+                const rain = Number(d.precipitation_probability_max?.[1] ?? d.precipitation_probability_max?.[0] ?? 0);
+                const wind = Number(d.wind_speed_10m_max?.[1] ?? d.wind_speed_10m_max?.[0] ?? 0);
+                const max = Number(d.temperature_2m_max?.[1] ?? d.temperature_2m_max?.[0] ?? 0);
+                const min = Number(d.temperature_2m_min?.[1] ?? d.temperature_2m_min?.[0] ?? 0);
+                let advice = '';
+                if (rain >= 60 || wind >= 45) {
+                  advice = siteLanguage === 'el' ? '⚠️ Για εξωτερική εργασία: οι συνθήκες φαίνονται δύσκολες λόγω βροχής/ανέμου.' : siteLanguage === 'en' ? '⚠️ For outdoor work: conditions look difficult because of rain/wind.' : '⚠️ გარე სამუშაოსთვის: პირობები რთულია, რადგან წვიმის/ძლიერი ქარის რისკია.';
+                } else if (rain >= 30 || wind >= 30) {
+                  advice = siteLanguage === 'el' ? '🟡 Για εξωτερική εργασία: γίνεται, αλλά χρειάζεται προσοχή και ευελιξία.' : siteLanguage === 'en' ? '🟡 For outdoor work: possible, but keep some flexibility and caution.' : '🟡 გარე სამუშაოსთვის: შესაძლებელია, მაგრამ სიფრთხილე და მოქნილობა დაგჭირდება.';
+                } else {
+                  advice = siteLanguage === 'el' ? '🟢 Για εξωτερική εργασία: οι συνθήκες φαίνονται γενικά καλές.' : siteLanguage === 'en' ? '🟢 For outdoor work: conditions look generally good.' : '🟢 გარე სამუშაოსთვის: პირობები ზოგადად კარგია.';
+                }
+                const tempLine = siteLanguage === 'el' ? `Θερμοκρασία ημέρας περίπου ${min}°–${max}°C, βροχή ${rain}%, μέγιστος άνεμος ${wind} km/h.` : siteLanguage === 'en' ? `Day temperature about ${min}°–${max}°C, rain ${rain}%, maximum wind ${wind} km/h.` : `დღის ტემპერატურა დაახლოებით ${min}°–${max}°C, წვიმა ${rain}%, მაქსიმალური ქარი ${wind} კმ/სთ.`;
+                finalReply += `\n\n${advice}\n${tempLine}`;
+              }
             }
           } catch (weatherError) {
             finalReply =
@@ -467,6 +500,7 @@ ${currentDate ? `Current site date: ${currentDate}` : ""}
         isWorkEntry: Boolean(parsed.isWorkEntry),
         needsConfirmation: Boolean(parsed.needsConfirmation),
         workEntry: parsed.workEntry || null,
+        weatherAdvice: Boolean(parsed.weatherAdvice),
         memoryRequest: Boolean(parsed.memoryRequest),
         memoryText: parsed.memoryText ? String(parsed.memoryText).trim().slice(0, 1000) : null,
         reminderRequest: Boolean(parsed.reminderRequest),
