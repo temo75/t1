@@ -1978,6 +1978,39 @@ html body.site-white-theme #aiChatModal .aiChatClose{
   -webkit-text-fill-color:#111 !important;
 }
 </style>
+<style id="temo-ai-fixed-position-and-taller-window">
+/* TEMO AI — fixed launcher on every page + taller chat window. */
+#aiHeaderBtn{
+  display:none !important;
+  position:fixed !important;
+  top:40px !important;
+  right:12px !important;
+  z-index:2147483646 !important;
+  width:40px !important;
+  height:40px !important;
+  margin:0 !important;
+}
+.aiChatBox{
+  height:min(88vh,820px) !important;
+  max-height:820px !important;
+}
+@media(max-width:700px){
+  #aiHeaderBtn{
+    display:none !important;
+    top:40px !important;
+    right:10px !important;
+    width:40px !important;
+    height:40px !important;
+  }
+  .aiChatModal{padding:6px !important;}
+  .aiChatBox{
+    width:calc(100% - 12px) !important;
+    height:86vh !important;
+    max-height:900px !important;
+    border-radius:18px !important;
+  }
+}
+</style>
 </head>
 <body>
 <nav id="bottomNav" aria-label="მთავარი მენიუ">
@@ -4063,7 +4096,7 @@ function confirmAIWorkEntry(){
 
 function updateUserUI(){
  const isAdmin=currentUser===ADMIN_USER;
- const aiBtn=$('aiHeaderBtn'); if(aiBtn)aiBtn.style.display=currentUser?'inline-flex':'none';
+ const aiBtn=$('aiHeaderBtn'); if(aiBtn)aiBtn.style.display=currentUser?'flex':'none';
  const site=$('websiteUpdateSection'); if(site)site.style.display=isAdmin?'':'none';
  const users=$('userManagementSection'); if(users)users.style.display=isAdmin?'':'none'; const neon=$('neonControlSection'); if(neon)neon.style.display=currentUser?'':'none';
  const chat=$('userChatSection'); if(chat)chat.style.display=currentUser&&!isAdmin?'':'none';
