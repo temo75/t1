@@ -3906,10 +3906,10 @@ async function createAIChatReminder(date,time,text){
 }
 async function deleteAIChatReminderCommand(message){
   const raw=String(message||'').trim();
-  const isDelete=/\b(?:წაშალე|წავშალოთ|წაშალეე)\b/iu.test(raw);
-  const isCancel=/\b(?:გააუქმე|გაუქმება|გააუქმოს)\b/iu.test(raw);
+  const isDelete=/(?:^|\s)(?:წაშალე|წავშალოთ|წაშალეე)(?=\s|$)/iu.test(raw);
+  const isCancel=/(?:^|\s)(?:გააუქმე|გაუქმება|გააუქმოს)(?=\s|$)/iu.test(raw);
   if(!isDelete&&!isCancel)return false;
-  if(!/\b(?:შეხსენებ|შეტყობინებ|რემინდერ|reminder)\w*/iu.test(raw) && !/(?:ეს|ის|ბოლო|ხვალ|დღეს|ზეგ|საათზე|ზე)/iu.test(raw))return false;
+  if(!/(?:შეხსენებ|შეტყობინებ|რემინდერ|reminder|ეს|ის|ბოლო|ხვალ|დღეს|ზეგ|საათზე|ზე)/iu.test(raw))return false;
 
   try{await loadNotes();}catch(e){return false;}
   const active=notesCache.filter(n=>n && n.reminder===true && !n.done);
