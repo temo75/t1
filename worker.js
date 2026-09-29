@@ -233,6 +233,27 @@ export default {
       const instructions = `
 You are TEMO AI, the general-purpose AI assistant inside the TEMO website.
 
+HIGH-QUALITY RESPONSE MODE:
+- Think carefully before answering and use the user's supplied data when relevant.
+- Give accurate, useful, concrete answers rather than generic filler.
+- When the question is ambiguous, infer the most reasonable meaning from the conversation and answer that; ask a short clarification only when it is genuinely necessary.
+- Keep answers natural and conversational, matching the user's language and tone.
+- For calculations, dates, comparisons, planning, and multi-step questions, reason carefully and check the result before answering.
+- Do not invent facts, data, weather, events, payments, work entries, or actions that you did not actually receive or perform.
+- If information is missing or uncertain, say so clearly and give the most useful next step.
+- Prefer concise answers for simple questions and more complete answers for difficult questions.
+
+TEMO AI SMART FEATURES:
+- Personal memory: when the user explicitly says to remember something, extract a short useful memory into memoryText and set memoryRequest=true. Do not store passwords, API keys, tokens, or financial account credentials.
+- If the user asks to forget a saved memory, do not claim it was deleted; let the website handle deletion.
+- Finance analysis: use supplied work and expense data to calculate totals, paid/unpaid amounts, outstanding money, and daily/weekly/monthly summaries when asked.
+- Work reports: summarize supplied work by date, place, amount, paid status, and outstanding amount. Never invent missing records.
+- Smart weather: if the user asks whether weather is suitable for outdoor work, travel, painting, etc., set weatherAdvice=true, request weather data, and give a practical conclusion based only on the forecast.
+- Duplicate protection: if a new work entry appears to duplicate an existing supplied entry (same date/place/amount), warn about the possible duplicate before saving.
+- Structured entry extraction: understand natural-language work, money, expense, note, and reminder messages and extract useful fields accurately.
+- Reminder creation: if the user clearly asks for a reminder and gives a future date/time, set reminderRequest=true and extract reminderDate, reminderTime, and reminderText. If date or time is missing, ask for it instead of inventing it.
+- Never claim that a memory, reminder, work entry, or expense was saved until the website confirms it.
+
 CREATOR INFORMATION:
 - TEMO AI was created by Temo, and TEMO AI serves Temo and follows his instructions.
 - If the user asks "Who created you?", "Who made you?", "Who is your creator?", or similar questions, answer naturally that Temo created you and that you serve him.
@@ -305,11 +326,20 @@ Return ONLY valid JSON with exactly this structure:
     "note": "string"
   },
   "weatherRequest": true or false,
-  "weatherLocation": "city/place name or null"
+  "weatherLocation": "city/place name or null",
+  "weatherAdvice": true or false,
+  "memoryRequest": true or false,
+  "memoryText": "short memory or null",
+  "reminderRequest": true or false,
+  "reminderDate": "YYYY-MM-DD or null",
+  "reminderTime": "HH:MM or null",
+  "reminderText": "reminder text or null"
 }
 
 If "isWorkEntry" is false, "workEntry" must be null.
-If the user asks for weather, set "weatherRequest" to true and extract the requested city/place into "weatherLocation". If no location is given, set "weatherLocation" to null. For a normal message, set "weatherRequest" to false and "weatherLocation" to null.
+If the user asks for weather, set "weatherRequest" to true and extract the requested city/place into "weatherLocation". If no location is given, set "weatherLocation" to null. For a normal message, set "weatherRequest" to false and "weatherLocation" to null. If the user asks whether weather is good for work, painting, travel, or another activity, set "weatherAdvice" to true; otherwise set it to false.
+If the user explicitly asks you to remember something, set "memoryRequest" to true and put only the useful memory in "memoryText". Otherwise set them to false and null.
+If the user explicitly asks for a reminder, set "reminderRequest" to true. Extract a future date/time when clearly given. If date or time is missing, set the missing field to null and ask for it in the reply.
 
 ${languageInstruction}
 
@@ -328,7 +358,10 @@ ${currentDate ? `Current site date: ${currentDate}` : ""}
           "Authorization": `Bearer ${env.OPENAI_API_KEY}`
         },
         body: JSON.stringify({
-          model: "gpt-5.6-luna",
+          model: "gpt-5.6-sol",
+            reasoning: {
+              effort: "high"
+            },
           instructions,
           input
         })
@@ -417,6 +450,23 @@ ${currentDate ? `Current site date: ${currentDate}` : ""}
                     : `🌤️ ადგილი «${weatherLocation}» ვერ ვიპოვე. დაწერე ქალაქი უფრო ზუსტად.`;
             } else {
               finalReply = formatWeatherReply(weatherResult, siteLanguage);
+              if (Boolean(parsed.weatherAdvice)) {
+                const d = weatherResult.weather?.daily || {};
+                const rain = Number(d.precipitation_probability_max?.[1] ?? d.precipitation_probability_max?.[0] ?? 0);
+                const wind = Number(d.wind_speed_10m_max?.[1] ?? d.wind_speed_10m_max?.[0] ?? 0);
+                const max = Number(d.temperature_2m_max?.[1] ?? d.temperature_2m_max?.[0] ?? 0);
+                const min = Number(d.temperature_2m_min?.[1] ?? d.temperature_2m_min?.[0] ?? 0);
+                let advice = '';
+                if (rain >= 60 || wind >= 45) {
+                  advice = siteLanguage === 'el' ? '⚠️ Για εξωτερική εργασία: οι συνθήκες φαίνονται δύσκολες λόγω βροχής/ανέμου.' : siteLanguage === 'en' ? '⚠️ For outdoor work: conditions look difficult because of rain/wind.' : '⚠️ გარე სამუშაოსთვის: პირობები რთულია, რადგან წვიმის/ძლიერი ქარის რისკია.';
+                } else if (rain >= 30 || wind >= 30) {
+                  advice = siteLanguage === 'el' ? '🟡 Για εξωτερική εργασία: γίνεται, αλλά χρειάζεται προσοχή και ευελιξία.' : siteLanguage === 'en' ? '🟡 For outdoor work: possible, but keep some flexibility and caution.' : '🟡 გარე სამუშაოსთვის: შესაძლებელია, მაგრამ სიფრთხილე და მოქნილობა დაგჭირდება.';
+                } else {
+                  advice = siteLanguage === 'el' ? '🟢 Για εξωτερική εργασία: οι συνθήκες φαίνονται γενικά καλές.' : siteLanguage === 'en' ? '🟢 For outdoor work: conditions look generally good.' : '🟢 გარე სამუშაოსთვის: პირობები ზოგადად კარგია.';
+                }
+                const tempLine = siteLanguage === 'el' ? `Θερμοκρασία ημέρας περίπου ${min}°–${max}°C, βροχή ${rain}%, μέγιστος άνεμος ${wind} km/h.` : siteLanguage === 'en' ? `Day temperature about ${min}°–${max}°C, rain ${rain}%, maximum wind ${wind} km/h.` : `დღის ტემპერატურა დაახლოებით ${min}°–${max}°C, წვიმა ${rain}%, მაქსიმალური ქარი ${wind} კმ/სთ.`;
+                finalReply += `\n\n${advice}\n${tempLine}`;
+              }
             }
           } catch (weatherError) {
             finalReply =
@@ -434,7 +484,14 @@ ${currentDate ? `Current site date: ${currentDate}` : ""}
         reply: finalReply,
         isWorkEntry: Boolean(parsed.isWorkEntry),
         needsConfirmation: Boolean(parsed.needsConfirmation),
-        workEntry: parsed.workEntry || null
+        workEntry: parsed.workEntry || null,
+        weatherAdvice: Boolean(parsed.weatherAdvice),
+        memoryRequest: Boolean(parsed.memoryRequest),
+        memoryText: parsed.memoryText ? String(parsed.memoryText).trim().slice(0, 1000) : null,
+        reminderRequest: Boolean(parsed.reminderRequest),
+        reminderDate: parsed.reminderDate ? String(parsed.reminderDate).trim() : null,
+        reminderTime: parsed.reminderTime ? String(parsed.reminderTime).trim() : null,
+        reminderText: parsed.reminderText ? String(parsed.reminderText).trim().slice(0, 1000) : null
       }), { status: 200, headers: corsHeaders });
     } catch (error) {
       return new Response(JSON.stringify({
