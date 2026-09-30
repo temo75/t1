@@ -3702,7 +3702,7 @@ function loadNeonSettings(){
 }
 
 // TEMO AI — admin-only test mode. Users will be enabled later.
-const TEMO_AI_WORKER_URL='https://temo-ai.temo75elia.workers.dev';
+const TEMO_AI_WORKER_URL='https://temo-ai.temo75.workers.dev';
 let aiHistory=[];
 let aiPendingWorkEntry=null;
 let aiBusy=false;
@@ -5580,7 +5580,7 @@ function renderNotes(){
     </div>`;
   }).join('');
 }
-const TEMO_PUSH_WORKER_URL='https://temo-ai.temo75elia.workers.dev';
+const TEMO_PUSH_WORKER_URL='https://temo-ai.temo75.workers.dev';
 let TEMO_VAPID_PUBLIC_KEY='';
 function temoB64UrlToBytes(value){
   const s=String(value||'').replace(/-/g,'+').replace(/_/g,'/');
