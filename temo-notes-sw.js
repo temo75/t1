@@ -48,7 +48,6 @@ self.addEventListener('push', event => {
     tag: data.tag || 'temo-note-reminder',
     requireInteraction: true,
     renotify: true,
-    silent: false,
     data: data.url || './'
   };
 
