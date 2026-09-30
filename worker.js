@@ -252,8 +252,10 @@ async function runPushCron(env){
 export default {
   async scheduled(event, env, ctx) { await runPushCron(env); },
   async fetch(request, env) {
+    const requestOrigin = request.headers.get("Origin") || "";
+    const allowedOrigin = requestOrigin === "https://temo75.github.io" ? requestOrigin : (requestOrigin === "null" ? "*" : "https://temo75.github.io");
     const corsHeaders = {
-      "Access-Control-Allow-Origin": "https://temo75.github.io",
+      "Access-Control-Allow-Origin": allowedOrigin,
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type",
       "Content-Type": "application/json; charset=UTF-8"
