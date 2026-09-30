@@ -43,10 +43,11 @@ self.addEventListener('push', event => {
 
   const options = {
     body: data.body || 'შეხსენების დრო მოვიდა',
-    icon: data.icon || './favicon.ico',
-    badge: data.badge || './favicon.ico',
+    icon: data.icon || './icon.png',
+    badge: data.badge || './icon.png',
     tag: data.tag || 'temo-note-reminder',
     requireInteraction: true,
+    renotify: true,
     data: data.url || './'
   };
 
