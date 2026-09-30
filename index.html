@@ -2099,6 +2099,7 @@ html body.site-white-theme #aiChatModal .aiChatClose{
     </div>
     <div class="notesPageSwitch">
       <button type="button" class="notesPageBtn" id="notesNewBtn" onclick="openNoteModal()">🔔 შეტყობინების დაყენება</button>
+      <button type="button" class="notesPageBtn" id="notesPushBtn" onclick="enableTEMOPush()">🔔 შეტყობინებების ჩართვა</button>
       <button type="button" class="notesPageBtn" id="notesSecondBtn" onclick="showNotesSubPage('daily')">📖 დღიური ჩანაწერები</button>
     </div>
   </div>
@@ -5579,6 +5580,38 @@ function renderNotes(){
     </div>`;
   }).join('');
 }
+async function enableTEMOPush(){
+  try{
+    if(!('Notification' in window)){
+      alert('ამ მოწყობილობაზე Push შეტყობინებები ხელმისაწვდომი არ არის.');
+      return false;
+    }
+    if(Notification.permission==='granted'){
+      try{
+        if('serviceWorker' in navigator){await navigator.serviceWorker.register('./temo-notes-sw.js',{scope:'./'});}
+      }catch(e){console.warn('TEMO service worker registration failed:',e);}
+      const b=document.getElementById('notesPushBtn');
+      if(b)b.textContent='✅ შეტყობინებები ჩართულია';
+      return true;
+    }
+    if(Notification.permission==='denied'){
+      alert('შეტყობინებები გამორთულია. ჩართე ისინი iPhone-ის Settings-ში TEMO-სთვის.');
+      return false;
+    }
+    const permission=await Notification.requestPermission();
+    if(permission!=='granted')return false;
+    if('serviceWorker' in navigator){
+      await navigator.serviceWorker.register('./temo-notes-sw.js',{scope:'./'});
+    }
+    const b=document.getElementById('notesPushBtn');
+    if(b)b.textContent='✅ შეტყობინებები ჩართულია';
+    return true;
+  }catch(e){
+    console.warn('TEMO Push permission failed:',e);
+    return false;
+  }
+}
+
 function scheduleNativeNoteReminder(note){
   try{
     if(typeof window.AndroidReminder==='undefined'||!window.AndroidReminder||typeof window.AndroidReminder.scheduleReminder!=='function')return;
