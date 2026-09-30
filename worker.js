@@ -210,13 +210,16 @@ async function runPushCron(env){
           for(const {sub,removePath} of group.subs.values()){
             try{
               const r=await sendPush(sub,{
-                title:'📖 TEMO — ჩანაწერის შეხსენება',
-                body:String(n.text||'შეხსენების დრო მოვიდა'),
-                icon:'https://temo75.github.io/t1/icon.png',
-                badge:'https://temo75.github.io/t1/icon.png',
-                tag:'temo-note-'+String(n.id||i),
-                silent:false,
-                url:'https://temo75.github.io/t1/'
+                web_push:8030,
+                notification:{
+                  title:'📖 TEMO — ჩანაწერის შეხსენება',
+                  body:String(n.text||'შეხსენების დრო მოვიდა'),
+                  icon:'https://temo75.github.io/t1/icon.png',
+                  badge:'https://temo75.github.io/t1/icon.png',
+                  tag:'temo-note-'+String(n.id||i),
+                  silent:false,
+                  navigate:'https://temo75.github.io/t1/'
+                }
               },env);
 
               if(r.ok){
