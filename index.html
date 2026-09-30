@@ -5581,15 +5581,25 @@ function renderNotes(){
   }).join('');
 }
 const TEMO_PUSH_WORKER_URL='https://temo-ai.temo75elia.workers.dev';
-const TEMO_VAPID_PUBLIC_KEY='BAXR55EfpRNlyZ601MjrhohilfbNZjZvgYeucD-luq8j5_L_K630pAuCA4ZAm3ZX1NjnP35xDAOCQ_N0eVEel9c';
+let TEMO_VAPID_PUBLIC_KEY='';
 function temoB64UrlToBytes(value){
   const s=String(value||'').replace(/-/g,'+').replace(/_/g,'/');
   const raw=atob(s+'='.repeat((4-s.length%4)%4));
   const out=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);return out;
 }
+async function loadTEMOVapidPublicKey(){
+  if(TEMO_VAPID_PUBLIC_KEY)return TEMO_VAPID_PUBLIC_KEY;
+  const r=await fetch(TEMO_PUSH_WORKER_URL+'?action=push-config',{cache:'no-store'});
+  if(!r.ok)throw new Error('Push config HTTP '+r.status);
+  const data=await r.json();
+  if(!data?.ok||!data.publicKey)throw new Error(data?.error||'Push public key unavailable');
+  TEMO_VAPID_PUBLIC_KEY=String(data.publicKey);
+  return TEMO_VAPID_PUBLIC_KEY;
+}
 async function ensureTEMOPushSubscription(){
   try{
     if(!currentUserId||!('Notification' in window)||Notification.permission!=='granted'||!('serviceWorker' in navigator)||!('PushManager' in window))return false;
+    await loadTEMOVapidPublicKey();
     await navigator.serviceWorker.register('./temo-notes-sw.js',{scope:'./'});
     const reg=await navigator.serviceWorker.ready;
     let sub=await reg.pushManager.getSubscription();
