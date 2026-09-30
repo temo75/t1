@@ -125,7 +125,26 @@ function formatWeatherReply(weatherResult, language) {
   return lines.join("\n");
 }
 
+// TEMO Web Push backend
+const TEMO_FIREBASE_DB_URL='https://temo-75-default-rtdb.europe-west1.firebasedatabase.app';
+function pb64d(v){const s=String(v||'').replace(/-/g,'+').replace(/_/g,'/');const r=atob(s+'='.repeat((4-s.length%4)%4));const o=new Uint8Array(r.length);for(let i=0;i<r.length;i++)o[i]=r.charCodeAt(i);return o;}
+function pb64e(b){let s='';for(const x of new Uint8Array(b))s+=String.fromCharCode(x);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function pcat(...a){const o=new Uint8Array(a.reduce((n,x)=>n+x.length,0));let p=0;for(const x of a){o.set(x,p);p+=x.length;}return o;}
+async function hmac(key,data){const k=await crypto.subtle.importKey('raw',key,{name:'HMAC',hash:'SHA-256'},false,['sign']);return new Uint8Array(await crypto.subtle.sign('HMAC',k,data));}
+async function hkdfExtract(salt,ikm){return hmac(salt,ikm);}
+async function hkdfExpand(prk,info,len){let out=new Uint8Array(0),t=new Uint8Array(0);for(let i=1;out.length<len;i++){t=await hmac(prk,pcat(t,info,new Uint8Array([i])));out=pcat(out,t);}return out.slice(0,len);}
+async function psha(b){return new Uint8Array(await crypto.subtle.digest('SHA-256',b));}
+async function pvapid(endpoint,env){const aud=new URL(endpoint).origin,h=pb64e(new TextEncoder().encode(JSON.stringify({typ:'JWT',alg:'ES256'}))),p=pb64e(new TextEncoder().encode(JSON.stringify({aud,exp:Math.floor(Date.now()/1000)+43200,sub:String(env.VAPID_SUBJECT)}))),input=h+'.'+p,k=await crypto.subtle.importKey('jwk',JSON.parse(env.VAPID_PRIVATE_JWK),{name:'ECDSA',namedCurve:'P-256'},false,['sign']),sig=new Uint8Array(await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'},k,new TextEncoder().encode(input)));return input+'.'+pb64e(sig);}
+async function pencrypt(sub,payload){const cp=pb64d(sub.keys.p256dh),auth=pb64d(sub.keys.auth),ck=await crypto.subtle.importKey('raw',cp,{name:'ECDH',namedCurve:'P-256'},false,[]),ep=await crypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveBits']),epub=new Uint8Array(await crypto.subtle.exportKey('raw',ep.publicKey)),shared=new Uint8Array(await crypto.subtle.deriveBits({name:'ECDH',public:ck},ep.privateKey,256)),prk0=await hkdfExtract(auth,shared),info=pcat(new TextEncoder().encode('WebPush: info\0'),cp,epub),ikm=await hkdfExpand(prk0,info,32),salt=crypto.getRandomValues(new Uint8Array(16)),prk=await hkdfExtract(salt,ikm),cek=await hkdfExpand(prk,new TextEncoder().encode('Content-Encoding: aes128gcm\0'),16),nonce=await hkdfExpand(prk,new TextEncoder().encode('Content-Encoding: nonce\0'),12),ak=await crypto.subtle.importKey('raw',cek,{name:'AES-GCM'},false,['encrypt']),ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv:nonce,tagLength:128},ak,pcat(new TextEncoder().encode(payload),new Uint8Array([2]))));return pcat(salt,new Uint8Array([0,0,16,0]),new Uint8Array([65]),epub,ct);}
+async function sendPush(sub,payload,env){const body=await pencrypt(sub,JSON.stringify(payload)),jwt=await pvapid(sub.endpoint,env);return fetch(sub.endpoint,{method:'POST',headers:{TTL:'86400',Urgency:'high','Content-Type':'application/octet-stream','Content-Encoding':'aes128gcm',Authorization:'vapid t='+jwt+', k='+env.VAPID_PUBLIC_KEY},body});}
+async function pfget(path){const r=await fetch(TEMO_FIREBASE_DB_URL+path+'.json',{cache:'no-store'});if(!r.ok)throw new Error('Firebase GET '+r.status);return r.json();}
+async function pfput(path,v){const r=await fetch(TEMO_FIREBASE_DB_URL+path+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(v)});if(!r.ok)throw new Error('Firebase PUT '+r.status);}
+function pkey(id){return encodeURIComponent(String(id||'')).replace(/%/g,'_');}
+function dueUtc(date,time,tz){const m=String(date).match(/^(\d{4})-(\d{2})-(\d{2})$/),t=String(time).match(/^(\d{1,2}):(\d{2})$/);if(!m||!t)return NaN;const base=Date.UTC(+m[1],+m[2]-1,+m[3],+t[1],+t[2]);try{const z=String(tz||'Europe/Athens'),parts=new Intl.DateTimeFormat('en-US',{timeZone:z,timeZoneName:'longOffset'}).formatToParts(new Date(base)),zn=parts.find(x=>x.type==='timeZoneName')?.value||'GMT',q=zn.match(/GMT([+-])(\d{2}):(\d{2})/),off=q?(+q[2]*60+ +q[3])*(q[1]=='-'?-1:1):0;const u=base-off*60000,p2=new Intl.DateTimeFormat('en-US',{timeZone:z,timeZoneName:'longOffset'}).formatToParts(new Date(u)),zn2=p2.find(x=>x.type==='timeZoneName')?.value||'GMT',q2=zn2.match(/GMT([+-])(\d{2}):(\d{2})/),off2=q2?(+q2[2]*60+ +q2[3])*(q2[1]=='-'?-1:1):off;return base-off2*60000;}catch(e){return base;}}
+async function runPushCron(env){if(!env.VAPID_PRIVATE_JWK||!env.VAPID_PUBLIC_KEY||!env.VAPID_SUBJECT)return;const all=await pfget('/pushSubscriptions')||{},now=Date.now();for(const [uk,sv] of Object.entries(all)){if(!sv||typeof sv!=='object')continue;const notes=await pfget('/notes/'+uk);if(!Array.isArray(notes))continue;let changed=false;for(let i=0;i<notes.length;i++){const n=notes[i];if(!n||n.done||n.reminder!==true||!n.date||!n.time||n.pushNotifiedAt)continue;const due=dueUtc(n.date,n.time,n.timezone);if(!Number.isFinite(due)||due>now)continue;let delivered=false;for(const [sk,s] of Object.entries(sv)){try{const r=await sendPush(s,{title:'📖 TEMO — ჩანაწერის შეხსენება',body:String(n.text||'შეხსენების დრო მოვიდა'),icon:'https://temo75.github.io/t1/icon.png',badge:'https://temo75.github.io/t1/icon.png',tag:'temo-note-'+String(n.id||i),url:'https://temo75.github.io/t1/'},env);if(r.ok)delivered=true;else if(r.status===404||r.status===410)await pfput('/pushSubscriptions/'+uk+'/'+sk,null);}catch(e){}}if(delivered){notes[i]={...n,pushNotifiedAt:now,notifiedAt:now};changed=true;}}if(changed)await pfput('/notes/'+uk,notes);}}
+
 export default {
+  async scheduled(event, env, ctx) { ctx.waitUntil(runPushCron(env)); },
   async fetch(request, env) {
     const corsHeaders = {
       "Access-Control-Allow-Origin": "https://temo75.github.io",
@@ -161,7 +180,6 @@ export default {
         }), { status: 500, headers: corsHeaders });
       }
 
-      const body = await request.json();
       const message = String(body.message || "").trim();
       const siteLanguage = String(body.language || "ka").trim();
       const currentDate = String(body.currentDate || "").trim();
