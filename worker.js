@@ -142,7 +142,100 @@ async function pfget(path){const r=await fetch(TEMO_FIREBASE_DB_URL+path+'.json'
 async function pfput(path,v){const r=await fetch(TEMO_FIREBASE_DB_URL+path+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(v)});if(!r.ok)throw new Error('Firebase PUT '+r.status);}
 function pkey(id){return encodeURIComponent(String(id||'')).replace(/%/g,'_');}
 function dueUtc(date,time,tz){const m=String(date).match(/^(\d{4})-(\d{2})-(\d{2})$/),t=String(time).match(/^(\d{1,2}):(\d{2})$/);if(!m||!t)return NaN;const base=Date.UTC(+m[1],+m[2]-1,+m[3],+t[1],+t[2]);try{const z=String(tz||'Europe/Athens'),parts=new Intl.DateTimeFormat('en-US',{timeZone:z,timeZoneName:'longOffset'}).formatToParts(new Date(base)),zn=parts.find(x=>x.type==='timeZoneName')?.value||'GMT',q=zn.match(/GMT([+-])(\d{2}):(\d{2})/),off=q?(+q[2]*60+ +q[3])*(q[1]=='-'?-1:1):0;const u=base-off*60000,p2=new Intl.DateTimeFormat('en-US',{timeZone:z,timeZoneName:'longOffset'}).formatToParts(new Date(u)),zn2=p2.find(x=>x.type==='timeZoneName')?.value||'GMT',q2=zn2.match(/GMT([+-])(\d{2}):(\d{2})/),off2=q2?(+q2[2]*60+ +q2[3])*(q2[1]=='-'?-1:1):off;return base-off2*60000;}catch(e){return base;}}
-async function runPushCron(env){if(!env.VAPID_PRIVATE_JWK)return;const all=await pfget('/pushSubscriptionsByUser')||{},users=await pfget('/users')||[],now=Date.now();for(const [userKey,sv] of Object.entries(all)){if(!sv||typeof sv!=='object')continue;try{const usersArr=Array.isArray(users)?users:Object.values(users);const subValues=Object.values(sv);const userName=String(subValues.find(x=>x&&x.userName)?.userName||'').trim();const user=usersArr.find(u=>u&&String(u.name||'').trim().toLowerCase()===userName.toLowerCase());if(!user?.id)continue;const notes=await pfget('/notes/'+pkey(user.id));if(!Array.isArray(notes))continue;let changed=false;for(let i=0;i<notes.length;i++){const n=notes[i];if(!n||n.done||n.reminder!==true||!n.date||!n.time||n.pushNotifiedAt)continue;const due=dueUtc(n.date,n.time,n.timezone);if(!Number.isFinite(due)||due>now)continue;let delivered=false;for(const [sk,s] of Object.entries(sv)){try{const r=await sendPush(s,{title:'📖 TEMO — ჩანაწერის შეხსენება',body:String(n.text||'შეხსენების დრო მოვიდა'),icon:'https://temo75.github.io/t1/icon.png',badge:'https://temo75.github.io/t1/icon.png',tag:'temo-note-'+String(n.id||i),url:'https://temo75.github.io/t1/'},env);if(r.ok)delivered=true;else if(r.status===404||r.status===410)await pfput('/pushSubscriptionsByUser/'+userKey+'/'+sk,null);}catch(e){}}if(delivered){notes[i]={...n,pushNotifiedAt:now,notifiedAt:now};changed=true;}}if(changed)await pfput('/notes/'+pkey(user.id),notes);}catch(e){console.log('TEMO Push cron user error',uk,e?.message||String(e));}}}
+async function runPushCron(env){
+  if(!env.VAPID_PRIVATE_JWK)return;
+
+  const byUser=await pfget('/pushSubscriptionsByUser')||{};
+  const legacy=await pfget('/pushSubscriptions')||{};
+  const usersRaw=await pfget('/users')||[];
+  const users=Array.isArray(usersRaw)?usersRaw:Object.values(usersRaw);
+  const groups={};
+
+  const addSubscription=(userName,sub,removePath)=>{
+    if(!sub||typeof sub!=='object'||!sub.endpoint||!sub.keys?.p256dh||!sub.keys?.auth)return;
+    const name=String(userName||sub.userName||'').trim();
+    if(!name)return;
+    const gkey=name.toLowerCase();
+    if(!groups[gkey])groups[gkey]={userName:name,subs:new Map(),userIds:new Set()};
+    const sk=pkey(sub.endpoint);
+    if(!groups[gkey].subs.has(sk))groups[gkey].subs.set(sk,{sub,removePath});
+    if(sub.userId)groups[gkey].userIds.add(String(sub.userId));
+  };
+
+  for(const [userKey,sv] of Object.entries(byUser)){
+    if(!sv||typeof sv!=='object')continue;
+    for(const [sk,sub] of Object.entries(sv)){
+      const name=String(sub?.userName||'').trim();
+      const resolved=name||String(users.find(u=>u&&String(u.id||'')===String(sub?.userId||''))?.name||'').trim();
+      addSubscription(resolved,sub,'/pushSubscriptionsByUser/'+userKey+'/'+sk);
+    }
+  }
+
+  for(const [userKey,sv] of Object.entries(legacy)){
+    if(!sv||typeof sv!=='object')continue;
+    for(const [sk,sub] of Object.entries(sv)){
+      const resolved=String(sub?.userName||users.find(u=>u&&String(u.id||'')===String(userKey.replace(/_/g,'%')))?.name||'').trim();
+      addSubscription(resolved,sub,'/pushSubscriptions/'+userKey+'/'+sk);
+    }
+  }
+
+  const now=Date.now();
+
+  for(const group of Object.values(groups)){
+    try{
+      const matchingUsers=users.filter(u=>u&&String(u.name||'').trim().toLowerCase()===group.userName.toLowerCase());
+      for(const u of matchingUsers)if(u.id)group.userIds.add(String(u.id));
+
+      if(!group.userIds.size)continue;
+
+      const noteStores=[];
+      for(const uid of group.userIds){
+        const notes=await pfget('/notes/'+pkey(uid));
+        if(Array.isArray(notes))noteStores.push({uid,notes});
+      }
+
+      for(const store of noteStores){
+        let changed=false;
+
+        for(let i=0;i<store.notes.length;i++){
+          const n=store.notes[i];
+          if(!n||n.done||n.reminder!==true||!n.date||!n.time||n.pushNotifiedAt)continue;
+
+          const due=dueUtc(n.date,n.time,n.timezone);
+          if(!Number.isFinite(due)||due>now)continue;
+
+          let delivered=false;
+
+          for(const {sub,removePath} of group.subs.values()){
+            try{
+              const r=await sendPush(sub,{
+                title:'📖 TEMO — ჩანაწერის შეხსენება',
+                body:String(n.text||'შეხსენების დრო მოვიდა'),
+                icon:'https://temo75.github.io/t1/icon.png',
+                badge:'https://temo75.github.io/t1/icon.png',
+                tag:'temo-note-'+String(n.id||i),
+                silent:false,
+                url:'https://temo75.github.io/t1/'
+              },env);
+
+              if(r.ok)delivered=true;
+              else if(r.status===404||r.status===410)await pfput(removePath,null);
+            }catch(e){}
+          }
+
+          if(delivered){
+            store.notes[i]={...n,pushNotifiedAt:now,notifiedAt:now};
+            changed=true;
+          }
+        }
+
+        if(changed)await pfput('/notes/'+pkey(store.uid),store.notes);
+      }
+    }catch(e){
+      console.log('TEMO Push cron user error',group.userName,e?.message||String(e));
+    }
+  }
+}
 
 export default {
   async scheduled(event, env, ctx) { await runPushCron(env); },
