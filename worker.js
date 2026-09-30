@@ -589,3 +589,5 @@ Timezone: ${timezone || "Europe/Athens"}
     }
   }
 };
+
+// Deployment trigger: keep Worker and wrangler.toml deployment configuration synchronized.
