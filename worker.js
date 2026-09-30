@@ -551,35 +551,23 @@ Timezone: ${timezone || "Europe/Athens"}
         { role: "user", content: message }
       ];
 
-      if (!env.OPENAI_API_KEY) {
-        return new Response(JSON.stringify({ok:false,error:"OPENAI_API_KEY is not configured"}),{status:500,headers:corsHeaders});
-      }
+      const openaiResponse = await fetch("https://api.openai.com/v1/responses", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${env.OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "gpt-5.6-sol",
+            reasoning: {
+              effort: "high"
+            },
+          instructions,
+          input
+        })
+      });
 
-      async function callOpenAI(model, effort) {
-        const response = await fetch("https://api.openai.com/v1/responses", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${env.OPENAI_API_KEY}`
-          },
-          body: JSON.stringify({
-            model,
-            reasoning: { effort },
-            instructions,
-            input
-          })
-        });
-        const data = await response.json().catch(()=>({}));
-        return {response,data};
-      }
-
-      let {response:openaiResponse,data} = await callOpenAI("gpt-5.6-sol","high");
-
-      if (!openaiResponse.ok && [400,404,408,409,429,500,502,503,504].includes(openaiResponse.status)) {
-        const fallback = await callOpenAI("gpt-5.6-luna","medium");
-        openaiResponse = fallback.response;
-        data = fallback.data;
-      }
+      const data = await openaiResponse.json();
 
       if (!openaiResponse.ok) {
         return new Response(JSON.stringify({
