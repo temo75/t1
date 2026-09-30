@@ -300,7 +300,7 @@ export default {
         }
         const uk = pkey(userId);
         const sk = pkey(subscription.endpoint);
-        await pfput('/pushSubscriptionsByUser/'+pkey(userName)+'/'+sk, {
+        const record = {
           userId: userId,
           userName: userName,
           endpoint: String(subscription.endpoint),
@@ -310,7 +310,9 @@ export default {
             auth: String(subscription.keys.auth)
           },
           updatedAt: Date.now()
-        });
+        };
+        await pfput('/pushSubscriptionsByUser/'+pkey(userName)+'/'+sk, record);
+        await pfput('/pushSubscriptions/'+uk+'/'+sk, record);
         return new Response(JSON.stringify({ ok: true }), { status: 200, headers: corsHeaders });
       }
 
