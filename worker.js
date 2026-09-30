@@ -223,7 +223,8 @@ async function runPushCron(env){
             }catch(e){}
           }
 
-          if(delivered){
+          const expected=group.subs.size;
+          if(delivered && expected>0){
             store.notes[i]={...n,pushNotifiedAt:now,notifiedAt:now};
             changed=true;
           }
