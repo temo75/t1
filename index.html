@@ -4003,7 +4003,7 @@ async function sendAIMessage(){
     };
     const response=await fetch(TEMO_AI_WORKER_URL,{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'text/plain;charset=UTF-8'},
       body:JSON.stringify({message,language,currentDate:aiToday(),currentTime:localTime(),currentDateTime:new Date().toISOString(),timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||'Europe/Athens',history,userContext})
     });
     const raw=await response.text();
