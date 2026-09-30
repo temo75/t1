@@ -39,17 +39,18 @@ self.addEventListener('push', event => {
     };
   }
 
-  const title = data.title || '📖 TEMO — ჩანაწერის შეხსენება';
+  const notification = data && data.notification && typeof data.notification === 'object' ? data.notification : data;
+  const title = notification.title || '📖 TEMO — ჩანაწერის შეხსენება';
 
   const options = {
-    body: data.body || 'შეხსენების დრო მოვიდა',
-    icon: data.icon || './icon.png',
-    badge: data.badge || './icon.png',
-    tag: data.tag || 'temo-note-reminder',
+    body: notification.body || 'შეხსენების დრო მოვიდა',
+    icon: notification.icon || data.icon || './icon.png',
+    badge: notification.badge || data.badge || './icon.png',
+    tag: notification.tag || data.tag || 'temo-note-reminder',
     requireInteraction: true,
     renotify: true,
     silent: false,
-    data: data.url || './'
+    data: notification.navigate || data.url || './'
   };
 
   event.waitUntil(
