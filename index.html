@@ -5606,7 +5606,7 @@ async function ensureTEMOPushSubscription(){
     if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:temoB64UrlToBytes(TEMO_VAPID_PUBLIC_KEY)});
     const payload=sub.toJSON();
     if(!payload?.endpoint||!payload?.keys?.p256dh||!payload?.keys?.auth)return false;
-    const r=await fetch(TEMO_PUSH_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'push-subscribe',userId:String(currentUserId),subscription:payload})});
+    const r=await fetch(TEMO_PUSH_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'push-subscribe',userId:String(currentUserId),userName:String(currentUser||''),subscription:payload})});
     if(!r.ok)return false;
     const b=document.getElementById('notesPushBtn');if(b)b.textContent='✅ შეტყობინებები ჩართულია';
     return true;
