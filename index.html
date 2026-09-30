@@ -3909,7 +3909,7 @@ async function createAIChatReminder(date,time,text){
   if(duplicate){scheduleNativeNoteReminder(duplicate);renderNotes();return true;}
   const note={id:makeNoteId(),text:cleanText,date:d,time:t,reminder:true,done:false,notifiedAt:0,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||'Europe/Athens',updatedAt:Date.now()};
   notesCache.push(note);
-  try{await saveNotesRemote();scheduleNativeNoteReminder(note);renderNotes();return true;}catch(e){await loadNotes();return false;}
+  try{if('Notification' in window&&Notification.permission==='granted'){const pushReady=await ensureTEMOPushSubscription();if(!pushReady)console.warn('TEMO Push subscription is not ready; AI reminder will still be saved.');}await saveNotesRemote();scheduleNativeNoteReminder(note);renderNotes();return true;}catch(e){await loadNotes();return false;}
 }
 async function deleteAIChatReminderCommand(message){
   const raw=String(message||'').trim();
