@@ -5659,6 +5659,9 @@ async function saveNote(){
   if(reminder && 'Notification' in window && Notification.permission==='default'){
     try{await Notification.requestPermission();}catch(e){console.warn('Notification permission failed:',e);}
   }
+  if(reminder && 'Notification' in window && Notification.permission==='granted'){
+    await ensureTEMOPushSubscription().catch(e=>console.warn('TEMO Push subscription after reminder permission failed:',e));
+  }
   const now=Date.now();
   const base={text,date,time,reminder,done:false,notifiedAt:0,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||'Europe/Athens',updatedAt:now};
   let savedNoteId=editingNoteId;
