@@ -5602,6 +5602,7 @@ async function ensureTEMOPushSubscription(){
     await loadTEMOVapidPublicKey();
     await navigator.serviceWorker.register('./temo-notes-sw.js',{scope:'./'});
     const reg=await navigator.serviceWorker.ready;
+    if(reg.active)reg.active.postMessage({type:'temo-push-identity',userId:String(currentUserId),userName:String(currentUser||'')});
     let sub=await reg.pushManager.getSubscription();
     if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:temoB64UrlToBytes(TEMO_VAPID_PUBLIC_KEY)});
     const payload=sub.toJSON();
