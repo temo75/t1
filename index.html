@@ -3702,7 +3702,7 @@ function loadNeonSettings(){
 }
 
 // TEMO AI — admin-only test mode. Users will be enabled later.
-const TEMO_AI_WORKER_URL='https://temo-ai.temo75.workers.dev';
+const TEMO_AI_WORKER_URL='https://temo-ai.temo75elia.workers.dev';
 let aiHistory=[];
 let aiPendingWorkEntry=null;
 let aiBusy=false;
@@ -3909,7 +3909,7 @@ async function createAIChatReminder(date,time,text){
   if(duplicate){scheduleNativeNoteReminder(duplicate);renderNotes();return true;}
   const note={id:makeNoteId(),text:cleanText,date:d,time:t,reminder:true,done:false,notifiedAt:0,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||'Europe/Athens',updatedAt:Date.now()};
   notesCache.push(note);
-  try{if('Notification' in window&&Notification.permission==='granted'){const pushReady=await ensureTEMOPushSubscription();if(!pushReady)console.warn('TEMO Push subscription is not ready; AI reminder will still be saved.');}await saveNotesRemote();scheduleNativeNoteReminder(note);renderNotes();return true;}catch(e){await loadNotes();return false;}
+  try{await saveNotesRemote();scheduleNativeNoteReminder(note);renderNotes();return true;}catch(e){await loadNotes();return false;}
 }
 async function deleteAIChatReminderCommand(message){
   const raw=String(message||'').trim();
@@ -5544,7 +5544,7 @@ async function loadNotes(){
     if(!r.ok)throw new Error('Firebase HTTP '+r.status);
     const data=await r.json();
     notesCache=Array.isArray(data)?data.filter(Boolean):Object.entries(data||{}).map(([id,n])=>({...n,id}));
-    notesCache=notesCache.map(n=>({id:String(n.id||makeNoteId()),text:String(n.text||''),date:String(n.date||''),time:String(n.time||''),reminder:n.reminder!==false,done:n.done===true,notifiedAt:Number(n.notifiedAt||0),pushNotifiedAt:Number(n.pushNotifiedAt||0),updatedAt:Number(n.updatedAt||0),timezone:String(n.timezone||Intl.DateTimeFormat().resolvedOptions().timeZone||'Europe/Athens')}));
+    notesCache=notesCache.map(n=>({id:String(n.id||makeNoteId()),text:String(n.text||''),date:String(n.date||''),time:String(n.time||''),reminder:n.reminder!==false,done:n.done===true,notifiedAt:Number(n.notifiedAt||0),updatedAt:Number(n.updatedAt||0)}));
     notesCache.sort((a,b)=>{
       const ak=(a.date||'9999-99-99')+' '+(a.time||'99:99');
       const bk=(b.date||'9999-99-99')+' '+(b.time||'99:99');
@@ -5580,7 +5580,7 @@ function renderNotes(){
     </div>`;
   }).join('');
 }
-const TEMO_PUSH_WORKER_URL='https://temo-ai.temo75.workers.dev';
+const TEMO_PUSH_WORKER_URL='https://temo-ai.temo75elia.workers.dev';
 let TEMO_VAPID_PUBLIC_KEY='';
 function temoB64UrlToBytes(value){
   const s=String(value||'').replace(/-/g,'+').replace(/_/g,'/');
@@ -5602,12 +5602,11 @@ async function ensureTEMOPushSubscription(){
     await loadTEMOVapidPublicKey();
     await navigator.serviceWorker.register('./temo-notes-sw.js',{scope:'./'});
     const reg=await navigator.serviceWorker.ready;
-    if(reg.active)reg.active.postMessage({type:'temo-push-identity',userId:String(currentUserId),userName:String(currentUser||'')});
     let sub=await reg.pushManager.getSubscription();
     if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:temoB64UrlToBytes(TEMO_VAPID_PUBLIC_KEY)});
     const payload=sub.toJSON();
     if(!payload?.endpoint||!payload?.keys?.p256dh||!payload?.keys?.auth)return false;
-    const r=await fetch(TEMO_PUSH_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'push-subscribe',userId:String(currentUserId),userName:String(currentUser||''),subscription:payload})});
+    const r=await fetch(TEMO_PUSH_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'push-subscribe',userId:String(currentUserId),subscription:payload})});
     if(!r.ok)return false;
     const b=document.getElementById('notesPushBtn');if(b)b.textContent='✅ შეტყობინებები ჩართულია';
     return true;
@@ -5660,9 +5659,6 @@ async function saveNote(){
   if(reminder && 'Notification' in window && Notification.permission==='default'){
     try{await Notification.requestPermission();}catch(e){console.warn('Notification permission failed:',e);}
   }
-  if(reminder && 'Notification' in window && Notification.permission==='granted'){
-    await ensureTEMOPushSubscription().catch(e=>console.warn('TEMO Push subscription after reminder permission failed:',e));
-  }
   const now=Date.now();
   const base={text,date,time,reminder,done:false,notifiedAt:0,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||'Europe/Athens',updatedAt:now};
   let savedNoteId=editingNoteId;
@@ -5675,10 +5671,6 @@ async function saveNote(){
     notesCache.push(newNote);
   }
   try{
-    if(reminder && 'Notification' in window && Notification.permission==='granted'){
-      const pushReady=await ensureTEMOPushSubscription();
-      if(!pushReady)console.warn('TEMO Push subscription is not ready; note will still be saved.');
-    }
     await saveNotesRemote();
     cancelNativeNoteReminder(savedNoteId);
     const savedNote=notesCache.find(n=>n.id===savedNoteId);
