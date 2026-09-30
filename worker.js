@@ -204,7 +204,8 @@ async function runPushCron(env){
           const due=dueUtc(n.date,n.time,n.timezone);
           if(!Number.isFinite(due)||due>now)continue;
 
-          let delivered=false;
+          let deliveredCount=0;
+          let activeCount=0;
 
           for(const {sub,removePath} of group.subs.values()){
             try{
@@ -218,13 +219,20 @@ async function runPushCron(env){
                 url:'https://temo75.github.io/t1/'
               },env);
 
-              if(r.ok)delivered=true;
-              else if(r.status===404||r.status===410)await pfput(removePath,null);
-            }catch(e){}
+              if(r.ok){
+                deliveredCount++;
+                activeCount++;
+              }else if(r.status===404||r.status===410){
+                await pfput(removePath,null);
+              }else{
+                activeCount++;
+              }
+            }catch(e){
+              activeCount++;
+            }
           }
 
-          const expected=group.subs.size;
-          if(delivered && expected>0){
+          if(activeCount>0 && deliveredCount===activeCount){
             store.notes[i]={...n,pushNotifiedAt:now,notifiedAt:now};
             changed=true;
           }
