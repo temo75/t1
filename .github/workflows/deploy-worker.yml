@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'worker.js'
+      - 'wrangler.toml'
 
 jobs:
   deploy:
@@ -23,4 +24,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy worker.js --name temo-ai --compatibility-date 2026-09-26
+          command: deploy worker.js --config wrangler.toml --name temo-ai --compatibility-date 2026-09-30
