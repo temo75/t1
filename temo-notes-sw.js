@@ -46,6 +46,7 @@ self.addEventListener('push', event => {
     icon: data.icon || './icon.png',
     badge: data.badge || './icon.png',
     tag: data.tag || 'temo-note-reminder',
+    silent: false,
     requireInteraction: true,
     renotify: true,
     data: data.url || './'
