@@ -1791,6 +1791,8 @@ html body.site-white-theme .backgroundColorBtn.black:active {
 #aiChatModal .aiChatInput::placeholder{color:#555!important;-webkit-text-fill-color:#555!important;opacity:1;}
 #aiChatModal .aiChatInput:focus{background:#fff!important;color:#000!important;-webkit-text-fill-color:#000!important;box-shadow:0 0 8px rgba(0,229,255,.82),0 0 16px rgba(0,229,255,.28),inset 0 0 10px rgba(0,0,0,.08);}
 #aiChatModal .aiChatSend{width:54px;min-width:54px;border:2px solid #00e5ff;border-radius:13px;background:#00e5ff;color:#001014!important;font-size:23px;font-weight:900;cursor:pointer;box-shadow:0 0 8px rgba(0,229,255,.82),0 0 18px rgba(0,229,255,.35);}
+#aiChatModal .aiChatMic{width:54px;min-width:54px;border:2px solid #00e5ff;border-radius:13px;background:#fff;color:#001014!important;font-size:22px;cursor:pointer;box-shadow:0 0 8px rgba(0,229,255,.55),0 0 14px rgba(0,229,255,.22);}
+#aiChatModal .aiChatMic.listening{background:#00e5ff;box-shadow:0 0 10px rgba(0,229,255,.9),0 0 20px rgba(0,229,255,.45);}
 .aiChatSend:disabled{opacity:.55;cursor:default;}
 @media(max-width:700px){.aiHeaderBtn{width:38px;height:38px;font-size:18px}.aiChatModal{padding:8px}.aiChatBox{width:calc(100% - 28px);height:72vh;max-height:620px;border-radius:18px}.aiChatHeader{padding:10px 11px}.aiChatMessages{padding:10px}#aiChatModal .aiMsg{max-width:94%;font-size:15px}.aiChatInputRow{padding:8px}#aiChatModal .aiChatSend{width:52px;min-width:52px}}
 
@@ -2338,7 +2340,7 @@ html body.site-white-theme #aiChatModal .aiChatClose{
   <div class="aiChatBox" role="dialog" aria-modal="true" aria-labelledby="aiChatTitle">
     <div class="aiChatHeader"><h2 id="aiChatTitle">🤖 TEMO AI</h2><button type="button" class="aiChatClose" onclick="closeAIChat()" aria-label="დახურვა">✕</button></div>
     <div class="aiChatMessages" id="aiChatMessages"></div>
-    <div class="aiChatInputRow"><textarea id="aiChatInput" class="aiChatInput" rows="1" placeholder="ჰკითხე"></textarea><button type="button" id="aiChatSend" class="aiChatSend" onclick="sendAIMessage()" aria-label="გაგზავნა">➤</button></div>
+    <div class="aiChatInputRow"><textarea id="aiChatInput" class="aiChatInput" rows="1" placeholder="ჰკითხე"></textarea><button type="button" id="aiChatMic" class="aiChatMic" onclick="toggleTEMOAIListening()" aria-label="მიკროფონი">🎤</button><button type="button" id="aiChatSend" class="aiChatSend" onclick="sendAIMessage()" aria-label="გაგზავნა">➤</button></div>
   </div>
 </div>
 <div class="modal" id="modal"><div class="form">
@@ -3715,6 +3717,56 @@ function aiAddMessage(role,text){
   box.appendChild(div);
   box.scrollTop=box.scrollHeight;
 }
+let temoAIRecognition=null;
+let temoAIListening=false;
+
+function toggleTEMOAIListening(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){
+    aiAddMessage('system','🎤 ამ მოწყობილობის ბრაუზერში ხმოვანი შეყვანა ხელმისაწვდომი არ არის.');
+    return;
+  }
+  const mic=document.getElementById('aiChatMic');
+  if(temoAIListening){
+    try{temoAIRecognition?.stop();}catch(e){}
+    return;
+  }
+  const recognition=new SR();
+  temoAIRecognition=recognition;
+  temoAIListening=true;
+  if(mic){mic.classList.add('listening');mic.textContent='⏹️';}
+  recognition.lang=aiCurrentLanguage()==='el'?'el-GR':aiCurrentLanguage()==='en'?'en-US':'ka-GE';
+  recognition.continuous=false;
+  recognition.interimResults=false;
+  recognition.onresult=e=>{
+    const text=Array.from(e.results||[]).map(x=>x[0]?.transcript||'').join(' ').trim();
+    const input=document.getElementById('aiChatInput');
+    if(text&&input){
+      const old=String(input.value||'').trim();
+      input.value=old?(old+' '+text):text;
+      input.dispatchEvent(new Event('input',{bubbles:true}));
+      input.focus();
+    }
+  };
+  recognition.onerror=e=>{
+    if(e?.error!=='aborted'){
+      const msg=e?.error==='not-allowed'?'🎤 მიკროფონზე წვდომა არ არის დაშვებული.':e?.error==='no-speech'?'🎤 ხმა ვერ გავიგე. კიდევ სცადე.':'🎤 მიკროფონის შეცდომა.';
+      aiAddMessage('system',msg);
+    }
+  };
+  recognition.onend=()=>{
+    temoAIListening=false;
+    temoAIRecognition=null;
+    const b=document.getElementById('aiChatMic');
+    if(b){b.classList.remove('listening');b.textContent='🎤';}
+  };
+  try{recognition.start();}catch(e){
+    temoAIListening=false;
+    temoAIRecognition=null;
+    if(mic){mic.classList.remove('listening');mic.textContent='🎤';}
+  }
+}
+
 function aiCurrentLanguage(){
   return typeof window.getCurrentLanguage==='function'?String(window.getCurrentLanguage()||'ka'):'ka';
 }
