@@ -3911,8 +3911,8 @@ async function createAIChatReminder(date,time,text){
 }
 async function deleteAIChatReminderCommand(message){
   const raw=String(message||'').trim();
-  const isDelete=/(?:^|\s)(?:წაშალე|წავშალოთ|წაშალეე|წაშალოს)(?=\s|$)/iu.test(raw);
-  const isCancel=/(?:^|\s)(?:გააუქმე|გაუქმება|გააუქმოს|გააუქმეთ)(?=\s|$)/iu.test(raw);
+  const isDelete=/(?:^|\s)(?:წაშალე|წავშალოთ|წაშალეე|წაშალოს|წაშლის|წავშალოთ)(?=\s|$)/iu.test(raw);
+  const isCancel=/(?:^|\s)(?:გააუქმე|გაუქმება|გააუქმოს|გააუქმეთ|გააუქმო|გავაუქმებ|გააბათილე|გააბათილოს|გააბათილებ)(?=\s|$)/iu.test(raw);
   if(!isDelete&&!isCancel)return false;
 
   try{await loadNotes();}catch(e){return false;}
