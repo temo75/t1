@@ -5208,7 +5208,14 @@ html body.site-white-theme .small.edit { border-color:#2999df !important; }
     });
   }
 
+  function setSwipeButtonsLocked(value){
+    document.querySelectorAll('button').forEach(b=>{
+      b.style.pointerEvents=value?'none':'';
+    });
+  }
+
   function reset(){
+    setSwipeButtonsLocked(false);
     current=next=null;
     currentIndex=-1;
     tracking=false;
@@ -5288,6 +5295,7 @@ html body.site-white-theme .small.edit { border-color:#2999df !important; }
         return;
       }
       locked=true;
+      setSwipeButtonsLocked(true);
     }
 
     e.preventDefault();
@@ -5330,6 +5338,7 @@ html body.site-white-theme .small.edit { border-color:#2999df !important; }
     }
 
     tracking=false;
+    setSwipeButtonsLocked(false);
 
     if(
       Math.abs(dx)<THRESHOLD ||
