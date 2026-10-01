@@ -5189,8 +5189,8 @@ html body.site-white-theme .small.edit { border-color:#2999df !important; }
   let sx=0,sy=0,dx=0,tracking=false,locked=false;
   let current=null,next=null,currentIndex=-1;
 
-  const LOCK=4;
-  const THRESHOLD=8;
+  const LOCK=8;
+  const THRESHOLD=60;
 
   function pages(){
     return NAV.map(id=>document.getElementById(id)).filter(Boolean);
