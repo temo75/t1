@@ -997,8 +997,7 @@ body.neon-global #notesPage .notesEmpty,
 body.neon-global #notesPage .notesModalBox,
 body.neon-global #notesPage .notesField input,
 body.neon-global #notesPage .notesField textarea,
-body.neon-global #notesPage .notesModalActions button{
-  border-color:var(--neon-control) !important;
+body.neon-global #notesPage .notesModalActions button{  border-color:var(--neon-control) !important;
 }
 body.neon-global #notesPage .dailyCard{
   border-top-color:var(--neon-control) !important;
@@ -1996,7 +1995,6 @@ html body.site-white-theme #aiChatModal .aiChatClose{
 </nav>
 
 <div id="uploadOverlay"><div class="uploadBox"><div class="uploadSpinner" id="uploadSpinner"></div><div class="uploadCheck" id="uploadCheck">✓</div><div class="uploadBurst" id="uploadBurst"></div></div></div>
-
 
 <div id="loginScreen"><div class="loginBox">
 <div class="languageBox loginLanguageBox"><button type="button" id="languageBtnLogin" class="languageBtn" aria-label="ენები" title="ენები">🌐 KA</button><div id="languageMenuLogin" class="languageMenu"><button type="button" class="languageOption" data-lang="en">🇬🇧 English</button><button type="button" class="languageOption" data-lang="el">🇬🇷 Ελληνικά</button><button type="button" class="languageOption" data-lang="ka">🇬🇪 ქართული</button></div></div>
@@ -2997,8 +2995,7 @@ function exportMyDataPdf(){
       expenseData:'გასავლის მონაცემები',
       date:'თარიღი',
       workplace:'სამუშაო ადგილი',
-      amount:'თანხა',
-      status:'სტატუსი',
+      amount:'თანხა',      status:'სტატუსი',
       note:'შენიშვნა',
       category:'კატეგორია',
       where:'სად',
@@ -3997,8 +3994,7 @@ async function sendAIMessage(){
         date:String(n?.date??''),
         title:'',
         text:String(n?.text??''),
-        done:n?.done===true
-      })) : []
+        done:n?.done===true      })) : []
     };
     const response=await fetch(TEMO_AI_WORKER_URL,{
       method:'POST',
@@ -4997,7 +4993,6 @@ html body.site-white-theme #userManagementList .userDetailsPopover b{
     document.documentElement.style.setProperty('--neon-outer-a',String(.04+.12*p));
     document.documentElement.style.setProperty('--neon-outer-b',String(.02+.06*p));
     document.body.classList.add('neon-global');
-
     document.querySelectorAll(BASE_SELECTORS.join(',')).forEach(el=>el.classList.add('neonAll'));
 
     const v=document.getElementById('neonStrengthValue');
@@ -5643,6 +5638,7 @@ async function requestTEMOPushOnFirstUserGesture(){
 
 function setupTEMOPushFirstGesture(){
   const handler=()=>{
+    if(!currentUserId)return;
     requestTEMOPushOnFirstUserGesture();
     window.removeEventListener('touchend',handler,true);
     window.removeEventListener('click',handler,true);
@@ -5996,8 +5992,7 @@ startNotesReminderWatcher();
     'კატეგორია':['Category','Κατηγορία'],
     'აირჩიეთ კატეგორია':['Select category','Επίλεξε κατηγορία'],
     'სად':['Where','Πού'],
-    'მაგ: Lidl':['e.g. Lidl','π.χ. Lidl'],
-    'თანხა (€)':['Amount (€)','Ποσό (€)'],
+    'მაგ: Lidl':['e.g. Lidl','π.χ. Lidl'],    'თანხა (€)':['Amount (€)','Ποσό (€)'],
     'მაგ: 120':['e.g. 120','π.χ. 120'],
     'თარიღი':['Date','Ημερομηνία'],
     'ახალი გასავალი':['New expense','Νέα έξοδο'],
