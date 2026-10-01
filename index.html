@@ -1796,6 +1796,50 @@ html body.site-white-theme .backgroundColorBtn.black:active {
 .aiChatSend:disabled{opacity:.55;cursor:default;}
 @media(max-width:700px){.aiHeaderBtn{width:38px;height:38px;font-size:18px}.aiChatModal{padding:8px}.aiChatBox{width:calc(100% - 28px);height:72vh;max-height:620px;border-radius:18px}.aiChatHeader{padding:10px 11px}.aiChatMessages{padding:10px}#aiChatModal .aiMsg{max-width:94%;font-size:15px}.aiChatInputRow{padding:8px}#aiChatModal .aiChatSend{width:52px;min-width:52px}}
 
+<style id="temo-ai-android-keyboard-fix">
+@media(max-width:700px){
+  html body.temo-ai-android-keyboard #aiChatModal{
+    align-items:flex-start !important;
+    justify-content:center !important;
+    padding:8px !important;
+  }
+  html body.temo-ai-android-keyboard #aiChatModal .aiChatBox{
+    height:min(72vh,calc(var(--temo-ai-visible-height,100vh) - 16px)) !important;
+    max-height:calc(var(--temo-ai-visible-height,100vh) - 16px) !important;
+    margin:0 !important;
+  }
+}
+</style>
+<script id="temo-ai-android-keyboard-fix-js">
+(function(){
+  const modal=document.getElementById('aiChatModal');
+  const input=document.getElementById('aiChatInput');
+  if(!modal||!input||!/Android/i.test(navigator.userAgent))return;
+
+  const vv=window.visualViewport;
+
+  function sync(){
+    if(document.activeElement!==input)return;
+    const visibleHeight=vv?vv.height:window.innerHeight;
+    document.documentElement.style.setProperty(
+      '--temo-ai-visible-height',
+      Math.max(320,visibleHeight)+'px'
+    );
+    document.body.classList.add('temo-ai-android-keyboard');
+  }
+
+  function hide(){
+    document.body.classList.remove('temo-ai-android-keyboard');
+    document.documentElement.style.removeProperty('--temo-ai-visible-height');
+  }
+
+  input.addEventListener('focus',()=>setTimeout(sync,60));
+  input.addEventListener('blur',()=>setTimeout(hide,120));
+  if(vv)vv.addEventListener('resize',sync);
+  window.addEventListener('resize',sync);
+})();
+</script>
+
 <style id="temo-ai-final-text-fix">
 /* TEMO AI FINAL: AI text must stay white even when the site's global theme forces dark text. */
 html body #aiChatModal .aiChatBox,
