@@ -188,6 +188,57 @@ export default {
       }), { status: 405, headers: corsHeaders });
     }
 
+    const contentType = String(request.headers.get("content-type") || "").toLowerCase();
+
+    if (contentType.includes("multipart/form-data")) {
+      try {
+        if (!env.OPENAI_API_KEY) {
+          return new Response(JSON.stringify({ ok: false, error: "OPENAI_API_KEY secret is not configured" }), { status: 500, headers: corsHeaders });
+        }
+
+        const form = await request.formData();
+        const audio = form.get("file");
+        const language = String(form.get("language") || "").trim();
+
+        if (!(audio instanceof File)) {
+          return new Response(JSON.stringify({ ok: false, error: "Audio file is missing" }), { status: 400, headers: corsHeaders });
+        }
+
+        const openaiForm = new FormData();
+        openaiForm.append("file", audio, audio.name || "temo-ai-audio");
+        openaiForm.append("model", "gpt-4o-mini-transcribe");
+        openaiForm.append("response_format", "json");
+        if (language) openaiForm.append("language", language);
+
+        const transcriptionResponse = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${env.OPENAI_API_KEY}`
+          },
+          body: openaiForm
+        });
+
+        const transcriptionData = await transcriptionResponse.json();
+
+        if (!transcriptionResponse.ok) {
+          return new Response(JSON.stringify({
+            ok: false,
+            error: transcriptionData?.error?.message || "Transcription request failed"
+          }), { status: transcriptionResponse.status, headers: corsHeaders });
+        }
+
+        return new Response(JSON.stringify({
+          ok: true,
+          text: String(transcriptionData?.text || "").trim()
+        }), { status: 200, headers: corsHeaders });
+      } catch (e) {
+        return new Response(JSON.stringify({
+          ok: false,
+          error: e?.message || "Transcription failed"
+        }), { status: 500, headers: corsHeaders });
+      }
+    }
+
     try {
       let body = {};
       try {
