@@ -5630,11 +5630,7 @@ async function requestTEMOPushOnFirstUserGesture(){
       await ensureTEMOPushSubscription();
       return;
     }
-    if(Notification.permission==='denied'){
-      alert('შეტყობინებები გამორთულია. ჩართე iPhone-ის Settings → TEMO → Allow Notifications.');
-      return;
-    }
-    if(Notification.permission!=='default')return;
+    if(Notification.permission!=='default' && Notification.permission!=='denied')return;
     const permission=await Notification.requestPermission();
     if(permission==='granted')await ensureTEMOPushSubscription();
   }catch(e){console.warn('TEMO Push first-gesture request failed:',e);}
