@@ -556,6 +556,7 @@ html body.site-white-theme .expenseDayPopup{background:#fff;color:#111;border-co
 <style id="temo-notes-page-switch">
 #notesPage .notesPageSwitch{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
 #notesPage .notesPageBtn{border:1px solid #29404c;background:#111f29;color:#fff;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer;box-shadow:none;pointer-events:auto;position:relative;z-index:20}
+#notesPage .notesPushEnableBtn{border:1px solid #7ec8ff;background:#f7fbff;color:#111;border-radius:8px;padding:5px 9px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 0 8px rgba(126,200,255,.35);margin-top:7px;display:inline-block}
 #notesPage .notesPageBtn.active{border-color:#49d86a;background:#123a21;color:#a8ffb8;box-shadow:0 0 10px rgba(73,216,106,.18)}
 #notesPage.notes-modal-open > :not(#noteModal){display:none !important;}
 #notesPage .notesToolsRow{display:flex;justify-content:flex-end;margin-bottom:12px}
@@ -2100,6 +2101,7 @@ html body.site-white-theme #aiChatModal .aiChatClose{
       <button type="button" class="notesPageBtn" id="notesSecondBtn" onclick="showNotesSubPage('daily')">📖 დღიური ჩანაწერები</button>
     </div>
   </div>
+  <button type="button" class="notesPushEnableBtn" onclick="requestTEMOPushOnFirstUserGesture()">🔔 შეტყობინებების ჩართვა</button>
 
   <div id="notesRemindersPage">
     <div class="notesToolsRow">
