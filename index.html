@@ -3719,8 +3719,175 @@ function aiAddMessage(role,text){
 }
 let temoAIRecognition=null;
 let temoAIListening=false;
+let temoAIMediaRecorder=null;
+let temoAIMediaStream=null;
+let temoAIAudioChunks=[];
+let temoAISilenceTimer=null;
+let temoAIMaxTimer=null;
+let temoAIHasSpeech=false;
+let temoAIAudioContext=null;
+let temoAIAudioSource=null;
+let temoAIAnalyser=null;
+let temoAIVoiceFrame=null;
+
+function temoAIIsIOS(){
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent||'') ||
+    (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+}
+
+function temoAIResetMicUI(){
+  temoAIListening=false;
+  const b=document.getElementById('aiChatMic');
+  if(b){b.classList.remove('listening');b.textContent='🎤';}
+}
+
+function temoAIStopIOSResources(){
+  if(temoAISilenceTimer)clearTimeout(temoAISilenceTimer);
+  if(temoAIMaxTimer)clearTimeout(temoAIMaxTimer);
+  temoAISilenceTimer=null;
+  temoAIMaxTimer=null;
+  if(temoAIVoiceFrame)cancelAnimationFrame(temoAIVoiceFrame);
+  temoAIVoiceFrame=null;
+  try{temoAIAudioSource?.disconnect();}catch(e){}
+  try{temoAIAnalyser?.disconnect();}catch(e){}
+  try{temoAIAudioContext?.close();}catch(e){}
+  temoAIAudioSource=null;
+  temoAIAnalyser=null;
+  temoAIAudioContext=null;
+  if(temoAIMediaStream){
+    temoAIMediaStream.getTracks().forEach(t=>{try{t.stop();}catch(e){}});
+  }
+  temoAIMediaStream=null;
+}
+
+function temoAIAppendTranscript(text){
+  const input=document.getElementById('aiChatInput');
+  const value=String(text||'').trim();
+  if(!value||!input)return;
+  const old=String(input.value||'').trim();
+  input.value=old?(old+' '+value):value;
+  input.dispatchEvent(new Event('input',{bubbles:true}));
+  input.focus();
+}
+
+async function temoAITranscribeIOS(blob){
+  try{
+    const fd=new FormData();
+    const lang=aiCurrentLanguage()==='el'?'el':aiCurrentLanguage()==='en'?'en':'ka';
+    const ext=blob.type.includes('mp4')?'m4a':blob.type.includes('ogg')?'ogg':'webm';
+    fd.append('file',blob,'temo-ai-'+Date.now()+'.'+ext);
+    fd.append('language',lang);
+    fd.append('action','transcribe');
+    const r=await fetch(TEMO_AI_WORKER_URL,{method:'POST',body:fd});
+    const data=await r.json().catch(()=>null);
+    if(!r.ok||!data?.ok)throw new Error(data?.error||'transcription failed');
+    temoAIAppendTranscript(data.text||'');
+  }catch(e){
+    aiAddMessage('system','🎤 ხმის ტექსტად გადაყვანა ვერ მოხერხდა. კიდევ სცადე.');
+  }
+}
+
+function temoAIStopIOSRecording(){
+  if(temoAIMediaRecorder && temoAIMediaRecorder.state!=='inactive'){
+    try{temoAIMediaRecorder.stop();}catch(e){}
+  }else{
+    temoAIStopIOSResources();
+    temoAIResetMicUI();
+  }
+}
+
+async function temoAIStartIOSRecording(){
+  if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){
+    aiAddMessage('system','🎤 ამ iPhone ბრაუზერში ხმის ჩაწერა ხელმისაწვდომი არ არის.');
+    return;
+  }
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    temoAIMediaStream=stream;
+    temoAIAudioChunks=[];
+    temoAIHasSpeech=false;
+    const types=['audio/mp4','audio/webm;codecs=opus','audio/webm'];
+    const mime=types.find(t=>MediaRecorder.isTypeSupported?.(t))||'';
+    const recorder=mime?new MediaRecorder(stream,{mimeType:mime}):new MediaRecorder(stream);
+    temoAIMediaRecorder=recorder;
+    temoAIListening=true;
+    const mic=document.getElementById('aiChatMic');
+    if(mic){mic.classList.add('listening');mic.textContent='⏹️';}
+    recorder.ondataavailable=e=>{
+      if(e.data&&e.data.size)temoAIAudioChunks.push(e.data);
+    };
+    recorder.onerror=()=>{
+      temoAIStopIOSResources();
+      temoAIMediaRecorder=null;
+      temoAIResetMicUI();
+      aiAddMessage('system','🎤 მიკროფონის შეცდომა.');
+    };
+    recorder.onstop=async()=>{
+      const type=recorder.mimeType||mime||'audio/mp4';
+      const blob=new Blob(temoAIAudioChunks,{type});
+      temoAIAudioChunks=[];
+      temoAIMediaRecorder=null;
+      temoAIStopIOSResources();
+      temoAIResetMicUI();
+      if(blob.size)await temoAITranscribeIOS(blob);
+    };
+
+    recorder.start(250);
+
+    if(window.AudioContext||window.webkitAudioContext){
+      const AC=window.AudioContext||window.webkitAudioContext;
+      temoAIAudioContext=new AC();
+      temoAIAudioSource=temoAIAudioContext.createMediaStreamSource(stream);
+      temoAIAnalyser=temoAIAudioContext.createAnalyser();
+      temoAIAnalyser.fftSize=2048;
+      temoAIAudioSource.connect(temoAIAnalyser);
+      const data=new Uint8Array(temoAIAnalyser.fftSize);
+      let quietSince=0;
+      const check=()=>{
+        if(!temoAIMediaRecorder||temoAIMediaRecorder.state==='inactive')return;
+        temoAIAnalyser.getByteTimeDomainData(data);
+        let sum=0;
+        for(let i=0;i<data.length;i++){
+          const v=(data[i]-128)/128;
+          sum+=v*v;
+        }
+        const rms=Math.sqrt(sum/data.length);
+        const now=Date.now();
+        if(rms>0.018){
+          temoAIHasSpeech=true;
+          quietSince=0;
+        }else if(temoAIHasSpeech){
+          if(!quietSince)quietSince=now;
+          if(now-quietSince>=1200){
+            temoAIStopIOSRecording();
+            return;
+          }
+        }
+        temoAIVoiceFrame=requestAnimationFrame(check);
+      };
+      temoAIVoiceFrame=requestAnimationFrame(check);
+    }
+
+    temoAIMaxTimer=setTimeout(()=>temoAIStopIOSRecording(),15000);
+  }catch(e){
+    temoAIStopIOSResources();
+    temoAIMediaRecorder=null;
+    temoAIResetMicUI();
+    const msg=e?.name==='NotAllowedError'?'🎤 მიკროფონზე წვდომა არ არის დაშვებული.':'🎤 მიკროფონის ჩართვა ვერ მოხერხდა.';
+    aiAddMessage('system',msg);
+  }
+}
 
 function toggleTEMOAIListening(){
+  if(temoAIIsIOS()){
+    if(temoAIListening){
+      temoAIStopIOSRecording();
+    }else{
+      temoAIStartIOSRecording();
+    }
+    return;
+  }
+
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){
     aiAddMessage('system','🎤 ამ მოწყობილობის ბრაუზერში ხმოვანი შეყვანა ხელმისაწვდომი არ არის.');
@@ -3740,13 +3907,7 @@ function toggleTEMOAIListening(){
   recognition.interimResults=false;
   recognition.onresult=e=>{
     const text=Array.from(e.results||[]).map(x=>x[0]?.transcript||'').join(' ').trim();
-    const input=document.getElementById('aiChatInput');
-    if(text&&input){
-      const old=String(input.value||'').trim();
-      input.value=old?(old+' '+text):text;
-      input.dispatchEvent(new Event('input',{bubbles:true}));
-      input.focus();
-    }
+    temoAIAppendTranscript(text);
   };
   recognition.onerror=e=>{
     if(e?.error!=='aborted'){
