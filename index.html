@@ -5070,9 +5070,6 @@ html body.site-white-theme #userManagementList .userDetailsPopover b{
     if(currentUser)loadRemoteNeon();
 
     if(remoteSyncTimer)clearInterval(remoteSyncTimer);
-    remoteSyncTimer=setInterval(()=>{
-      if(currentUser)loadRemoteNeon();
-    },3000);
   };
 
   window.refreshUserNeonSettings=async function(){
