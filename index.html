@@ -4877,9 +4877,16 @@ html body.site-white-theme #userManagementList .userDetailsPopover b{
 }
 @media(max-width:600px){
   #userManagementSection{padding:14px !important}
+  #userManagementList{
+    gap:0 !important;
+  }
   #userManagementList .userRow{
     grid-template-columns:minmax(0,60%) minmax(0,25%) minmax(0,15%) !important;
     gap:3px !important;
+    height:38px !important;
+    min-height:38px !important;
+    max-height:38px !important;
+    margin-bottom:0 !important;
   }
   #userManagementList .userRow .userNameBtn{
     width:88% !important;
@@ -4916,6 +4923,9 @@ html body.site-white-theme #userManagementList .userDetailsPopover b{
   #userManagementList .userRow{
     grid-template-columns:minmax(0,60%) minmax(0,25%) minmax(0,15%) !important;
     gap:2px !important;
+    height:36px !important;
+    min-height:36px !important;
+    max-height:36px !important;
   }
   #userManagementList .userRow .userNameBtn{
     width:88% !important;
