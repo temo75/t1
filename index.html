@@ -4919,6 +4919,7 @@ html body.site-white-theme #userManagementList .userDetailsPopover b{
     let h=(Math.atan2(dy,dx)*180/Math.PI+90+360)%360;let sat=clamp((dist-minR)/(maxR-minR),0,1);sat=.25+.75*sat;
     setDraftColor(hslToHex(h,sat,.5));
   }
+  window.setTEMOPresetNeonColor=function(color){setDraftColor(color);};
   window.openNeonPicker=function(){
     const c=document.getElementById('neonColor'),r=document.getElementById('neonStrength'),m=document.getElementById('neonPickerModal');if(!c||!r||!m)return;
     originalColor=c.value||'#49d86a';originalStrength=Number(r.value)||65;draftColor=originalColor;draftStrength=originalStrength;
