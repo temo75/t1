@@ -3933,7 +3933,7 @@ async function deleteAIChatReminderCommand(message){
       return text && lowered.includes(text.slice(0,80));
     })||null;
   }
-  if(!target && /(?:ბოლო|ეს|ის)/iu.test(raw)){
+  if(!target && /(?:ბოლო|ეს|ის|ახლა|მიმდინარე)/iu.test(raw)){
     target=[...active].sort((a,b)=>String(b.updatedAt||0).localeCompare(String(a.updatedAt||0)))[0]||null;
   }
   if(!target && active.length===1)target=active[0];
