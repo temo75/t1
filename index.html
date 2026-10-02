@@ -2033,22 +2033,24 @@ html body.site-white-theme #aiChatModal .aiChatClose{
 <style id="temo-exit-confirm-style">
 #temoExitConfirm{
   position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;
-  background:rgba(0,0,0,.52);padding:18px;box-sizing:border-box;
+  background:rgba(0,0,0,.52);padding:16px;box-sizing:border-box;
 }
 #temoExitConfirm.show{display:flex}
 #temoExitConfirm .temoExitBox{
-  width:min(360px,calc(100vw - 36px));box-sizing:border-box;padding:22px 20px 16px;
-  border:1px solid #3da9ff;border-radius:22px;background:#202127;color:#fff;
-  box-shadow:0 0 20px rgba(61,169,255,.28);text-align:center;
+  width:min(330px,calc(100vw - 32px));box-sizing:border-box;padding:18px 18px 10px;
+  border:0;border-radius:22px;background:#292a30;color:#fff;
+  box-shadow:0 8px 28px rgba(0,0,0,.35);text-align:left;
 }
-#temoExitConfirm .temoExitText{margin:0 0 20px;font-size:21px;line-height:1.35;font-weight:600}
-#temoExitConfirm .temoExitActions{display:flex;justify-content:flex-end;gap:10px}
+#temoExitConfirm .temoExitText{margin:0 0 14px;font-size:19px;line-height:1.35;font-weight:400;color:#fff}
+#temoExitConfirm .temoExitActions{display:flex;justify-content:flex-end;gap:4px}
 #temoExitConfirm .temoExitActions button{
-  border:0;background:transparent;color:#b8c9ff;font-size:17px;font-weight:700;padding:8px 10px;cursor:pointer;
+  border:0!important;background:transparent!important;color:#b8c9ff!important;
+  box-shadow:none!important;border-radius:0!important;font-size:16px!important;font-weight:500!important;
+  padding:8px 10px!important;min-width:0!important;width:auto!important;cursor:pointer;
 }
 @media(max-width:420px){
-  #temoExitConfirm .temoExitBox{width:min(340px,calc(100vw - 30px));padding:20px 17px 14px}
-  #temoExitConfirm .temoExitText{font-size:19px;margin-bottom:16px}
+  #temoExitConfirm .temoExitBox{width:min(330px,calc(100vw - 32px));padding:18px 18px 10px}
+  #temoExitConfirm .temoExitText{font-size:19px;margin-bottom:12px}
 }
 </style>
 </head>
