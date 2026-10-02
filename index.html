@@ -2410,6 +2410,7 @@ const REMOVED_USER_NAMES=['TEMOADMIN'];
 const FIREBASE_DB_URL='https://temo-75-default-rtdb.europe-west1.firebasedatabase.app';
 let currentUser=localStorage.getItem(SESSION_USER_KEY)||'';
 let currentUserId=localStorage.getItem(SESSION_USER_ID_KEY)||'';
+let temoLoggingOut=false;
 let firebaseSyncBusy=false;
 let firebaseWriteQueue=Promise.resolve();
 function makeUserId(){return window.crypto&&crypto.randomUUID?crypto.randomUUID():'u_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,10);}
@@ -4599,7 +4600,7 @@ function closeCredentials(){
 function showSettings(){updateUserUI();if(typeof window.loadNeonSettings==='function')window.loadNeonSettings();document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('userManagementPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.remove('pageHidden');window.scrollTo(0,0)}
 function showUserManagement(){if(currentUser!==ADMIN_USER)return;updateUserUI();document.getElementById('mainPage').classList.add('pageHidden');document.getElementById('settingsPage').classList.add('pageHidden');document.getElementById('userManagementPage').classList.remove('pageHidden');window.scrollTo(0,0)}
 function showMain(){document.getElementById('settingsPage').classList.add('pageHidden');document.getElementById('userManagementPage').classList.add('pageHidden');document.getElementById('mainPage').classList.remove('pageHidden');window.scrollTo(0,0)}
-function logout(){localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);localStorage.removeItem(SESSION_USER_ID_KEY);window.location.reload()}
+function logout(){if(!confirm('ნამდვილად გსურთ საიტის დატოვება?'))return;temoLoggingOut=true;localStorage.removeItem(AUTH_KEY);localStorage.removeItem(SESSION_USER_KEY);localStorage.removeItem(SESSION_USER_ID_KEY);window.location.reload()}
 function exportData(){const blob=new Blob([JSON.stringify({version:1,exported:new Date().toISOString(),jobs},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='TEMO_WORK_TRACKER_BACKUP.json';a.click();URL.revokeObjectURL(a.href)}
 function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result),arr=Array.isArray(d)?d:d.jobs;if(!Array.isArray(arr))throw 0;if(confirm('არსებული მონაცემები შეიცვალოს ამ სარეზერვო ასლით?')){jobs=arr;save();render();alert('მონაცემები აღდგენილია')}}catch(x){alert('ეს სარეზერვო ფაილი არასწორია')}e.target.value=''};r.readAsText(f)}
 function clearAll(){
@@ -5919,7 +5920,7 @@ async function ensureTEMOPushSubscription(){
     return true;
   }catch(e){
     console.warn('TEMO Push subscription failed:',e);
-    alert('Push შეცდომა:\n'+(e?.message||String(e)));
+    if(!temoLoggingOut)alert('Push შეცდომა:\n'+(e?.message||String(e)));
     return false;
   }
 }
@@ -6206,6 +6207,7 @@ startNotesReminderWatcher();
     'ყველა თვე':['All months','Όλοι οι μήνες'],
     'ქართული':['Georgian','Γεωργιανά'],
     'ენები':['Languages','Γλώσσες'],
+    'ნამდვილად გსურთ საიტის დატოვება?':['Are you sure you want to leave the site?','Θέλετε πραγματικά να φύγετε από τον ιστότοπο;'],
     'ინგლისური':['English','Αγγλικά'],
     'ბერძნული':['Greek','Ελληνικά'],
     'ჩემი სამუშაო':['My Work','Η εργασία μου'],
