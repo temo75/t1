@@ -5892,7 +5892,11 @@ async function loadTEMOVapidPublicKey(){
 }
 async function ensureTEMOPushSubscription(){
   try{
-    if(!currentUserId||!('Notification' in window)||Notification.permission!=='granted'||!('serviceWorker' in navigator)||!('PushManager' in window))return false;
+    if(!currentUserId)throw new Error('მომხმარებელი არ არის შესული');
+    if(!('Notification' in window))throw new Error('Notification API მიუწვდომელია');
+    if(Notification.permission!=='granted')throw new Error('Notification permission: '+Notification.permission);
+    if(!('serviceWorker' in navigator))throw new Error('Service Worker მიუწვდომელია');
+    if(!('PushManager' in window))throw new Error('PushManager მიუწვდომელია');
     await loadTEMOVapidPublicKey();
     const applicationServerKey=temoB64UrlToBytes(TEMO_VAPID_PUBLIC_KEY);
     await navigator.serviceWorker.register('./temo-notes-sw.js',{scope:'./'});
@@ -5904,12 +5908,20 @@ async function ensureTEMOPushSubscription(){
     }
     if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey});
     const payload=sub.toJSON();
-    if(!payload?.endpoint||!payload?.keys?.p256dh||!payload?.keys?.auth)return false;
+    if(!payload?.endpoint||!payload?.keys?.p256dh||!payload?.keys?.auth)throw new Error('Push subscription მონაცემები არასრულია');
     const r=await fetch(TEMO_PUSH_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'push-subscribe',userId:String(currentUserId),deviceId:temoPushDeviceId(),subscription:payload})});
-    if(!r.ok)return false;
+    if(!r.ok){
+      let detail='';
+      try{detail=(await r.text()).slice(0,300);}catch(_){}
+      throw new Error('Worker HTTP '+r.status+(detail?' — '+detail:''));
+    }
     const b=document.getElementById('notesPushEnableBtn');if(b)b.textContent='✅ შეტყობინებები ჩართულია';
     return true;
-  }catch(e){console.warn('TEMO Push subscription failed:',e);return false;}
+  }catch(e){
+    console.warn('TEMO Push subscription failed:',e);
+    alert('Push შეცდომა:\n'+(e?.message||String(e)));
+    return false;
+  }
 }
 async function enableTEMOPush(){
   try{
@@ -5919,10 +5931,12 @@ async function enableTEMOPush(){
     if(isTEMOiOSDevice()&&!isHomeScreenApp){alert('iPhone-ზე Push შეტყობინებებისთვის დაამატე TEMO Home Screen-ზე და გახსენი მისი ხატულიდან.');return false;}
     if(Notification.permission==='denied'){alert('შეტყობინებები გამორთულია. ჩართე ისინი iPhone-ის Settings-ში TEMO-სთვის.');return false;}
     if(Notification.permission==='default'){const permission=await Notification.requestPermission();if(permission!=='granted')return false;}
-    const enabled=await ensureTEMOPushSubscription();
-    if(!enabled)alert('Push subscription ვერ შეიქმნა. შეამოწმე ინტერნეტი და სცადე ხელახლა.');
-    return enabled;
-  }catch(e){console.warn('TEMO Push permission failed:',e);return false;}
+    return await ensureTEMOPushSubscription();
+  }catch(e){
+    console.warn('TEMO Push permission failed:',e);
+    alert('Push შეცდომა:\n'+(e?.message||String(e)));
+    return false;
+  }
 }
 
 async function requestTEMOPushOnFirstUserGesture(){
