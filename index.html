@@ -1796,6 +1796,32 @@ html body.site-white-theme .backgroundColorBtn.black:active {
 .aiChatSend:disabled{opacity:.55;cursor:default;}
 @media(max-width:700px){.aiHeaderBtn{width:38px;height:38px;font-size:18px}.aiChatModal{padding:8px}.aiChatBox{width:calc(100% - 28px);height:72vh;max-height:620px;border-radius:18px}.aiChatHeader{padding:10px 11px}.aiChatMessages{padding:10px}#aiChatModal .aiMsg{max-width:94%;font-size:15px}.aiChatInputRow{padding:8px}#aiChatModal .aiChatSend{width:52px;min-width:52px}}
 
+<style id="temo-ai-floating-fixed-position">
+/* TEMO AI — მუდმივად ეკრანის მარჯვენა მხარეს, ქვედა მენიუს ზემოთ */
+#aiHeaderBtn{
+  position:fixed !important;
+  right:8px !important;
+  bottom:calc(76px + 100px) !important;
+  width:54px !important;
+  height:54px !important;
+  display:none !important;
+  align-items:center !important;
+  justify-content:center !important;
+  z-index:2147483646 !important;
+  border:2px solid #00e5ff !important;
+  border-radius:14px !important;
+  background:#fff !important;
+  color:#111 !important;
+  font-size:28px !important;
+  line-height:1 !important;
+  box-shadow:0 0 8px rgba(0,229,255,.95),0 0 22px rgba(0,229,255,.55),0 0 36px rgba(0,229,255,.25) !important;
+  text-shadow:none !important;
+}
+#aiHeaderBtn:active{transform:scale(.94) !important;}
+body.temo-android-app #aiHeaderBtn{
+  bottom:calc(64px + 100px) !important;
+}
+</style>
 <style id="temo-ai-android-keyboard-fix">
 @media(max-width:700px){
   html body.temo-ai-android-keyboard #aiChatModal{
