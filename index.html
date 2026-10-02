@@ -1805,7 +1805,7 @@ html body.site-white-theme .backgroundColorBtn.black:active {
   bottom:calc(76px + 100px) !important;
   width:54px !important;
   height:54px !important;
-  display:none !important;
+  display:flex !important;
   align-items:center !important;
   justify-content:center !important;
   z-index:2147483646 !important;
@@ -1818,6 +1818,7 @@ html body.site-white-theme .backgroundColorBtn.black:active {
   box-shadow:0 0 8px rgba(0,229,255,.95),0 0 22px rgba(0,229,255,.55),0 0 36px rgba(0,229,255,.25) !important;
   text-shadow:none !important;
 }
+body:has(#loginScreen:not(.hidden)) #aiFloatingBtn{display:none !important;}
 #aiFloatingBtn:active{transform:scale(.94) !important;}
 body.temo-android-app #aiFloatingBtn{
   bottom:calc(64px + 100px) !important;
