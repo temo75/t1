@@ -1798,7 +1798,8 @@ html body.site-white-theme .backgroundColorBtn.black:active {
 
 <style id="temo-ai-floating-fixed-position">
 /* TEMO AI — მუდმივად ეკრანის მარჯვენა მხარეს, ქვედა მენიუს ზემოთ */
-#aiHeaderBtn{
+#aiHeaderBtn{display:none !important;}
+#aiFloatingBtn{
   position:fixed !important;
   right:8px !important;
   bottom:calc(76px + 100px) !important;
@@ -1817,8 +1818,8 @@ html body.site-white-theme .backgroundColorBtn.black:active {
   box-shadow:0 0 8px rgba(0,229,255,.95),0 0 22px rgba(0,229,255,.55),0 0 36px rgba(0,229,255,.25) !important;
   text-shadow:none !important;
 }
-#aiHeaderBtn:active{transform:scale(.94) !important;}
-body.temo-android-app #aiHeaderBtn{
+#aiFloatingBtn:active{transform:scale(.94) !important;}
+body.temo-android-app #aiFloatingBtn{
   bottom:calc(64px + 100px) !important;
 }
 </style>
@@ -2111,6 +2112,8 @@ html body.site-white-theme #aiChatModal .aiChatClose{
   <button id="notesNavButton" type="button" onclick="goNotes()" aria-label="ჩანაწერები" title="ჩანაწერები"><span class="navLogo">📖</span></button>
   <button type="button" onclick="logout()" class="logoutNav" aria-label="გამოსვლა" title="გამოსვლა"><span class="navLogo">🚪</span></button>
 </nav>
+
+<button type="button" id="aiFloatingBtn" onclick="openAIChat()" aria-label="TEMO AI" title="TEMO AI">🤖</button>
 
 <div id="uploadOverlay"><div class="uploadBox"><div class="uploadSpinner" id="uploadSpinner"></div><div class="uploadCheck" id="uploadCheck">✓</div><div class="uploadBurst" id="uploadBurst"></div></div></div>
 
@@ -4404,7 +4407,8 @@ function confirmAIWorkEntry(){
 
 function updateUserUI(){
  const isAdmin=currentUser===ADMIN_USER;
- const aiBtn=$('aiHeaderBtn'); if(aiBtn)aiBtn.style.display=currentUser?'inline-flex':'none';
+ const aiBtn=$('aiHeaderBtn'); if(aiBtn)aiBtn.style.display='none';
+ const aiFloatingBtn=$('aiFloatingBtn'); if(aiFloatingBtn)aiFloatingBtn.style.display=currentUser?'flex':'none';
  const site=$('websiteUpdateSection'); if(site)site.style.display=isAdmin?'':'none';
  const users=$('userManagementSection'); if(users)users.style.display=isAdmin?'':'none'; const neon=$('neonControlSection'); if(neon)neon.style.display=currentUser?'':'none';
  const chat=$('userChatSection'); if(chat)chat.style.display=currentUser&&!isAdmin?'':'none';
