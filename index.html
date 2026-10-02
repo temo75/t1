@@ -5920,7 +5920,6 @@ async function ensureTEMOPushSubscription(){
     return true;
   }catch(e){
     console.warn('TEMO Push subscription failed:',e);
-    if(!temoLoggingOut)alert('Push შეცდომა:\n'+(e?.message||String(e)));
     return false;
   }
 }
