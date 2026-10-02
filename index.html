@@ -1817,6 +1817,18 @@ html body.site-white-theme .backgroundColorBtn.black:active {
   line-height:1 !important;
   box-shadow:0 0 8px rgba(0,229,255,.95),0 0 22px rgba(0,229,255,.55),0 0 36px rgba(0,229,255,.25) !important;
   text-shadow:none !important;
+  overflow:visible !important;
+  background:transparent !important;
+  border:none !important;
+  box-shadow:none !important;
+  padding:0 !important;
+}
+#aiFloatingBtn img{
+  width:100% !important;
+  height:100% !important;
+  object-fit:contain !important;
+  display:block !important;
+  background:transparent !important;
 }
 body:has(#loginScreen:not(.hidden)) #aiFloatingBtn{display:none !important;}
 #aiFloatingBtn:active{transform:scale(.94) !important;}
@@ -2114,7 +2126,7 @@ html body.site-white-theme #aiChatModal .aiChatClose{
   <button type="button" onclick="logout()" class="logoutNav" aria-label="გამოსვლა" title="გამოსვლა"><span class="navLogo">🚪</span></button>
 </nav>
 
-<button type="button" id="aiFloatingBtn" onclick="openAIChat()" aria-label="TEMO AI" title="TEMO AI">🤖</button>
+<button type="button" id="aiFloatingBtn" onclick="openAIChat()" aria-label="TEMO AI" title="TEMO AI"><img src="1000013446.png" alt="TEMO AI"></button>
 
 <div id="uploadOverlay"><div class="uploadBox"><div class="uploadSpinner" id="uploadSpinner"></div><div class="uploadCheck" id="uploadCheck">✓</div><div class="uploadBurst" id="uploadBurst"></div></div></div>
 
