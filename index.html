@@ -2145,7 +2145,7 @@ html body.site-white-theme #aiChatModal .aiChatClose{
     <div class="notesPageSwitch">
       <button type="button" class="notesPageBtn" id="notesNewBtn" onclick="openNoteModal()">🔔 შეტყობინების დაყენება</button>
       <button type="button" class="notesPageBtn" id="notesSecondBtn" onclick="showNotesSubPage('daily')">📖 დღიური ჩანაწერები</button>
-      <button type="button" class="notesPushEnableBtn" onclick="requestTEMOPushOnFirstUserGesture()">🔔 შეტყობინებების ჩართვა</button>
+      <button type="button" class="notesPushEnableBtn" id="notesPushEnableBtn" onclick="enableTEMOPush()">🔔 შეტყობინებების ჩართვა</button>
     </div>
   </div>
 
@@ -5824,7 +5824,7 @@ async function loadNotes(){
     if(!r.ok)throw new Error('Firebase HTTP '+r.status);
     const data=await r.json();
     notesCache=Array.isArray(data)?data.filter(Boolean):Object.entries(data||{}).map(([id,n])=>({...n,id}));
-    notesCache=notesCache.map(n=>({id:String(n.id||makeNoteId()),text:String(n.text||''),date:String(n.date||''),time:String(n.time||''),reminder:n.reminder!==false,done:n.done===true,notifiedAt:Number(n.notifiedAt||0),updatedAt:Number(n.updatedAt||0)}));
+    notesCache=notesCache.map(n=>({id:String(n.id||makeNoteId()),text:String(n.text||''),date:String(n.date||''),time:String(n.time||''),reminder:n.reminder!==false,done:n.done===true,notifiedAt:Number(n.notifiedAt||0),pushNotifiedAt:Number(n.pushNotifiedAt||0),timezone:String(n.timezone||'Europe/Athens'),updatedAt:Number(n.updatedAt||0)}));
     notesCache.sort((a,b)=>{
       const ak=(a.date||'9999-99-99')+' '+(a.time||'99:99');
       const bk=(b.date||'9999-99-99')+' '+(b.time||'99:99');
@@ -5867,6 +5867,20 @@ function temoB64UrlToBytes(value){
   const raw=atob(s+'='.repeat((4-s.length%4)%4));
   const out=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);return out;
 }
+function temoPushDeviceId(){
+  const key='temoPushDeviceId';
+  let id=localStorage.getItem(key);
+  if(!id){id=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():'d_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,12);localStorage.setItem(key,id);}
+  return id;
+}
+function temoPushKeysMatch(a,b){
+  if(!a||!b)return false;
+  const x=new Uint8Array(a),y=new Uint8Array(b);
+  if(x.length!==y.length)return false;
+  for(let i=0;i<x.length;i++)if(x[i]!==y[i])return false;
+  return true;
+}
+function isTEMOiOSDevice(){return /iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);}
 async function loadTEMOVapidPublicKey(){
   if(TEMO_VAPID_PUBLIC_KEY)return TEMO_VAPID_PUBLIC_KEY;
   const r=await fetch(TEMO_PUSH_WORKER_URL+'?action=push-config',{cache:'no-store'});
@@ -5880,33 +5894,35 @@ async function ensureTEMOPushSubscription(){
   try{
     if(!currentUserId||!('Notification' in window)||Notification.permission!=='granted'||!('serviceWorker' in navigator)||!('PushManager' in window))return false;
     await loadTEMOVapidPublicKey();
+    const applicationServerKey=temoB64UrlToBytes(TEMO_VAPID_PUBLIC_KEY);
     await navigator.serviceWorker.register('./temo-notes-sw.js',{scope:'./'});
     const reg=await navigator.serviceWorker.ready;
     let sub=await reg.pushManager.getSubscription();
-    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:temoB64UrlToBytes(TEMO_VAPID_PUBLIC_KEY)});
+    if(sub&&!temoPushKeysMatch(sub.options?.applicationServerKey,applicationServerKey)){
+      await sub.unsubscribe();
+      sub=null;
+    }
+    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey});
     const payload=sub.toJSON();
     if(!payload?.endpoint||!payload?.keys?.p256dh||!payload?.keys?.auth)return false;
-    const r=await fetch(TEMO_PUSH_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'push-subscribe',userId:String(currentUserId),subscription:payload})});
+    const r=await fetch(TEMO_PUSH_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'push-subscribe',userId:String(currentUserId),deviceId:temoPushDeviceId(),subscription:payload})});
     if(!r.ok)return false;
-    const b=document.getElementById('notesPushBtn');if(b)b.textContent='✅ შეტყობინებები ჩართულია';
+    const b=document.getElementById('notesPushEnableBtn');if(b)b.textContent='✅ შეტყობინებები ჩართულია';
     return true;
   }catch(e){console.warn('TEMO Push subscription failed:',e);return false;}
 }
 async function enableTEMOPush(){
   try{
+    if(!currentUserId){alert('შეტყობინებების ჩასართავად ჯერ შედი ანგარიშში.');return false;}
     if(!('Notification' in window)){alert('ამ მოწყობილობაზე Push შეტყობინებები ხელმისაწვდომი არ არის.');return false;}
+    const isHomeScreenApp=navigator.standalone===true||window.matchMedia('(display-mode: standalone)').matches;
+    if(isTEMOiOSDevice()&&!isHomeScreenApp){alert('iPhone-ზე Push შეტყობინებებისთვის დაამატე TEMO Home Screen-ზე და გახსენი მისი ხატულიდან.');return false;}
     if(Notification.permission==='denied'){alert('შეტყობინებები გამორთულია. ჩართე ისინი iPhone-ის Settings-ში TEMO-სთვის.');return false;}
     if(Notification.permission==='default'){const permission=await Notification.requestPermission();if(permission!=='granted')return false;}
-    return await ensureTEMOPushSubscription();
+    const enabled=await ensureTEMOPushSubscription();
+    if(!enabled)alert('Push subscription ვერ შეიქმნა. შეამოწმე ინტერნეტი და სცადე ხელახლა.');
+    return enabled;
   }catch(e){console.warn('TEMO Push permission failed:',e);return false;}
-}
-
-function autoTEMOPushOnEntry(){
-  try{
-    if('Notification' in window && Notification.permission==='granted'){
-      ensureTEMOPushSubscription();
-    }
-  }catch(e){console.warn('TEMO Push entry check failed:',e);}
 }
 
 async function requestTEMOPushOnFirstUserGesture(){
@@ -5924,13 +5940,21 @@ async function requestTEMOPushOnFirstUserGesture(){
 
 function setupTEMOPushFirstGesture(){
   const handler=()=>{
-    if(!currentUserId)return;
+    if(!currentUserId||isTEMOiOSDevice())return;
     requestTEMOPushOnFirstUserGesture();
     window.removeEventListener('touchend',handler,true);
     window.removeEventListener('click',handler,true);
   };
   window.addEventListener('touchend',handler,true);
   window.addEventListener('click',handler,true);
+}
+
+function autoTEMOPushOnEntry(){
+  try{
+    if('Notification' in window && Notification.permission==='granted'){
+      ensureTEMOPushSubscription();
+    }
+  }catch(e){console.warn('TEMO Push entry check failed:',e);}
 }
 
 window.addEventListener('load',autoTEMOPushOnEntry,{once:true});
@@ -5981,7 +6005,7 @@ async function saveNote(){
     }catch(e){console.warn('Notification permission/push subscription failed:',e);}
   }
   const now=Date.now();
-  const base={text,date,time,reminder,done:false,notifiedAt:0,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||'Europe/Athens',updatedAt:now};
+  const base={text,date,time,reminder,done:false,notifiedAt:0,pushNotifiedAt:0,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||'Europe/Athens',updatedAt:now};
   let savedNoteId=editingNoteId;
   if(editingNoteId){
     const i=notesCache.findIndex(n=>n.id===editingNoteId);

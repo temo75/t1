@@ -9,22 +9,39 @@ self.addEventListener('activate', event => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
 
-  event.waitUntil(
-    self.clients.matchAll({
-      type: 'window',
-      includeUncontrolled: true
-    }).then(clients => {
-      for (const client of clients) {
-        if ('focus' in client) {
-          return client.focus();
-        }
-      }
+  event.waitUntil((async () => {
+    const scopeUrl = new URL(self.registration.scope);
+    let targetUrl;
+    try {
+      targetUrl = new URL(event.notification.data || './', scopeUrl);
+    } catch (e) {
+      targetUrl = scopeUrl;
+    }
+    if (targetUrl.origin !== scopeUrl.origin || !targetUrl.pathname.startsWith(scopeUrl.pathname)) {
+      targetUrl = scopeUrl;
+    }
 
-      if (self.clients.openWindow) {
-        return self.clients.openWindow('./');
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const client = clients.find(candidate => {
+      try {
+        const url = new URL(candidate.url);
+        return url.origin === scopeUrl.origin && url.pathname.startsWith(scopeUrl.pathname);
+      } catch (e) {
+        return false;
       }
-    })
-  );
+    });
+
+    if (client) {
+      if (client.url !== targetUrl.href && 'navigate' in client) {
+        try {
+          await client.navigate(targetUrl.href);
+        } catch (e) {}
+      }
+      return client.focus();
+    }
+
+    return self.clients.openWindow(targetUrl.href);
+  })());
 });
 
 self.addEventListener('push', event => {
