@@ -388,10 +388,10 @@ export default {
           (item.role === "user" || item.role === "assistant") &&
           typeof item.content === "string"
         )
-        .slice(-12)
+        .slice(-6)
         .map(item => ({
           role: item.role,
-          content: item.content.slice(0, 6000)
+          content: item.content.slice(0, 3000)
         }));
 
       if (!message) {
@@ -550,12 +550,13 @@ Timezone: ${timezone || "Europe/Athens"}
           "Authorization": `Bearer ${env.OPENAI_API_KEY}`
         },
         body: JSON.stringify({
-          model: "gpt-5.6-sol",
+          model: "gpt-5.6-luna",
             reasoning: {
-              effort: "high"
+              effort: "low"
             },
           instructions,
-          input
+          input,
+          max_output_tokens: 1200
         })
       });
 
