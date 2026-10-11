@@ -2,42 +2,118 @@
 <html lang="ka">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#071117">
 <title>TEMO — ჩემი გადასახადები</title>
-
 <style>
 *{box-sizing:border-box}
-body{
-  margin:0;padding:16px;
-  background:#071117;color:#eef7f7;
-  font-family:Arial,sans-serif
-}
+body{margin:0;padding:16px;background:#071117;color:#eef7f7;font:16px Arial,sans-serif}
 main{max-width:700px;margin:auto}
-header{
-  display:flex;align-items:center;
-  justify-content:space-between;gap:10px
-}
-h1{font-size:24px}
-button{
-  background:#12354a;color:white;
-  border:1px solid #2999df;
-  border-radius:10px;padding:12px;
-  cursor:pointer;font-size:15px
-}
-.panel{
-  background:#0d1b24;border:1px solid #254253;
-  border-radius:14px;padding:16px;margin:14px 0
-}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+h1{font-size:23px}
+button{background:#12354a;color:white;border:1px solid #2999df;border-radius:10px;padding:12px;cursor:pointer}
+.panel,.bill{background:#0d1b24;border:1px solid #254253;border-radius:14px;padding:15px;margin:14px 0}
 label{display:block;margin:12px 0;color:#b6c8d0}
-input,select{
-  width:100%;padding:12px;margin-top:6px;
-  background:#071117;color:white;
-  border:1px solid #254253;border-radius:8px
+input,select{width:100%;padding:12px;margin-top:6px;background:#071117;color:white;border:1px solid #254253;border-radius:8px}
+.total{font-size:26px;color:#70e7a0;font-weight:bold}
+.muted{color:#9fb0b8;font-size:13px;line-height:1.5}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.delete{background:#45242a;border-color:#a34250}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div><h1>💶 ჩემი გადასახადები</h1><div class="muted">TEMO — პირადი დაფა</div></div>
+<button onclick="location.href='./index.html'">← მთავარი</button>
+</header>
+
+<div class="panel muted">
+საცდელი ვერსია. გადასახადები ხელით ემატება.
+ΔΕΗ-ს, NOVA-ს, წყლისა და პარკინგის საიტებთან
+ავტომატური კავშირი ჯერ ჩართული არ არის.
+</div>
+
+<div class="panel">
+<div>გადასახდელი ჯამი</div>
+<div class="total" id="total">€0.00</div>
+<div id="count" class="muted">0 გადასახადი</div>
+</div>
+
+<div class="panel">
+<h2>➕ ახალი გადასახადი</h2>
+<form id="form">
+<label>სერვისი
+<select id="service">
+<option>ΔΕΗ — დენი</option>
+<option>NOVA — ტელეფონი</option>
+<option>წყალი</option>
+<option>პარკინგი</option>
+<option>GitHub</option>
+<option>Cloudflare</option>
+<option>სხვა</option>
+</select>
+</label>
+<label>თანხა (€)
+<input id="amount" type="number" min="0" step="0.01" required>
+</label>
+<label>გადახდის ვადა
+<input id="due" type="date">
+</label>
+<label>სტატუსი
+<select id="status">
+<option value="due">გადასახდელია</option>
+<option value="paid">გადახდილია</option>
+<option value="check">შესამოწმებელია</option>
+</select>
+</label>
+<button type="submit">შენახვა</button>
+</form>
+</div>
+
+<h2>📋 გადასახადების სია</h2>
+<div id="list"></div>
+<div class="muted">ჩანაწერები ინახება ამ ბრაუზერში. ავტომატური შემოწმება და სერვერული დაცვა შემდეგ ეტაპზეა დასამატებელი.</div>
+</main>
+
+<script>
+(function(){
+const KEY='temoPrivateBillsPrototypeV1';
+const $=id=>document.getElementById(id);
+
+if(String(localStorage.getItem('temoWorkTrackerUser')||'').trim().toUpperCase()!=='TEMO'){
+document.body.innerHTML='<main class="panel"><h2>🔒 წვდომა შეზღუდულია</h2><button onclick="location.href=\'./index.html\'">მთავარზე დაბრუნება</button></main>';
+return;
 }
-.total{font-size:27px;color:#70e7a0;font-weight:bold}
-.bill{
-  background:#10232f;border:1px solid #254253;
-  border-radius:12px;padding:14px;margin:12px 0
+
+let bills=[];
+try{
+const saved=JSON.parse(localStorage.getItem(KEY)||'[]');
+if(Array.isArray(saved))bills=saved;
+}catch(e){}
+
+function money(n){
+return '€'+Number(n||0).toLocaleString('en-IE',{minimumFractionDigits:2,maximumFractionDigits:2});
 }
-.muted{color
+
+function save(){
+localStorage.setItem(KEY,JSON.stringify(bills));
+render();
+}
+
+function render(){
+const due=bills.filter(b=>b.status==='due');
+$('total').textContent=money(due.reduce((s,b)=>s+Number(b.amount),0));
+$('count').textContent=due.length+' გადასახადი';
+const list=$('list');
+list.replaceChildren();
+
+if(!bills.length){
+const empty=document.createElement('div');
+empty.className='panel muted';
+empty.textContent='ჯერ ჩანაწერები არ არის.';
+list.append(empty);
+return;
+}
+
+bills.slice().sort((a,b)=>(a.due||'9999').localeCompare(b.due||
