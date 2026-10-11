@@ -6871,6 +6871,28 @@ startNotesReminderWatcher();
 }
 </style>
 
+
+<script id="temo-personal-bills-nav">
+(function(){
+  function addBillsButton(){
+    try{
+      if(String(localStorage.getItem('temoWorkTrackerUser')||'').trim().toUpperCase()!=='TEMO') return;
+      if(document.getElementById('temoPersonalBillsButton')) return;
+      var b=document.createElement('button');
+      b.id='temoPersonalBillsButton';
+      b.type='button';
+      b.textContent='💶 ჩემი გადასახადები';
+      b.setAttribute('aria-label','ჩემი გადასახადები');
+      b.style.cssText='position:fixed;right:14px;bottom:calc(82px + env(safe-area-inset-bottom,0px));z-index:9998;border:1px solid #2999df;border-radius:14px;padding:13px 16px;background:#102b3b;color:#fff;font-weight:700;font-size:15px;box-shadow:0 0 12px #2999df66;cursor:pointer';
+      b.addEventListener('click',function(){location.href='./bills.html';});
+      document.body.appendChild(b);
+    }catch(e){}
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addBillsButton);else addBillsButton();
+  window.addEventListener('pageshow',addBillsButton);
+})();
+</script>
+
 </body>
 </html>
 <style id="temo-calendar-number-neon">
