@@ -111,7 +111,12 @@
     sync.hidden = true;
     signOut.hidden = true;
     actions.append(connect, sync, signOut);
-    root.append(header, message, details, actions);
+    const historyPanel = element("section", "dei-bill-history");
+    const historyTitle = element("h3", "", "შენახული ქვითრების ისტორია");
+    const historySummary = element("p", "muted", "ისტორია ჯერ არ ჩატვირთულა.");
+    const historyList = element("div", "dei-bill-history-list");
+    historyPanel.append(historyTitle, historySummary, historyList);
+    root.append(header, message, details, actions, historyPanel);
 
     function setStatus(text, good) {
       badge.textContent = text;
@@ -132,6 +137,25 @@
       values.email.textContent = bill.emailDate || "თარიღი არ არის მითითებული";
       values.sync.textContent = bill.fetchedAt ? new Date(bill.fetchedAt).toLocaleString("ka-GE") : "ჯერ არ დასინქრონებულა";
       window.dispatchEvent(new CustomEvent("t1:dei-bill", { detail: bill }));
+    }
+
+    async function refreshHistory(session) {
+      const result = await api("/api/history", session);
+      historyList.replaceChildren();
+      historySummary.textContent = "ქვითრები: " + result.count +
+        " · გადახდილი ჯამი: " + formatAmount(result.totalPaidEUR) +
+        " · გადასახდელი ჯამი: " + formatAmount(result.totalDueEUR);
+      if (!result.bills.length) {
+        historyList.append(element("p", "muted", "ჯერ შენახული ქვითრები არ არის. დააჭირე სინქრონიზაციას."));
+        return;
+      }
+      result.bills.forEach((bill) => {
+        const row = element("article", "dei-bill-history-item");
+        row.append(element("strong", "", formatAmount(bill.totalEUR)));
+        row.append(element("span", "", paymentLabel(bill.paymentStatus, bill.dueDate)));
+        row.append(element("small", "", (bill.emailDate || "თარიღი უცნობია") + " · ვადა: " + formatDueDate(bill.dueDate)));
+        historyList.append(row);
+      });
     }
 
     async function refresh(force) {
@@ -161,6 +185,7 @@
       }
       renderBill(result.bill);
       message.textContent = result.cached ? "ბოლო ქვითარი უსაფრთხოდ ჩაიტვირთა KV-დან." : "ბოლო ქვითარი წარმატებით განახლდა Gmail-იდან.";
+      await refreshHistory(session);
     }
 
     connect.addEventListener("click", connectGmail);
