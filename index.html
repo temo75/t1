@@ -6981,6 +6981,12 @@ startNotesReminderWatcher();
   }
   function openMenu(){
     if(!drawer||!overlay||!isTemo())return;
+    /* Commit the off-screen starting transform before changing state.
+       This prevents the browser batching the initial and open styles into one frame. */
+    drawer.classList.remove('open');
+    drawer.style.setProperty('transform','translateX(-105%)','important');
+    void drawer.offsetWidth;
+    drawer.style.removeProperty('transform');
     drawer.classList.add('open');
     overlay.classList.add('open');
     document.body.classList.add('temo-menu-open');
