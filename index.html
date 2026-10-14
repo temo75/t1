@@ -6958,24 +6958,7 @@ startNotesReminderWatcher();
 
 
 <script id="temo-personal-bills-nav">
-(function(){
-  function addBillsButton(){
-    try{
-      if(String(localStorage.getItem('temoWorkTrackerUser')||'').trim().toUpperCase()!=='TEMO') return;
-      if(document.getElementById('temoPersonalBillsButton')) return;
-      var b=document.createElement('button');
-      b.id='temoPersonalBillsButton';
-      b.type='button';
-      b.textContent='💶 ჩემი გადასახადები';
-      b.setAttribute('aria-label','ჩემი გადასახადები');
-      b.style.cssText='position:fixed;right:14px;bottom:calc(82px + env(safe-area-inset-bottom,0px));z-index:9998;border:1px solid #2999df;border-radius:14px;padding:13px 16px;background:#102b3b;color:#fff;font-weight:700;font-size:15px;box-shadow:0 0 12px #2999df66;cursor:pointer';
-      b.addEventListener('click',function(){location.href='./bills.html';});
-      document.body.appendChild(b);
-    }catch(e){}
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addBillsButton);else addBillsButton();
-  window.addEventListener('pageshow',addBillsButton);
-})();
+/* გადასახადების ღილაკი მთავარ გვერდზე აღარ გამოისახება; ღილაკი გადატანილია ადმინის გვერდითა მენიუში. */
 </script>
 
 
@@ -7017,7 +7000,7 @@ body.temo-admin-slide-menu-open{overflow:hidden}
     toggle.id='temoAdminMenuToggle';toggle.type='button';toggle.textContent='☰';
     toggle.setAttribute('aria-label','მენიუს გახსნა');toggle.setAttribute('aria-expanded','false');
     var overlay=document.createElement('div');overlay.id='temoAdminMenuOverlay';
-    overlay.innerHTML='<aside id="temoAdminMenuDrawer" aria-label="ადმინის მენიუ" role="dialog" aria-modal="true"><div class="temoAdminMenuHead"><span>მენიუ</span><button type="button" class="temoAdminMenuClose" aria-label="მენიუს დახურვა">×</button></div><button type="button" class="temoAdminMenuItem" data-action="goHome">🏠 მთავარი</button><button type="button" class="temoAdminMenuItem" data-action="goSettings">⚙️ პარამეტრები</button><button type="button" class="temoAdminMenuItem" data-action="goUsers">👥 მომხმარებლები</button><button type="button" class="temoAdminMenuItem" data-action="goWallet">💰 ფული</button><button type="button" class="temoAdminMenuItem" data-action="goNotes">📖 ჩანაწერები</button><button type="button" class="temoAdminMenuItem" data-action="logout">🚪 გამოსვლა</button></aside>';
+    overlay.innerHTML='<aside id="temoAdminMenuDrawer" aria-label="ადმინის მენიუ" role="dialog" aria-modal="true"><div class="temoAdminMenuHead"><span>მენიუ</span><button type="button" class="temoAdminMenuClose" aria-label="მენიუს დახურვა">×</button></div><button type="button" class="temoAdminMenuItem" data-action="goHome">🏠 მთავარი</button><button type="button" class="temoAdminMenuItem" data-action="goSettings">⚙️ პარამეტრები</button><button type="button" class="temoAdminMenuItem" data-action="goUsers">👥 მომხმარებლები</button><button type="button" class="temoAdminMenuItem" data-action="goWallet">💰 ფული</button><button type="button" class="temoAdminMenuItem" data-action="goNotes">📖 ჩანაწერები</button><button type="button" class="temoAdminMenuItem" data-action="openBills">💶 ჩემი გადასახადები</button><button type="button" class="temoAdminMenuItem" data-action="logout">🚪 გამოსვლა</button></aside>';
     var bottomNav=document.getElementById("bottomNav");if(bottomNav){toggle.className="adminMenuNavButton";bottomNav.insertBefore(toggle,bottomNav.firstChild);}else{document.body.appendChild(toggle);}document.body.appendChild(overlay);
     toggle.addEventListener('click',function(){
       if(!isAdmin())return;
@@ -7025,7 +7008,7 @@ body.temo-admin-slide-menu-open{overflow:hidden}
       toggle.setAttribute('aria-expanded','true');
     });
     overlay.addEventListener('click',function(e){if(e.target===overlay||e.target.closest('.temoAdminMenuClose'))closeMenu();});
-    overlay.querySelectorAll('[data-action]').forEach(function(b){b.addEventListener('click',function(){go(b.getAttribute('data-action'));});});
+    overlay.querySelectorAll('[data-action]').forEach(function(b){b.addEventListener('click',function(){var action=b.getAttribute('data-action');if(action==='openBills'){closeMenu();location.href='./bills.html';return;}go(action);});});
     document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMenu();});
     function sync(){
       var admin=isAdmin();
