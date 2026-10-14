@@ -14,7 +14,9 @@ const GOOGLE_AUTH = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN = "https://oauth2.googleapis.com/token";
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
 const ALLOWED_ORIGIN = "https://temo75.github.io";
-const GMAIL_QUERY = 'from:(dei.gr) {subject:ΔΕΗ subject:λογαριασμού}';
+// Search broadly across DEI mail, then identify invoice-like messages in code.
+ // in:anywhere also allows older messages still present in Spam/Trash to be considered.
+const GMAIL_QUERY = 'in:anywhere from:(dei.gr)';
 
 function corsHeaders(extra = {}) {
   return {
@@ -193,34 +195,82 @@ async function gmailFetch(env, path) {
   return data;
 }
 
+function isLikelyInvoice(subject, bodyText) {
+  const s = String(subject || "").toLocaleLowerCase("el");
+  const t = String(bodyText || "").toLocaleLowerCase("el");
+  if (/(verification|security code|one[- ]time|login code|κωδικός επιβεβαίωσης|κωδικός ασφαλείας)/i.test(s)) return false;
+  if (/(payment confirmation|payment received|receipt for payment|επιβεβαίωση πληρωμής|απόδειξη πληρωμής|εξόφληση λογαριασμού)/i.test(s)) return false;
+  const subjectLooksLikeBill = /(δεη|δ[εέ]η|λογαριασμ|bill|invoice|electricity|ρεύμα)/i.test(s);
+  const bodyLooksLikeBill = /(πληρωτέο ποσό|συνολικό ποσό|προθεσμία πληρωμής|ημερομηνία λήξης|amount due|due date|electricity bill|λογαριασμός ηλεκτρικού)/i.test(t);
+  return subjectLooksLikeBill || bodyLooksLikeBill;
+}
+
 async function getLatestBill(env) {
+  // Gmail list results are paginated; do not assume the first result is an invoice.
+  // Cap the scan at 500 messages to keep a single request bounded.
   const query = encodeURIComponent(GMAIL_QUERY);
-  const list = await gmailFetch(env, `/messages?q=${query}&maxResults=10`);
-  const messages = list.messages || [];
-  if (!messages.length) {
+  const summaries = [];
+  let pageToken = "";
+  for (let page = 0; page < 5; page++) {
+    const pageQuery = `/messages?q=${query}&maxResults=100${pageToken ? "&pageToken=" + encodeURIComponent(pageToken) : ""}`;
+    const list = await gmailFetch(env, pageQuery);
+    summaries.push(...(Array.isArray(list.messages) ? list.messages : []));
+    pageToken = String(list.nextPageToken || "");
+    if (!pageToken || !(list.messages || []).length) break;
+  }
+
+  if (!summaries.length) {
     const empty = { found: false, message: "No matching DEI bill email found", emailDate: "", totalEUR: null, dueDate: null, paymentStatus: "unknown", fetchedAt: new Date().toISOString() };
     await env.DEI_KV.put("latest_bill", JSON.stringify(empty));
     return empty;
   }
 
-  const full = await gmailFetch(env, `/messages/${encodeURIComponent(messages[0].id)}?format=full`);
-  const headers = full.payload?.headers || [];
-  const htmlBody = findBody(full.payload, "text/html");
-  const plainBody = findBody(full.payload, "text/plain");
-  const bodyText = stripHtml(htmlBody || plainBody || full.snippet || "");
-  const result = {
-    found: true,
-    subject: headerValue(headers, "subject"),
-    from: headerValue(headers, "from"),
-    emailDate: headerValue(headers, "date"),
-    totalEUR: extractAmount(bodyText),
-    dueDate: extractDueDate(bodyText),
-    paymentStatus: extractPaymentStatus(bodyText),
-    snippet: String(full.snippet || "").slice(0, 300),
-    fetchedAt: new Date().toISOString(),
-  };
-  await env.DEI_KV.put("latest_bill", JSON.stringify(result));
-  return result;
+  // Prefer Gmail's internalDate (stable and sortable) over the sender's Date header.
+  summaries.sort((a, b) => Number(b.internalDate || 0) - Number(a.internalDate || 0));
+  let selected = null;
+  for (const summary of summaries) {
+    if (!summary?.id) continue;
+    const full = await gmailFetch(env, `/messages/${encodeURIComponent(summary.id)}?format=full`);
+    const headers = full.payload?.headers || [];
+    const subject = headerValue(headers, "subject");
+    const from = headerValue(headers, "from");
+    // The user confirmed DEI's sender as noreply@dei.gr; allow other addresses
+    // on the same DEI domain without accepting unrelated senders.
+    if (!/@(?:[a-z0-9-]+\.)*dei\.gr\b/i.test(from)) continue;
+    const htmlBody = findBody(full.payload, "text/html");
+    const plainBody = findBody(full.payload, "text/plain");
+    const bodyText = stripHtml(htmlBody || plainBody || full.snippet || "");
+    if (!isLikelyInvoice(subject, bodyText)) continue;
+
+    const candidate = {
+      found: true,
+      subject,
+      from,
+      emailDate: headerValue(headers, "date"),
+      totalEUR: extractAmount(bodyText),
+      dueDate: extractDueDate(bodyText),
+      paymentStatus: extractPaymentStatus(bodyText),
+      snippet: String(full.snippet || "").slice(0, 300),
+      fetchedAt: new Date().toISOString(),
+      gmailMessageId: String(summary.id),
+      internalDate: Number(summary.internalDate || 0),
+    };
+    // Keep scanning past codes, notices, and unparseable mail. A candidate
+    // needs at least a parsed amount or a due date to be displayed as a bill.
+    if (candidate.totalEUR !== null || candidate.dueDate !== null) {
+      selected = candidate;
+      break;
+    }
+  }
+
+  if (!selected) {
+    const empty = { found: false, message: "No parseable DEI invoice found in scanned messages", emailDate: "", totalEUR: null, dueDate: null, paymentStatus: "unknown", fetchedAt: new Date().toISOString() };
+    await env.DEI_KV.put("latest_bill", JSON.stringify(empty));
+    return empty;
+  }
+
+  await env.DEI_KV.put("latest_bill", JSON.stringify(selected));
+  return selected;
 }
 
 function publicBill(bill) {
