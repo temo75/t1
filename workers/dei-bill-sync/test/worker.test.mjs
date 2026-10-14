@@ -17,8 +17,13 @@ globalThis.fetch=async (input, init={})=>{
    if(form.get('grant_type')==='authorization_code') return new Response(JSON.stringify({access_token:'test-access',refresh_token:'test-refresh'}),{status:200});
    if(form.get('grant_type')==='refresh_token' && form.get('refresh_token')==='test-refresh') return new Response(JSON.stringify({access_token:'test-access'}),{status:200});
  }
- if(url.includes('/messages?q=')) return new Response(JSON.stringify({messages:[{id:'message-1'}]}),{status:200});
- if(url.includes('/messages/message-1?format=full')) return new Response(JSON.stringify({snippet:'test',payload:{headers:[{name:'Subject',value:'DEI bill'},{name:'From',value:'billing@dei.gr'},{name:'Date',value:'Wed, 14 Oct 2026 09:00:00 +0000'}],mimeType:'text/plain',body:{data:b64}}}),{status:200});
+ if(url.includes('/messages?q=')) {
+   const parsed = new URL(url);
+   if(parsed.searchParams.has('pageToken')) return new Response(JSON.stringify({messages:[{id:'message-1',internalDate:'1791968400000'}]}),{status:200});
+   return new Response(JSON.stringify({messages:[{id:'security-code',internalDate:'1792054800000'}],nextPageToken:'page-2'}),{status:200});
+ }
+ if(url.includes('/messages/security-code?format=full')) return new Response(JSON.stringify({snippet:'security code',payload:{headers:[{name:'Subject',value:'Your DEI security code'},{name:'From',value:'noreply@dei.gr'},{name:'Date',value:'Thu, 15 Oct 2026 09:00:00 +0000'}],mimeType:'text/plain',body:{data:Buffer.from('Your verification code is 123456','utf8').toString('base64url')}}}),{status:200});
+ if(url.includes('/messages/message-1?format=full')) return new Response(JSON.stringify({snippet:'test',payload:{headers:[{name:'Subject',value:'DEI bill'},{name:'From',value:'noreply@dei.gr'},{name:'Date',value:'Wed, 14 Oct 2026 09:00:00 +0000'}],mimeType:'text/plain',body:{data:b64}}}),{status:200});
  throw new Error('Unexpected fetch URL');
 };
 const req=(path,opts={})=>new Request('https://dei-bill-sync.temo75elia.workers.dev'+path,opts);
