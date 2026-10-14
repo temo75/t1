@@ -187,8 +187,8 @@ async function refreshAccessToken(env) {
   return data.access_token;
 }
 
-async function gmailFetch(env, path) {
-  const token = await refreshAccessToken(env);
+async function gmailFetch(env, path, accessToken = "") {
+  const token = accessToken || await refreshAccessToken(env);
   const response = await fetch(`${GMAIL_API}${path}`, { headers: { authorization: `Bearer ${token}` } });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(`GMAIL_API_FAILED_${response.status}`);
@@ -209,11 +209,12 @@ async function getLatestBill(env) {
   // Gmail list results are paginated; do not assume the first result is an invoice.
   // Cap the scan at 500 messages to keep a single request bounded.
   const query = encodeURIComponent(GMAIL_QUERY);
+  const accessToken = await refreshAccessToken(env);
   const summaries = [];
   let pageToken = "";
-  for (let page = 0; page < 5; page++) {
+  for (let page = 0; page < 3; page++) {
     const pageQuery = `/messages?q=${query}&maxResults=100${pageToken ? "&pageToken=" + encodeURIComponent(pageToken) : ""}`;
-    const list = await gmailFetch(env, pageQuery);
+    const list = await gmailFetch(env, pageQuery, accessToken);
     summaries.push(...(Array.isArray(list.messages) ? list.messages : []));
     pageToken = String(list.nextPageToken || "");
     if (!pageToken || !(list.messages || []).length) break;
@@ -230,7 +231,7 @@ async function getLatestBill(env) {
   let selected = null;
   for (const summary of summaries) {
     if (!summary?.id) continue;
-    const full = await gmailFetch(env, `/messages/${encodeURIComponent(summary.id)}?format=full`);
+    const full = await gmailFetch(env, `/messages/${encodeURIComponent(summary.id)}?format=full`, accessToken);
     const headers = full.payload?.headers || [];
     const subject = headerValue(headers, "subject");
     const from = headerValue(headers, "from");
