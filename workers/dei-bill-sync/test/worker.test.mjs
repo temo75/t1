@@ -7,7 +7,7 @@ class MemoryKV {
   async delete(k) { this.data.delete(k); }
 }
 const kv=new MemoryKV();
-const env={GOOGLE_CLIENT_ID:'test-client-id',GOOGLE_CLIENT_SECRET:'dummy-not-secret',DEI_KV:kv};
+const env={GOOGLE_CLIENT_ID:'test-client-id',GOOGLE_CLIENT_SECRET:'test-client-secret',DEI_KV:kv};
 const email='Πληρωτέο ποσό: 77,00 € Προθεσμία πληρωμής έως 31/10/2026 Οφειλή';
 const b64=Buffer.from(email,'utf8').toString('base64url');
 globalThis.fetch=async (input, init={})=>{
@@ -21,9 +21,9 @@ globalThis.fetch=async (input, init={})=>{
  if(url.includes('/messages/message-1?format=full')) return new Response(JSON.stringify({snippet:'test',payload:{headers:[{name:'Subject',value:'DEI bill'},{name:'From',value:'billing@dei.gr'},{name:'Date',value:'Wed, 14 Oct 2026 09:00:00 +0000'}],mimeType:'text/plain',body:{data:b64}}}),{status:200});
  throw new Error('Unexpected fetch URL');
 };
-const req=(path,opts={})=>new Request('https://worker.test'+path,opts);
+const req=(path,opts={})=>new Request('https://dei-bill-sync.temo75elia.workers.dev'+path,opts);
 let r=await worker.fetch(req('/health'),env); assert.equal(r.status,200); assert.equal((await r.json()).configurationComplete,true);
-r=await worker.fetch(req('/oauth/start?return_to='+encodeURIComponent('https://temo75.github.io/t1/dei-bill.html')),env); assert.equal(r.status,302); const auth=new URL(r.headers.get('location')); const state=auth.searchParams.get('state'); assert.ok(state); assert.equal(auth.searchParams.get('redirect_uri'),'https://worker.test/oauth/callback');
+r=await worker.fetch(req('/oauth/start?return_to='+encodeURIComponent('https://temo75.github.io/t1/dei-bill.html')),env); assert.equal(r.status,302); const auth=new URL(r.headers.get('location')); const state=auth.searchParams.get('state'); assert.ok(state); assert.equal(auth.searchParams.get('redirect_uri'),'https://dei-bill-sync.temo75elia.workers.dev/oauth/callback');
 r=await worker.fetch(req('/oauth/callback?code=test-code&state='+state),env); assert.equal(r.status,302); const returnUrl=new URL(r.headers.get('location')); const grant=new URLSearchParams(returnUrl.hash.slice(1)).get('dei_code'); assert.ok(grant);
 r=await worker.fetch(req('/api/session/exchange',{method:'POST',headers:{origin:'https://temo75.github.io','content-type':'application/json'},body:JSON.stringify({code:grant})}),env); assert.equal(r.status,200); const session=await r.json(); assert.ok(session.sessionToken);
 r=await worker.fetch(req('/api/latest',{headers:{origin:'https://temo75.github.io',authorization:'Bearer '+session.sessionToken}}),env); assert.equal(r.status,200); const result=await r.json(); assert.equal(result.bill.totalEUR,'77.00'); assert.equal(result.bill.dueDate,'2026-10-31'); assert.equal(result.bill.paymentStatus,'due'); assert.ok(await kv.get('latest_bill'));
