@@ -7029,7 +7029,7 @@ body.temo-admin-slide-menu-open{overflow:hidden}
     document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMenu();});
     function sync(){
       var admin=isAdmin();
-      toggle.style.display=admin?'block':'none';
+      toggle.style.display=admin?'flex':'none';
       if(!admin)closeMenu();
     }
     sync();
