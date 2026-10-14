@@ -1,44 +1,20 @@
 <!doctype html>
-<html lang="ka">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>TEMO — DEI გადასახადი</title>
+<html lang="ka"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f3f7fb"><title>TEMO — DEI ელექტროენერგიის გადასახადი</title>
 <style>
-:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#f3f7fb;color:#17212b;font:16px system-ui,Arial,sans-serif;padding:20px}
-main{max-width:620px;margin:28px auto;background:white;border:1px solid #dbe5ef;border-radius:18px;padding:22px;box-shadow:0 8px 28px #13283a12}
-h1{font-size:24px;margin:0 0 8px;color:#0878d1}p{line-height:1.5}.muted{color:#637383;font-size:14px}
-label{display:block;font-weight:650;margin:18px 0 6px}input{width:100%;padding:12px;border:1px solid #b9c9d8;border-radius:9px;font:inherit}button{margin-top:12px;padding:12px 16px;border:0;border-radius:9px;background:#0878d1;color:white;font:inherit;font-weight:700;cursor:pointer}
-.card{background:#f5faff;border:1px solid #dceaf7;border-radius:12px;padding:16px;margin-top:16px}.amount{font-size:32px;font-weight:800;color:#0878d1}.status{white-space:pre-wrap}.error{color:#b42318}.ok{color:#137547}
+:root{color-scheme:light;--blue:#0878d1;--text:#17212b;--muted:#637383;--line:#dbe5ef;--panel:#fff}
+*{box-sizing:border-box}body{margin:0;background:#f3f7fb;color:var(--text);font:16px system-ui,Arial,sans-serif;padding:20px}main{max-width:700px;margin:28px auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 8px 28px #13283a12}
+h1{font-size:24px;margin:0 0 8px;color:var(--blue)}p{line-height:1.5}.muted{color:var(--muted);font-size:14px}
+.dei-sync-widget{background:#f5faff;border:1px solid #dceaf7;border-radius:12px;padding:16px;margin-top:18px}.dei-sync-header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.dei-sync-header h2{font-size:19px;margin:0;color:#17547e}.dei-sync-badge{font-size:12px;padding:6px 9px;border-radius:20px;background:#e9edf2;color:#44515d}
+.dei-sync-badge.is-connected{background:#e0f5e8;color:#137547}.dei-sync-badge.is-error{background:#fde8e7;color:#a11a16}.dei-sync-message{color:var(--muted);margin:12px 0}
+.dei-sync-details{display:grid;grid-template-columns:minmax(130px,1fr) 2fr;gap:8px 14px;margin:16px 0}.dei-sync-details dt{color:var(--muted);font-size:14px}.dei-sync-details dd{margin:0;font-weight:650;overflow-wrap:anywhere}
+.dei-sync-actions{display:flex;gap:8px;flex-wrap:wrap}button,.back{display:inline-block;margin-top:8px;padding:11px 14px;border:0;border-radius:9px;background:var(--blue);color:white;font:inherit;font-weight:700;cursor:pointer;text-decoration:none}
+button:disabled{opacity:.6;cursor:wait}.dei-sync-actions button:not(.dei-sync-primary){background:#e6eef5;color:#243847}
+@media(max-width:520px){body{padding:12px}main{padding:17px}.dei-sync-details{grid-template-columns:1fr}.dei-sync-details dd{margin-bottom:8px}}
 </style></head>
-<body><main>
-<h1>DEI — ელექტროენერგიის გადასახადი</h1>
-<p class="muted">T1-ის ცალკე გვერდი. მთავარი index.html არ შეცვლილა.</p>
-<p>ეს გვერდი კითხულობს DEI-ის ბოლო ქვითარს დაცული Worker-ის მეშვეობით. Google-ის პაროლი ან Client Secret აქ არ შეიყვანო.</p>
-<label for="key">Worker API გასაღები (SYNC_API_KEY)</label>
-<input id="key" type="password" autocomplete="off" placeholder="შეიყვანე Cloudflare-ში შექმნილი API გასაღები">
-<button id="load">ქვითრის წაკითხვა</button>
-<div id="result" class="card status">ჯერ არ წაგვიკითხავს ქვითარი.</div>
-<p class="muted">უსაფრთხოებისთვის გასაღები ამ გვერდზე არ ინახება; გვერდის განახლებისას თავიდან შეყვანაა საჭირო.</p>
-</main>
-<script>
-const API='https://dei-bill-sync.temo75elia.workers.dev';
-const result=document.getElementById('result');
-document.getElementById('load').addEventListener('click',async()=>{
- const key=document.getElementById('key').value.trim();
- if(!key){result.className='card status error';result.textContent='ჯერ შეიყვანე SYNC_API_KEY.';return}
- result.className='card status';result.textContent='ვამოწმებ DEI-ის ბოლო ქვითარს…';
- try{
-  const r=await fetch(API+'/api/latest',{headers:{Authorization:'Bearer '+key}});
-  const data=await r.json();
-  if(!r.ok)throw new Error(r.status===401?'გასაღები არასწორია ან Worker-ში SYNC_API_KEY ჯერ არ არის დაყენებული.':(data.error||'შეცდომა '+r.status));
-  const b=data.bill||{};
-  if(!b.found){result.textContent='DEI-ის შესაბამისი წერილი ვერ მოიძებნა.';return}
-  result.innerHTML='';
-  const title=document.createElement('div');title.textContent='ბოლო DEI ქვითარი';title.style.fontWeight='750';result.appendChild(title);
-  const amount=document.createElement('div');amount.className='amount';amount.textContent=b.totalEUR==null?'თანხა ვერ ამოვიღე':new Intl.NumberFormat('el-GR',{style:'currency',currency:'EUR'}).format(Number(b.totalEUR));result.appendChild(amount);
-  const due=document.createElement('p');due.textContent='გადახდის ბოლო ვადა: '+(b.dueDate||'წერილიდან ვერ ამოვიღე');result.appendChild(due);
-  const date=document.createElement('p');date.className='muted';date.textContent='წერილის თარიღი: '+(b.emailDate||'უცნობია')+' · განახლდა: '+(b.fetchedAt||'ახლა');result.appendChild(date);
-  if(b.totalEUR==null||!b.dueDate){const warn=document.createElement('p');warn.className='error';warn.textContent='ყურადღება: წერილი მოიძებნა, მაგრამ თანხა ან თარიღი ავტომატურად ვერ ამოიცნო. შედეგი გადაამოწმე ორიგინალ ქვითარში.';result.appendChild(warn)}
- }catch(e){result.className='card status error';result.textContent='ვერ წავიკითხე: '+e.message}
-});
-</script></body></html>
+<body><main><h1>ΔΕΗ — ელექტროენერგიის გადასახადი</h1>
+<p class="muted">ბოლო ქვითარი Gmail-იდან იტვირთება დაცული Worker-ის მეშვეობით. Gmail-ის პაროლი და API გასაღები ამ გვერდზე არ შეგყავს.</p>
+<div id="deiCloudBill"></div>
+<p class="muted">პირველ დაკავშირებაზე Google-ის OAuth თანხმობის გვერდი მოგთხოვს მხოლოდ Gmail-ის წაკითხვის ნებართვას. ამ ბრაუზერის სესია 8 საათში იწურება.</p>
+<a class="back" href="./bills.html">← ჩემს გადასახადებზე დაბრუნება</a>
+</main><script src="./dei-bill-sync.js"></script><script>window.DEIBillSync&&window.DEIBillSync.mount(document.getElementById("deiCloudBill"));</script></body></html>
