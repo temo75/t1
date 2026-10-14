@@ -47,7 +47,7 @@
 (function(){
   const ADMIN_KEY='temoWorkTrackerUser';
   if(String(localStorage.getItem(ADMIN_KEY)||'').trim().toUpperCase()!=='TEMO'){
-    document.body.innerHTML='<div style="font:16px Arial,sans-serif;background:#071117;color:#eef7f7;min-height:100vh;display:grid;place-items:center;text-align:center;padding:24px"><div><h2>წვდომა შეზღუდულია</h2><p>ეს გვერდი განკუთვნილია ადმინისტრატორისთვის.</p><button onclick="location.href=\\'./index.html\\'" style="padding:12px;border-radius:10px">მთავარზე დაბრუნება</button></div></div>';
+    document.body.innerHTML='<div style="font:16px Arial,sans-serif;background:#071117;color:#eef7f7;min-height:100vh;display:grid;place-items:center;text-align:center;padding:24px"><div><h2>წვდომა შეზღუდულია</h2><p>ეს გვერდი განკუთვნილია ადმინისტრატორისთვის.</p><a href="./index.html" style="display:inline-block;padding:12px;border-radius:10px;background:#183445;color:white;text-decoration:none">მთავარზე დაბრუნება</a></div></div>';
     return;
   }
   const $=id=>document.getElementById(id), KEY='temoPrivateBillsPrototypeV1';
