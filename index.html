@@ -6980,7 +6980,7 @@ startNotesReminderWatcher();
 
 
 <style id="temo-admin-slide-menu-v1">
-#temoAdminMenuToggle{display:none;position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:12px;z-index:2147483646;width:46px;height:46px;border:1px solid #285269;border-radius:12px;background:#10232f;color:#eef7f7;font-size:25px;line-height:1;cursor:pointer;box-shadow:0 4px 16px #0005}
+#temoAdminMenuToggle{display:none;position:static;flex:1 1 0;min-width:0;height:100%;margin:0;padding:5px 2px;border:1px solid #285269;border-radius:10px;background:#10232f;color:#eef7f7;font-size:30px;line-height:1;cursor:pointer;box-shadow:0 0 8px rgba(41,153,255,.28);align-items:center;justify-content:center}#bottomNav #temoAdminMenuToggle{flex:1 1 0;width:auto;max-width:none;min-height:46px;z-index:auto}
 #temoAdminMenuOverlay{position:fixed;inset:0;z-index:2147483646;background:rgba(0,0,0,.52);opacity:0;visibility:hidden;transition:opacity .28s ease,visibility .28s ease}
 #temoAdminMenuDrawer{position:absolute;top:0;left:0;bottom:0;width:min(82vw,320px);padding:calc(18px + env(safe-area-inset-top,0px)) 14px calc(18px + env(safe-area-inset-bottom,0px));background:var(--panel,#0d1b24);border-right:1px solid var(--line,#1e3542);box-shadow:12px 0 35px #0005;transform:translateX(-102%);transition:transform .28s ease;overflow-y:auto}
 #temoAdminMenuOverlay.open{opacity:1;visibility:visible}
@@ -7018,7 +7018,7 @@ body.temo-admin-slide-menu-open{overflow:hidden}
     toggle.setAttribute('aria-label','მენიუს გახსნა');toggle.setAttribute('aria-expanded','false');
     var overlay=document.createElement('div');overlay.id='temoAdminMenuOverlay';
     overlay.innerHTML='<aside id="temoAdminMenuDrawer" aria-label="ადმინის მენიუ" role="dialog" aria-modal="true"><div class="temoAdminMenuHead"><span>მენიუ</span><button type="button" class="temoAdminMenuClose" aria-label="მენიუს დახურვა">×</button></div><button type="button" class="temoAdminMenuItem" data-action="goHome">🏠 მთავარი</button><button type="button" class="temoAdminMenuItem" data-action="goSettings">⚙️ პარამეტრები</button><button type="button" class="temoAdminMenuItem" data-action="goUsers">👥 მომხმარებლები</button><button type="button" class="temoAdminMenuItem" data-action="goWallet">💰 ფული</button><button type="button" class="temoAdminMenuItem" data-action="goNotes">📖 ჩანაწერები</button><button type="button" class="temoAdminMenuItem" data-action="logout">🚪 გამოსვლა</button></aside>';
-    document.body.appendChild(toggle);document.body.appendChild(overlay);
+    var bottomNav=document.getElementById("bottomNav");if(bottomNav){toggle.className="adminMenuNavButton";bottomNav.insertBefore(toggle,bottomNav.firstChild);}else{document.body.appendChild(toggle);}document.body.appendChild(overlay);
     toggle.addEventListener('click',function(){
       if(!isAdmin())return;
       overlay.classList.add('open');document.body.classList.add('temo-admin-slide-menu-open');
