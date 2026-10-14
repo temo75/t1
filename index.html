@@ -2153,6 +2153,7 @@ html body.site-white-theme #aiChatModal .aiChatClose{
   <button type="button" onclick="goWallet()" aria-label="ფული" title="ფული"><span class="navLogo">💰</span></button>
   <button id="notesNavButton" type="button" onclick="goNotes()" aria-label="ჩანაწერები" title="ჩანაწერები"><span class="navLogo">📖</span></button>
   <button type="button" onclick="logout()" class="logoutNav" aria-label="გამოსვლა" title="გამოსვლა"><span class="navLogo">🚪</span></button>
+  <button type="button" id="sideMenuToggle" aria-label="მენიუ" title="მენიუ"><span class="navLogo">☰</span></button>
 </nav>
 
 <button type="button" id="aiFloatingBtn" onclick="openAIChat()" aria-label="TEMO AI" title="TEMO AI"><img src="temo_ai_robot_64.png" alt="TEMO AI"></button>
@@ -6947,33 +6948,30 @@ startNotesReminderWatcher();
 }
 #expensesPage .expenseCalendarSection .expenseCalendarAddBtn{
   width:auto;
-  max-width:none;
-  margin:10px 0 0 auto;
-  padding:7px 11px;
-  font-size:13px;
-  line-height:1.15;
-  display:block;
-}
-</style>
-
-
-<script id="temo-personal-bills-nav">
+  max-width:n<script id="temo-personal-bills-nav">
 (function(){
-  function addBillsButton(){
-    try{
-      if(String(localStorage.getItem('temoWorkTrackerUser')||'').trim().toUpperCase()!=='TEMO') return;
-      if(document.getElementById('temoPersonalBillsButton')) return;
-      var b=document.createElement('button');
-      b.id='temoPersonalBillsButton';
-      b.type='button';
-      b.textContent='💶 ჩემი გადასახადები';
-      b.setAttribute('aria-label','ჩემი გადასახადები');
-      b.style.cssText='position:fixed;right:14px;bottom:calc(82px + env(safe-area-inset-bottom,0px));z-index:9998;border:1px solid #2999df;border-radius:14px;padding:13px 16px;background:#102b3b;color:#fff;font-weight:700;font-size:15px;box-shadow:0 0 12px #2999df66;cursor:pointer';
-      b.addEventListener('click',function(){location.href='./bills.html';});
-      document.body.appendChild(b);
-    }catch(e){}
+  var drawer,overlay,startX=0,startY=0;
+  function isTemo(){try{return String(localStorage.getItem('temoWorkTrackerUser')||'').trim().toUpperCase()==='TEMO'}catch(e){return false}}
+  function closeMenu(){if(drawer){drawer.classList.remove('open');overlay.classList.remove('open');document.body.classList.remove('temo-menu-open')}}
+  function openMenu(){if(!drawer)return;drawer.classList.add('open');overlay.classList.add('open');document.body.classList.add('temo-menu-open')}
+  function init(){
+    if(document.getElementById('temoSideDrawer'))return;
+    var style=document.createElement('style');style.textContent='#temoSideOverlay{position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:2147483000;opacity:0;visibility:hidden;transition:opacity .22s,visibility .22s}#temoSideOverlay.open{opacity:1;visibility:visible}#temoSideDrawer{position:fixed;z-index:2147483001;top:0;bottom:0;left:0;width:min(82vw,330px);padding:calc(22px + env(safe-area-inset-top,0px)) 18px calc(20px + env(safe-area-inset-bottom,0px));box-sizing:border-box;background:#101e2b;border-right:1px solid #168cff;box-shadow:0 0 22px #168cff55;transform:translateX(-105%);transition:transform .24s ease;overflow:auto;color:white}#temoSideDrawer.open{transform:translateX(0)}#temoSideDrawer h3{margin:0 0 24px;font-size:22px}#temoSideDrawer button{display:block;width:100%;text-align:left;margin:10px 0;padding:14px;border:1px solid #168cff;border-radius:12px;background:#122f43;color:#fff;font-size:16px;font-weight:700}body.temo-menu-open{overflow:hidden}';
+    document.head.appendChild(style);
+    overlay=document.createElement('div');overlay.id='temoSideOverlay';overlay.addEventListener('click',closeMenu);
+    drawer=document.createElement('aside');drawer.id='temoSideDrawer';drawer.setAttribute('aria-label','გვერდითი მენიუ');
+    drawer.innerHTML='<h3>☰ მენიუ</h3>';
+    if(isTemo()){var b=document.createElement('button');b.type='button';b.textContent='💶 ჩემი გადასახადები';b.addEventListener('click',function(){location.href='./bills.html'});drawer.appendChild(b)}
+    var close=document.createElement('button');close.type='button';close.textContent='✕ დახურვა';close.addEventListener('click',closeMenu);drawer.appendChild(close);
+    document.body.appendChild(overlay);document.body.appendChild(drawer);
+    var toggle=document.getElementById('sideMenuToggle');if(toggle)toggle.addEventListener('click',openMenu);
+    document.addEventListener('touchstart',function(e){if(!drawer.classList.contains('open'))return;startX=e.touches[0].clientX;startY=e.touches[0].clientY},{passive:true});
+    document.addEventListener('touchend',function(e){if(!drawer.classList.contains('open'))return;var dx=e.changedTouches[0].clientX-startX,dy=e.changedTouches[0].clientY-startY;if(dx < -65 && Math.abs(dx)>Math.abs(dy))closeMenu()},{passive:true});
+    document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMenu()});
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addBillsButton);else addBillsButton();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>tLoaded',addBillsButton);else addBillsButton();
   window.addEventListener('pageshow',addBillsButton);
 })();
 </script>
