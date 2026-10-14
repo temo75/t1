@@ -6960,30 +6960,95 @@ startNotesReminderWatcher();
 
 <script id="temo-personal-bills-nav">
 (function(){
-  var drawer,overlay,startX=0,startY=0;
-  function isTemo(){try{return String(localStorage.getItem('temoWorkTrackerUser')||'').trim().toUpperCase()==='TEMO'}catch(e){return false}}
-  function closeMenu(){if(drawer){drawer.classList.remove('open');overlay.classList.remove('open');document.body.classList.remove('temo-menu-open')}}
-  function openMenu(){drawer=document.getElementById('temoSideDrawer');overlay=document.getElementById('temoSideOverlay');if(!drawer||!overlay)return;drawer.classList.add('open');overlay.classList.add('open');drawer.style.setProperty('transform','translateX(0)','important');overlay.style.setProperty('visibility','visible','important');overlay.style.setProperty('opacity','1','important');document.body.classList.add('temo-menu-open')}
+  'use strict';
+  var drawer=null,overlay=null,startX=0,startY=0;
+  function isTemo(){
+    try{return String(localStorage.getItem('temoWorkTrackerUser')||'').trim().toUpperCase()==='TEMO';}
+    catch(e){return false;}
+  }
+  function closeMenu(){
+    if(!drawer||!overlay)return;
+    drawer.classList.remove('open');
+    overlay.classList.remove('open');
+    document.body.classList.remove('temo-menu-open');
+    var toggle=document.getElementById('sideMenuToggle');
+    if(toggle)toggle.setAttribute('aria-expanded','false');
+  }
+  function openMenu(){
+    if(!drawer||!overlay)return;
+    /* Let the CSS class drive transform so the slide transition can run. */
+    drawer.style.removeProperty('transform');
+    drawer.classList.add('open');
+    overlay.classList.add('open');
+    document.body.classList.add('temo-menu-open');
+    var toggle=document.getElementById('sideMenuToggle');
+    if(toggle)toggle.setAttribute('aria-expanded','true');
+  }
   function init(){
+    var toggle=document.getElementById('sideMenuToggle');
+    if(!toggle)return;
     var admin=isTemo();
-    var toggleButton=document.getElementById('sideMenuToggle');
-    if(toggleButton)toggleButton.style.display=admin?'':'none';
+    toggle.style.display=admin?'':'none';
     if(!admin)return;
     if(document.getElementById('temoSideDrawer'))return;
-    var style=document.createElement('style');style.textContent='#temoSideOverlay{position:fixed!important;inset:0!important;background:rgba(0,0,0,.48)!important;z-index:2147483646!important;opacity:0;visibility:hidden;transition:opacity .22s,visibility .22s}#temoSideOverlay.open{opacity:1!important;visibility:visible!important}#temoSideDrawer{position:fixed!important;z-index:2147483647!important;top:0!important;bottom:0!important;left:0!important;width:min(82vw,330px)!important;padding:calc(22px + env(safe-area-inset-top,0px)) 18px calc(20px + env(safe-area-inset-bottom,0px))!important;box-sizing:border-box!important;background:#101e2b!important;border-right:1px solid #168cff!important;box-shadow:0 0 22px #168cff55!important;transform:translateX(-105%)!important;transition:transform .24s ease!important;overflow:auto!important;color:white!important;pointer-events:auto!important}#temoSideDrawer.open{transform:translateX(0)!important}#temoSideDrawer h3{margin:0 0 24px;font-size:22px}#temoSideDrawer button{display:block;width:100%;text-align:left;margin:10px 0;padding:14px;border:1px solid #168cff;border-radius:12px;background:#122f43;color:#fff;font-size:16px;font-weight:700}body.temo-menu-open{overflow:hidden}';
-    document.head.appendChild(style);
-    overlay=document.createElement('div');overlay.id='temoSideOverlay';overlay.addEventListener('click',closeMenu);
-    drawer=document.createElement('aside');drawer.id='temoSideDrawer';drawer.setAttribute('aria-label','გვერდითი მენიუ');
-    drawer.innerHTML='<h3>☰ მენიუ</h3>';
-    if(isTemo()){var b=document.createElement('button');b.type='button';b.textContent='💶 ჩემი გადასახადები';b.addEventListener('click',function(){location.href='./bills.html'});drawer.appendChild(b)}
-    var close=document.createElement('button');close.type='button';close.textContent='✕ დახურვა';close.addEventListener('click',closeMenu);drawer.appendChild(close);
-    document.body.appendChild(overlay);document.body.appendChild(drawer);
-    var toggle=document.getElementById('sideMenuToggle');if(toggle){toggle.onclick=openMenu;toggle.addEventListener('click',openMenu)}
-    document.addEventListener('touchstart',function(e){if(!drawer.classList.contains('open'))return;startX=e.touches[0].clientX;startY=e.touches[0].clientY},{passive:true});
-    document.addEventListener('touchend',function(e){if(!drawer.classList.contains('open'))return;var dx=e.changedTouches[0].clientX-startX,dy=e.changedTouches[0].clientY-startY;if(dx < -65 && Math.abs(dx)>Math.abs(dy))closeMenu()},{passive:true});
-    document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMenu()});
+
+    var style=document.createElement('style');
+    style.id='temo-side-drawer-fix-style';
+    style.textContent=
+      '#temoSideOverlay{position:fixed!important;inset:0!important;background:rgba(0,0,0,.52)!important;z-index:2147483646!important;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .28s ease,visibility .28s ease}' +
+      '#temoSideOverlay.open{opacity:1!important;visibility:visible!important;pointer-events:auto!important}' +
+      '#temoSideDrawer{position:fixed!important;z-index:2147483647!important;top:0!important;bottom:0!important;left:0!important;width:min(82vw,330px)!important;max-width:90vw!important;padding:calc(22px + env(safe-area-inset-top,0px)) 18px calc(20px + env(safe-area-inset-bottom,0px))!important;box-sizing:border-box!important;background:#101e2b!important;border-right:1px solid #168cff!important;box-shadow:0 0 22px #168cff55!important;transform:translateX(-105%)!important;transition:transform .32s cubic-bezier(.22,.8,.25,1)!important;will-change:transform;overflow:auto!important;color:white!important;pointer-events:none!important}' +
+      '#temoSideDrawer.open{transform:translateX(0)!important;pointer-events:auto!important}' +
+      '#temoSideDrawer h3{margin:0 0 24px;font-size:22px}' +
+      '#temoSideDrawer button{display:block;width:100%;text-align:left;margin:10px 0;padding:14px;border:1px solid #168cff;border-radius:12px;background:#122f43;color:#fff;font-size:16px;font-weight:700}' +
+      'body.temo-menu-open{overflow:hidden!important}';
+    (document.head||document.documentElement).appendChild(style);
+
+    overlay=document.createElement('div');
+    overlay.id='temoSideOverlay';
+    overlay.addEventListener('click',closeMenu);
+
+    drawer=document.createElement('aside');
+    drawer.id='temoSideDrawer';
+    drawer.setAttribute('aria-label','გვერდითი მენიუ');
+    drawer.setAttribute('role','dialog');
+    drawer.setAttribute('aria-modal','true');
+    var heading=document.createElement('h3');
+    heading.textContent='☰ მენიუ';
+    drawer.appendChild(heading);
+    var bills=document.createElement('button');
+    bills.type='button';
+    bills.textContent='💶 ჩემი გადასახადები';
+    bills.addEventListener('click',function(){location.href='./bills.html';});
+    drawer.appendChild(bills);
+    var close=document.createElement('button');
+    close.type='button';
+    close.textContent='✕ დახურვა';
+    close.addEventListener('click',closeMenu);
+    drawer.appendChild(close);
+    document.body.appendChild(overlay);
+    document.body.appendChild(drawer);
+
+    toggle.setAttribute('aria-expanded','false');
+    toggle.addEventListener('click',function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      if(drawer.classList.contains('open'))closeMenu();else openMenu();
+    });
+    document.addEventListener('touchstart',function(e){
+      if(!drawer.classList.contains('open')||!e.touches||!e.touches.length)return;
+      startX=e.touches[0].clientX;startY=e.touches[0].clientY;
+    },{passive:true});
+    document.addEventListener('touchend',function(e){
+      if(!drawer.classList.contains('open')||!e.changedTouches||!e.changedTouches.length)return;
+      var dx=e.changedTouches[0].clientX-startX;
+      var dy=e.changedTouches[0].clientY-startY;
+      if(dx < -55 && Math.abs(dx)>Math.abs(dy))closeMenu();
+    },{passive:true});
+    document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMenu();});
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
+  else init();
 })();
 </script>
 </body>
