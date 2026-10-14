@@ -4509,10 +4509,24 @@ async function sendAdminMessage(){
 }
 function renderUserChatMessages(thread){
   const box=$('userChatMessages');if(!box)return;
-  if(!Array.isArray(thread)||!thread.length){box.innerHTML='<div class="chatEmpty">ჯერ შეტყობინება არ არის.</div>';return;}
+  if(!Array.isArray(thread)||!thread.length){userChatRenderKey='';box.innerHTML='<div class="chatEmpty">ჯერ შეტყობინება არ არის.</div>';return;}
   const key=JSON.stringify(thread.map(m=>[m.id,m.text,m.reply,m.createdAt,m.replyAt]));
   if(key===userChatRenderKey&&box.children.length)return;userChatRenderKey=key;
-  box.innerHTML=thread.map(m=>`<div class="chatMessage"><div class="chatMessageHead"><b>📨 შენ</b><span class="chatMessageTime">${chatEscape(chatFormatTime(m.createdAt))}</span></div><div class="chatMessageText">${chatEscape(m.text)}</div>${m.reply?`<div class="chatReplyBox"><div class="chatReplyLabel">↩️ ადმინისტრატორის პასუხი · ${chatEscape(chatFormatTime(m.replyAt))}</div><div class="chatAdminMessageText">${chatEscape(m.reply)}</div></div>`:''}</div>`).join('');
+  box.innerHTML=thread.map(m=>`<div class="chatMessage"><div class="chatMessageHead"><b>📨 შენ</b><span class="chatMessageTime">${chatEscape(chatFormatTime(m.createdAt))}</span></div><div class="chatMessageText">${chatEscape(m.text)}</div>${m.reply?`<div class="chatReplyBox"><div class="chatReplyLabel">↩️ ადმინისტრატორის პასუხი · ${chatEscape(chatFormatTime(m.replyAt))}</div><div class="chatAdminMessageText">${chatEscape(m.reply)}</div></div>`:''}<div class="chatDeleteRow userMessageDeleteRow"><button type="button" class="chatDeleteBtn" onclick="deleteOwnMessage('${chatEscape(m.id)}')">🗑️ მესიჯის წაშლა</button></div></div>`).join('');
+}
+async function deleteOwnMessage(messageId){
+  if(!currentUser||currentUser===ADMIN_USER)return;
+  if(!confirm('ეს მესიჯი წაიშალოს?'))return;
+  const thread=await loadChatThread(currentUserId);
+  if(thread===null){alert('მესიჯები ვერ ჩაიტვირთა.');return;}
+  const next=thread.filter(m=>String(m.id)!==String(messageId));
+  if(next.length===thread.length)return;
+  try{
+    await saveChatThread(currentUserId,next);
+    userChatRenderKey='';
+    await loadAndRenderUserChat();
+    await updateMessagesNavDot();
+  }catch(e){alert('მესიჯი ვერ წაიშალა.\\n\\n'+(e?.message||''));}
 }
 async function loadAndRenderUserChat(){
   if(!currentUser||currentUser===ADMIN_USER)return;
