@@ -2153,7 +2153,7 @@ html body.site-white-theme #aiChatModal .aiChatClose{
   <button type="button" onclick="goWallet()" aria-label="ფული" title="ფული"><span class="navLogo">💰</span></button>
   <button id="notesNavButton" type="button" onclick="goNotes()" aria-label="ჩანაწერები" title="ჩანაწერები"><span class="navLogo">📖</span></button>
   <button type="button" onclick="logout()" class="logoutNav" aria-label="გამოსვლა" title="გამოსვლა"><span class="navLogo">🚪</span></button>
-  <button type="button" id="sideMenuToggle" aria-label="მენიუ" title="მენიუ"><span class="navLogo">☰</span></button>
+  <button type="button" id="sideMenuToggle" aria-label="მენიუ" title="მენიუ" style="display:none"><span class="navLogo">☰</span></button>
 </nav>
 
 <button type="button" id="aiFloatingBtn" onclick="openAIChat()" aria-label="TEMO AI" title="TEMO AI"><img src="temo_ai_robot_64.png" alt="TEMO AI"></button>
@@ -6955,6 +6955,10 @@ startNotesReminderWatcher();
   function closeMenu(){if(drawer){drawer.classList.remove('open');overlay.classList.remove('open');document.body.classList.remove('temo-menu-open')}}
   function openMenu(){if(!drawer)return;drawer.classList.add('open');overlay.classList.add('open');document.body.classList.add('temo-menu-open')}
   function init(){
+    var admin=isTemo();
+    var toggleButton=document.getElementById('sideMenuToggle');
+    if(toggleButton)toggleButton.style.display=admin?'':'none';
+    if(!admin)return;
     if(document.getElementById('temoSideDrawer'))return;
     var style=document.createElement('style');style.textContent='#temoSideOverlay{position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:2147483000;opacity:0;visibility:hidden;transition:opacity .22s,visibility .22s}#temoSideOverlay.open{opacity:1;visibility:visible}#temoSideDrawer{position:fixed;z-index:2147483001;top:0;bottom:0;left:0;width:min(82vw,330px);padding:calc(22px + env(safe-area-inset-top,0px)) 18px calc(20px + env(safe-area-inset-bottom,0px));box-sizing:border-box;background:#101e2b;border-right:1px solid #168cff;box-shadow:0 0 22px #168cff55;transform:translateX(-105%);transition:transform .24s ease;overflow:auto;color:white}#temoSideDrawer.open{transform:translateX(0)}#temoSideDrawer h3{margin:0 0 24px;font-size:22px}#temoSideDrawer button{display:block;width:100%;text-align:left;margin:10px 0;padding:14px;border:1px solid #168cff;border-radius:12px;background:#122f43;color:#fff;font-size:16px;font-weight:700}body.temo-menu-open{overflow:hidden}';
     document.head.appendChild(style);
