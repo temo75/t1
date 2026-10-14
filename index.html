@@ -6256,6 +6256,10 @@ startNotesReminderWatcher();
   function apply(mode,saveRemote){
     mode=mode==='white'?'white':'black';
     document.body.classList.toggle('site-white-theme',mode==='white');
+    document.documentElement.style.background = mode==='white' ? '#ffffff' : '#000000';
+    document.body.style.background = mode==='white' ? '#ffffff' : '#000000';
+    document.documentElement.style.setProperty('background-color', mode==='white' ? '#ffffff' : '#000000', 'important');
+    document.body.style.setProperty('background-color', mode==='white' ? '#ffffff' : '#000000', 'important');
     if(mode==='white' && typeof window.forceWhiteThemeText==='function') window.forceWhiteThemeText();
     if(mode==='black'){
       // თეთრი რეჟიმიდან შავზე გადასვლისას მოვაშოროთ თეთრი რეჟიმის მიერ
