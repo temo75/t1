@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ka">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TEMO — DEI გადასახადი</title>
+<style>
+:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#f3f7fb;color:#17212b;font:16px system-ui,Arial,sans-serif;padding:20px}
+main{max-width:620px;margin:28px auto;background:white;border:1px solid #dbe5ef;border-radius:18px;padding:22px;box-shadow:0 8px 28px #13283a12}
+h1{font-size:24px;margin:0 0 8px;color:#0878d1}p{line-height:1.5}.muted{color:#637383;font-size:14px}
+label{display:block;font-weight:650;margin:18px 0 6px}input{width:100%;padding:12px;border:1px solid #b9c9d8;border-radius:9px;font:inherit}button{margin-top:12px;padding:12px 16px;border:0;border-radius:9px;background:#0878d1;color:white;font:inherit;font-weight:700;cursor:pointer}
+.card{background:#f5faff;border:1px solid #dceaf7;border-radius:12px;padding:16px;margin-top:16px}.amount{font-size:32px;font-weight:800;color:#0878d1}.status{white-space:pre-wrap}.error{color:#b42318}.ok{color:#137547}
+</style></head>
+<body><main>
+<h1>DEI — ელექტროენერგიის გადასახადი</h1>
+<p class="muted">T1-ის ცალკე გვერდი. მთავარი index.html არ შეცვლილა.</p>
+<p>ეს გვერდი კითხულობს DEI-ის ბოლო ქვითარს დაცული Worker-ის მეშვეობით. Google-ის პაროლი ან Client Secret აქ არ შეიყვანო.</p>
+<label for="key">Worker API გასაღები (SYNC_API_KEY)</label>
+<input id="key" type="password" autocomplete="off" placeholder="შეიყვანე Cloudflare-ში შექმნილი API გასაღები">
+<button id="load">ქვითრის წაკითხვა</button>
+<div id="result" class="card status">ჯერ არ წაგვიკითხავს ქვითარი.</div>
+<p class="muted">უსაფრთხოებისთვის გასაღები ამ გვერდზე არ ინახება; გვერდის განახლებისას თავიდან შეყვანაა საჭირო.</p>
+</main>
+<script>
+const API='https://dei-bill-sync.temo75elia.workers.dev';
+const result=document.getElementById('result');
+document.getElementById('load').addEventListener('click',async()=>{
+ const key=document.getElementById('key').value.trim();
+ if(!key){result.className='card status error';result.textContent='ჯერ შეიყვანე SYNC_API_KEY.';return}
+ result.className='card status';result.textContent='ვამოწმებ DEI-ის ბოლო ქვითარს…';
+ try{
+  const r=await fetch(API+'/api/latest',{headers:{Authorization:'Bearer '+key}});
+  const data=await r.json();
+  if(!r.ok)throw new Error(r.status===401?'გასაღები არასწორია ან Worker-ში SYNC_API_KEY ჯერ არ არის დაყენებული.':(data.error||'შეცდომა '+r.status));
+  const b=data.bill||{};
+  if(!b.found){result.textContent='DEI-ის შესაბამისი წერილი ვერ მოიძებნა.';return}
+  result.innerHTML='';
+  const title=document.createElement('div');title.textContent='ბოლო DEI ქვითარი';title.style.fontWeight='750';result.appendChild(title);
+  const amount=document.createElement('div');amount.className='amount';amount.textContent=b.totalEUR==null?'თანხა ვერ ამოვიღე':new Intl.NumberFormat('el-GR',{style:'currency',currency:'EUR'}).format(Number(b.totalEUR));result.appendChild(amount);
+  const due=document.createElement('p');due.textContent='გადახდის ბოლო ვადა: '+(b.dueDate||'წერილიდან ვერ ამოვიღე');result.appendChild(due);
+  const date=document.createElement('p');date.className='muted';date.textContent='წერილის თარიღი: '+(b.emailDate||'უცნობია')+' · განახლდა: '+(b.fetchedAt||'ახლა');result.appendChild(date);
+  if(b.totalEUR==null||!b.dueDate){const warn=document.createElement('p');warn.className='error';warn.textContent='ყურადღება: წერილი მოიძებნა, მაგრამ თანხა ან თარიღი ავტომატურად ვერ ამოიცნო. შედეგი გადაამოწმე ორიგინალ ქვითარში.';result.appendChild(warn)}
+ }catch(e){result.className='card status error';result.textContent='ვერ წავიკითხე: '+e.message}
+});
+</script></body></html>
