@@ -21,13 +21,6 @@ html.auth-booting.site-white-boot{background:#fff!important}
     }
   }catch(e){}
   document.documentElement.classList.add('auth-booting');
-  /* Safety fallback: never leave the page permanently blank after refresh. */
-  window.setTimeout(function(){
-    try{
-      document.documentElement.classList.remove('auth-booting');
-      if(document.body) document.body.style.visibility='visible';
-    }catch(e){}
-  },7000);
 })();
 </script>
 <!-- TEMO AI FIX 021 -->
@@ -2160,7 +2153,6 @@ html body.site-white-theme #aiChatModal .aiChatClose{
   <button type="button" onclick="goWallet()" aria-label="ფული" title="ფული"><span class="navLogo">💰</span></button>
   <button id="notesNavButton" type="button" onclick="goNotes()" aria-label="ჩანაწერები" title="ჩანაწერები"><span class="navLogo">📖</span></button>
   <button type="button" onclick="logout()" class="logoutNav" aria-label="გამოსვლა" title="გამოსვლა"><span class="navLogo">🚪</span></button>
-  <button type="button" id="sideMenuToggle" aria-label="მენიუ" title="მენიუ" style="display:none"><span class="navLogo">☰</span></button>
 </nav>
 
 <button type="button" id="aiFloatingBtn" onclick="openAIChat()" aria-label="TEMO AI" title="TEMO AI"><img src="temo_ai_robot_64.png" alt="TEMO AI"></button>
@@ -3290,8 +3282,7 @@ function exportMyDataPdf(){
   <tbody>${rowsExp||`<tr><td colspan="4">${esc(t.noData)}</td></tr>`}</tbody></table>
   <button type="button" class="noPrint" id="temoPdfPrintBtn" style="margin-top:20px;padding:10px 16px">${esc(t.print)}</button>
   <script>document.getElementById("temoPdfPrintBtn").addEventListener("click",function(){setTimeout(function(){window.focus();window.print();},50);});<\/script>
-  
-</body></html>`);
+  </body></html>`);
   w.document.close();
   w.focus();
 }
@@ -6956,116 +6947,37 @@ startNotesReminderWatcher();
 }
 #expensesPage .expenseCalendarSection .expenseCalendarAddBtn{
   width:auto;
-  max-width:n
+  max-width:none;
+  margin:10px 0 0 auto;
+  padding:7px 11px;
+  font-size:13px;
+  line-height:1.15;
+  display:block;
+}
+</style>
+
 
 <script id="temo-personal-bills-nav">
 (function(){
-  'use strict';
-  var drawer=null,overlay=null,toggle=null,startX=0,startY=0,visibilityTimer=null;
-  function isTemo(){
-    try{return String(localStorage.getItem('temoWorkTrackerUser')||'').trim().toUpperCase()==='TEMO';}
-    catch(e){return false;}
+  function addBillsButton(){
+    try{
+      if(String(localStorage.getItem('temoWorkTrackerUser')||'').trim().toUpperCase()!=='TEMO') return;
+      if(document.getElementById('temoPersonalBillsButton')) return;
+      var b=document.createElement('button');
+      b.id='temoPersonalBillsButton';
+      b.type='button';
+      b.textContent='💶 ჩემი გადასახადები';
+      b.setAttribute('aria-label','ჩემი გადასახადები');
+      b.style.cssText='position:fixed;right:14px;bottom:calc(82px + env(safe-area-inset-bottom,0px));z-index:9998;border:1px solid #2999df;border-radius:14px;padding:13px 16px;background:#102b3b;color:#fff;font-weight:700;font-size:15px;box-shadow:0 0 12px #2999df66;cursor:pointer';
+      b.addEventListener('click',function(){location.href='./bills.html';});
+      document.body.appendChild(b);
+    }catch(e){}
   }
-  function closeMenu(){
-    if(!drawer||!overlay)return;
-    drawer.classList.remove('open');
-    overlay.classList.remove('open');
-    document.body.classList.remove('temo-menu-open');
-    if(toggle)toggle.setAttribute('aria-expanded','false');
-  }
-  function refreshVisibility(){
-    if(!toggle)return;
-    var admin=isTemo();
-    toggle.style.display=admin?'':'none';
-    if(!admin)closeMenu();
-  }
-  function openMenu(){
-    if(!drawer||!overlay||!isTemo())return;
-    /* Commit the off-screen starting transform before changing state.
-       This prevents the browser batching the initial and open styles into one frame. */
-    drawer.classList.remove('open');
-    drawer.style.setProperty('transform','translateX(-105%)','important');
-    void drawer.offsetWidth;
-    drawer.style.removeProperty('transform');
-    drawer.classList.add('open');
-    overlay.classList.add('open');
-    document.body.classList.add('temo-menu-open');
-    if(toggle)toggle.setAttribute('aria-expanded','true');
-  }
-  function init(){
-    toggle=document.getElementById('sideMenuToggle');
-    if(!toggle)return;
-    refreshVisibility();
-
-    if(!document.getElementById('temo-side-drawer-fix-style')){
-      var style=document.createElement('style');
-      style.id='temo-side-drawer-fix-style';
-      style.textContent=
-        '#temoSideOverlay{position:fixed!important;inset:0!important;background:rgba(0,0,0,.52)!important;z-index:2147483646!important;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .28s ease,visibility .28s ease}' +
-        '#temoSideOverlay.open{opacity:1!important;visibility:visible!important;pointer-events:auto!important}' +
-        '#temoSideDrawer{position:fixed!important;z-index:2147483647!important;top:0!important;bottom:0!important;left:0!important;width:min(82vw,330px)!important;max-width:90vw!important;padding:calc(22px + env(safe-area-inset-top,0px)) 18px calc(20px + env(safe-area-inset-bottom,0px))!important;box-sizing:border-box!important;background:#101e2b!important;border-right:1px solid #168cff!important;box-shadow:0 0 22px #168cff55!important;transform:translateX(-105%)!important;transition:transform .32s cubic-bezier(.22,.8,.25,1)!important;will-change:transform;overflow:auto!important;color:white!important;pointer-events:none!important}' +
-        '#temoSideDrawer.open{transform:translateX(0)!important;pointer-events:auto!important}' +
-        '#temoSideDrawer h3{margin:0 0 24px;font-size:22px}' +
-        '#temoSideDrawer button{display:block;width:100%;text-align:left;margin:10px 0;padding:14px;border:1px solid #168cff;border-radius:12px;background:#122f43;color:#fff;font-size:16px;font-weight:700}' +
-        'body.temo-menu-open{overflow:hidden!important}';
-      (document.head||document.documentElement).appendChild(style);
-    }
-
-    overlay=document.getElementById('temoSideOverlay');
-    if(!overlay){overlay=document.createElement('div');overlay.id='temoSideOverlay';}
-    drawer=document.getElementById('temoSideDrawer');
-    if(!drawer){
-      drawer=document.createElement('aside');
-      drawer.id='temoSideDrawer';
-      drawer.setAttribute('aria-label','გვერდითი მენიუ');
-      drawer.setAttribute('role','dialog');
-      drawer.setAttribute('aria-modal','true');
-      var heading=document.createElement('h3');
-      heading.textContent='☰ მენიუ';
-      drawer.appendChild(heading);
-      var bills=document.createElement('button');
-      bills.type='button';
-      bills.textContent='💶 ჩემი გადასახადები';
-      bills.addEventListener('click',function(){location.href='./bills.html';});
-      drawer.appendChild(bills);
-      var close=document.createElement('button');
-      close.type='button';
-      close.textContent='✕ დახურვა';
-      close.addEventListener('click',closeMenu);
-      drawer.appendChild(close);
-    }
-    if(!overlay.parentNode)document.body.appendChild(overlay);
-    if(!drawer.parentNode)document.body.appendChild(drawer);
-    overlay.onclick=closeMenu;
-
-    if(!toggle.dataset.temoDrawerBound){
-      toggle.dataset.temoDrawerBound='1';
-      toggle.setAttribute('aria-expanded','false');
-      toggle.addEventListener('click',function(e){
-        e.preventDefault();
-        e.stopPropagation();
-        refreshVisibility();
-        if(!isTemo())return;
-        if(drawer.classList.contains('open'))closeMenu();else openMenu();
-      });
-    }
-    document.addEventListener('touchstart',function(e){
-      if(!drawer.classList.contains('open')||!e.touches||!e.touches.length)return;
-      startX=e.touches[0].clientX;startY=e.touches[0].clientY;
-    },{passive:true});
-    document.addEventListener('touchend',function(e){
-      if(!drawer.classList.contains('open')||!e.changedTouches||!e.changedTouches.length)return;
-      var dx=e.changedTouches[0].clientX-startX;
-      var dy=e.changedTouches[0].clientY-startY;
-      if(dx < -55 && Math.abs(dx)>Math.abs(dy))closeMenu();
-    },{passive:true});
-    document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMenu();});
-    if(!visibilityTimer)visibilityTimer=window.setInterval(refreshVisibility,700);
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
-  else init();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',addBillsButton);else addBillsButton();
+  window.addEventListener('pageshow',addBillsButton);
 })();
 </script>
+
 </body>
 </html>
 <style id="temo-calendar-number-neon">
