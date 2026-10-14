@@ -2136,13 +2136,20 @@ html body.site-white-theme #aiChatModal .aiChatClose{
   width:100% !important;
   box-sizing:border-box !important;
 }
+<style id="temo-message-nav-status">
+#bottomNav button{position:relative}
+#bottomNav .messagesNavDot{position:absolute;top:3px;right:calc(50% - 20px);width:11px;height:11px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 5px currentColor;z-index:5}
+#bottomNav .messagesNavDot.unread{background:#18c964;color:#18c964}
+#bottomNav .messagesNavDot.read{background:#ef4444;color:#ef4444}
+#bottomNav .messagesNavDot[hidden]{display:none!important}
+</style>
 </style>
 </head>
 <body>
 <nav id="bottomNav" aria-label="მთავარი მენიუ">
   <button type="button" onclick="goHome()" aria-label="მთავარი" title="მთავარი"><span class="navLogo">🏠</span></button>
   <button type="button" onclick="goSettings()" aria-label="პარამეტრები" title="პარამეტრები"><span class="navLogo">⚙️</span></button>
-  <button type="button" onclick="goUsers()" aria-label="მომხმარებლები" title="მომხმარებლები"><span class="navLogo">👥</span></button>
+  <button type="button" onclick="goUsers()" aria-label="მომხმარებლები" title="მომხმარებლები"><span class="navLogo">👥</span><span id="messagesNavDot" class="messagesNavDot" aria-label="მესიჯის სტატუსი" hidden></span></button>
   <button type="button" onclick="goWallet()" aria-label="ფული" title="ფული"><span class="navLogo">💰</span></button>
   <button id="notesNavButton" type="button" onclick="goNotes()" aria-label="ჩანაწერები" title="ჩანაწერები"><span class="navLogo">📖</span></button>
   <button type="button" onclick="logout()" class="logoutNav" aria-label="გამოსვლა" title="გამოსვლა"><span class="navLogo">🚪</span></button>
@@ -2604,8 +2611,8 @@ window.addEventListener('DOMContentLoaded',async()=>{
     }
   },1000);
   setInterval(async()=>{
-    if(currentUser===ADMIN_USER)await renderAdminMessages();
-    else if(currentUser)await loadAndRenderUserChat();
+    if(currentUser===ADMIN_USER){await renderAdminMessages();await updateMessagesNavDot();}
+    else if(currentUser){await loadAndRenderUserChat();await updateMessagesNavDot();}
   },3000);
 });
 
@@ -4492,7 +4499,7 @@ async function sendAdminMessage(){
   if(count>100){alert('შეტყობინება მაქსიმუმ 100 სიტყვა უნდა იყოს.');return;}
   const thread=await loadChatThread(currentUserId);
   if(thread===null){alert('შეტყობინება Firebase-ში ვერ ჩაიტვირთა.');return;}
-  thread.push({id:(window.crypto&&crypto.randomUUID)?crypto.randomUUID():'m_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8),userId:String(currentUserId),userName:String(currentUser),text,createdAt:Date.now(),reply:'',replyAt:0});
+  thread.push({id:(window.crypto&&crypto.randomUUID)?crypto.randomUUID():'m_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8),userId:String(currentUserId),userName:String(currentUser),text,createdAt:Date.now(),reply:'',replyAt:0,readByAdmin:false,replyReadByUser:true});
   try{
     await saveChatThread(currentUserId,thread);
     ta.value='';updateUserChatCount();renderUserChatMessages(thread);
@@ -4509,7 +4516,43 @@ function renderUserChatMessages(thread){
 }
 async function loadAndRenderUserChat(){
   if(!currentUser||currentUser===ADMIN_USER)return;
-  const thread=await loadChatThread(currentUserId);if(thread!==null)renderUserChatMessages(thread);
+  const thread=await loadChatThread(currentUserId);
+  if(thread!==null){
+    let changed=false;
+    thread.forEach(m=>{if(m.reply && m.replyReadByUser!==true){m.replyReadByUser=true;changed=true;}});
+    if(changed){try{await saveChatThread(currentUserId,thread);}catch(e){}}
+    renderUserChatMessages(thread);
+  }
+}
+async function updateMessagesNavDot(){
+  const dot=document.getElementById('messagesNavDot');if(!dot||!currentUser)return;
+  let unread=false,hasMessages=false;
+  if(currentUser===ADMIN_USER){
+    const all=await loadAllAdminChats();if(all===null)return;
+    Object.entries(all).forEach(([key,thread])=>{
+      const arr=Array.isArray(thread)?thread.filter(Boolean):Object.entries(thread||{}).map(([id,m])=>({...m,id:String(m?.id||id)}));
+      arr.forEach(m=>{if(m&&m.text){hasMessages=true;if(m.readByAdmin!==true)unread=true;}});
+    });
+  }else{
+    const thread=await loadChatThread(currentUserId);if(thread===null)return;
+    thread.forEach(m=>{if(m.reply){hasMessages=true;if(m.replyReadByUser!==true)unread=true;}});
+  }
+  dot.hidden=!hasMessages;
+  dot.classList.toggle('unread',hasMessages&&unread);
+  dot.classList.toggle('read',hasMessages&&!unread);
+}
+async function markAdminMessagesRead(){
+  if(currentUser!==ADMIN_USER)return;
+  const page=document.getElementById('userManagementPage');
+  if(page&&page.classList.contains('pageHidden'))return;
+  const all=await loadAllAdminChats();if(!all)return;
+  for(const [key,threadData] of Object.entries(all)){
+    const arr=Array.isArray(threadData)?threadData.filter(Boolean):Object.entries(threadData||{}).map(([id,m])=>({...m,id:String(m?.id||id)}));
+    let changed=false;
+    arr.forEach(m=>{if(m.text&&m.readByAdmin!==true){m.readByAdmin=true;changed=true;}});
+    if(changed){try{await saveChatThread(String(arr[0]?.userId||key),arr);}catch(e){}}
+  }
+  await updateMessagesNavDot();
 }
 async function loadAllAdminChats(){
   try{
@@ -4522,6 +4565,8 @@ async function renderAdminMessages(){
   if(currentUser!==ADMIN_USER)return;
   const box=$('adminMessagesList');if(!box)return;
   const all=await loadAllAdminChats();if(all===null)return;
+  const usersPage=document.getElementById('userManagementPage');
+  if(usersPage&&!usersPage.classList.contains('pageHidden'))await markAdminMessagesRead();
   const groups=[];
   Object.entries(all).forEach(([key,thread])=>{
     const arr=(Array.isArray(thread)?thread.filter(Boolean):Object.entries(thread||{}).map(([id,m])=>({...m,id:String(m?.id||id)})))
@@ -4562,7 +4607,7 @@ async function replyToUser(userId,messageId){
   if(chatWordCount(reply)>100){alert('პასუხი მაქსიმუმ 100 სიტყვა უნდა იყოს.');return;}
   const thread=await loadChatThread(userId);if(thread===null){alert('მესიჯი Firebase-ში ვერ ჩაიტვირთა.');return;}
   const m=thread.find(x=>String(x.id)===String(messageId));if(!m){alert('მესიჯი ვერ მოიძებნა.');return;}
-  m.reply=reply;m.replyAt=Date.now();
+  m.reply=reply;m.replyAt=Date.now();m.replyReadByUser=false;
   try{await saveChatThread(userId,thread);adminChatRenderKey='';await renderAdminMessages();}catch(e){alert('პასუხი ვერ შეინახა.\
 \
 '+(e?.message||''));}
