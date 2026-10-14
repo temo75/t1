@@ -6953,7 +6953,7 @@ startNotesReminderWatcher();
   var drawer,overlay,startX=0,startY=0;
   function isTemo(){try{return String(localStorage.getItem('temoWorkTrackerUser')||'').trim().toUpperCase()==='TEMO'}catch(e){return false}}
   function closeMenu(){if(drawer){drawer.classList.remove('open');overlay.classList.remove('open');document.body.classList.remove('temo-menu-open')}}
-  function openMenu(){if(!drawer)return;drawer.classList.add('open');overlay.classList.add('open');document.body.classList.add('temo-menu-open')}
+  function openMenu(){drawer=document.getElementById('temoSideDrawer');overlay=document.getElementById('temoSideOverlay');if(!drawer||!overlay)return;drawer.classList.add('open');overlay.classList.add('open');drawer.style.setProperty('transform','translateX(0)','important');overlay.style.setProperty('visibility','visible','important');overlay.style.setProperty('opacity','1','important');document.body.classList.add('temo-menu-open')}
   function init(){
     var admin=isTemo();
     var toggleButton=document.getElementById('sideMenuToggle');
@@ -6968,7 +6968,7 @@ startNotesReminderWatcher();
     if(isTemo()){var b=document.createElement('button');b.type='button';b.textContent='💶 ჩემი გადასახადები';b.addEventListener('click',function(){location.href='./bills.html'});drawer.appendChild(b)}
     var close=document.createElement('button');close.type='button';close.textContent='✕ დახურვა';close.addEventListener('click',closeMenu);drawer.appendChild(close);
     document.body.appendChild(overlay);document.body.appendChild(drawer);
-    var toggle=document.getElementById('sideMenuToggle');if(toggle)toggle.addEventListener('click',openMenu);
+    var toggle=document.getElementById('sideMenuToggle');if(toggle){toggle.onclick=openMenu;toggle.addEventListener('click',openMenu)}
     document.addEventListener('touchstart',function(e){if(!drawer.classList.contains('open'))return;startX=e.touches[0].clientX;startY=e.touches[0].clientY},{passive:true});
     document.addEventListener('touchend',function(e){if(!drawer.classList.contains('open'))return;var dx=e.changedTouches[0].clientX-startX,dy=e.changedTouches[0].clientY-startY;if(dx < -65 && Math.abs(dx)>Math.abs(dy))closeMenu()},{passive:true});
     document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMenu()});
