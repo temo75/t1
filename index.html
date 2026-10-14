@@ -4428,7 +4428,7 @@ function updateUserUI(){
  const chat=$('userChatSection'); if(chat)chat.style.display=currentUser&&!isAdmin?'':'none';
  const adminMessages=$('adminMessagesSection'); if(adminMessages)adminMessages.style.display=isAdmin?'':'none';
  const manageBtn=$('userManagementOpenBtn'); if(manageBtn)manageBtn.style.display=isAdmin?'block':'none';
- const label=$('currentUserLabel'); if(label){label.textContent=currentUser?'TEMO':'';label.style.display=currentUser?'block':'none';}
+ const label=$('currentUserLabel'); if(label){label.textContent=currentUser?'👤 შენ შეხვედი... '+currentUser:'';label.style.display=currentUser?'block':'none';}
  if(isAdmin)renderManagedUsers();
  if(isAdmin)renderAdminMessages();
  else if(currentUser)loadAndRenderUserChat();
