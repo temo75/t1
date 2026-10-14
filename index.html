@@ -7004,8 +7004,12 @@ body.temo-admin-slide-menu-open{overflow:hidden}
     var bottomNav=document.getElementById("bottomNav");if(bottomNav){toggle.className="adminMenuNavButton";bottomNav.insertBefore(toggle,bottomNav.firstChild);}else{document.body.appendChild(toggle);}document.body.appendChild(overlay);
     toggle.addEventListener('click',function(){
       if(!isAdmin())return;
-      overlay.classList.add('open');document.body.classList.add('temo-admin-slide-menu-open');
-      toggle.setAttribute('aria-expanded','true');
+      if(overlay.classList.contains('open')){
+        closeMenu();
+      }else{
+        overlay.classList.add('open');document.body.classList.add('temo-admin-slide-menu-open');
+        toggle.setAttribute('aria-expanded','true');
+      }
     });
     overlay.addEventListener('click',function(e){if(e.target===overlay||e.target.closest('.temoAdminMenuClose'))closeMenu();});
     overlay.querySelectorAll('[data-action]').forEach(function(b){b.addEventListener('click',function(){var action=b.getAttribute('data-action');if(action==='openBills'){closeMenu();location.href='./bills.html';return;}go(action);});});
