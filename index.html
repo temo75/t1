@@ -21,6 +21,13 @@ html.auth-booting.site-white-boot{background:#fff!important}
     }
   }catch(e){}
   document.documentElement.classList.add('auth-booting');
+  /* Safety fallback: never leave the page permanently blank after refresh. */
+  window.setTimeout(function(){
+    try{
+      document.documentElement.classList.remove('auth-booting');
+      if(document.body) document.body.style.visibility='visible';
+    }catch(e){}
+  },7000);
 })();
 </script>
 <!-- TEMO AI FIX 021 -->
