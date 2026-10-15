@@ -83,6 +83,7 @@ function stripHtml(s) {
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
     .replace(/<\/(p|div|tr|li|h[1-6]|br|td|th)>/gi, "\n")
+    .replace(/<(br|hr)\b[^>]*>/gi, "\n")
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;|&#160;/gi, " ")
     .replace(/&euro;|&#8364;|&#x20ac;/gi, "€")
@@ -131,7 +132,7 @@ function numericBillAmount(value) {
 
 function extractPaymentStatus(text) {
   const value = String(text || "").toLocaleLowerCase("el");
-  const due = /(οφειλ|ανεξόφλητ|πληρωτέο|amount\s+due|outstanding|to\s+pay)/i.test(value);
+  const due = /(οφειλ|ανεξόφλητ|πληρωτέο|τελικό\s+ποσό\s+πληρωμής|amount\s+due|payable\s+amount|outstanding|to\s+pay)/i.test(value);
   const paid = /(εξοφλήθηκ|έχει\s+εξοφληθεί|πληρώθηκε|καταβλήθηκε|paid\s+in\s+full|fully\s+paid|settled)/i.test(value);
   if (due && paid) return "unknown";
   if (paid) return "paid";
@@ -140,7 +141,7 @@ function extractPaymentStatus(text) {
 }
 function extractDueDate(text) {
   const patterns = [
-    /(?:ημερομηνία\s+λήξης|λήξη\s+πληρωμής|πληρωτέο\s+έως|due\s+date)[^\d]{0,30}(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/i,
+    /(?:ημερομηνία\s+λήξης|λήξη\s+πληρωμής|πληρωτέο\s+έως|due\s+date|expiration\s+date)[^\d]{0,30}(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/i,
     /(?:έως|μέχρι|until|by)\s+(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/i,
   ];
   for (const re of patterns) {
