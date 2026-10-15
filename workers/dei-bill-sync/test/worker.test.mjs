@@ -141,8 +141,10 @@ assert.equal((await worker.fetch(request("/oauth/start", { method: "POST", body:
 
 const tokenA = await makeIdToken("firebase-A");
 const tokenB = await makeIdToken("firebase-B");
+const tokenC = await makeIdToken("firebase-C");
 const headersA = { authorization: "Bearer " + tokenA, "content-type": "application/json" };
 const headersB = { authorization: "Bearer " + tokenB, "content-type": "application/json" };
+const headersC = { authorization: "Bearer " + tokenC, "content-type": "application/json" };
 assert.equal((await worker.fetch(request("/api/status", { headers: headersA }), env)).status, 200);
 assert.equal((await json(await worker.fetch(request("/api/status", { headers: headersB }), env))).linked, false);
 
@@ -179,6 +181,14 @@ async function connectGmail(uid, headers, identity) {
 assert.equal((await worker.fetch(request("/oauth/callback?code=invalid&state=not-a-real-state"), env)).status, 400, "unknown OAuth state is rejected");
 await connectGmail("firebase-A", headersA, "A");
 await connectGmail("firebase-B", headersB, "B");
+assert.equal((await json(await worker.fetch(request("/api/status", { headers: headersC }), env))).linked, false,
+  "legacy account linking remains optional for personal DEI access");
+await connectGmail("firebase-C", headersC, "C");
+const syncC = await worker.fetch(request("/api/sync", { method: "POST", headers: headersC, body: JSON.stringify({ continue: false }) }), env);
+assert.equal(syncC.status, 200, "a Firebase UID can sync without an administrator claim");
+assert.equal((await json(syncC)).complete, true);
+assert.equal((await json(await worker.fetch(request("/api/history", { headers: headersC }), env))).count, 0);
+
 
 const deniedStart = await worker.fetch(request("/oauth/start", {
   method: "POST", headers: headersA, body: JSON.stringify({ returnTo: "https://temo75.github.io/t1/dei-bill.html" })
