@@ -12,4 +12,4 @@ id = "2e81574e0ad9499aac5c7a4d47f95e1b"
 
 [triggers]
 # Once daily at 00:00 UTC (03:00 Athens time during summer time).
-crons = ["0 0 * * *"]
+crons = ["0 */3 * * *"]
