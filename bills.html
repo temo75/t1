@@ -12,13 +12,29 @@
 .dei-sync-header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.dei-sync-header h2{font-size:19px;margin:0}
 .dei-sync-badge{font-size:12px;padding:6px 9px;border-radius:20px;background:#263443;color:#c7d7e3}.dei-sync-badge.is-connected{background:#173c2b;color:#8ef0b1}.dei-sync-badge.is-error{background:#45242a;color:#ff9a9a}
 .dei-sync-message{color:var(--muted);line-height:1.5}.dei-sync-details{display:grid;grid-template-columns:1fr 2fr;gap:7px 12px;margin:14px 0}
-.dei-sync-details dt{color:var(--muted);font-size:13px}.dei-sync-details dd{margin:0;font-weight:bold;overflow-wrap:anywhere}.dei-sync-actions{display:flex;gap:8px;flex-wrap:wrap}.dei-sync-primary{border-color:var(--blue);background:#12354a}
+.dei-sync-details dt{color:var(--muted);font-size:13px}.dei-sync-details dd{margin:0;font-weight:bold;overflow-wrap:anywhere}.dei-sync-actions{display:flex;gap:8px;flex-wrap:wrap}.dei-sync-primary{border-color:var(--blue);background:#12354a}.dei-admin-link select,.dei-admin-link input:not([type=checkbox]){width:100%;margin-top:6px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#071117;color:var(--text)}.dei-admin-link label{display:block;color:var(--muted);font-size:13px}.dei-claim-code{white-space:pre-wrap;word-break:break-all;padding:12px;border:1px solid var(--green);border-radius:10px;color:#8ef0b1}
 </style>
 </head>
 <body>
 <div class="app">
-<header><div><h1>💶 ჩემი გადასახადები</h1><small>პირადი გადასახადები — <span id="billUserName"></span></small></div><button onclick="location.href='./index.html'">← მთავარზე</button></header>
+<header><div><h1>💶 ჩემი გადასახადები</h1><small>პირადი ადმინისტრატორის დაფა</small></div><button onclick="location.href='./index.html'">← მთავარზე</button></header>
 <div id="deiCloudBill" class="panel"></div>
+<section id="deiAdminLink" class="panel dei-admin-link">
+  <h2>DEI მომხმარებლის დაკავშირება</h2>
+  <p class="notice">მოთხოვნები Firebase-ით დადასტურებული Google ანგარიშიდან მოდის. ელფოსტა მხოლოდ იდენტიფიკაციისთვის ჩანს; T1 ანგარიშს ელფოსტის დამთხვევით არ ვუკავშირებთ.</p>
+  <button id="deiAdminSignIn" type="button">ადმინისტრატორის Google-ით შესვლა</button>
+  <div id="deiAdminControls" hidden>
+    <div class="form">
+      <label class="wide">მომხმარებლის Firebase მოთხოვნა<select id="deiPendingRequest"><option value="">მოთხოვნა აირჩიე</option></select></label>
+      <label class="wide">არსებული T1 მომხმარებელი<select id="deiLegacyUser"><option value="">მომხმარებელი აირჩიე</option></select></label>
+      <label class="wide">მფლობელობის გადამოწმების ჩანაწერი<input id="deiVerificationReference" maxlength="200" placeholder="მაგ. პირადად გადამოწმდა 2026-10-15"></label>
+    </div>
+    <label class="wide"><input id="deiOwnershipVerified" type="checkbox"> დამოუკიდებლად გადავამოწმე, რომ ეს Google ანგარიში სწორედ ამ T1 მომხმარებელს ეკუთვნის.</label>
+    <div class="actions"><button id="deiRefreshRequests" type="button">მოთხოვნების განახლება</button><button id="deiIssueClaim" class="primary" type="button">ერთჯერადი მიბმის კოდის გაცემა</button><button id="deiAdminSignOut" type="button">Google ანგარიშის შეცვლა</button></div>
+  </div>
+  <p id="deiAdminMessage" class="notice" role="status">ადმინისტრატორის დადასტურებული Google ანგარიში საჭიროა.</p>
+  <pre id="deiClaimCode" class="dei-claim-code" hidden></pre>
+</section>
 <div class="panel">
 <h2 style="margin-top:0">＋ გადასახადის დამატება</h2>
 <form id="billForm" class="form">
@@ -34,18 +50,13 @@
 </div>
 <script>
 (function(){
-  const currentUser=String(localStorage.getItem('temoWorkTrackerUser')||'').trim();
-  const currentUserId=String(localStorage.getItem('temoWorkTrackerUserId')||'').trim();
-  const authorized=localStorage.getItem('temoWorkTrackerAuthorized')==='yes';
-  if(!authorized||!currentUserId){
-    document.body.innerHTML='<div style="font:16px Arial,sans-serif;background:#071117;color:#eef7f7;min-height:100vh;display:grid;place-items:center;text-align:center;padding:24px"><div><h2>შესვლა საჭიროა</h2><p>გადასახადების სანახავად ჯერ შედი TEMO ანგარიშში.</p><a href="./index.html" style="display:inline-block;padding:12px;border-radius:10px;background:#183445;color:white;text-decoration:none">შესვლაზე დაბრუნება</a></div></div>';
+  const ADMIN_KEY='temoWorkTrackerUser';
+  if(String(localStorage.getItem(ADMIN_KEY)||'').trim().toUpperCase()!=='TEMO'){
+    document.body.innerHTML='<div style="font:16px Arial,sans-serif;background:#071117;color:#eef7f7;min-height:100vh;display:grid;place-items:center;text-align:center;padding:24px"><div><h2>წვდომა შეზღუდულია</h2><p>ეს გვერდი განკუთვნილია ადმინისტრატორისთვის.</p><a href="./index.html" style="display:inline-block;padding:12px;border-radius:10px;background:#183445;color:white;text-decoration:none">მთავარზე დაბრუნება</a></div></div>';
     return;
   }
-  const $=id=>document.getElementById(id), KEY='temoPrivateBillsPrototypeV1:'+encodeURIComponent(currentUserId);
-  const LEGACY_KEY='temoPrivateBillsPrototypeV1';
-  if(currentUser.toUpperCase()==='TEMO'&&!localStorage.getItem(KEY)&&localStorage.getItem(LEGACY_KEY)){try{localStorage.setItem(KEY,localStorage.getItem(LEGACY_KEY));}catch(e){}}
+  const $=id=>document.getElementById(id), KEY='temoPrivateBillsPrototypeV1';
   let bills=[];try{bills=JSON.parse(localStorage.getItem(KEY)||'[]');if(!Array.isArray(bills))bills=[];}catch(e){bills=[]}
-  const userLabel=document.getElementById('billUserName');if(userLabel)userLabel.textContent=currentUser;
   const money=n=>'€'+(Number(n)||0).toLocaleString('en-IE',{minimumFractionDigits:2,maximumFractionDigits:2});
   function save(){localStorage.setItem(KEY,JSON.stringify(bills));render();}
   function render(){
@@ -69,6 +80,6 @@
   render();
 })();
 </script>
-<script src="./dei-bill-sync.js"></script><script>if(window.DEIBillSync){const root=document.getElementById("deiCloudBill");if(root)window.DEIBillSync.mount(root)}</script>
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script><script src="./dei-bill-sync.js"></script><script src="./dei-admin-link.js"></script><script>if(window.DEIBillSync){const root=document.getElementById("deiCloudBill");if(root)window.DEIBillSync.mount(root)}</script>
 </body>
 </html>
