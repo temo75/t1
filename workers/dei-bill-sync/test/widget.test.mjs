@@ -33,6 +33,9 @@ class FakeElement {
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../");
 const source = await readFile(path.join(rootDir, "dei-bill-sync.js"), "utf8");
 const pageHtml = await readFile(path.join(rootDir, "dei-bill.html"), "utf8");
+const appHtml = await readFile(path.join(rootDir, "index.html"), "utf8");
+assert.match(appHtml, /data-action="openDeiBills">⚡ DEI — დენის ქვითრები/);
+assert.match(appHtml, /action===\x27openDeiBills\x27\)\{closeMenu\(\);location\.href=\x27\.\/dei-bill\.html\x27/);
 assert.match(pageHtml, /\.dei-sync-primary\{[^}]*min-height:58px;width:100%/);
 
 const idToken = "firebase-id-token-fixture";
