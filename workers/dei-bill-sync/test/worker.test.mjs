@@ -51,6 +51,10 @@ const env = {
   DEI_KV: kv
 };
 const requestedPages = [];
+let failOAuthExchange = false;
+await kv.put("gmail_refresh_token", "legacy-global-token-fixture");
+await kv.put("latest_bill", JSON.stringify({ totalEUR: "999.00", paymentStatus: "due" }));
+await kv.put("bill_history", JSON.stringify([{ gmailMessageId: "legacy-shared", totalEUR: "999.00", paymentStatus: "due" }]));
 const gmailBodies = {
   "a-current": "Πληρωτέο ποσό: 77,00 € Προθεσμία πληρωμής έως 26/10/2026 Οφειλή",
   "a-paid": "Ο λογαριασμός εξοφλήθηκε. Total amount: 20,00 €",
@@ -64,6 +68,7 @@ globalThis.fetch = async (input, init = {}) => {
   if (url.href === "https://oauth2.googleapis.com/token") {
     const form = new URLSearchParams(init.body);
     if (form.get("grant_type") === "authorization_code") {
+      if (failOAuthExchange) return new Response(JSON.stringify({ error: "fixture denial" }), { status: 400 });
       const identity = form.get("code").replace("code-", "");
       return new Response(JSON.stringify({ access_token: "access-" + identity, refresh_token: "refresh-" + identity }), { status: 200 });
     }
@@ -172,6 +177,24 @@ async function connectGmail(uid, headers, identity) {
 await connectGmail("firebase-A", headersA, "A");
 await connectGmail("firebase-B", headersB, "B");
 
+const deniedStart = await worker.fetch(request("/oauth/start", {
+  method: "POST", headers: headersA, body: JSON.stringify({ returnTo: "https://temo75.github.io/t1/dei-bill.html" })
+}), env);
+const deniedState = new URL((await json(deniedStart)).authorizationUrl).searchParams.get("state");
+const deniedCallback = await worker.fetch(request("/oauth/callback?error=access_denied&state=" + deniedState), env);
+assert.equal(deniedCallback.status, 302, "Google OAuth denial returns to T1");
+assert.match(deniedCallback.headers.get("location"), /dei_gmail=denied/);
+
+const failedStart = await worker.fetch(request("/oauth/start", {
+  method: "POST", headers: headersA, body: JSON.stringify({ returnTo: "https://temo75.github.io/t1/dei-bill.html" })
+}), env);
+const failedState = new URL((await json(failedStart)).authorizationUrl).searchParams.get("state");
+failOAuthExchange = true;
+const failedCallback = await worker.fetch(request("/oauth/callback?code=code-A-failure&state=" + failedState), env);
+failOAuthExchange = false;
+assert.equal(failedCallback.status, 302, "Google token exchange errors do not expose provider data");
+assert.match(failedCallback.headers.get("location"), /dei_gmail=error/);
+
 const userHash = async uid => Buffer.from(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(uid))).toString("hex");
 const userKey = async (uid, suffix) => "dei:user:" + await userHash(uid) + ":" + suffix;
 const encryptedA = await kv.get(await userKey("firebase-A", "gmail_refresh_token"));
@@ -191,6 +214,11 @@ assert.equal((await json(syncA2)).complete, true);
 const syncB = await worker.fetch(request("/api/sync?uid=firebase-A", { method: "POST", headers: headersB, body: JSON.stringify({ uid: "firebase-A" }) }), env);
 assert.equal(syncB.status, 200, "browser-supplied UID is ignored in favor of signed UID");
 assert.equal((await json(syncB)).bill.totalEUR, "10.00");
+
+const latestA = await json(await worker.fetch(request("/api/latest?uid=firebase-B"), { headers: headersA }), env);
+assert.equal(latestA.bill.totalEUR, "77.00", "latest endpoint derives user A from the signed token");
+const latestB = await json(await worker.fetch(request("/api/latest?uid=firebase-A"), { headers: headersB }), env);
+assert.equal(latestB.bill.totalEUR, "10.00", "latest endpoint ignores a browser-supplied UID");
 
 const historyA = await json(await worker.fetch(request("/api/history?uid=firebase-B", { headers: headersA }), env));
 const historyB = await json(await worker.fetch(request("/api/history?uid=firebase-A", { headers: headersB }), env));
@@ -213,7 +241,7 @@ assert.equal(statusA.gmailConnected, true);
 assert.equal(statusA.linked, true);
 const statusB = await json(await worker.fetch(request("/api/status", { headers: headersB }), env));
 assert.equal(statusB.gmailConnected, true);
-assert.notEqual(await kv.get("gmail_refresh_token"), encryptedA, "legacy global token is not used");
+assert.equal(await kv.get("gmail_refresh_token"), "legacy-global-token-fixture", "legacy global Gmail token is neither overwritten nor used");
 await kv.put("latest_bill", JSON.stringify({ totalEUR: "999.00", paymentStatus: "due" }));
 await kv.put("bill_history:old-admin-record", JSON.stringify({ gmailMessageId: "old-admin-record", totalEUR: "999.00", paymentStatus: "due" }));
 const isolatedA = await json(await worker.fetch(request("/api/history", { headers: headersA }), env));
