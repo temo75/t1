@@ -167,6 +167,7 @@
       const user = firebaseAuth?.currentUser;
       if (!user) {
         authPanel.hidden = false; linkPanel.hidden = true; details.hidden = true; connect.hidden = true; sync.hidden = true;
+        signIn.hidden = false; createAccount.hidden = false; email.hidden = false; password.hidden = false;
         signOut.hidden = true; verifyEmail.hidden = true;
         setStatus("Firebase ანგარიშში შესვლა საჭიროა", false);
         message.textContent = "შესვლა/ანგარიშის შექმნა მხოლოდ DEI გვერდზე მოქმედებს; T1-ის სხვა შესვლას არ ცვლის.";
