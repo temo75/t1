@@ -1,19 +1,15 @@
 /**
- * TEMO DEI bill sync — Cloudflare Worker
- * Required binding: DEI_KV (KV namespace)
- * Required variables/secrets:
- *   GOOGLE_CLIENT_ID       (text variable)
- *   GOOGLE_CLIENT_SECRET   (secret)
- *   T1 bill access uses short-lived sessions issued after Google OAuth.
- * OAuth redirect URI:
- *   https://dei-bill-sync.temo75elia.workers.dev/oauth/callback
- * Optional: configure a Cron Trigger every 3 hours.
+ * Per-user TEMO DEI bill sync. All private state is keyed by verified Firebase UID.
+ * Firebase ID tokens are verified against Google's public Secure Token keys.
  */
+import { verifyFirebaseIdToken } from "./firebase-auth.mjs";
 
 const GOOGLE_AUTH = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN = "https://oauth2.googleapis.com/token";
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
-const GOOGLE_USERINFO = "https://www.googleapis.com/oauth2/v2/userinfo";
+const OAUTH_REDIRECT_URI = "https://dei-bill-sync.temo75elia.workers.dev/oauth/callback";
+const DEI_USER_PREFIX = "dei:user:";
+const DEI_CONNECTED_PREFIX = "dei:connected:";
 const ALLOWED_ORIGIN = "https://temo75.github.io";
 // Search broadly across DEI mail, then identify invoice-like messages in code.
  // in:anywhere also allows older messages still present in Spam/Trash to be considered.
@@ -174,27 +170,91 @@ async function sha256Hex(value) {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(value)));
   return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
 }
-async function getT1Session(request, env) {
-  const token = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
-  if (!token || !env.DEI_KV) return null;
-  const value = await env.DEI_KV.get("t1_session:" + await sha256Hex(token));
-  if (!value) return null;
-  try {
-    const session = JSON.parse(value);
-    return session && /^[a-f0-9]{64}$/.test(session.emailKey || "") ? session : null;
-  } catch { return null; }
+function base64UrlBytes(value) {
+  const normalized = String(value || "").replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized + "=".repeat((4 - normalized.length % 4) % 4);
+  const binary = atob(padded);
+  return Uint8Array.from(binary, char => char.charCodeAt(0));
+}
+function base64UrlEncode(bytes) {
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+async function userPrefix(uid) { return DEI_USER_PREFIX + await sha256Hex(uid) + ":"; }
+async function userKey(uid, key) { return await userPrefix(uid) + key; }
+async function authenticatedUid(request, env) {
+  const match = String(request.headers.get("authorization") || "").match(/^Bearer\s+(\S+)$/i);
+  if (!match) return null;
+  const claims = await verifyFirebaseIdToken(match[1], env.FIREBASE_PROJECT_ID);
+  return claims?.sub || null;
+}
+async function linkedT1Account(env, uid) {
+  return await env.DEI_KV.get(await userKey(uid, "legacy_account_link"), "json");
+}
+async function verifiedLinkAdmin(request, env) {
+  const bearer = String(request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+  if (env.LEGACY_LINK_ADMIN_KEY && constantTimeEqual(bearer, env.LEGACY_LINK_ADMIN_KEY)) return { type: "key" };
+  if (!env.LEGACY_LINK_ADMIN_UID || !bearer) return null;
+  const claims = await verifyFirebaseIdToken(bearer, env.FIREBASE_PROJECT_ID);
+  if (claims?.sub === env.LEGACY_LINK_ADMIN_UID && claims.email_verified === true) return { type: "firebase", uid: claims.sub };
+  return null;
+}
+async function pendingLinkRequest(env, uid) {
+  return await env.DEI_KV.get("account_link_request:" + await sha256Hex(uid), "json");
+}
+function t1LinkRequired() {
+  return json({ ok: false, error: "A verified existing T1 account link is required", code: "T1_ACCOUNT_LINK_REQUIRED" }, 403);
 }
 function assertConfig(env) {
   const missing = [];
   if (!env.GOOGLE_CLIENT_ID) missing.push("GOOGLE_CLIENT_ID");
   if (!env.GOOGLE_CLIENT_SECRET) missing.push("GOOGLE_CLIENT_SECRET");
   if (!env.DEI_KV) missing.push("DEI_KV binding");
+  if (!env.FIREBASE_PROJECT_ID) missing.push("FIREBASE_PROJECT_ID");
+  if (!env.LEGACY_LINK_ADMIN_UID) missing.push("LEGACY_LINK_ADMIN_UID for the browser admin panel");
+  if (!env.DEI_TOKEN_ENCRYPTION_KEY) missing.push("DEI_TOKEN_ENCRYPTION_KEY");
   return missing;
 }
-
-async function refreshAccessToken(env, emailKey) {
-  const refreshToken = await env.DEI_KV.get("gmail_refresh_token:" + emailKey);
-  if (!refreshToken) throw new Error("GMAIL_NOT_CONNECTED");
+function firebaseClientConfig(env) {
+  return {
+    apiKey: env.FIREBASE_API_KEY || "",
+    authDomain: env.FIREBASE_AUTH_DOMAIN || "",
+    projectId: env.FIREBASE_PROJECT_ID || "",
+    appId: env.FIREBASE_APP_ID || "",
+  };
+}
+async function encryptionKey(env) {
+  let raw;
+  try { raw = base64UrlBytes(env.DEI_TOKEN_ENCRYPTION_KEY || ""); } catch { raw = new Uint8Array(); }
+  if (raw.length !== 32) throw new Error("TOKEN_ENCRYPTION_CONFIG_INVALID");
+  return crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt", "decrypt"]);
+}
+async function encryptRefreshToken(env, token) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await encryptionKey(env);
+  const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(token));
+  return "v1." + base64UrlEncode(iv) + "." + base64UrlEncode(new Uint8Array(encrypted));
+}
+async function decryptRefreshToken(env, value) {
+  const [version, ivPart, dataPart] = String(value || "").split(".");
+  if (version !== "v1" || !ivPart || !dataPart) throw new Error("TOKEN_CIPHERTEXT_INVALID");
+  const key = await encryptionKey(env);
+  const clear = await crypto.subtle.decrypt({ name: "AES-GCM", iv: base64UrlBytes(ivPart) }, key, base64UrlBytes(dataPart));
+  return new TextDecoder().decode(clear);
+}
+function constantTimeEqual(a, b) {
+  const left = new TextEncoder().encode(String(a || ""));
+  const right = new TextEncoder().encode(String(b || ""));
+  if (left.length !== right.length) return false;
+  let difference = 0;
+  for (let i = 0; i < left.length; i++) difference |= left[i] ^ right[i];
+  return difference === 0;
+}
+async function refreshAccessToken(env, uid) {
+  const encryptedToken = await env.DEI_KV.get(await userKey(uid, "gmail_refresh_token"));
+  if (!encryptedToken) throw new Error("GMAIL_NOT_CONNECTED");
+  const refreshToken = await decryptRefreshToken(env, encryptedToken);
   const form = new URLSearchParams({
     client_id: env.GOOGLE_CLIENT_ID,
     client_secret: env.GOOGLE_CLIENT_SECRET,
@@ -211,8 +271,8 @@ async function refreshAccessToken(env, emailKey) {
   return data.access_token;
 }
 
-async function gmailFetch(env, emailKey, path, accessToken = "") {
-  const token = accessToken || await refreshAccessToken(env, emailKey);
+async function gmailFetch(env, path, accessToken = "") {
+  const token = accessToken || await refreshAccessToken(env);
   const response = await fetch(`${GMAIL_API}${path}`, { headers: { authorization: `Bearer ${token}` } });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(`GMAIL_API_FAILED_${response.status}`);
@@ -232,10 +292,10 @@ function isLikelyInvoice(subject, bodyText) {
 const BILL_PREFIX = "bill_history:";
 const GMAIL_PAGE_SIZE = 20;
 
-async function listStoredBills(env, emailKey) {
-  const prefix = BILL_PREFIX + emailKey + ":";
+async function listStoredBills(env, uid) {
   const bills = [];
   let cursor;
+  const prefix = await userKey(uid, "bill:");
   do {
     const page = await env.DEI_KV.list({ prefix, limit: 1000, cursor });
     for (const key of page.keys || []) {
@@ -244,28 +304,18 @@ async function listStoredBills(env, emailKey) {
     }
     cursor = page.list_complete ? undefined : page.cursor;
   } while (cursor);
-  const legacy = await env.DEI_KV.get("bill_history:" + emailKey, "json");
-  if (Array.isArray(legacy)) {
-    const seen = new Set(bills.map(x => String(x.gmailMessageId)));
-    for (const bill of legacy) {
-      if (!bill?.gmailMessageId || seen.has(String(bill.gmailMessageId))) continue;
-      bills.push(bill);
-      seen.add(String(bill.gmailMessageId));
-      await env.DEI_KV.put(prefix + encodeURIComponent(String(bill.gmailMessageId)), JSON.stringify(bill));
-    }
-  }
   return [...new Map(bills.map(b => [String(b.gmailMessageId), b])).values()];
 }
 
-async function getLatestBill(env, emailKey, pageToken = "") {
-  const accessToken = await refreshAccessToken(env, emailKey);
+async function getLatestBill(env, uid, pageToken = "") {
+  const accessToken = await refreshAccessToken(env, uid);
   const tokenParam = pageToken ? "&pageToken=" + encodeURIComponent(pageToken) : "";
-  const list = await gmailFetch(env, emailKey, "/messages?q=" + encodeURIComponent(GMAIL_QUERY) + "&maxResults=" + GMAIL_PAGE_SIZE + tokenParam, accessToken);
+  const list = await gmailFetch(env, "/messages?q=" + encodeURIComponent(GMAIL_QUERY) + "&maxResults=" + GMAIL_PAGE_SIZE + tokenParam, accessToken);
   const messages = Array.isArray(list.messages) ? list.messages : [];
   let newest = null;
   for (const summary of messages) {
     if (!summary?.id) continue;
-    const full = await gmailFetch(env, emailKey, "/messages/" + encodeURIComponent(summary.id) + "?format=full", accessToken);
+    const full = await gmailFetch(env, "/messages/" + encodeURIComponent(summary.id) + "?format=full", accessToken);
     const headers = full.payload?.headers || [];
     const subject = headerValue(headers, "subject");
     const from = headerValue(headers, "from");
@@ -288,24 +338,23 @@ async function getLatestBill(env, emailKey, pageToken = "") {
       internalDate: timestamp,
     };
     if (bill.totalEUR === null && bill.dueDate === null) continue;
-    await env.DEI_KV.put(BILL_PREFIX + emailKey + ":" + encodeURIComponent(bill.gmailMessageId), JSON.stringify(bill));
+    await env.DEI_KV.put(await userKey(uid, "bill:" + encodeURIComponent(bill.gmailMessageId)), JSON.stringify(bill));
     if (!newest || bill.internalDate > newest.internalDate) newest = bill;
   }
-  const latestKey = "latest_bill:" + emailKey;
-  const existingLatest = await env.DEI_KV.get(latestKey, "json");
+  const existingLatest = await env.DEI_KV.get(await userKey(uid, "latest_bill"), "json");
   if (newest && (!existingLatest || newest.internalDate >= Number(existingLatest.internalDate || 0))) {
-    await env.DEI_KV.put(latestKey, JSON.stringify(newest));
+    await env.DEI_KV.put(await userKey(uid, "latest_bill"), JSON.stringify(newest));
   }
-  const allBills = await listStoredBills(env, emailKey);
-  const latest = await env.DEI_KV.get(latestKey, "json") || newest || {
+  const allBills = await listStoredBills(env, uid);
+  const latest = await env.DEI_KV.get(await userKey(uid, "latest_bill"), "json") || newest || {
     found: false, message: "No parseable DEI invoice found in scanned messages",
     emailDate: "", totalEUR: null, dueDate: null, paymentStatus: "unknown", fetchedAt: new Date().toISOString()
   };
   return { ...latest, historyCount: allBills.length, scannedInvoices: messages.length, nextPageToken: list.nextPageToken || null };
 }
 
-async function getBillHistory(env, emailKey) {
-  const bills = await listStoredBills(env, emailKey);
+async function getBillHistory(env, uid) {
+  const bills = await listStoredBills(env, uid);
   const totalPaid = bills.reduce((sum, bill) => {
     const amount = numericBillAmount(bill.totalEUR);
     return bill.paymentStatus === "paid" && amount !== null ? sum + amount : sum;
@@ -343,13 +392,10 @@ function publicBill(bill) {
   if (!bill || typeof bill !== "object") return null;
   return {
     found: Boolean(bill.found),
-    subject: String(bill.subject || ""),
-    from: String(bill.from || ""),
     emailDate: String(bill.emailDate || ""),
     totalEUR: bill.totalEUR ?? null,
     dueDate: bill.dueDate ?? null,
     paymentStatus: bill.paymentStatus || "unknown",
-    snippet: String(bill.snippet || "").slice(0, 300),
     fetchedAt: bill.fetchedAt || null,
     message: bill.message || null,
   };
@@ -368,138 +414,223 @@ export default {
     const url = new URL(request.url);
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders() });
     if (request.method !== "GET" && request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "GET, POST, OPTIONS" });
+    if (url.origin === "null") return json({ ok: false, error: "Invalid request origin" }, 400);
 
     try {
       if (url.pathname === "/health") {
         const missing = assertConfig(env);
-        const connected = Boolean(env.DEI_KV && (await env.DEI_KV.list({ prefix: "gmail_refresh_token:", limit: 1 })).keys?.length);
-        return json({ ok: true, service: "TEMO DEI bill sync", configurationComplete: missing.length === 0, missing, oauthConfigured: Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET), kvConfigured: Boolean(env.DEI_KV), gmailConnected: connected });
+        return json({ ok: true, service: "TEMO per-user DEI bill sync", configurationComplete: missing.length === 0, missing });
       }
-
+      if (url.pathname === "/api/config") {
+        const config = firebaseClientConfig(env);
+        if (!config.apiKey || !config.authDomain || !config.projectId || !config.appId) {
+          return json({ ok: false, error: "Firebase client configuration is incomplete" }, 503);
+        }
+        return json({ ok: true, firebaseConfig: config });
+      }
+      if (url.pathname === "/api/account/link-request") {
+        if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "POST, OPTIONS" });
+        if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
+        const bearer = String(request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+        const claims = await verifyFirebaseIdToken(bearer, env.FIREBASE_PROJECT_ID);
+        const uid = claims?.sub || null;
+        if (!uid) return json({ ok: false, error: "A valid Firebase ID token is required" }, 401);
+        if (claims.email_verified !== true || !claims.email) return json({ ok: false, error: "Verify the Firebase account email before requesting a link" }, 403);
+        if ((await linkedT1Account(env, uid))?.legacyAccountId) return json({ ok: false, error: "This Firebase account is already linked" }, 409);
+        const requestedAt = new Date().toISOString();
+        await env.DEI_KV.put("account_link_request:" + await sha256Hex(uid), JSON.stringify({
+          firebaseUid: uid, email: String(claims.email).slice(0, 254), requestedAt
+        }), { expirationTtl: 7 * 24 * 60 * 60 });
+        return json({ ok: true, requested: true, requestedAt });
+      }
+      if (url.pathname === "/api/admin/link-requests") {
+        if (request.method !== "GET") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "GET, OPTIONS" });
+        if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
+        if (!(await verifiedLinkAdmin(request, env))) return json({ ok: false, error: "Unauthorized" }, 401);
+        const requests = [];
+        let cursor;
+        do {
+          const page = await env.DEI_KV.list({ prefix: "account_link_request:", limit: 1000, cursor });
+          for (const key of page.keys || []) {
+            const value = await env.DEI_KV.get(key.name, "json");
+            if (value?.firebaseUid && value?.email && value?.requestedAt) requests.push(value);
+          }
+          cursor = page.list_complete ? undefined : page.cursor;
+        } while (cursor);
+        requests.sort((a, b) => a.requestedAt.localeCompare(b.requestedAt));
+        return json({ ok: true, requests });
+      }
+      if (url.pathname === "/api/admin/link-claim") {
+        if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "POST, OPTIONS" });
+        const admin = await verifiedLinkAdmin(request, env);
+        if (!admin) return json({ ok: false, error: "Unauthorized" }, 401);
+        const body = await request.json().catch(() => ({}));
+        const legacyAccountId = String(body.legacyAccountId || "").trim();
+        const firebaseUid = String(body.firebaseUid || "").trim();
+        const verificationMethod = String(body.verificationMethod || "");
+        const verificationReference = String(body.verificationReference || "").trim();
+        if (!legacyAccountId || legacyAccountId.length > 200 || /[\u0000-\u001f]/.test(legacyAccountId) ||
+            !firebaseUid || firebaseUid.length > 128 || /[\u0000-\u001f]/.test(firebaseUid) ||
+            !["in_person", "known_phone", "existing_verified_channel", "owner_review"].includes(verificationMethod) ||
+            !verificationReference || verificationReference.length > 200 || body.ownershipVerified !== true) {
+          return json({ ok: false, error: "A verified account mapping and audit reference are required" }, 400);
+        }
+        if (admin.type === "firebase") {
+          const pending = await pendingLinkRequest(env, firebaseUid);
+          if (!pending || pending.firebaseUid !== firebaseUid) return json({ ok: false, error: "No pending request exists for this Firebase account" }, 409);
+        }
+        const claimCode = randomHex(32);
+        await env.DEI_KV.put("account_link_claim:" + await sha256Hex(claimCode), JSON.stringify({
+          firebaseUid, legacyAccountId, verificationMethod, verificationReference, issuedAt: new Date().toISOString()
+        }), { expirationTtl: 7 * 24 * 60 * 60 });
+        if (admin.type === "firebase") await env.DEI_KV.delete("account_link_request:" + await sha256Hex(firebaseUid));
+        return json({ ok: true, claimCode, expiresInSeconds: 7 * 24 * 60 * 60 });
+      }
+      if (url.pathname === "/api/account/link") {
+        if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "POST, OPTIONS" });
+        if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
+        const bearer = String(request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+        const claims = await verifyFirebaseIdToken(bearer, env.FIREBASE_PROJECT_ID);
+        const uid = claims?.sub || null;
+        if (!uid) return json({ ok: false, error: "A valid Firebase ID token is required" }, 401);
+        if (claims.email_verified !== true) return json({ ok: false, error: "Verify the Firebase account email before linking" }, 403);
+        const body = await request.json().catch(() => ({}));
+        const claimCode = String(body.claimCode || "");
+        if (!/^[a-f0-9]{64}$/i.test(claimCode)) return json({ ok: false, error: "Invalid or expired link code" }, 401);
+        const claimKey = "account_link_claim:" + await sha256Hex(claimCode);
+        const claim = await env.DEI_KV.get(claimKey, "json");
+        if (!claim || claim.firebaseUid !== uid) return json({ ok: false, error: "Invalid or expired link code" }, 401);
+        const linkKey = await userKey(uid, "legacy_account_link");
+        const existing = await env.DEI_KV.get(linkKey, "json");
+        if (existing && existing.legacyAccountId !== claim.legacyAccountId) {
+          return json({ ok: false, error: "This Firebase account is already linked" }, 409);
+        }
+        await env.DEI_KV.put(linkKey, JSON.stringify({
+          legacyAccountId: claim.legacyAccountId,
+          verificationMethod: claim.verificationMethod,
+          verificationReference: claim.verificationReference,
+          linkedAt: existing?.linkedAt || new Date().toISOString()
+        }));
+        await env.DEI_KV.delete(claimKey);
+        return json({ ok: true, linked: true });
+      }
       if (url.pathname === "/oauth/start") {
+        if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "POST, OPTIONS" });
         const missing = assertConfig(env);
-        if (missing.length) return json({ ok: false, error: "Missing required Worker configuration", missing }, 500);
-        const stateBytes = crypto.getRandomValues(new Uint8Array(32));
-        const state = Array.from(stateBytes, byte => byte.toString(16).padStart(2, "0")).join("");
-        const returnTo = safeReturnTo(url.searchParams.get("return_to"));
+        if (missing.length) return json({ ok: false, error: "Worker configuration is incomplete", missing }, 503);
+        const uid = await authenticatedUid(request, env);
+        if (!uid) return json({ ok: false, error: "A valid Firebase ID token is required" }, 401);
+        if (!(await linkedT1Account(env, uid))?.legacyAccountId) return t1LinkRequired();
+        const body = await request.json().catch(() => ({}));
+        const returnTo = safeReturnTo(body.returnTo);
         if (!returnTo) return json({ ok: false, error: "Invalid T1 return URL" }, 400);
-        await env.DEI_KV.put("oauth_state:" + state, JSON.stringify({ returnTo }), { expirationTtl: 600 });
-        const redirectUri = `${url.origin}/oauth/callback`;
+        const state = randomHex(32);
+        await env.DEI_KV.put("oauth_state:" + await sha256Hex(state), JSON.stringify({ uid, returnTo }), { expirationTtl: 10 * 60 });
         const auth = new URL(GOOGLE_AUTH);
         auth.search = new URLSearchParams({
           client_id: env.GOOGLE_CLIENT_ID,
-          redirect_uri: redirectUri,
+          redirect_uri: OAUTH_REDIRECT_URI,
           response_type: "code",
-          scope: "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email",
+          scope: "https://www.googleapis.com/auth/gmail.readonly",
           access_type: "offline",
-          prompt: "consent",
+          prompt: "select_account",
           include_granted_scopes: "true",
           state,
         }).toString();
-        return Response.redirect(auth.toString(), 302);
+        return json({ ok: true, authorizationUrl: auth.toString() });
       }
-
       if (url.pathname === "/oauth/callback") {
         const missing = assertConfig(env);
-        if (missing.length) return html(`<h2>Worker configuration is incomplete.</h2><p>Missing: ${escapeHtml(missing.join(", "))}</p>`, 500);
+        if (missing.length) return html("<h2>Worker configuration is incomplete.</h2>", 503);
         const code = url.searchParams.get("code");
         const state = url.searchParams.get("state");
-        const denied = url.searchParams.get("error");
-        if (denied) return html(`<h2>Google authorization was not completed.</h2><p>${escapeHtml(denied)}</p>`, 400);
-        const stateValue = state ? await env.DEI_KV.get("oauth_state:" + state) : null;
-        let oauthState = null;
-        try { oauthState = stateValue ? JSON.parse(stateValue) : null; } catch { oauthState = null; }
-        if (!code || !state || !oauthState?.returnTo) {
-          return html("<h2>Authorization link is invalid or expired.</h2><p>Open T1 and connect Gmail again.</p>", 400);
+        const stateKey = state ? "oauth_state:" + await sha256Hex(state) : "";
+        const stateRecord = stateKey ? await env.DEI_KV.get(stateKey, "json") : null;
+        if (!stateRecord?.uid || !safeReturnTo(stateRecord.returnTo)) {
+          return html("<h2>Authorization state is invalid or expired. Return to T1 and try again.</h2>", 400);
         }
-        await env.DEI_KV.delete("oauth_state:" + state);
-        const redirectUri = `${url.origin}/oauth/callback`;
-        const form = new URLSearchParams({ code, client_id: env.GOOGLE_CLIENT_ID, client_secret: env.GOOGLE_CLIENT_SECRET, redirect_uri: redirectUri, grant_type: "authorization_code" });
+        // Consume state before calling Google so a callback cannot be replayed.
+        await env.DEI_KV.delete(stateKey);
+        const destination = new URL(stateRecord.returnTo);
+        if (!(await linkedT1Account(env, stateRecord.uid))?.legacyAccountId) {
+          destination.hash = new URLSearchParams({ dei_gmail: "link_required" }).toString();
+          return Response.redirect(destination.toString(), 302);
+        }
+        if (url.searchParams.get("error")) {
+          destination.hash = new URLSearchParams({ dei_gmail: "denied" }).toString();
+          return Response.redirect(destination.toString(), 302);
+        }
+        if (!code) return html("<h2>Google did not return an authorization code.</h2>", 400);
+        const form = new URLSearchParams({
+          code, client_id: env.GOOGLE_CLIENT_ID, client_secret: env.GOOGLE_CLIENT_SECRET,
+          redirect_uri: OAUTH_REDIRECT_URI, grant_type: "authorization_code"
+        });
         const response = await fetch(GOOGLE_TOKEN, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: form });
         const data = await response.json().catch(() => ({}));
-        if (!response.ok || !data.access_token) return html("<h2>Google authorization failed.</h2><p>Verify the OAuth client and exact redirect URI in Google Cloud. Do not expose secrets.</p>", 502);
-        const profileResponse = await fetch(GOOGLE_USERINFO, { headers: { authorization: "Bearer " + data.access_token } });
-        const profile = await profileResponse.json().catch(() => ({}));
-        const email = String(profile.email || "").trim().toLowerCase();
-        if (!profileResponse.ok || !email || profile.verified_email === false) {
-          return html("<h2>Google did not provide a verified account email.</h2><p>Check Google account permissions and try connecting again.</p>", 502);
+        if (!response.ok || !data.access_token) {
+          destination.hash = new URLSearchParams({ dei_gmail: "error" }).toString();
+          return Response.redirect(destination.toString(), 302);
         }
-        const emailKey = await sha256Hex(email);
-        const refreshKey = "gmail_refresh_token:" + emailKey;
+        const refreshKey = await userKey(stateRecord.uid, "gmail_refresh_token");
         if (data.refresh_token) {
-          await env.DEI_KV.put(refreshKey, data.refresh_token);
+          await env.DEI_KV.put(refreshKey, await encryptRefreshToken(env, data.refresh_token));
         } else if (!(await env.DEI_KV.get(refreshKey))) {
-          return html("<h2>Google did not return a refresh token.</h2><p>Revoke this app's access in Google Account security, then open /oauth/start again and approve access.</p>", 400);
+          destination.hash = new URLSearchParams({ dei_gmail: "missing_refresh" }).toString();
+          return Response.redirect(destination.toString(), 302);
         }
-        await env.DEI_KV.put("gmail_connected_at:" + emailKey, new Date().toISOString());
-        const grant = randomHex(32);
-        await env.DEI_KV.put("oauth_grant:" + await sha256Hex(grant), JSON.stringify({ returnTo: oauthState.returnTo, emailKey }), { expirationTtl: 180 });
-        const destination = new URL(oauthState.returnTo);
-        destination.hash = new URLSearchParams({ dei_code: grant }).toString();
+        const stateKeyForUser = await userKey(stateRecord.uid, "sync_status");
+        await env.DEI_KV.put(stateKeyForUser, JSON.stringify({ gmailConnectedAt: new Date().toISOString(), lastSyncAt: null, lastSyncStatus: "not_synced" }));
+        await env.DEI_KV.put(DEI_CONNECTED_PREFIX + await sha256Hex(stateRecord.uid), stateRecord.uid);
+        destination.hash = new URLSearchParams({ dei_gmail: "connected" }).toString();
         return Response.redirect(destination.toString(), 302);
       }
-
-      if (url.pathname === "/api/session/exchange") {
-        if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "POST, OPTIONS" });
-        if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
-        if (request.headers.get("origin") !== ALLOWED_ORIGIN) return json({ ok: false, error: "Forbidden" }, 403);
-        const body = await request.json().catch(() => ({}));
-        const grant = String(body.code || "");
-        if (!/^[a-f0-9]{64}$/i.test(grant)) return json({ ok: false, error: "Invalid or expired authorization code" }, 401);
-        const grantKey = "oauth_grant:" + await sha256Hex(grant);
-        const grantValue = await env.DEI_KV.get(grantKey);
-        if (!grantValue) return json({ ok: false, error: "Invalid or expired authorization code" }, 401);
-        await env.DEI_KV.delete(grantKey);
-        let grantData;
-        try { grantData = JSON.parse(grantValue); } catch { grantData = null; }
-        if (!grantData?.emailKey || !/^[a-f0-9]{64}$/.test(grantData.emailKey)) return json({ ok: false, error: "Invalid or expired authorization code" }, 401);
-        const sessionToken = randomHex(32);
-        const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString();
-        await env.DEI_KV.put("t1_session:" + await sha256Hex(sessionToken), JSON.stringify({ emailKey: grantData.emailKey }), { expirationTtl: 8 * 60 * 60 });
-        return json({ ok: true, sessionToken, expiresAt });
-      }
-
       if (url.pathname === "/api/status") {
-        const session = await getT1Session(request, env);
-        const latest = session && env.DEI_KV ? await env.DEI_KV.get("latest_bill:" + session.emailKey, "json") : null;
-        return json({ ok: true, gmailConnected: Boolean(session && env.DEI_KV && await env.DEI_KV.get("gmail_refresh_token:" + session.emailKey)), lastFetchedAt: latest?.fetchedAt || null });
+        const uid = await authenticatedUid(request, env);
+        if (!uid) return json({ ok: false, error: "A valid Firebase ID token is required" }, 401);
+        const link = await linkedT1Account(env, uid);
+        if (!link?.legacyAccountId) return json({ ok: true, linked: false, gmailConnected: false, syncStatus: "account_link_required", lastSyncAt: null });
+        const refresh = await env.DEI_KV.get(await userKey(uid, "gmail_refresh_token"));
+        const status = await env.DEI_KV.get(await userKey(uid, "sync_status"), "json");
+        const latest = await env.DEI_KV.get(await userKey(uid, "latest_bill"), "json");
+        return json({ ok: true, linked: true, t1AccountId: link.legacyAccountId, gmailConnected: Boolean(refresh), lastFetchedAt: latest?.fetchedAt || null, syncStatus: status?.lastSyncStatus || "not_synced", lastSyncAt: status?.lastSyncAt || null });
       }
-
       if (url.pathname === "/api/sync") {
         if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "POST, OPTIONS" });
         if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
-        const sessionToken = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
-        const session = await getT1Session(request, env);
-        if (!sessionToken || !session) return json({ ok: false, error: "Unauthorized" }, 401);
+        const uid = await authenticatedUid(request, env);
+        if (!uid) return json({ ok: false, error: "A valid Firebase ID token is required" }, 401);
+        if (!(await linkedT1Account(env, uid))?.legacyAccountId) return t1LinkRequired();
         let body = {};
         try { body = await request.json(); } catch { return json({ ok: false, error: "Invalid JSON body" }, 400); }
-        const cursorKey = "sync_cursor:" + await sha256Hex(sessionToken);
+        const cursorKey = await userKey(uid, "sync_cursor");
         if (!body.continue) await env.DEI_KV.delete(cursorKey);
         const pageToken = body.continue ? await env.DEI_KV.get(cursorKey) : null;
-        const result = await getLatestBill(env, session.emailKey, pageToken || "");
-        if (result.nextPageToken) await env.DEI_KV.put(cursorKey, result.nextPageToken, { expirationTtl: 3600 });
+        const result = await getLatestBill(env, uid, pageToken || "");
+        if (result.nextPageToken) await env.DEI_KV.put(cursorKey, result.nextPageToken, { expirationTtl: 24 * 60 * 60 });
         else await env.DEI_KV.delete(cursorKey);
-        return json({
-          ok: true, bill: publicBill(result), cached: false, scannedCount: result.scannedInvoices,
-          historyCount: result.historyCount, complete: !result.nextPageToken
-        });
+        await env.DEI_KV.put(await userKey(uid, "sync_status"), JSON.stringify({
+          gmailConnectedAt: (await env.DEI_KV.get(await userKey(uid, "sync_status"), "json"))?.gmailConnectedAt || null,
+          lastSyncAt: new Date().toISOString(), lastSyncStatus: result.nextPageToken ? "in_progress" : "complete"
+        }));
+        return json({ ok: true, bill: publicBill(result), cached: false, scannedCount: result.scannedInvoices, historyCount: result.historyCount, complete: !result.nextPageToken });
       }
       if (url.pathname === "/api/history") {
         if (request.method !== "GET") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "GET, OPTIONS" });
         if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
-        const session = await getT1Session(request, env);
-        if (!session) return json({ ok: false, error: "Unauthorized" }, 401);
-        return json({ ok: true, ...(await getBillHistory(env, session.emailKey)) });
+        const uid = await authenticatedUid(request, env);
+        if (!uid) return json({ ok: false, error: "A valid Firebase ID token is required" }, 401);
+        if (!(await linkedT1Account(env, uid))?.legacyAccountId) return t1LinkRequired();
+        return json({ ok: true, ...(await getBillHistory(env, uid)) });
       }
-
       if (url.pathname === "/api/latest") {
         if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
-        const session = await getT1Session(request, env);
-        if (!session) return json({ ok: false, error: "Unauthorized" }, 401);
-        const cached = await env.DEI_KV.get("latest_bill:" + session.emailKey, "json");
-        return json({ ok: true, bill: publicBill(cached || { found: false, paymentStatus: "unknown" }), cached: true });
+        const uid = await authenticatedUid(request, env);
+        if (!uid) return json({ ok: false, error: "A valid Firebase ID token is required" }, 401);
+        if (!(await linkedT1Account(env, uid))?.legacyAccountId) return t1LinkRequired();
+        const latest = await env.DEI_KV.get(await userKey(uid, "latest_bill"), "json");
+        return json({ ok: true, bill: publicBill(latest || { found: false, paymentStatus: "unknown" }), cached: true });
       }
-      return json({ service: "TEMO DEI bill sync", routes: ["/health", "/oauth/start", "/oauth/callback", "/api/status", "/api/session/exchange", "/api/sync", "/api/latest"], t1Page: "https://temo75.github.io/t1/dei-bill.html" });
+      return json({ service: "TEMO per-user DEI bill sync", routes: ["/health", "/api/config", "/api/account/link-request", "/api/admin/link-requests", "/api/admin/link-claim", "/api/account/link", "/oauth/start", "/oauth/callback", "/api/status", "/api/sync", "/api/latest", "/api/history"] });
     } catch (error) {
       const safe = safeError(error);
       return json({ ok: false, error: safe.message }, safe.status);
@@ -510,19 +641,27 @@ export default {
     ctx.waitUntil((async () => {
       let cursor;
       do {
-        const page = await env.DEI_KV.list({ prefix: "gmail_refresh_token:", limit: 1000, cursor });
-        for (const item of page.keys || []) {
-          const emailKey = item.name.slice("gmail_refresh_token:".length);
-          if (!/^[a-f0-9]{64}$/.test(emailKey)) continue;
-          const cursorKey = "scheduled_sync_cursor:" + emailKey;
+        const page = await env.DEI_KV.list({ prefix: DEI_CONNECTED_PREFIX, limit: 1000, cursor });
+        for (const key of page.keys || []) {
+          const uid = await env.DEI_KV.get(key.name);
+          if (!uid) continue;
           try {
-            const pageToken = await env.DEI_KV.get(cursorKey);
-            const result = await getLatestBill(env, emailKey, pageToken || "");
-            if (result.nextPageToken) await env.DEI_KV.put(cursorKey, result.nextPageToken);
-            else await env.DEI_KV.delete(cursorKey);
-          } catch (error) {
-            // Keep other connected accounts syncing if one account has a temporary error.
-            console.error("DEI scheduled sync failed for account key", emailKey, String(error?.message || error));
+            if (!(await linkedT1Account(env, uid))?.legacyAccountId) continue;
+            let pageToken = await env.DEI_KV.get(await userKey(uid, "scheduled_sync_cursor")) || "";
+            for (let count = 0; count < 5; count++) {
+              const result = await getLatestBill(env, uid, pageToken);
+              pageToken = result.nextPageToken || "";
+              if (!pageToken) break;
+            }
+            if (pageToken) await env.DEI_KV.put(await userKey(uid, "scheduled_sync_cursor"), pageToken, { expirationTtl: 7 * 24 * 60 * 60 });
+            else await env.DEI_KV.delete(await userKey(uid, "scheduled_sync_cursor"));
+            await env.DEI_KV.put(await userKey(uid, "sync_status"), JSON.stringify({
+              lastSyncAt: new Date().toISOString(), lastSyncStatus: pageToken ? "in_progress" : "complete"
+            }));
+          } catch {
+            await env.DEI_KV.put(await userKey(uid, "sync_status"), JSON.stringify({
+              lastSyncAt: new Date().toISOString(), lastSyncStatus: "error"
+            }));
           }
         }
         cursor = page.list_complete ? undefined : page.cursor;
@@ -530,4 +669,3 @@ export default {
     })());
   },
 };
-
