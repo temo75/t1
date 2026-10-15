@@ -156,36 +156,22 @@
     async function refresh(force = false) {
       const user = firebaseAuth?.currentUser;
       if (!user) {
-        authPanel.hidden = false; linkPanel.hidden = true; details.hidden = true; connect.hidden = true; sync.hidden = true;
+        authPanel.hidden = false; details.hidden = true; connect.hidden = false; sync.hidden = true;
         signIn.hidden = false; createAccount.hidden = false; email.hidden = false; password.hidden = false;
-        signOut.hidden = true; verifyEmail.hidden = true;
-        setStatus("Firebase ანგარიშში შესვლა საჭიროა", false);
-        message.textContent = "შესვლა/ანგარიშის შექმნა მხოლოდ DEI გვერდზე მოქმედებს; T1-ის სხვა შესვლას არ ცვლის.";
+        signOut.hidden = true;
+        setStatus("Firebase ავტორიზაცია საჭიროა", false);
+        message.textContent = "დააჭირე დიდ Google ღილაკს: აირჩიე ანგარიში, შემდეგ დაადასტურე მხოლოდ Gmail-ის წაკითხვის ნებართვა.";
         historyList.replaceChildren(); annualSummary.replaceChildren();
-        historySummary.textContent = "Firebase ანგარიშში შესვლის შემდეგ გამოჩნდება მხოლოდ შენი ქვითრები.";
+        historySummary.textContent = "შესვლის შემდეგ გამოჩნდება მხოლოდ ამ ანგარიშის DEI ქვითრები.";
         return;
       }
       authPanel.hidden = false; signIn.hidden = true; createAccount.hidden = true; signOut.hidden = false;
       email.hidden = true; password.hidden = true;
-      if (!user.emailVerified) {
-        verifyEmail.hidden = false; linkPanel.hidden = true; connect.hidden = true; sync.hidden = true;
-        setStatus("ელფოსტის დადასტურება საჭიროა", false);
-        message.textContent = "დადასტურე Firebase Auth-ის ელფოსტა, შემდეგ T1 ანგარიშის მიბმის კოდი გამოიყენე.";
-        return;
-      }
-      verifyEmail.hidden = true;
       const status = await api("/api/status");
-      if (!status.linked) {
-        linkPanel.hidden = false; connect.hidden = true; sync.hidden = true; details.hidden = true;
-        setStatus("T1 ანგარიშის მიბმა საჭიროა", false);
-        message.textContent = "ქვითრების სანახავად საჭიროა ადმინისტრატორის მიერ დადასტურებული ერთჯერადი მიბმის კოდი.";
-        return;
-      }
-      linkPanel.hidden = true; authPanel.hidden = false;
       connect.hidden = Boolean(status.gmailConnected); sync.hidden = !status.gmailConnected;
-      setStatus(status.gmailConnected ? "შენი Gmail ანგარიში დაკავშირებულია" : "T1 ანგარიში მიბმულია", true);
+      setStatus(status.gmailConnected ? "შენი Gmail ანგარიში დაკავშირებულია" : "Google ანგარიშში შესული ხარ", Boolean(status.gmailConnected));
       if (!status.gmailConnected) {
-        message.textContent = "დაკავშირება გამოიყენებს მხოლოდ შენ მიერ არჩეულ Google ანგარიშს და მხოლოდ Gmail-ის წაკითხვის ნებართვას.";
+        message.textContent = "დააჭირე დიდ ღილაკს და Google-ში აირჩიე Gmail ანგარიში. T1 ითხოვს მხოლოდ Gmail-ის წაკითხვის ნებართვას.";
         historyList.replaceChildren(); annualSummary.replaceChildren();
         historySummary.textContent = "Gmail ჯერ არ არის დაკავშირებული.";
         return;
