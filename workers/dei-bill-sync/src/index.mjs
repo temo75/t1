@@ -448,11 +448,6 @@ export default {
         const claimKey = "account_link_claim:" + await sha256Hex(claimCode);
         const claim = await env.DEI_KV.get(claimKey, "json");
         if (!claim || claim.firebaseUid !== uid) return json({ ok: false, error: "Invalid or expired link code" }, 401);
-        const claims = await verifyFirebaseIdToken(
-          String(request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").replace(/^Bearer\s+/i, ""),
-          env.FIREBASE_PROJECT_ID
-        );
-        if (claims?.email_verified !== true) return json({ ok: false, error: "Verify the Firebase account email before linking" }, 403);
         const linkKey = await userKey(uid, "legacy_account_link");
         const existing = await env.DEI_KV.get(linkKey, "json");
         if (existing && existing.legacyAccountId !== claim.legacyAccountId) {
