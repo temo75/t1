@@ -116,11 +116,13 @@ function extractAmount(text) {
 
 function extractPaymentStatus(text) {
   const value = String(text || "").toLocaleLowerCase("el");
-  if (/(εξοφλ|πληρώθηκε|καταβλήθηκε|paid|settled|fully\s+paid)/i.test(value)) return "paid";
-  if (/(οφειλ|ανεξόφλητ|πληρωτέο|πληρωμή\s+(?:έως|μέχρι)|amount\s+due|outstanding|to\s+pay)/i.test(value)) return "due";
+  const due = /(οφειλ|ανεξόφλητ|πληρωτέο|amount\s+due|outstanding|to\s+pay)/i.test(value);
+  const paid = /(εξοφλήθηκ|έχει\s+εξοφληθεί|πληρώθηκε|καταβλήθηκε|paid\s+in\s+full|fully\s+paid|settled)/i.test(value);
+  if (due && paid) return "unknown";
+  if (paid) return "paid";
+  if (due) return "due";
   return "unknown";
 }
-
 function extractDueDate(text) {
   const patterns = [
     /(?:ημερομηνία\s+λήξης|λήξη\s+πληρωμής|πληρωτέο\s+έως|due\s+date)[^\d]{0,30}(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/i,
@@ -198,110 +200,115 @@ async function gmailFetch(env, path, accessToken = "") {
 function isLikelyInvoice(subject, bodyText) {
   const s = String(subject || "").toLocaleLowerCase("el");
   const t = String(bodyText || "").toLocaleLowerCase("el");
-  if (/(verification|security code|one[- ]time|login code|κωδικός επιβεβαίωσης|κωδικός ασφαλείας)/i.test(s)) return false;
-  if (/(payment confirmation|payment received|receipt for payment|επιβεβαίωση πληρωμής|απόδειξη πληρωμής|εξόφληση λογαριασμού)/i.test(s)) return false;
+  const combined = s + "\n" + t;
+  if (/(verification code|security code|one[- ]time password|login code|κωδικός επιβεβαίωσης|κωδικός ασφαλείας|κωδικός μιας χρήσης)/i.test(combined)) return false;
+  if (/(payment confirmation|payment received|receipt for payment|επιβεβαίωση πληρωμής|απόδειξη πληρωμής|εξόφληση λογαριασμού|η πληρωμή σας καταχωρήθηκε)/i.test(combined)) return false;
   const subjectLooksLikeBill = /(δεη|δ[εέ]η|λογαριασμ|bill|invoice|electricity|ρεύμα)/i.test(s);
   const bodyLooksLikeBill = /(πληρωτέο ποσό|συνολικό ποσό|προθεσμία πληρωμής|ημερομηνία λήξης|amount due|due date|electricity bill|λογαριασμός ηλεκτρικού)/i.test(t);
   return subjectLooksLikeBill || bodyLooksLikeBill;
 }
+const BILL_PREFIX = "bill_history:";
+const GMAIL_PAGE_SIZE = 20;
 
-async function getLatestBill(env) {
-  const query = encodeURIComponent(GMAIL_QUERY);
-  const accessToken = await refreshAccessToken(env);
-  const summaries = [];
-  let pageToken = "";
-  // Scan up to 300 recent DEI-domain messages; stop at Gmail's end.
-  for (let page = 0; page < 3; page++) {
-    const pageQuery = `/messages?q=${query}&maxResults=100${pageToken ? "&pageToken=" + encodeURIComponent(pageToken) : ""}`;
-    const list = await gmailFetch(env, pageQuery, accessToken);
-    summaries.push(...(Array.isArray(list.messages) ? list.messages : []));
-    pageToken = String(list.nextPageToken || "");
-    if (!pageToken || !(list.messages || []).length) break;
+async function listStoredBills(env) {
+  const bills = [];
+  let cursor;
+  do {
+    const page = await env.DEI_KV.list({ prefix: BILL_PREFIX, limit: 1000, cursor });
+    for (const key of page.keys || []) {
+      const bill = await env.DEI_KV.get(key.name, "json");
+      if (bill && bill.gmailMessageId) bills.push(bill);
+    }
+    cursor = page.list_complete ? undefined : page.cursor;
+  } while (cursor);
+  const legacy = await env.DEI_KV.get("bill_history", "json");
+  if (Array.isArray(legacy)) {
+    const seen = new Set(bills.map(x => String(x.gmailMessageId)));
+    for (const bill of legacy) {
+      if (!bill?.gmailMessageId || seen.has(String(bill.gmailMessageId))) continue;
+      bills.push(bill);
+      seen.add(String(bill.gmailMessageId));
+      await env.DEI_KV.put(BILL_PREFIX + encodeURIComponent(String(bill.gmailMessageId)), JSON.stringify(bill));
+    }
   }
-  summaries.sort((a, b) => Number(b.internalDate || 0) - Number(a.internalDate || 0));
+  return [...new Map(bills.map(b => [String(b.gmailMessageId), b])).values()];
+}
 
-  const historyKey = "bill_history";
-  const previous = await env.DEI_KV.get(historyKey, "json");
-  const history = Array.isArray(previous) ? previous : [];
-  const byId = new Map(history.filter(x => x && x.gmailMessageId).map(x => [String(x.gmailMessageId), x]));
-  let scannedInvoices = 0;
-
-  for (const summary of summaries) {
+async function getLatestBill(env, pageToken = "") {
+  const accessToken = await refreshAccessToken(env);
+  const tokenParam = pageToken ? "&pageToken=" + encodeURIComponent(pageToken) : "";
+  const list = await gmailFetch(env, "/messages?q=" + encodeURIComponent(GMAIL_QUERY) + "&maxResults=" + GMAIL_PAGE_SIZE + tokenParam, accessToken);
+  const messages = Array.isArray(list.messages) ? list.messages : [];
+  let newest = null;
+  for (const summary of messages) {
     if (!summary?.id) continue;
-    const full = await gmailFetch(env, `/messages/${encodeURIComponent(summary.id)}?format=full`, accessToken);
+    const full = await gmailFetch(env, "/messages/" + encodeURIComponent(summary.id) + "?format=full", accessToken);
     const headers = full.payload?.headers || [];
     const subject = headerValue(headers, "subject");
     const from = headerValue(headers, "from");
     if (!/@(?:[a-z0-9-]+\.)*dei\.gr\b/i.test(from)) continue;
     const htmlBody = findBody(full.payload, "text/html");
     const plainBody = findBody(full.payload, "text/plain");
-    const bodyText = stripHtml(htmlBody || plainBody || full.snippet || "");
+    const bodyText = stripHtml([htmlBody, plainBody, full.snippet || ""].filter(Boolean).join("\n"));
     if (!isLikelyInvoice(subject, bodyText)) continue;
-    const candidate = {
+    const timestamp = Number(full.internalDate || summary.internalDate || 0);
+    const headerDate = headerValue(headers, "date");
+    const parsedHeaderDate = Date.parse(headerDate);
+    const bill = {
       found: true,
-      subject,
-      from,
-      emailDate: headerValue(headers, "date"),
+      emailDate: timestamp ? new Date(timestamp).toISOString() : (Number.isFinite(parsedHeaderDate) ? new Date(parsedHeaderDate).toISOString() : ""),
       totalEUR: extractAmount(bodyText),
       dueDate: extractDueDate(bodyText),
       paymentStatus: extractPaymentStatus(bodyText),
       fetchedAt: new Date().toISOString(),
       gmailMessageId: String(summary.id),
-      internalDate: Number(full.internalDate || summary.internalDate || 0),
+      internalDate: timestamp,
     };
-    // Keep invoice-like messages even if a field cannot be parsed, so history
-    // is not silently discarded; never store login/security codes as bills.
-    if (candidate.totalEUR === null && candidate.dueDate === null) continue;
-    scannedInvoices++;
-    byId.set(candidate.gmailMessageId, candidate);
+    if (bill.totalEUR === null && bill.dueDate === null) continue;
+    await env.DEI_KV.put(BILL_PREFIX + encodeURIComponent(bill.gmailMessageId), JSON.stringify(bill));
+    if (!newest || bill.internalDate > newest.internalDate) newest = bill;
   }
-
-  const allBills = [...byId.values()].sort((a,b) => Number(b.internalDate || 0) - Number(a.internalDate || 0));
-  // Bound KV record size and keep the newest 500 unique message records.
-  const savedBills = allBills.slice(0, 500);
-  await env.DEI_KV.put(historyKey, JSON.stringify(savedBills));
-  const latest = savedBills[0] || {
+  const existingLatest = await env.DEI_KV.get("latest_bill", "json");
+  if (newest && (!existingLatest || newest.internalDate >= Number(existingLatest.internalDate || 0))) {
+    await env.DEI_KV.put("latest_bill", JSON.stringify(newest));
+  }
+  const allBills = await listStoredBills(env);
+  const latest = await env.DEI_KV.get("latest_bill", "json") || newest || {
     found: false, message: "No parseable DEI invoice found in scanned messages",
     emailDate: "", totalEUR: null, dueDate: null, paymentStatus: "unknown", fetchedAt: new Date().toISOString()
   };
-  await env.DEI_KV.put("latest_bill", JSON.stringify(latest));
-  return { ...latest, historyCount: savedBills.length, scannedInvoices };
+  return { ...latest, historyCount: allBills.length, scannedInvoices: messages.length, nextPageToken: list.nextPageToken || null };
 }
 
 async function getBillHistory(env) {
-  const stored = await env.DEI_KV.get("bill_history", "json");
-  const bills = Array.isArray(stored) ? stored : [];
-  const totalPaid = bills.reduce((sum, bill) => bill.paymentStatus === "paid" ? sum + Number(bill.totalEUR || 0) : sum, 0);
-  const totalDue = bills.reduce((sum, bill) => bill.paymentStatus === "due" ? sum + Number(bill.totalEUR || 0) : sum, 0);
+  const bills = await listStoredBills(env);
+  const totalPaid = bills.reduce((sum, bill) => bill.paymentStatus === "paid" && Number.isFinite(Number(bill.totalEUR)) ? sum + Number(bill.totalEUR) : sum, 0);
+  const totalDue = bills.reduce((sum, bill) => bill.paymentStatus === "due" && Number.isFinite(Number(bill.totalEUR)) ? sum + Number(bill.totalEUR) : sum, 0);
   const years = new Map();
   for (const bill of bills) {
     const timestamp = Number(bill.internalDate || 0);
     const parsedDate = timestamp ? new Date(timestamp) : new Date(bill.emailDate || "");
     if (Number.isNaN(parsedDate.getTime())) continue;
-    const year = String(parsedDate.getFullYear());
+    const year = String(parsedDate.getUTCFullYear());
     if (!years.has(year)) years.set(year, { year, count: 0, paidEUR: 0, dueEUR: 0 });
     const row = years.get(year);
     row.count++;
-    const amount = Number(bill.totalEUR || 0);
-    if (bill.paymentStatus === "paid") row.paidEUR += amount;
-    else if (bill.paymentStatus === "due") row.dueEUR += amount;
+    const amount = Number(bill.totalEUR);
+    if (bill.paymentStatus === "paid" && Number.isFinite(amount)) row.paidEUR += amount;
+    else if (bill.paymentStatus === "due" && Number.isFinite(amount)) row.dueEUR += amount;
   }
   const annualTotals = [...years.values()].sort((a, b) => Number(b.year) - Number(a.year))
     .map(row => ({ year: row.year, count: row.count, paidEUR: row.paidEUR.toFixed(2), dueEUR: row.dueEUR.toFixed(2) }));
+  bills.sort((a, b) => Number(b.internalDate || 0) - Number(a.internalDate || 0));
   return {
     bills: bills.map(bill => ({
-      found: Boolean(bill.found), subject: String(bill.subject || ""),
-      from: String(bill.from || ""), emailDate: String(bill.emailDate || ""),
+      emailDate: String(bill.emailDate || ""), internalDate: Number(bill.internalDate || 0) || null,
       totalEUR: bill.totalEUR ?? null, dueDate: bill.dueDate ?? null,
       paymentStatus: bill.paymentStatus || "unknown", fetchedAt: bill.fetchedAt || null
     })),
-    count: bills.length,
-    totalPaidEUR: totalPaid.toFixed(2),
-    totalDueEUR: totalDue.toFixed(2),
-    annualTotals
+    count: bills.length, totalPaidEUR: totalPaid.toFixed(2), totalDueEUR: totalDue.toFixed(2), annualTotals
   };
 }
-
 function publicBill(bill) {
   if (!bill || typeof bill !== "object") return null;
   return {
@@ -420,11 +427,21 @@ export default {
       if (url.pathname === "/api/sync") {
         if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "POST, OPTIONS" });
         if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
-        if (!(await hasT1Session(request, env))) return json({ ok: false, error: "Unauthorized" }, 401);
-        const bill = await getLatestBill(env);
-        return json({ ok: true, bill: publicBill(bill), cached: false });
+        const sessionToken = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+        if (!sessionToken || !(await hasT1Session(request, env))) return json({ ok: false, error: "Unauthorized" }, 401);
+        let body = {};
+        try { body = await request.json(); } catch { return json({ ok: false, error: "Invalid JSON body" }, 400); }
+        const cursorKey = "sync_cursor:" + await sha256Hex(sessionToken);
+        if (!body.continue) await env.DEI_KV.delete(cursorKey);
+        const pageToken = body.continue ? await env.DEI_KV.get(cursorKey) : null;
+        const result = await getLatestBill(env, pageToken || "");
+        if (result.nextPageToken) await env.DEI_KV.put(cursorKey, result.nextPageToken, { expirationTtl: 3600 });
+        else await env.DEI_KV.delete(cursorKey);
+        return json({
+          ok: true, bill: publicBill(result), cached: false, scannedCount: result.scannedInvoices,
+          historyCount: result.historyCount, complete: !result.nextPageToken
+        });
       }
-
       if (url.pathname === "/api/history") {
         if (request.method !== "GET") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "GET, OPTIONS" });
         if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
@@ -436,11 +453,8 @@ export default {
         if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
         if (!(await hasT1Session(request, env))) return json({ ok: false, error: "Unauthorized" }, 401);
         const cached = await env.DEI_KV.get("latest_bill", "json");
-        if (cached?.fetchedAt && Date.now() - Date.parse(cached.fetchedAt) < 5 * 60 * 1000) return json({ ok: true, bill: publicBill(cached), cached: true });
-        const bill = await getLatestBill(env);
-        return json({ ok: true, bill: publicBill(bill), cached: false });
+        return json({ ok: true, bill: publicBill(cached || { found: false, paymentStatus: "unknown" }), cached: true });
       }
-
       return json({ service: "TEMO DEI bill sync", routes: ["/health", "/oauth/start", "/oauth/callback", "/api/status", "/api/session/exchange", "/api/sync", "/api/latest"], t1Page: "https://temo75.github.io/t1/dei-bill.html" });
     } catch (error) {
       const safe = safeError(error);
@@ -449,7 +463,12 @@ export default {
   },
 
   async scheduled(controller, env, ctx) {
-    ctx.waitUntil(getLatestBill(env));
+    ctx.waitUntil((async () => {
+      const cursor = await env.DEI_KV.get("scheduled_sync_cursor");
+      const result = await getLatestBill(env, cursor || "");
+      if (result.nextPageToken) await env.DEI_KV.put("scheduled_sync_cursor", result.nextPageToken);
+      else await env.DEI_KV.delete("scheduled_sync_cursor");
+    })());
   },
 };
 
