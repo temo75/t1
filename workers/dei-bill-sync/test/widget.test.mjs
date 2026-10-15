@@ -33,6 +33,7 @@ const root = new FakeElement();
 const messageEvents = [];
 const calls = [];
 let linked = true;
+let gmailConnected = true;
 let syncMode = "success";
 let syncRequests = 0;
 const idToken = "signed-firebase-id-token-fixture";
@@ -68,7 +69,7 @@ const fetchMock = async (url, options = {}) => {
   if (parsed.pathname === "/api/config") return response(200, {
     ok: true, firebaseConfig: { apiKey: "public-key", authDomain: "temo-75.firebaseapp.com", projectId: "temo-75", appId: "web-app-id" }
   });
-  if (parsed.pathname === "/api/status") return response(200, { ok: true, linked, gmailConnected: linked, lastSyncAt: "2026-10-15T09:00:00Z" });
+  if (parsed.pathname === "/api/status") return response(200, { ok: true, linked, gmailConnected, lastSyncAt: "2026-10-15T09:00:00Z" });
   if (parsed.pathname === "/api/latest") return response(200, {
     ok: true, cached: true, bill: { found: true, totalEUR: "77.00", dueDate: "2026-10-26", paymentStatus: "due", emailDate: "2026-10-06T05:02:02Z" }
   });
@@ -107,6 +108,9 @@ const sandbox = {
 const here = path.dirname(fileURLToPath(import.meta.url));
 const scriptPath = path.resolve(here, "../../../dei-bill-sync.js");
 const source = await readFile(scriptPath, "utf8");
+const htmlPath = path.resolve(here, "../../../dei-bill.html");
+const pageHtml = await readFile(htmlPath, "utf8");
+assert.match(pageHtml, /\.dei-sync-primary\\{[^}]*min-height:58px;width:100%/);
 new vm.Script(source, { filename: scriptPath }).runInNewContext(sandbox);
 const host = new FakeElement();
 windowObject.DEIBillSync.mount(host);
@@ -134,4 +138,16 @@ await clickSync();
 assert.match(host.children[1].textContent, /სინქრონიზაცია ვერ შესრულდა/);
 assert.equal(syncButton.disabled, false);
 assert.ok(messageEvents.some(event => event.type === "t1:dei-bill"));
-console.log("PASS: Firebase ID token on private API calls; no browser Worker session/API secret; personal history display; multi-page progress; sync error reporting.");
+
+gmailConnected = false;
+const connectHost = new FakeElement();
+windowObject.DEIBillSync.mount(connectHost);
+await new Promise(resolve => setTimeout(resolve, 30));
+const connectActions = connectHost.children[5];
+const connectButton = connectActions.children[0];
+assert.equal(connectButton.textContent, "Google-თან ჩემი Gmail-ის დაკავშირება");
+assert.equal(connectButton.hidden, false);
+await connectButton.listeners.get("click")();
+assert.ok(calls.some(call => call.path === "/oauth/start" && call.method === "POST" && call.authorization === "Bearer " + idToken));
+assert.match(locationObject.assigned, /^https:\/\/accounts\.google\.com\/o\/oauth2\/v2\/auth\?state=test$/);
+console.log("PASS: Firebase ID token on private API calls; no browser Worker session/API secret; personal history display; multi-page progress; sync errors; prominent Gmail connect button and OAuth navigation.");
