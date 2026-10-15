@@ -87,7 +87,7 @@
     const badge = element("span", "dei-sync-badge", "სტატუსის შემოწმება…");
     header.append(badge);
 
-    const message = element("p", "dei-sync-message", "ვამოწმებ Gmail კავშირს…");
+    const message = element("p", "dei-sync-message", "პირველად დააჭირე Google-თან დაკავშირებას და მიეცი Gmail-ის წაკითხვის ნებართვა. ამის შემდეგ შენი DEI ქვითრები ავტომატურად გამოჩნდება და პერიოდულად განახლდება.");
     const details = element("dl", "dei-sync-details");
     details.hidden = true;
     const fields = [
@@ -105,7 +105,7 @@
     });
 
     const actions = element("div", "dei-sync-actions");
-    const connect = element("button", "dei-sync-primary", "Gmail-ის უსაფრთხოდ დაკავშირება");
+    const connect = element("button", "dei-sync-primary", "🔗 Google-თან დაკავშირება და ნებართვის მიცემა");
     const sync = element("button", "", "ახლავე სინქრონიზაცია");
     const signOut = element("button", "", "ამ ბრაუზერის სესიის დასრულება");
     sync.hidden = true;
@@ -196,7 +196,7 @@ async function syncAllPages(session) {
         sync.hidden = true;
         signOut.hidden = true;
         setStatus("ამ ბრაუზერში Gmail არ არის ავტორიზებული", false);
-        message.textContent = "დააკავშირე Google ანგარიში OAuth-ის ოფიციალური თანხმობის გვერდით. პაროლს ან საიდუმლო გასაღებს ეს გვერდი არ ითხოვს.";
+        message.textContent = "პირველად დააჭირე „Google-თან დაკავშირება და ნებართვის მიცემა“, აირჩიე შენი Google ანგარიში და დაადასტურე Gmail-ის წაკითხვის ნებართვა. ამის შემდეგ ქვითრები ამ გვერდზე ავტომატურად გამოჩნდება და პერიოდულად განახლდება. Gmail-ის პაროლს ეს საიტი არ ითხოვს.";
         const status = await api("/api/status", null);
         if (status.gmailConnected) message.textContent = "Gmail Worker-თან უკვე დაკავშირებულია. ამ მოწყობილობაზე მონაცემების სანახავად დააჭირე დაკავშირებას.";
         return;
