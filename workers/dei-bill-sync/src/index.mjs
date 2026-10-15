@@ -559,14 +559,12 @@ export default {
         if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
         const uid = await authenticatedUid(request, env);
         if (!uid) return json({ ok: false, error: "A valid Firebase ID token is required" }, 401);
-        if (!(await env.DEI_KV.get(await userKey(uid, "legacy_account_link")))) return json({ ok: false, error: "T1 account link is required" }, 403);
         return json({ ok: true, ...(await getBillHistory(env, uid)) });
       }
       if (url.pathname === "/api/latest") {
         if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
         const uid = await authenticatedUid(request, env);
         if (!uid) return json({ ok: false, error: "A valid Firebase ID token is required" }, 401);
-        if (!(await env.DEI_KV.get(await userKey(uid, "legacy_account_link")))) return json({ ok: false, error: "T1 account link is required" }, 403);
         const latest = await env.DEI_KV.get(await userKey(uid, "latest_bill"), "json");
         return json({ ok: true, bill: publicBill(latest || { found: false, paymentStatus: "unknown" }), cached: true });
       }
