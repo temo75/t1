@@ -165,6 +165,8 @@ async function connectGmail(uid, headers, identity) {
   const startData = await json(start);
   const authorizationUrl = new URL(startData.authorizationUrl);
   assert.equal(authorizationUrl.searchParams.get("redirect_uri"), "https://dei-bill-sync.temo75elia.workers.dev/oauth/callback");
+  assert.equal(authorizationUrl.searchParams.get("scope"), "https://www.googleapis.com/auth/gmail.readonly");
+  assert.equal(authorizationUrl.searchParams.get("prompt"), "select_account");
   const state = authorizationUrl.searchParams.get("state");
   const callback = await worker.fetch(request("/oauth/callback?code=code-" + identity + "&state=" + state), env);
   assert.equal(callback.status, 302);
@@ -174,6 +176,7 @@ async function connectGmail(uid, headers, identity) {
   assert.equal(replay.status, 400, "consumed OAuth state cannot be replayed");
   assert.equal(requestedPages.length, before);
 }
+assert.equal((await worker.fetch(request("/oauth/callback?code=invalid&state=not-a-real-state"), env)).status, 400, "unknown OAuth state is rejected");
 await connectGmail("firebase-A", headersA, "A");
 await connectGmail("firebase-B", headersB, "B");
 
