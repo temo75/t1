@@ -171,6 +171,22 @@
       });
     }
 
+async function syncAllPages(session) {
+      let result = null;
+      let continueSync = false;
+      let pages = 0;
+      do {
+        message.textContent = pages
+          ? "Gmail-ის ძველი ქვითრების გვერდებს ვამოწმებ… (" + pages + ")"
+          : "Gmail-იდან DEI ქვითრებს ვკითხულობ…";
+        result = await api("/api/sync", session, { method: "POST", body: { continue: continueSync } });
+        pages++;
+        continueSync = result.complete === false;
+      } while (continueSync);
+      result.syncPages = pages;
+      return result;
+    }
+
     async function refresh(force) {
       const session = getSession();
       if (!session) {
@@ -186,21 +202,22 @@
       sync.hidden = false;
       signOut.hidden = false;
       setStatus("Gmail ავტორიზებულია ამ ბრაუზერში", true);
-      message.textContent = force ? "ვკითხულობ Gmail-იდან ახალ DEI ქვითარს…" : "ვკითხულობ Worker-ში შენახულ ბოლო DEI ქვითარს…";
-      const result = force
-        ? await api("/api/sync", session, { method: "POST", body: {} })
-        : await api("/api/latest", session);
-      if (!result.bill || !result.bill.found) {
+      message.textContent = force ? "Gmail-იდან DEI ქვითრებს ვკითხულობ…" : "Worker-ში შენახულ ბოლო DEI ქვითარს ვკითხულობ…";
+      const result = force ? await syncAllPages(session) : await api("/api/latest", session);
+      if (result.bill && result.bill.found) {
+        renderBill(result.bill);
+        message.textContent = result.cached
+          ? "ბოლო ქვითარი უსაფრთხოდ ჩაიტვირთა KV-დან."
+          : "Gmail-ის ყველა გვერდი შემოწმებულია. დამუშავებული გვერდები: " + (result.syncPages ?? "—") + ".";
+      } else {
         details.hidden = true;
-        message.textContent = "DEI-ის შესაბამისი წერილი ჯერ ვერ მოიძებნა.";
+        message.textContent = force
+          ? "სინქრონიზაცია დასრულდა, მაგრამ ამ წერილებში ამოსაცნობი DEI ქვითარი ვერ მოიძებნა."
+          : "DEI-ის შენახული ქვითარი ჯერ არ არის. დააჭირე სინქრონიზაციას.";
         window.dispatchEvent(new CustomEvent("t1:dei-bill", { detail: null }));
-        return;
       }
-      renderBill(result.bill);
-      message.textContent = result.cached ? "ბოლო ქვითარი უსაფრთხოდ ჩაიტვირთა KV-დან." : "ბოლო ქვითარი წარმატებით განახლდა Gmail-იდან.";
       await refreshHistory(session);
     }
-
     connect.addEventListener("click", connectGmail);
     sync.addEventListener("click", async () => {
       sync.disabled = true;
