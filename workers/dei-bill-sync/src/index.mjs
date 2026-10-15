@@ -114,6 +114,21 @@ function extractAmount(text) {
   return null;
 }
 
+function numericBillAmount(value) {
+  if (typeof value === "number") {
+    return Number.isFinite(value) && value >= 0 && value < 100000 ? value : null;
+  }
+  const raw = String(value ?? "").trim().replace(/[\s\u00a0€]/g, "");
+  if (!raw) return null;
+  let normalized;
+  if (/^\d+(?:\.\d{3})*,\d{1,2}$/.test(raw)) normalized = raw.replace(/\./g, "").replace(",", ".");
+  else if (/^\d+(?:,\d{3})*\.\d{1,2}$/.test(raw)) normalized = raw.replace(/,/g, "");
+  else if (/^\d+(?:\.\d{1,2})?$/.test(raw)) normalized = raw;
+  else return null;
+  const amount = Number(normalized);
+  return Number.isFinite(amount) && amount >= 0 && amount < 100000 ? amount : null;
+}
+
 function extractPaymentStatus(text) {
   const value = String(text || "").toLocaleLowerCase("el");
   const due = /(οφειλ|ανεξόφλητ|πληρωτέο|amount\s+due|outstanding|to\s+pay)/i.test(value);
@@ -282,8 +297,14 @@ async function getLatestBill(env, pageToken = "") {
 
 async function getBillHistory(env) {
   const bills = await listStoredBills(env);
-  const totalPaid = bills.reduce((sum, bill) => bill.paymentStatus === "paid" && Number.isFinite(Number(bill.totalEUR)) ? sum + Number(bill.totalEUR) : sum, 0);
-  const totalDue = bills.reduce((sum, bill) => bill.paymentStatus === "due" && Number.isFinite(Number(bill.totalEUR)) ? sum + Number(bill.totalEUR) : sum, 0);
+  const totalPaid = bills.reduce((sum, bill) => {
+    const amount = numericBillAmount(bill.totalEUR);
+    return bill.paymentStatus === "paid" && amount !== null ? sum + amount : sum;
+  }, 0);
+  const totalDue = bills.reduce((sum, bill) => {
+    const amount = numericBillAmount(bill.totalEUR);
+    return bill.paymentStatus === "due" && amount !== null ? sum + amount : sum;
+  }, 0);
   const years = new Map();
   for (const bill of bills) {
     const timestamp = Number(bill.internalDate || 0);
@@ -293,9 +314,9 @@ async function getBillHistory(env) {
     if (!years.has(year)) years.set(year, { year, count: 0, paidEUR: 0, dueEUR: 0 });
     const row = years.get(year);
     row.count++;
-    const amount = Number(bill.totalEUR);
-    if (bill.paymentStatus === "paid" && Number.isFinite(amount)) row.paidEUR += amount;
-    else if (bill.paymentStatus === "due" && Number.isFinite(amount)) row.dueEUR += amount;
+    const amount = numericBillAmount(bill.totalEUR);
+    if (bill.paymentStatus === "paid" && amount !== null) row.paidEUR += amount;
+    else if (bill.paymentStatus === "due" && amount !== null) row.dueEUR += amount;
   }
   const annualTotals = [...years.values()].sort((a, b) => Number(b.year) - Number(a.year))
     .map(row => ({ year: row.year, count: row.count, paidEUR: row.paidEUR.toFixed(2), dueEUR: row.dueEUR.toFixed(2) }));
@@ -303,7 +324,7 @@ async function getBillHistory(env) {
   return {
     bills: bills.map(bill => ({
       emailDate: String(bill.emailDate || ""), internalDate: Number(bill.internalDate || 0) || null,
-      totalEUR: bill.totalEUR ?? null, dueDate: bill.dueDate ?? null,
+      totalEUR: numericBillAmount(bill.totalEUR)?.toFixed(2) ?? bill.totalEUR ?? null, dueDate: bill.dueDate ?? null,
       paymentStatus: bill.paymentStatus || "unknown", fetchedAt: bill.fetchedAt || null
     })),
     count: bills.length, totalPaidEUR: totalPaid.toFixed(2), totalDueEUR: totalDue.toFixed(2), annualTotals
