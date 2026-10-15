@@ -36,6 +36,11 @@ const samples = {
     internalDate: Date.parse('2025-12-31T23:30:00Z'), from: 'billing@dei.gr',
     date: 'Thu, 15 Oct 2026 09:00:00 +0000'
   },
+  'dei-notice': {
+    subject: 'Ειδοποίηση έκδοσης λογαριασμού Ηλεκτρικής Ενέργειας ΔΕΗ',
+    body: '<strong>Τελικό Ποσό Πληρωμής</strong><br><br><strong>77,00€</strong><br><br><strong>Ημερομηνία Λήξης</strong><br>26/10/2026<br><br><strong>Payable Amount</strong><br>77,00€<br><br><strong>Expiration Date</strong><br>26/10/2026',
+    internalDate: Date.parse('2026-10-06T05:02:02Z'), from: 'noreply@dei.gr', mimeType: 'text/html'
+  },
   'bill-paid-2024': {
     subject: 'DEI electricity bill 2024', body: 'Ο λογαριασμός εξοφλήθηκε. Total amount: 15.50 €',
     internalDate: Date.parse('2024-06-01T10:00:00Z'), from: 'billing@dei.gr'
@@ -44,7 +49,7 @@ const samples = {
 const fullMessage = id => {
   const m = samples[id];
   return { internalDate: String(m.internalDate), snippet: m.body,
-    payload: { mimeType: 'text/plain', headers: [
+    payload: { mimeType: m.mimeType || 'text/plain', headers: [
       { name: 'Subject', value: m.subject }, { name: 'From', value: m.from },
       { name: 'Date', value: m.date || dateHeader }
     ], body: { data: Buffer.from(m.body, 'utf8').toString('base64url') } } };
@@ -68,7 +73,7 @@ globalThis.fetch = async (input, init = {}) => {
     if (!page) return new Response(JSON.stringify({ messages: [{ id: 'security-code' }], nextPageToken: 'page-2' }));
     if (page === 'page-2') return new Response(JSON.stringify({ messages: [{ id: 'bill-2026' }, { id: 'bill-2026' }], nextPageToken: 'page-3' }));
     if (page === 'page-3') return new Response(JSON.stringify({ messages: [{ id: 'payment-confirmation' }, { id: 'bill-2025' }], nextPageToken: 'page-4' }));
-    if (page === 'page-4') return new Response(JSON.stringify({ messages: [{ id: 'bill-paid-2024' }] }));
+    if (page === 'page-4') return new Response(JSON.stringify({ messages: [{ id: 'bill-paid-2024' }, { id: 'dei-notice' }] }));
   }
   const match = url.match(/\/messages\/([^?]+)\?format=full$/);
   if (match && samples[decodeURIComponent(match[1])]) return new Response(JSON.stringify(fullMessage(decodeURIComponent(match[1]))));
@@ -106,22 +111,26 @@ for (const continuation of [false, true, true, true]) {
 }
 assert.equal(JSON.stringify(requestedPages), JSON.stringify(['', 'page-2', 'page-3', 'page-4']));
 const historyKeys = [...kv.data.keys()].filter(k => k.startsWith('bill_history:'));
-assert.equal(historyKeys.length, 3, 'Gmail IDs deduplicate and security/payment messages are excluded');
+assert.equal(historyKeys.length, 4, 'Gmail IDs deduplicate and security/payment messages are excluded');
 const storedLatest = await kv.get('latest_bill', 'json');
 assert.equal(storedLatest.totalEUR, '77.00');
 assert.equal(storedLatest.dueDate, '2026-10-31');
 assert.equal(storedLatest.paymentStatus, 'due');
 assert.equal(storedLatest.emailDate, new Date(samples['bill-2026'].internalDate).toISOString(), 'internalDate overrides Date header');
+const deiNotice = await kv.get('bill_history:dei-notice', 'json');
+assert.equal(deiNotice.totalEUR, '77.00');
+assert.equal(deiNotice.dueDate, '2026-10-26');
+assert.equal(deiNotice.paymentStatus, 'due');
 
 r = await worker.fetch(req('/api/history', { headers: authHeaders }), env);
 assert.equal(r.status, 200);
 const history = await r.json();
-assert.equal(history.count, 3);
+assert.equal(history.count, 4);
 assert.equal(history.bills.every(x => x.gmailMessageId === undefined), true, 'private Gmail message IDs are not returned');
 assert.equal(history.totalPaidEUR, '15.50');
-assert.equal(history.totalDueEUR, '77.00', 'unknown status must not be counted as due');
+assert.equal(history.totalDueEUR, '154.00', 'unknown status must not be counted as due');
 assert.equal(JSON.stringify(history.annualTotals), JSON.stringify([
-  { year: '2026', count: 1, paidEUR: '0.00', dueEUR: '77.00' },
+  { year: '2026', count: 2, paidEUR: '0.00', dueEUR: '154.00' },
   { year: '2025', count: 1, paidEUR: '0.00', dueEUR: '0.00' },
   { year: '2024', count: 1, paidEUR: '15.50', dueEUR: '0.00' }
 ]));
@@ -161,9 +170,7 @@ assert.equal(JSON.stringify(localizedHistory.annualTotals), JSON.stringify([
 ]));
 assert.ok(localizedHistory.bills.some(x => x.totalEUR === '45.00'));
 assert.equal(localizedHistory.totalPaidEUR.includes('99.00'), false, 'unknown status remains excluded');
-assert.equal(new Date(history.bills[0].emailDate).getUTCFullYear(), 2026);
-assert.equal(new Date(history.bills[1].emailDate).getUTCFullYear(), 2025);
-assert.equal(new Date(history.bills[2].emailDate).getUTCFullYear(), 2024);
+assert.equal(JSON.stringify(history.bills.map(x => new Date(x.emailDate).getUTCFullYear())), JSON.stringify([2026, 2026, 2025, 2024]), 'history sorts bills newest first');
 r = await worker.fetch(req('/api/latest', { headers: authHeaders }), env);
 assert.equal(r.status, 200);
 assert.equal((await r.json()).bill.totalEUR, '77.00');
