@@ -208,15 +208,15 @@ assert.equal(historyB.bills[0].totalEUR, "10.00");
 assert.equal(JSON.stringify(historyA).includes("10.00"), false, "user A response contains no user B bill");
 assert.equal(JSON.stringify(historyB).includes("77.00"), false, "user B response contains no user A bill");
 
-const statusA = await json(await worker.fetch(request("/api/status", { headers: headersA }), env));
+const statusA = await json(await worker.fetch(request("/api/status"), env));
 assert.equal(statusA.gmailConnected, true);
 assert.equal(statusA.linked, true);
-const statusB = await json(await worker.fetch(request("/api/status", { headers: headersB }), env));
+const statusB = await json(await worker.fetch(request("/api/status"), env));
 assert.equal(statusB.gmailConnected, true);
 assert.notEqual(await kv.get("gmail_refresh_token"), encryptedA, "legacy global token is not used");
 await kv.put("latest_bill", JSON.stringify({ totalEUR: "999.00", paymentStatus: "due" }));
 await kv.put("bill_history:old-admin-record", JSON.stringify({ gmailMessageId: "old-admin-record", totalEUR: "999.00", paymentStatus: "due" }));
-const isolatedA = await json(await worker.fetch(request("/api/history"), env));
+const isolatedA = await json(await worker.fetch(request("/api/history", { headers: headersA }), env));
 assert.equal(isolatedA.count, 2, "legacy shared KV history is never assigned to a regular UID");
 assert.equal(isolatedA.totalDueEUR, "77.00");
 
