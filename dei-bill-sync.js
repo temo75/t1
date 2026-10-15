@@ -142,6 +142,9 @@
 
     async function refreshHistory(session) {
       const result = await api("/api/history", session);
+      if (!result || result.ok !== true || !Array.isArray(result.bills)) {
+        throw new Error("Worker-ის /api/history endpoint არ აბრუნებს ქვითრების ისტორიას. განახლებული Worker ჯერ არ არის აქტიური.");
+      }
       historyList.replaceChildren();
       historySummary.textContent = "ქვითრები: " + result.count +
         " · გადახდილი ჯამი: " + formatAmount(result.totalPaidEUR) +
@@ -216,7 +219,13 @@ async function syncAllPages(session) {
           : "DEI-ის შენახული ქვითარი ჯერ არ არის. დააჭირე სინქრონიზაციას.";
         window.dispatchEvent(new CustomEvent("t1:dei-bill", { detail: null }));
       }
-      await refreshHistory(session);
+      try {
+        await refreshHistory(session);
+      } catch (error) {
+        historyList.replaceChildren();
+        annualSummary.replaceChildren();
+        historySummary.textContent = "ისტორია ვერ ჩაიტვირთა: " + error.message;
+      }
     }
     connect.addEventListener("click", connectGmail);
     sync.addEventListener("click", async () => {
