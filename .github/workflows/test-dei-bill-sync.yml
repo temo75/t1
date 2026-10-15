@@ -11,6 +11,7 @@ on:
   push:
     branches:
       - fix/dei-historical-bill-search
+      - codex/per-user-dei-auth
     paths:
       - 'dei-bill-sync.js'
       - 'workers/dei-bill-sync/**'
@@ -34,12 +35,17 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check workers/dei-bill-sync/src/index.mjs
+          node --check workers/dei-bill-sync/src/firebase-auth.mjs
           node --check workers/dei-bill-sync/test/worker.test.mjs
+          node --check workers/dei-bill-sync/test/firebase-auth.test.mjs
           node --check workers/dei-bill-sync/test/widget.test.mjs
           node --check dei-bill-sync.js
 
       - name: Run Worker integration tests
         run: node workers/dei-bill-sync/test/worker.test.mjs
+
+      - name: Run Firebase ID token tests
+        run: node workers/dei-bill-sync/test/firebase-auth.test.mjs
 
       - name: Run T1 widget tests
         run: node workers/dei-bill-sync/test/widget.test.mjs
