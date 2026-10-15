@@ -79,22 +79,12 @@
     const password = element("input", "dei-auth-input");
     password.type = "password"; password.autocomplete = "current-password"; password.placeholder = "Firebase პაროლი"; password.setAttribute("aria-label", "Firebase Auth პაროლი");
     const authActions = element("div", "dei-sync-actions");
-    const signIn = element("button", "", "შესვლა Firebase-ით");
+    const signIn = element("button", "", "არსებული Firebase ანგარიშით შესვლა");
     const createAccount = element("button", "", "Firebase ანგარიშის შექმნა");
-    const verifyEmail = element("button", "", "დადასტურების წერილის გაგზავნა");
     const signOut = element("button", "", "ამ ბრაუზერიდან გამოსვლა");
-    signOut.hidden = true; verifyEmail.hidden = true;
-    authActions.append(signIn, createAccount, verifyEmail, signOut);
+    signOut.hidden = true;
+    authActions.append(signIn, createAccount, signOut);
     authPanel.append(email, password, authActions);
-
-    const linkPanel = element("section", "dei-link-panel");
-    linkPanel.hidden = true;
-    linkPanel.append(element("p", "muted", "არსებული T1 ანგარიშის მიბმის კოდი უნდა მოგაწოდოს ადმინისტრატორმა მას შემდეგ, რაც შენს ანგარიშს პირადად გადაამოწმებს."));
-    const claimCode = element("input", "dei-auth-input");
-    claimCode.type = "text"; claimCode.autocomplete = "one-time-code"; claimCode.maxLength = 64; claimCode.placeholder = "ერთჯერადი მიბმის კოდი";
-    claimCode.setAttribute("aria-label", "T1 ანგარიშის ერთჯერადი მიბმის კოდი");
-    const linkButton = element("button", "", "დადასტურებული T1 ანგარიშის მიბმა");
-    linkPanel.append(claimCode, linkButton);
 
     const details = element("dl", "dei-sync-details"); details.hidden = true;
     const values = {};
@@ -113,7 +103,7 @@
     const annualSummary = element("div", "dei-bill-annual-summary");
     const historyList = element("div", "dei-bill-history-list");
     historyPanel.append(historyTitle, historySummary, annualSummary, historyList);
-    root.append(header, message, authPanel, linkPanel, details, actions, historyPanel);
+    root.append(header, message, authPanel, details, actions, historyPanel);
 
     function setStatus(text, good) {
       badge.textContent = text;
