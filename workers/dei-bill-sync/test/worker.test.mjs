@@ -184,6 +184,9 @@ await connectGmail("firebase-B", headersB, "B");
 assert.equal((await json(await worker.fetch(request("/api/status", { headers: headersC }), env))).linked, false,
   "legacy account linking remains optional for personal DEI access");
 await connectGmail("firebase-C", headersC, "C");
+const statusC = await json(await worker.fetch(request("/api/status", { headers: headersC }), env));
+assert.equal(statusC.linked, false);
+assert.equal(statusC.gmailConnected, true, "status reads this UID Gmail connection without a legacy link");
 const syncC = await worker.fetch(request("/api/sync", { method: "POST", headers: headersC, body: JSON.stringify({ continue: false }) }), env);
 assert.equal(syncC.status, 200, "a Firebase UID can sync without an administrator claim");
 assert.equal((await json(syncC)).complete, true);
