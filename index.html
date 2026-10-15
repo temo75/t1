@@ -7018,7 +7018,7 @@ body.temo-admin-slide-menu-open{overflow:hidden}
       toggle.style.display='flex';
       var usersItem=overlay.querySelector('[data-action="goUsers"]');
       if(usersItem)usersItem.style.display=admin?'block':'none';
-      if(!admin)closeMenu();
+      /* Do not close the drawer during unrelated DOM updates: the page's text/localization observers mutate child nodes after opening. */
     }
     sync();
     window.addEventListener('pageshow',sync);
