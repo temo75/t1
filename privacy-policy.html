@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f3f7fb">
+  <title>TEMO DEI Bill Sync — Privacy Policy</title>
+  <style>
+    :root{color-scheme:light;--blue:#0878d1;--text:#17212b;--muted:#637383;--line:#dbe5ef}
+    *{box-sizing:border-box}body{margin:0;padding:20px;background:#f3f7fb;color:var(--text);font:16px/1.65 system-ui,Arial,sans-serif}
+    main{max-width:800px;margin:28px auto;padding:clamp(20px,4vw,36px);background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 28px #13283a12}
+    h1,h2{line-height:1.25}h1{color:var(--blue)}h2{margin-top:28px;font-size:1.2rem}a{color:#075fa8;overflow-wrap:anywhere}.muted{color:var(--muted);font-size:.92rem}
+  </style>
+</head>
+<body>
+<main>
+  <h1>TEMO DEI Bill Sync — Privacy Policy</h1>
+  <p class="muted">Last updated: October 15, 2026</p>
+  <p>TEMO DEI Bill Sync helps a user find DEI electricity-bill messages in their own Gmail account and display extracted billing details and bill history on their private T1 account page.</p>
+
+  <h2>Google data we access</h2>
+  <p>When you choose to connect Google, the app requests Gmail read-only access (<code>gmail.readonly</code>) and permission to identify the connected Google account. The app searches Gmail for messages from DEI, reads relevant message content, and extracts information such as bill amount, due date, payment status, and message date.</p>
+
+  <h2>How we use and store data</h2>
+  <p>Google account email addresses are transformed into account-specific keys. OAuth refresh tokens and extracted bill records are stored in Cloudflare Workers KV so the app can refresh access and maintain bill history. Short-lived T1 session tokens are stored as hashes. The app uses the data only to provide the bill lookup, display, history, and synchronization features requested by the user.</p>
+  <p>Access tokens are handled by the server and are not displayed in the page. The app does not send, modify, or delete Gmail messages. It does not sell Google user data or use it for advertising.</p>
+
+  <h2>Sharing and service providers</h2>
+  <p>Data is processed by Google APIs to provide Gmail access and by Cloudflare infrastructure to run the Worker and store app data. We do not sell or share Gmail data with advertisers. We do not use Gmail data for purposes unrelated to the bill features described above.</p>
+
+  <h2>Retention and revoking access</h2>
+  <p>Stored bill history and the refresh token may remain in the app's storage until deleted. You can revoke the app's Google access from your Google Account's third-party connections/security settings. Revoking access stops future authorized access but may not automatically erase data already stored by the app. To request deletion of stored app data, contact <a href="mailto:temo75elia@gmail.com">temo75elia@gmail.com</a> and identify the Google account used to connect; do not send passwords or tokens.</p>
+
+  <h2>Security</h2>
+  <p>The app uses OAuth authorization, server-side token handling, account-specific storage keys, and short-lived sessions. No internet service can guarantee absolute security; do not share OAuth tokens or passwords.</p>
+
+  <h2>Children</h2>
+  <p>This service is not designed for children under 13.</p>
+
+  <h2>Changes and contact</h2>
+  <p>This policy may be updated when the service changes. Questions or deletion requests can be sent to <a href="mailto:temo75elia@gmail.com">temo75elia@gmail.com</a>.</p>
+
+  <p><strong>Google API Services User Data Policy:</strong> The app's use and transfer to any other app of information received from Google APIs will adhere to the Google API Services User Data Policy, including the Limited Use requirements.</p>
+  <p><a href="./dei-bill.html">Return to TEMO DEI Bill Sync</a></p>
+</main>
+</body>
+</html>
