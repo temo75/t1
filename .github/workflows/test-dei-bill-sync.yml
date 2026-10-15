@@ -35,7 +35,11 @@ jobs:
         run: |
           node --check workers/dei-bill-sync/src/index.mjs
           node --check workers/dei-bill-sync/test/worker.test.mjs
+          node --check workers/dei-bill-sync/test/widget.test.mjs
           node --check dei-bill-sync.js
 
       - name: Run Worker integration tests
         run: node workers/dei-bill-sync/test/worker.test.mjs
+
+      - name: Run T1 widget tests
+        run: node workers/dei-bill-sync/test/widget.test.mjs
