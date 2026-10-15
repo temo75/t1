@@ -16,6 +16,7 @@ class MemoryKV {
 }
 
 const kv = new MemoryKV();
+const emailKey = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode('temo@example.com')))].map(x => x.toString(16).padStart(2, '0')).join('');
 const env = { GOOGLE_CLIENT_ID: 'test-client-id', GOOGLE_CLIENT_SECRET: 'test-client-secret', DEI_KV: kv };
 const dateHeader = 'Wed, 14 Oct 2026 09:00:00 +0000';
 const samples = {
@@ -58,6 +59,7 @@ let failGmail = false;
 const requestedPages = [];
 globalThis.fetch = async (input, init = {}) => {
   const url = String(input);
+  if (url === 'https://www.googleapis.com/oauth2/v2/userinfo') return new Response(JSON.stringify({ email: 'temo@example.com', verified_email: true }), { status: 200 });
   if (url === 'https://oauth2.googleapis.com/token') {
     const form = new URLSearchParams(init.body);
     if (form.get('grant_type') === 'authorization_code') return new Response(JSON.stringify({ access_token: 'test-access', refresh_token: 'test-refresh' }), { status: 200 });
@@ -110,14 +112,14 @@ for (const continuation of [false, true, true, true]) {
   assert.equal(result.complete, continuation && requestedPages.length === 4);
 }
 assert.equal(JSON.stringify(requestedPages), JSON.stringify(['', 'page-2', 'page-3', 'page-4']));
-const historyKeys = [...kv.data.keys()].filter(k => k.startsWith('bill_history:'));
+const historyKeys = [...kv.data.keys()].filter(k => k.startsWith('bill_history:' + emailKey + ':'));
 assert.equal(historyKeys.length, 4, 'Gmail IDs deduplicate and security/payment messages are excluded');
-const storedLatest = await kv.get('latest_bill', 'json');
+const storedLatest = await kv.get('latest_bill:' + emailKey, 'json');
 assert.equal(storedLatest.totalEUR, '77.00');
 assert.equal(storedLatest.dueDate, '2026-10-31');
 assert.equal(storedLatest.paymentStatus, 'due');
 assert.equal(storedLatest.emailDate, new Date(samples['bill-2026'].internalDate).toISOString(), 'internalDate overrides Date header');
-const deiNotice = await kv.get('bill_history:dei-notice', 'json');
+const deiNotice = await kv.get('bill_history:' + emailKey + ':dei-notice', 'json');
 assert.equal(deiNotice.totalEUR, '77.00');
 assert.equal(deiNotice.dueDate, '2026-10-26');
 assert.equal(deiNotice.paymentStatus, 'due');
@@ -138,7 +140,7 @@ assert.equal(JSON.stringify(history.annualTotals), JSON.stringify([
 const localizedKV = new MemoryKV();
 const localizedDigest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(session.sessionToken));
 const localizedSessionHash = [...new Uint8Array(localizedDigest)].map(x => x.toString(16).padStart(2, '0')).join('');
-await localizedKV.put('t1_session:' + localizedSessionHash, '1');
+await localizedKV.put('t1_session:' + localizedSessionHash, JSON.stringify({ emailKey }));
 const localizedBills = [
   ['2025-paid', '2025-03-01', '45,00 €', 'paid'],
   ['2025-due', '2025-08-01', '12,50', 'due'],
@@ -152,7 +154,7 @@ const localizedBills = [
 ];
 for (const [id, day, amount, paymentStatus] of localizedBills) {
   const internalDate = Date.parse(day + 'T12:00:00Z');
-  await localizedKV.put('bill_history:' + id, JSON.stringify({
+  await localizedKV.put('bill_history:' + emailKey + ':' + id, JSON.stringify({
     gmailMessageId: id, internalDate, emailDate: new Date(internalDate).toISOString(),
     totalEUR: amount, paymentStatus
   }));
@@ -188,13 +190,13 @@ const largeKV = new MemoryKV();
 const largeEnv = { ...env, DEI_KV: largeKV };
 const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(session.sessionToken));
 const sessionHash = [...new Uint8Array(digest)].map(x => x.toString(16).padStart(2, '0')).join('');
-await largeKV.put('t1_session:' + sessionHash, '1');
-for (let i = 0; i < 1001; i++) await largeKV.put('bill_history:bulk-' + i, JSON.stringify({ gmailMessageId: 'bulk-' + i, found: true, emailDate: '2020-01-01T00:00:00.000Z', totalEUR: '1.00', dueDate: null, paymentStatus: 'unknown' }));
+await largeKV.put('t1_session:' + sessionHash, JSON.stringify({ emailKey }));
+for (let i = 0; i < 1001; i++) await largeKV.put('bill_history:' + emailKey + ':bulk-' + i, JSON.stringify({ gmailMessageId: 'bulk-' + i, found: true, emailDate: '2020-01-01T00:00:00.000Z', totalEUR: '1.00', dueDate: null, paymentStatus: 'unknown' }));
 r = await worker.fetch(req('/api/history', { headers: authHeaders }), largeEnv);
 assert.equal(r.status, 200);
 assert.equal((await r.json()).count, 1001, 'KV history uses all list pages beyond 1000 keys');
 let scheduled;
 await worker.scheduled({}, env, { waitUntil(p) { scheduled = p; } });
 await scheduled;
-assert.ok(await kv.get('latest_bill'));
+assert.ok(await kv.get('latest_bill:' + emailKey));
 console.log('PASS: OAuth redirect/callback; session authorization; Gmail all-page cursor flow; security/payment exclusions; unique KV history; internalDate precedence; unknown-status totals; annual totals/order; safe Gmail API error; scheduled handler.');
