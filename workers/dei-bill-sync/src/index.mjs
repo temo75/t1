@@ -372,7 +372,7 @@ export default {
     try {
       if (url.pathname === "/health") {
         const missing = assertConfig(env);
-        const connected = Boolean(env.DEI_KV && await env.DEI_KV.get("gmail_refresh_token"));
+        const connected = Boolean(env.DEI_KV && (await env.DEI_KV.list({ prefix: "gmail_refresh_token:", limit: 1 })).keys?.length);
         return json({ ok: true, service: "TEMO DEI bill sync", configurationComplete: missing.length === 0, missing, oauthConfigured: Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET), kvConfigured: Boolean(env.DEI_KV), gmailConnected: connected });
       }
 
@@ -469,7 +469,8 @@ export default {
         if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "POST, OPTIONS" });
         if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
         const sessionToken = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
-        if (!sessionToken || !(await hasT1Session(request, env))) return json({ ok: false, error: "Unauthorized" }, 401);
+        const session = await getT1Session(request, env);
+        if (!sessionToken || !session) return json({ ok: false, error: "Unauthorized" }, 401);
         let body = {};
         try { body = await request.json(); } catch { return json({ ok: false, error: "Invalid JSON body" }, 400); }
         const cursorKey = "sync_cursor:" + await sha256Hex(sessionToken);
