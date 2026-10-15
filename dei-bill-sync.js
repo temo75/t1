@@ -141,8 +141,6 @@
         signOut.hidden = true;
         setStatus("ამ ბრაუზერში Gmail არ არის ავტორიზებული", false);
         message.textContent = "დააკავშირე Google ანგარიში OAuth-ის ოფიციალური თანხმობის გვერდით. პაროლს ან საიდუმლო გასაღებს ეს გვერდი არ ითხოვს.";
-        const status = await api("/api/status", null);
-        if (status.gmailConnected) message.textContent = "Gmail Worker-თან უკვე დაკავშირებულია. ამ მოწყობილობაზე მონაცემების სანახავად დააჭირე დაკავშირებას.";
         return;
       }
       connect.hidden = true;
