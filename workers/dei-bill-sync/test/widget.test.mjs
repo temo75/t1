@@ -110,7 +110,7 @@ const scriptPath = path.resolve(here, "../../../dei-bill-sync.js");
 const source = await readFile(scriptPath, "utf8");
 const htmlPath = path.resolve(here, "../../../dei-bill.html");
 const pageHtml = await readFile(htmlPath, "utf8");
-assert.match(pageHtml, /\.dei-sync-primary\\{[^}]*min-height:58px;width:100%/);
+assert.match(pageHtml, /\\.dei-sync-primary\\{[^}]*min-height:58px;width:100%/);
 new vm.Script(source, { filename: scriptPath }).runInNewContext(sandbox);
 const host = new FakeElement();
 windowObject.DEIBillSync.mount(host);
