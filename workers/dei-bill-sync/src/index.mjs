@@ -390,7 +390,7 @@ export default {
           client_id: env.GOOGLE_CLIENT_ID,
           redirect_uri: redirectUri,
           response_type: "code",
-          scope: "https://www.googleapis.com/auth/gmail.readonly email",
+          scope: "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email",
           access_type: "offline",
           prompt: "consent",
           include_granted_scopes: "true",
