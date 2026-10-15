@@ -158,4 +158,10 @@ assert.ok(calls.some(call => call.path === "/oauth/start" && call.method === "PO
 assert.equal(popupSignIns, 1, "the main Gmail button signs into Firebase with Google when needed");
 assert.equal(selectedGooglePrompt, "select_account");
 assert.match(locationObject.assigned, /^https:\/\/accounts\.google\.com\/o\/oauth2\/v2\/auth\?state=test$/);
+locationObject.hash = "#dei_gmail=denied";
+const deniedHost = new FakeElement();
+windowObject.DEIBillSync.mount(deniedHost);
+await new Promise(resolve => setTimeout(resolve, 30));
+assert.match(deniedHost.children[1].textContent, /თანხმობა გაუქმდა/);
+assert.equal(deniedHost.children[4].children[0].hidden, false, "retry remains visible after denied consent");
 console.log("PASS: Firebase ID token on private API calls; no browser Worker session/API secret; personal history display; multi-page progress; sync errors; prominent Gmail connect button and OAuth navigation.");
