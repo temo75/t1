@@ -121,6 +121,7 @@ assert.ok(calls.filter(call => call.path !== "/api/config").every(call => call.a
   "all private Worker API requests carry the Firebase ID token");
 assert.ok(!source.includes("t1.deiBillSession.v1"), "the old browser-issued Worker session is removed");
 assert.ok(!source.includes("SYNC_API_KEY"), "no API secret is bundled in public browser code");
+assert.equal(host.children[0].children[1].textContent, "შენი Gmail ანგარიში დაკავშირებულია", "connected Gmail status is visible");
 const historyPanel = host.children[6];
 assert.match(historyPanel.children[1].textContent, /ქვითრები: 1/);
 assert.match(historyPanel.children[2].children[1].textContent, /2026/);
