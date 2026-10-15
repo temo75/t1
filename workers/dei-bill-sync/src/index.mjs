@@ -247,7 +247,7 @@ async function getLatestBill(env) {
       paymentStatus: extractPaymentStatus(bodyText),
       fetchedAt: new Date().toISOString(),
       gmailMessageId: String(summary.id),
-      internalDate: Number(summary.internalDate || 0),
+      internalDate: Number(full.internalDate || summary.internalDate || 0),
     };
     // Keep invoice-like messages even if a field cannot be parsed, so history
     // is not silently discarded; never store login/security codes as bills.
