@@ -4,6 +4,7 @@
   let authPromise;
   let firebaseAuth;
   let oauthNotice = "";
+  let autoSyncAfterOAuth = false;
 
   async function initializeAuth() {
     if (authPromise) return authPromise;
@@ -241,16 +242,20 @@
         const callbackStatus = new URLSearchParams(location.hash.replace(/^#/, "")).get("dei_gmail");
         if (callbackStatus) {
           history.replaceState(null, "", location.pathname + location.search);
-          if (callbackStatus === "connected") oauthNotice = "Gmail OAuth წარმატებულია; ვამოწმებ შენს კავშირს…";
+          if (callbackStatus === "connected") { autoSyncAfterOAuth = true; oauthNotice = "Gmail OAuth წარმატებულია; ვეძებ DEI ქვითრებს…"; }
           else if (callbackStatus === "denied") oauthNotice = "Google-ის თანხმობა გაუქმდა. შეგიძლია ხელახლა ცადო.";
           else if (callbackStatus === "missing_refresh") oauthNotice = "Google-მა განახლების ნებართვა არ დააბრუნა. ხელახლა სცადე დაკავშირება.";
           else oauthNotice = "Gmail OAuth ვერ დასრულდა. სცადე თავიდან.";
           message.textContent = oauthNotice;
         }
-        firebaseAuth.onAuthStateChanged(() => refresh(false).catch(error => {
-          message.textContent = "პირადი სტატუსის ჩატვირთვა ვერ მოხერხდა: " + error.message;
-          setStatus("კავშირი ვერ მოწმდება", false);
-        }));
+        firebaseAuth.onAuthStateChanged(() => {
+          const runSync = autoSyncAfterOAuth;
+          autoSyncAfterOAuth = false;
+          return refresh(runSync).catch(error => {
+            message.textContent = "პირადი სტატუსის ჩატვირთვა ვერ მოხერხდა: " + error.message;
+            setStatus("კავშირი ვერ მოწმდება", false);
+          });
+        });
       } catch (error) {
         message.textContent = "Firebase Auth-ის კონფიგურაცია ვერ ჩაიტვირთა: " + error.message;
         setStatus("Firebase კონფიგურაცია აკლია", false);
