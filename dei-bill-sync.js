@@ -114,8 +114,9 @@
     const historyPanel = element("section", "dei-bill-history");
     const historyTitle = element("h3", "", "შენახული ქვითრების ისტორია");
     const historySummary = element("p", "muted", "ისტორია ჯერ არ ჩატვირთულა.");
+    const annualSummary = element("div", "dei-bill-annual-summary");
     const historyList = element("div", "dei-bill-history-list");
-    historyPanel.append(historyTitle, historySummary, historyList);
+    historyPanel.append(historyTitle, historySummary, annualSummary, historyList);
     root.append(header, message, details, actions, historyPanel);
 
     function setStatus(text, good) {
@@ -145,6 +146,18 @@
       historySummary.textContent = "ქვითრები: " + result.count +
         " · გადახდილი ჯამი: " + formatAmount(result.totalPaidEUR) +
         " · გადასახდელი ჯამი: " + formatAmount(result.totalDueEUR);
+      annualSummary.replaceChildren();
+      annualSummary.append(element("h4", "", "წლიური ჯამები"));
+      if (Array.isArray(result.annualTotals) && result.annualTotals.length) {
+        result.annualTotals.forEach((year) => {
+          const line = element("p", "dei-bill-year-total");
+          line.textContent = year.year + " — გადახდილი: " + formatAmount(year.paidEUR) +
+            " · გადასახდელი: " + formatAmount(year.dueEUR);
+          annualSummary.append(line);
+        });
+      } else {
+        annualSummary.append(element("p", "muted", "წლიური ჯამები ჯერ არ არის."));
+      }
       if (!result.bills.length) {
         historyList.append(element("p", "muted", "ჯერ შენახული ქვითრები არ არის. დააჭირე სინქრონიზაციას."));
         return;
