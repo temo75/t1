@@ -437,7 +437,7 @@ export default {
       if (url.pathname === "/api/account/link") {
         if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "POST, OPTIONS" });
         if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
-        const bearer = String(request.headers.get("authorization") || "").replace(/^Bearer\\s+/i, "");
+        const bearer = String(request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
         const claims = await verifyFirebaseIdToken(bearer, env.FIREBASE_PROJECT_ID);
         const uid = claims?.sub || null;
         if (!uid) return json({ ok: false, error: "A valid Firebase ID token is required" }, 401);
