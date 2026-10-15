@@ -7003,7 +7003,6 @@ body.temo-admin-slide-menu-open{overflow:hidden}
     overlay.innerHTML='<aside id="temoAdminMenuDrawer" aria-label="ადმინის მენიუ" role="dialog" aria-modal="true"><div class="temoAdminMenuHead"><span>მენიუ</span><button type="button" class="temoAdminMenuClose" aria-label="მენიუს დახურვა">×</button></div><button type="button" class="temoAdminMenuItem" data-action="goHome">🏠 მთავარი</button><button type="button" class="temoAdminMenuItem" data-action="goSettings">⚙️ პარამეტრები</button><button type="button" class="temoAdminMenuItem" data-action="goUsers">👥 მომხმარებლები</button><button type="button" class="temoAdminMenuItem" data-action="goWallet">💰 ფული</button><button type="button" class="temoAdminMenuItem" data-action="goNotes">📖 ჩანაწერები</button><button type="button" class="temoAdminMenuItem" data-action="openBills">💶 ჩემი გადასახადები</button><button type="button" class="temoAdminMenuItem" data-action="logout">🚪 გამოსვლა</button></aside>';
     var bottomNav=document.getElementById("bottomNav");if(bottomNav){toggle.className="adminMenuNavButton";bottomNav.insertBefore(toggle,bottomNav.firstChild);}else{document.body.appendChild(toggle);}document.body.appendChild(overlay);
     toggle.addEventListener('click',function(){
-      if(!isAdmin())return;
       if(overlay.classList.contains('open')){
         closeMenu();
       }else{
@@ -7016,7 +7015,9 @@ body.temo-admin-slide-menu-open{overflow:hidden}
     document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMenu();});
     function sync(){
       var admin=isAdmin();
-      toggle.style.display=admin?'flex':'none';
+      toggle.style.display='flex';
+      var usersItem=overlay.querySelector('[data-action="goUsers"]');
+      if(usersItem)usersItem.style.display=admin?'block':'none';
       if(!admin)closeMenu();
     }
     sync();
