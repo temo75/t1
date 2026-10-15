@@ -155,7 +155,7 @@ async function sha256Hex(value) {
   return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
 }
 async function getT1Session(request, env) {
-  const token = (request.headers.get("authorization") || "").replace(/^Bearer\\s+/i, "");
+  const token = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
   if (!token || !env.DEI_KV) return null;
   const value = await env.DEI_KV.get("t1_session:" + await sha256Hex(token));
   if (!value) return null;
