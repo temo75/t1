@@ -48,6 +48,7 @@ const env = {
   FIREBASE_APP_ID: "1:fixture:web:fixture",
   DEI_TOKEN_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64url"),
   LEGACY_LINK_ADMIN_KEY: "admin-fixture-key",
+  LEGACY_LINK_ADMIN_UID: "firebase-admin",
   DEI_KV: kv
 };
 const requestedPages = [];
@@ -155,6 +156,47 @@ assert.equal((await worker.fetch(request("/oauth/start", {
   method: "POST", headers: headersA, body: JSON.stringify({ returnTo: "https://temo75.github.io/t1/dei-bill.html" })
 }), env)).status, 403, "OAuth cannot start until the existing T1 account is admin-linked");
 assert.equal((await json(await worker.fetch(request("/api/status", { headers: headersB }), env))).linked, false);
+
+const tokenD = await makeIdToken("firebase-D", { email: "pending-user@example.test" });
+const tokenAdmin = await makeIdToken("firebase-admin", { email: "admin@example.test" });
+const headersD = { authorization: "Bearer " + tokenD, "content-type": "application/json" };
+const headersAdmin = { authorization: "Bearer " + tokenAdmin, "content-type": "application/json" };
+assert.equal((await worker.fetch(request("/api/account/link-request", { method: "POST", headers: {}, body: "{}" }), env)).status, 401);
+const unverifiedRequestToken = await makeIdToken("firebase-unverified-request", { email: "unverified@example.test", email_verified: false });
+assert.equal((await worker.fetch(request("/api/account/link-request", {
+  method: "POST", headers: { authorization: "Bearer " + unverifiedRequestToken }, body: "{}"
+}), env)).status, 403, "unverified Firebase email cannot create a link request");
+assert.equal((await worker.fetch(request("/api/account/link-request", { method: "POST", headers: headersD, body: "{}" }), env)).status, 200);
+assert.equal((await worker.fetch(request("/api/account/link-request", { method: "POST", headers: headersD, body: "{}" }), env)).status, 200, "link request is idempotent for the same UID");
+assert.equal((await worker.fetch(request("/api/admin/link-requests", { headers: headersD }), env)).status, 401, "regular user cannot inspect pending link requests");
+const pending = await json(await worker.fetch(request("/api/admin/link-requests", { headers: headersAdmin }), env));
+assert.equal(pending.requests.length, 1);
+assert.equal(pending.requests[0].firebaseUid, "firebase-D");
+assert.equal(pending.requests[0].email, "pending-user@example.test");
+const rejectedClaim = await worker.fetch(request("/api/admin/link-claim", {
+  method: "POST", headers: headersA, body: JSON.stringify({
+    legacyAccountId: "legacy-account-D", firebaseUid: "firebase-D", ownershipVerified: true,
+    verificationMethod: "owner_review", verificationReference: "verified-D"
+  })
+}), env);
+assert.equal(rejectedClaim.status, 401, "non-admin Firebase identity cannot issue link claims");
+const claimDResponse = await worker.fetch(request("/api/admin/link-claim", {
+  method: "POST", headers: headersAdmin, body: JSON.stringify({
+    legacyAccountId: "legacy-account-D", firebaseUid: "firebase-D", ownershipVerified: true,
+    verificationMethod: "owner_review", verificationReference: "verified-D"
+  })
+}), env);
+assert.equal(claimDResponse.status, 200);
+const claimD = (await json(claimDResponse)).claimCode;
+assert.equal((await worker.fetch(request("/api/admin/link-requests", { headers: headersAdmin }), env)).status, 200);
+assert.equal((await worker.fetch(request("/api/account/link", { method: "POST", headers: headersD, body: JSON.stringify({ claimCode: claimD }) }), env)).status, 200);
+assert.equal((await worker.fetch(request("/api/history", { headers: headersD }), env)).status, 200);
+assert.equal((await worker.fetch(request("/api/admin/link-claim", {
+  method: "POST", headers: headersAdmin, body: JSON.stringify({
+    legacyAccountId: "legacy-account-missing", firebaseUid: "firebase-missing", ownershipVerified: true,
+    verificationMethod: "owner_review", verificationReference: "verified-missing"
+  })
+}), env)).status, 409, "admin UI cannot issue a claim without a user-submitted Firebase request");
 
 const claimA = await issueLinkClaim("legacy-account-A", "firebase-A");
 const claimB = await issueLinkClaim("legacy-account-B", "firebase-B");

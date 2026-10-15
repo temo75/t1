@@ -100,6 +100,7 @@ const fetchMock = async (url, options = {}) => {
     ok: true, linked, t1AccountId: linked ? t1AccountId : null, gmailConnected,
     lastSyncAt: "2026-10-15T09:00:00Z"
   });
+  if (parsed.pathname === "/api/account/link-request") return response(200, { ok: true, requested: true });
   if (parsed.pathname === "/api/account/link") {
     claimSubmitted = body?.claimCode || "";
     if (claimSubmitted !== "admin-claim-fixture") return response(401, { ok: false, error: "Invalid or expired link code" });
@@ -167,8 +168,10 @@ assert.ok(!source.includes("t1.deiBillSession.v1"), "the browser-issued Worker s
 await firstHost.children[4].children[0].listeners.get("click")();
 assert.equal(popupSignIns, 1, "one-button flow starts Firebase Google Sign-In");
 assert.equal(selectedGooglePrompt, "select_account");
-assert.equal(firstHost.children[5].hidden, false, "unmapped UID is prompted for the one-time admin account link");
+assert.equal(firstHost.children[5].hidden, false, "unmapped UID is prompted for admin-approved account linking");
+assert.match(firstHost.children[1].textContent, /მოთხოვნა გაიგზავნა/);
 assert.equal(calls.some(call => call.path === "/oauth/start"), false, "Gmail OAuth is not started before T1 account binding");
+assert.ok(calls.some(call => call.path === "/api/account/link-request" && call.method === "POST" && call.authorization === "Bearer " + idToken), "the current Firebase UID requests verified account binding");
 
 const linkPanel = firstHost.children[5];
 linkPanel.children[2].value = "admin-claim-fixture";

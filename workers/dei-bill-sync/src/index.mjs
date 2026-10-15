@@ -192,6 +192,17 @@ async function authenticatedUid(request, env) {
 async function linkedT1Account(env, uid) {
   return await env.DEI_KV.get(await userKey(uid, "legacy_account_link"), "json");
 }
+async function verifiedLinkAdmin(request, env) {
+  const bearer = String(request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+  if (env.LEGACY_LINK_ADMIN_KEY && constantTimeEqual(bearer, env.LEGACY_LINK_ADMIN_KEY)) return { type: "key" };
+  if (!env.LEGACY_LINK_ADMIN_UID || !bearer) return null;
+  const claims = await verifyFirebaseIdToken(bearer, env.FIREBASE_PROJECT_ID);
+  if (claims?.sub === env.LEGACY_LINK_ADMIN_UID && claims.email_verified === true) return { type: "firebase", uid: claims.sub };
+  return null;
+}
+async function pendingLinkRequest(env, uid) {
+  return await env.DEI_KV.get("account_link_request:" + await sha256Hex(uid), "json");
+}
 function t1LinkRequired() {
   return json({ ok: false, error: "A verified existing T1 account link is required", code: "T1_ACCOUNT_LINK_REQUIRED" }, 403);
 }
@@ -201,6 +212,7 @@ function assertConfig(env) {
   if (!env.GOOGLE_CLIENT_SECRET) missing.push("GOOGLE_CLIENT_SECRET");
   if (!env.DEI_KV) missing.push("DEI_KV binding");
   if (!env.FIREBASE_PROJECT_ID) missing.push("FIREBASE_PROJECT_ID");
+  if (!env.LEGACY_LINK_ADMIN_UID) missing.push("LEGACY_LINK_ADMIN_UID for the browser admin panel");
   if (!env.DEI_TOKEN_ENCRYPTION_KEY) missing.push("DEI_TOKEN_ENCRYPTION_KEY");
   return missing;
 }
@@ -416,12 +428,42 @@ export default {
         }
         return json({ ok: true, firebaseConfig: config });
       }
+      if (url.pathname === "/api/account/link-request") {
+        if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "POST, OPTIONS" });
+        if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
+        const bearer = String(request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+        const claims = await verifyFirebaseIdToken(bearer, env.FIREBASE_PROJECT_ID);
+        const uid = claims?.sub || null;
+        if (!uid) return json({ ok: false, error: "A valid Firebase ID token is required" }, 401);
+        if (claims.email_verified !== true || !claims.email) return json({ ok: false, error: "Verify the Firebase account email before requesting a link" }, 403);
+        if ((await linkedT1Account(env, uid))?.legacyAccountId) return json({ ok: false, error: "This Firebase account is already linked" }, 409);
+        const requestedAt = new Date().toISOString();
+        await env.DEI_KV.put("account_link_request:" + await sha256Hex(uid), JSON.stringify({
+          firebaseUid: uid, email: String(claims.email).slice(0, 254), requestedAt
+        }), { expirationTtl: 7 * 24 * 60 * 60 });
+        return json({ ok: true, requested: true, requestedAt });
+      }
+      if (url.pathname === "/api/admin/link-requests") {
+        if (request.method !== "GET") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "GET, OPTIONS" });
+        if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
+        if (!(await verifiedLinkAdmin(request, env))) return json({ ok: false, error: "Unauthorized" }, 401);
+        const requests = [];
+        let cursor;
+        do {
+          const page = await env.DEI_KV.list({ prefix: "account_link_request:", limit: 1000, cursor });
+          for (const key of page.keys || []) {
+            const value = await env.DEI_KV.get(key.name, "json");
+            if (value?.firebaseUid && value?.email && value?.requestedAt) requests.push(value);
+          }
+          cursor = page.list_complete ? undefined : page.cursor;
+        } while (cursor);
+        requests.sort((a, b) => a.requestedAt.localeCompare(b.requestedAt));
+        return json({ ok: true, requests });
+      }
       if (url.pathname === "/api/admin/link-claim") {
         if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "POST, OPTIONS" });
-        const adminToken = String(request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
-        if (!env.LEGACY_LINK_ADMIN_KEY || !constantTimeEqual(adminToken, env.LEGACY_LINK_ADMIN_KEY)) {
-          return json({ ok: false, error: "Unauthorized" }, 401);
-        }
+        const admin = await verifiedLinkAdmin(request, env);
+        if (!admin) return json({ ok: false, error: "Unauthorized" }, 401);
         const body = await request.json().catch(() => ({}));
         const legacyAccountId = String(body.legacyAccountId || "").trim();
         const firebaseUid = String(body.firebaseUid || "").trim();
@@ -433,10 +475,15 @@ export default {
             !verificationReference || verificationReference.length > 200 || body.ownershipVerified !== true) {
           return json({ ok: false, error: "A verified account mapping and audit reference are required" }, 400);
         }
+        if (admin.type === "firebase") {
+          const pending = await pendingLinkRequest(env, firebaseUid);
+          if (!pending || pending.firebaseUid !== firebaseUid) return json({ ok: false, error: "No pending request exists for this Firebase account" }, 409);
+        }
         const claimCode = randomHex(32);
         await env.DEI_KV.put("account_link_claim:" + await sha256Hex(claimCode), JSON.stringify({
           firebaseUid, legacyAccountId, verificationMethod, verificationReference, issuedAt: new Date().toISOString()
         }), { expirationTtl: 7 * 24 * 60 * 60 });
+        if (admin.type === "firebase") await env.DEI_KV.delete("account_link_request:" + await sha256Hex(firebaseUid));
         return json({ ok: true, claimCode, expiresInSeconds: 7 * 24 * 60 * 60 });
       }
       if (url.pathname === "/api/account/link") {
@@ -583,7 +630,7 @@ export default {
         const latest = await env.DEI_KV.get(await userKey(uid, "latest_bill"), "json");
         return json({ ok: true, bill: publicBill(latest || { found: false, paymentStatus: "unknown" }), cached: true });
       }
-      return json({ service: "TEMO per-user DEI bill sync", routes: ["/health", "/api/config", "/api/admin/link-claim", "/api/account/link", "/oauth/start", "/oauth/callback", "/api/status", "/api/sync", "/api/latest", "/api/history"] });
+      return json({ service: "TEMO per-user DEI bill sync", routes: ["/health", "/api/config", "/api/account/link-request", "/api/admin/link-requests", "/api/admin/link-claim", "/api/account/link", "/oauth/start", "/oauth/callback", "/api/status", "/api/sync", "/api/latest", "/api/history"] });
     } catch (error) {
       const safe = safeError(error);
       return json({ ok: false, error: safe.message }, safe.status);

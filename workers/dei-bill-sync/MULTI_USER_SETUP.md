@@ -25,28 +25,25 @@ Confirm these variables/secrets exist before deployment:
 - Existing variable: `GOOGLE_CLIENT_ID`
 - Existing secrets: `GOOGLE_CLIENT_SECRET` (do not replace if already configured)
 - Secret: `DEI_TOKEN_ENCRYPTION_KEY` — a new random 32-byte key encoded as unpadded base64url. Generate it in a password manager or secure local generator, then enter it only into the Wrangler/Cloudflare secret prompt.
-- Secret: `LEGACY_LINK_ADMIN_KEY` — required for the one-time administrator-controlled link from an existing T1 account to its verified Firebase UID. It is never sent to the browser.
+- Variable: `LEGACY_LINK_ADMIN_UID` — Firebase UID of the administrator account allowed to operate the browser-based link panel. The Worker compares the signed Firebase ID token UID server-side. Configure this before using the panel.
+- Secret: `LEGACY_LINK_ADMIN_KEY` — retained only for trusted server-side/legacy administration. It is never sent to the browser and is not needed by the panel.
 
 Use `wrangler secret put <NAME>` from a trusted local terminal; never put secret values in source, GitHub, browser code, chat, or command history. Verify secret *names* with `wrangler secret list`; values cannot be read back.
 
 The current `wrangler.toml` already contains a daily Cron trigger. This branch does not alter that schedule. Do not deploy until the tests pass and the owner gives final deployment approval.
 
-## Required one-time link for existing T1 accounts
+## Admin-panel one-time link for existing T1 accounts
 
-The existing T1 login is a legacy browser session, not a Firebase Auth identity. The DEI Worker therefore requires an administrator-verified link before Gmail OAuth or any private bill endpoint is available. Do not link accounts using an email match, localStorage ID, password, or password hash alone.
+1. The user signs in to T1 with their existing account, opens DEI, and clicks the Gmail button. Google sign-in establishes a Firebase UID and the page sends a pending-link request. It does not send the T1 browser ID as identity.
+2. The administrator opens the existing admin bills page and uses **DEI მომხმარებლის დაკავშირება**. Sign in with the Google account whose Firebase UID is configured in Worker variable `LEGACY_LINK_ADMIN_UID`.
+3. Select the pending Firebase request and the existing T1 user from the account list. Independently verify that the Google account belongs to that T1 user through an existing trusted channel or in person. Do not infer identity from matching email addresses.
+4. Record the verification reference and issue the one-time code. Give it only to the verified user through the trusted channel.
+5. The user enters the code on the DEI page. The Worker verifies the signed Firebase UID, consumes the code once, and stores the mapping. Gmail OAuth can then proceed. The code expires after seven days.
+6. A mismatch between the current T1 account and the server-approved mapping blocks sync and history. Each Gmail token and bill remains stored under the mapped Firebase UID.
 
-1. The user signs in to T1 with the existing T1 account and opens the DEI page. They press the Gmail button and select their Google account. This establishes the Firebase UID; no separate email/password registration form is shown.
-2. The T1 administrator independently verifies ownership of the existing T1 account through a trusted channel or in person. In Firebase Authentication, the administrator confirms the Firebase UID for the Google account the user selected. Record a non-sensitive verification reference.
-3. From a trusted local terminal, the administrator calls `POST /api/admin/link-claim` using the Cloudflare-only `LEGACY_LINK_ADMIN_KEY`. Include the verified existing T1 account ID, Firebase UID, verification method/reference, and `ownershipVerified: true`.
-4. Deliver the returned single-use claim code only to that verified user through the same trusted channel. It expires after seven days and is bound to that Firebase UID; another UID cannot redeem it.
-5. The user enters the code on the DEI page. The Worker verifies the signed Firebase ID token and claim binding, stores the T1-account-to-UID mapping, and only then permits Gmail OAuth and private bill APIs.
-6. After this one-time mapping, the user signs in to T1 normally, clicks the Gmail button, selects their Gmail account, and approves read-only access. The Worker checks that the signed UID maps to the T1 account active in that browser. A mismatch fails closed.
+The pending request list and code-issuance endpoint require a Firebase ID token whose verified UID exactly matches `LEGACY_LINK_ADMIN_UID`. The old `LEGACY_LINK_ADMIN_KEY` remains a server-side fallback only; never put it in HTML, JavaScript, localStorage, or chat.
 
-A user ID read from the browser is used only as a UI consistency check; the Worker never accepts it as identity. Every protected request derives the Firebase UID from the verified ID token and requires that UID's administrator-approved T1 link. The link code is not a replacement for T1 login.
-
-The legacy shared KV keys (`gmail_refresh_token`, `latest_bill`, `bill_history`, and old unscoped history keys) are deliberately ignored by the per-user API. No old bill is assigned to any user automatically.
-
-The legacy shared keys (`gmail_refresh_token`, `latest_bill`, `bill_history`, and old unscoped history keys) are deliberately ignored by the per-user API. No old bill is assigned to a regular user automatically.
+The legacy shared KV keys (`gmail_refresh_token`, `latest_bill`, `bill_history`, and old unscoped history keys) are deliberately ignored by the per-user API. No old bill is assigned to a user automatically.
 
 ## Isolation model
 

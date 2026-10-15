@@ -118,7 +118,7 @@
     const linkPanel = element("section", "dei-link-panel");
     linkPanel.hidden = true;
     linkPanel.append(element("strong", "", "ერთჯერადი, ადმინისტრატორის მიერ დადასტურებული მიბმა"));
-    linkPanel.append(element("p", "muted", "შენი T1 ანგარიში Firebase UID-ს უსაფრთხოდ უნდა დაუკავშირდეს. T1-ის ადმინისტრატორისგან მიიღე ერთჯერადი კოდი და შეიყვანე ქვემოთ."));
+    linkPanel.append(element("p", "muted", "შენი Firebase ანგარიში ადმინისტრატორს დასადასტურებლად გაეგზავნება. ადმინისტრატორის მიერ მიბმის დამტკიცების შემდეგ შეიყვანე მიღებული ერთჯერადი კოდი."));
     const claimInput = element("input", "dei-auth-input");
     claimInput.type = "text";
     claimInput.autocomplete = "one-time-code";
@@ -198,10 +198,13 @@
       if (!session) throw new Error("ჯერ შედი არსებული T1 ანგარიშით.");
       const status = await api("/api/status");
       if (status.linked !== true) {
+        const request = await api("/api/account/link-request", { method: "POST", body: {} });
         linkPanel.hidden = false;
         connect.hidden = true;
-        setStatus("T1 ანგარიშის მიბმა საჭიროა", false);
-        message.textContent = "შენი Firebase UID ჯერ არ არის მიბმული ამ T1 ანგარიშზე. შეიყვანე ადმინისტრატორის ერთჯერადი კოდი.";
+        setStatus("ადმინისტრატორის დადასტურება საჭიროა", false);
+        message.textContent = request.requested
+          ? "მოთხოვნა გაიგზავნა. ადმინისტრატორი შეამოწმებს T1 ანგარიშის მფლობელობას; შემდეგ მიიღებ ერთჯერად კოდს."
+          : "ანგარიშის მიბმის მოთხოვნა ვერ გაიგზავნა.";
         return;
       }
       if (!sessionMatches(status)) {
