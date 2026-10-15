@@ -170,9 +170,7 @@ assert.equal(JSON.stringify(localizedHistory.annualTotals), JSON.stringify([
 ]));
 assert.ok(localizedHistory.bills.some(x => x.totalEUR === '45.00'));
 assert.equal(localizedHistory.totalPaidEUR.includes('99.00'), false, 'unknown status remains excluded');
-assert.equal(new Date(history.bills[0].emailDate).getUTCFullYear(), 2026);
-assert.equal(new Date(history.bills[1].emailDate).getUTCFullYear(), 2025);
-assert.equal(new Date(history.bills[2].emailDate).getUTCFullYear(), 2024);
+assert.deepEqual(history.bills.map(x => new Date(x.emailDate).getUTCFullYear()), [2026, 2026, 2025, 2024], 'history sorts bills newest first');
 r = await worker.fetch(req('/api/latest', { headers: authHeaders }), env);
 assert.equal(r.status, 200);
 assert.equal((await r.json()).bill.totalEUR, '77.00');
