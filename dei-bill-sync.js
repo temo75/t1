@@ -3,6 +3,7 @@
   const API = "https://dei-bill-sync.temo75elia.workers.dev";
   let authPromise;
   let firebaseAuth;
+  let oauthNotice = "";
 
   async function initializeAuth() {
     if (authPromise) return authPromise;
@@ -171,7 +172,7 @@
       connect.hidden = Boolean(status.gmailConnected); sync.hidden = !status.gmailConnected;
       setStatus(status.gmailConnected ? "შენი Gmail ანგარიში დაკავშირებულია" : "Google ანგარიშში შესული ხარ", Boolean(status.gmailConnected));
       if (!status.gmailConnected) {
-        message.textContent = "დააჭირე დიდ ღილაკს და Google-ში აირჩიე Gmail ანგარიში. T1 ითხოვს მხოლოდ Gmail-ის წაკითხვის ნებართვას.";
+        message.textContent = oauthNotice || "დააჭირე დიდ ღილაკს და Google-ში აირჩიე Gmail ანგარიში. T1 ითხოვს მხოლოდ Gmail-ის წაკითხვის ნებართვას.";
         historyList.replaceChildren(); annualSummary.replaceChildren();
         historySummary.textContent = "Gmail ჯერ არ არის დაკავშირებული.";
         return;
@@ -215,6 +216,7 @@
     });
     connect.addEventListener("click", async () => {
       connect.disabled = true;
+      oauthNotice = "";
       try {
         await initializeAuth();
         if (!firebaseAuth.currentUser) {
@@ -239,10 +241,11 @@
         const callbackStatus = new URLSearchParams(location.hash.replace(/^#/, "")).get("dei_gmail");
         if (callbackStatus) {
           history.replaceState(null, "", location.pathname + location.search);
-          if (callbackStatus === "connected") message.textContent = "Gmail OAuth წარმატებულია; ვამოწმებ შენს კავშირს…";
-          else if (callbackStatus === "denied") message.textContent = "Google-ის თანხმობა გაუქმდა.";
-          else if (callbackStatus === "missing_refresh") message.textContent = "Google-მა განახლების ნებართვა არ დააბრუნა. ხელახლა დაიწყე Gmail-ის დაკავშირება.";
-          else message.textContent = "Gmail OAuth ვერ დასრულდა. სცადე თავიდან.";
+          if (callbackStatus === "connected") oauthNotice = "Gmail OAuth წარმატებულია; ვამოწმებ შენს კავშირს…";
+          else if (callbackStatus === "denied") oauthNotice = "Google-ის თანხმობა გაუქმდა. შეგიძლია ხელახლა ცადო.";
+          else if (callbackStatus === "missing_refresh") oauthNotice = "Google-მა განახლების ნებართვა არ დააბრუნა. ხელახლა სცადე დაკავშირება.";
+          else oauthNotice = "Gmail OAuth ვერ დასრულდა. სცადე თავიდან.";
+          message.textContent = oauthNotice;
         }
         firebaseAuth.onAuthStateChanged(() => refresh(false).catch(error => {
           message.textContent = "პირადი სტატუსის ჩატვირთვა ვერ მოხერხდა: " + error.message;
