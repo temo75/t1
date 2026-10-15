@@ -5,6 +5,7 @@
   let firebaseAuth;
   let oauthNotice = "";
   let autoSyncAfterOAuth = false;
+  let legacyLoginExpanded = false;
 
   async function initializeAuth() {
     if (authPromise) return authPromise;
@@ -75,7 +76,10 @@
     const badge = element("span", "dei-sync-badge", "Firebase Auth-ის ჩატვირთვა…");
     header.append(badge);
     const message = element("p", "dei-sync-message", "მომხმარებლის პირადი მონაცემებისთვის საჭიროა დადასტურებული Firebase ანგარიში.");
+    const authToggle = element("button", "dei-auth-toggle", "უკვე გაქვს Firebase ანგარიში? შესვლა");
+    authToggle.type = "button";
     const authPanel = element("section", "dei-auth-panel");
+    authPanel.hidden = true;
     const email = element("input", "dei-auth-input");
     email.type = "email"; email.autocomplete = "username"; email.placeholder = "ელფოსტა"; email.setAttribute("aria-label", "Firebase Auth ელფოსტა");
     const password = element("input", "dei-auth-input");
@@ -105,7 +109,7 @@
     const annualSummary = element("div", "dei-bill-annual-summary");
     const historyList = element("div", "dei-bill-history-list");
     historyPanel.append(historyTitle, historySummary, annualSummary, historyList);
-    root.append(header, message, authPanel, details, actions, historyPanel);
+    root.append(header, message, authToggle, authPanel, details, actions, historyPanel);
 
     function setStatus(text, good) {
       badge.textContent = text;
@@ -158,7 +162,7 @@
     async function refresh(force = false) {
       const user = firebaseAuth?.currentUser;
       if (!user) {
-        authPanel.hidden = false; details.hidden = true; connect.hidden = false; sync.hidden = true;
+        authPanel.hidden = !legacyLoginExpanded; authToggle.hidden = false; details.hidden = true; connect.hidden = false; sync.hidden = true;
         signIn.hidden = false; createAccount.hidden = false; email.hidden = false; password.hidden = false;
         signOut.hidden = true;
         setStatus("Firebase ავტორიზაცია საჭიროა", false);
@@ -167,7 +171,7 @@
         historySummary.textContent = "შესვლის შემდეგ გამოჩნდება მხოლოდ ამ ანგარიშის DEI ქვითრები.";
         return;
       }
-      authPanel.hidden = false; signIn.hidden = true; createAccount.hidden = true; signOut.hidden = false;
+      authToggle.hidden = true; authPanel.hidden = false; signIn.hidden = true; createAccount.hidden = true; signOut.hidden = false;
       email.hidden = true; password.hidden = true;
       const status = await api("/api/status");
       connect.hidden = Boolean(status.gmailConnected); sync.hidden = !status.gmailConnected;
@@ -196,6 +200,11 @@
         historySummary.textContent = "ისტორია ვერ ჩაიტვირთა: " + error.message;
       }
     }
+    authToggle.addEventListener("click", () => {
+      legacyLoginExpanded = !legacyLoginExpanded;
+      authPanel.hidden = !legacyLoginExpanded;
+      authToggle.textContent = legacyLoginExpanded ? "Firebase შესვლის დახურვა" : "უკვე გაქვს Firebase ანგარიში? შესვლა";
+    });
     signIn.addEventListener("click", async () => {
       try {
         await initializeAuth();
