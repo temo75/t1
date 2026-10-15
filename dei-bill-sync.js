@@ -111,7 +111,13 @@
     sync.hidden = true;
     signOut.hidden = true;
     actions.append(connect, sync, signOut);
-    root.append(header, message, details, actions);
+    const historyPanel = element("section", "dei-bill-history");
+    const historyTitle = element("h3", "", "შენახული ქვითრების ისტორია");
+    const historySummary = element("p", "muted", "ისტორია ჯერ არ ჩატვირთულა.");
+    const annualSummary = element("div", "dei-bill-annual-summary");
+    const historyList = element("div", "dei-bill-history-list");
+    historyPanel.append(historyTitle, historySummary, annualSummary, historyList);
+    root.append(header, message, details, actions, historyPanel);
 
     function setStatus(text, good) {
       badge.textContent = text;
@@ -134,6 +140,56 @@
       window.dispatchEvent(new CustomEvent("t1:dei-bill", { detail: bill }));
     }
 
+    async function refreshHistory(session) {
+      const result = await api("/api/history", session);
+      if (!result || result.ok !== true || !Array.isArray(result.bills)) {
+        throw new Error("Worker-ის /api/history endpoint არ აბრუნებს ქვითრების ისტორიას. განახლებული Worker ჯერ არ არის აქტიური.");
+      }
+      historyList.replaceChildren();
+      historySummary.textContent = "ქვითრები: " + result.count +
+        " · გადახდილი ჯამი: " + formatAmount(result.totalPaidEUR) +
+        " · გადასახდელი ჯამი: " + formatAmount(result.totalDueEUR);
+      annualSummary.replaceChildren();
+      annualSummary.append(element("h4", "", "წლიური ჯამები"));
+      if (Array.isArray(result.annualTotals) && result.annualTotals.length) {
+        result.annualTotals.forEach((year) => {
+          const line = element("p", "dei-bill-year-total");
+          line.textContent = year.year + " — გადახდილი: " + formatAmount(year.paidEUR) +
+            " · გადასახდელი: " + formatAmount(year.dueEUR);
+          annualSummary.append(line);
+        });
+      } else {
+        annualSummary.append(element("p", "muted", "წლიური ჯამები ჯერ არ არის."));
+      }
+      if (!result.bills.length) {
+        historyList.append(element("p", "muted", "ჯერ შენახული ქვითრები არ არის. დააჭირე სინქრონიზაციას."));
+        return;
+      }
+      result.bills.forEach((bill) => {
+        const row = element("article", "dei-bill-history-item");
+        row.append(element("strong", "", formatAmount(bill.totalEUR)));
+        row.append(element("span", "", paymentLabel(bill.paymentStatus, bill.dueDate)));
+        row.append(element("small", "", (bill.emailDate || "თარიღი უცნობია") + " · ვადა: " + formatDueDate(bill.dueDate)));
+        historyList.append(row);
+      });
+    }
+
+async function syncAllPages(session) {
+      let result = null;
+      let continueSync = false;
+      let pages = 0;
+      do {
+        message.textContent = pages
+          ? "Gmail-ის ძველი ქვითრების გვერდებს ვამოწმებ… (" + pages + ")"
+          : "Gmail-იდან DEI ქვითრებს ვკითხულობ…";
+        result = await api("/api/sync", session, { method: "POST", body: { continue: continueSync } });
+        pages++;
+        continueSync = result.complete === false;
+      } while (continueSync);
+      result.syncPages = pages;
+      return result;
+    }
+
     async function refresh(force) {
       const session = getSession();
       if (!session) {
@@ -149,20 +205,28 @@
       sync.hidden = false;
       signOut.hidden = false;
       setStatus("Gmail ავტორიზებულია ამ ბრაუზერში", true);
-      message.textContent = force ? "ვკითხულობ Gmail-იდან ახალ DEI ქვითარს…" : "ვკითხულობ Worker-ში შენახულ ბოლო DEI ქვითარს…";
-      const result = force
-        ? await api("/api/sync", session, { method: "POST", body: {} })
-        : await api("/api/latest", session);
-      if (!result.bill || !result.bill.found) {
+      message.textContent = force ? "Gmail-იდან DEI ქვითრებს ვკითხულობ…" : "Worker-ში შენახულ ბოლო DEI ქვითარს ვკითხულობ…";
+      const result = force ? await syncAllPages(session) : await api("/api/latest", session);
+      if (result.bill && result.bill.found) {
+        renderBill(result.bill);
+        message.textContent = result.cached
+          ? "ბოლო ქვითარი უსაფრთხოდ ჩაიტვირთა KV-დან."
+          : "Gmail-ის ყველა გვერდი შემოწმებულია. დამუშავებული გვერდები: " + (result.syncPages ?? "—") + ".";
+      } else {
         details.hidden = true;
-        message.textContent = "DEI-ის შესაბამისი წერილი ჯერ ვერ მოიძებნა.";
+        message.textContent = force
+          ? "სინქრონიზაცია დასრულდა, მაგრამ ამ წერილებში ამოსაცნობი DEI ქვითარი ვერ მოიძებნა."
+          : "DEI-ის შენახული ქვითარი ჯერ არ არის. დააჭირე სინქრონიზაციას.";
         window.dispatchEvent(new CustomEvent("t1:dei-bill", { detail: null }));
-        return;
       }
-      renderBill(result.bill);
-      message.textContent = result.cached ? "ბოლო ქვითარი უსაფრთხოდ ჩაიტვირთა KV-დან." : "ბოლო ქვითარი წარმატებით განახლდა Gmail-იდან.";
+      try {
+        await refreshHistory(session);
+      } catch (error) {
+        historyList.replaceChildren();
+        annualSummary.replaceChildren();
+        historySummary.textContent = "ისტორია ვერ ჩაიტვირთა: " + error.message;
+      }
     }
-
     connect.addEventListener("click", connectGmail);
     sync.addEventListener("click", async () => {
       sync.disabled = true;
