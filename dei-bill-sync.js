@@ -204,36 +204,27 @@
     createAccount.addEventListener("click", async () => {
       try {
         await initializeAuth();
-        const credential = await firebaseAuth.createUserWithEmailAndPassword(email.value.trim(), password.value);
-        await credential.user.sendEmailVerification();
-        message.textContent = "Firebase Auth-ის დადასტურების წერილი გამოგზავნილია. დაადასტურე ელფოსტა და შემდეგ ისევ შედი.";
-        await firebaseAuth.signOut();
+        await firebaseAuth.createUserWithEmailAndPassword(email.value.trim(), password.value);
+        message.textContent = "Firebase ანგარიში შეიქმნა. ახლა Google ღილაკით დააკავშირე Gmail.";
+        await refresh(false);
       } catch (error) { message.textContent = "ანგარიშის შექმნა ვერ შესრულდა: " + error.message; setStatus("ანგარიშის შეცდომა", false); }
     });
-    verifyEmail.addEventListener("click", async () => {
-      try { await firebaseAuth.currentUser.sendEmailVerification(); message.textContent = "დადასტურების წერილი ხელახლა გაიგზავნა."; }
-      catch (error) { message.textContent = "წერილის გაგზავნა ვერ შესრულდა: " + error.message; }
-    });
-    linkButton.addEventListener("click", async () => {
-      linkButton.disabled = true;
-      try {
-        await api("/api/account/link", { method: "POST", body: { claimCode: claimCode.value.trim() } });
-        claimCode.value = "";
-        message.textContent = "T1 ანგარიში უსაფრთხოდ მიება Firebase UID-ს.";
-        await refresh(false);
-      } catch (error) { message.textContent = "ანგარიშის მიბმა ვერ შესრულდა: " + error.message; setStatus("მიბმის შეცდომა", false); }
-      finally { linkButton.disabled = false; }
-    });
     signOut.addEventListener("click", async () => {
-      try { if (firebaseAuth) await firebaseAuth.signOut(); }
-      finally { authPanel.hidden = false; signIn.hidden = false; createAccount.hidden = false; email.hidden = false; password.hidden = false; await refresh(false); }
+      if (firebaseAuth) await firebaseAuth.signOut();
+      await refresh(false);
     });
     connect.addEventListener("click", async () => {
       connect.disabled = true;
       try {
+        await initializeAuth();
+        if (!firebaseAuth.currentUser) {
+          const provider = new window.firebase.auth.GoogleAuthProvider();
+          provider.setCustomParameters({ prompt: "select_account" });
+          await firebaseAuth.signInWithPopup(provider);
+        }
         const result = await api("/oauth/start", { method: "POST", body: { returnTo: location.origin + location.pathname } });
         location.assign(result.authorizationUrl);
-      } catch (error) { message.textContent = "Gmail OAuth-ის დაწყება ვერ მოხერხდა: " + error.message; setStatus("OAuth შეცდომა", false); connect.disabled = false; }
+      } catch (error) { message.textContent = "Google/Gmail დაკავშირება ვერ მოხერხდა: " + error.message; setStatus("OAuth შეცდომა", false); connect.disabled = false; }
     });
     sync.addEventListener("click", async () => {
       sync.disabled = true;
