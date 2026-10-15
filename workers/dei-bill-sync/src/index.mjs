@@ -273,6 +273,21 @@ async function getBillHistory(env) {
   const bills = Array.isArray(stored) ? stored : [];
   const totalPaid = bills.reduce((sum, bill) => bill.paymentStatus === "paid" ? sum + Number(bill.totalEUR || 0) : sum, 0);
   const totalDue = bills.reduce((sum, bill) => bill.paymentStatus === "due" ? sum + Number(bill.totalEUR || 0) : sum, 0);
+  const years = new Map();
+  for (const bill of bills) {
+    const timestamp = Number(bill.internalDate || 0);
+    const parsedDate = timestamp ? new Date(timestamp) : new Date(bill.emailDate || "");
+    if (Number.isNaN(parsedDate.getTime())) continue;
+    const year = String(parsedDate.getFullYear());
+    if (!years.has(year)) years.set(year, { year, count: 0, paidEUR: 0, dueEUR: 0 });
+    const row = years.get(year);
+    row.count++;
+    const amount = Number(bill.totalEUR || 0);
+    if (bill.paymentStatus === "paid") row.paidEUR += amount;
+    else if (bill.paymentStatus === "due") row.dueEUR += amount;
+  }
+  const annualTotals = [...years.values()].sort((a, b) => Number(b.year) - Number(a.year))
+    .map(row => ({ year: row.year, count: row.count, paidEUR: row.paidEUR.toFixed(2), dueEUR: row.dueEUR.toFixed(2) }));
   return {
     bills: bills.map(bill => ({
       found: Boolean(bill.found), subject: String(bill.subject || ""),
@@ -282,7 +297,8 @@ async function getBillHistory(env) {
     })),
     count: bills.length,
     totalPaidEUR: totalPaid.toFixed(2),
-    totalDueEUR: totalDue.toFixed(2)
+    totalDueEUR: totalDue.toFixed(2),
+    annualTotals
   };
 }
 
