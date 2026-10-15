@@ -530,9 +530,9 @@ export default {
         const uid = await authenticatedUid(request, env);
         if (!uid) return json({ ok: false, error: "A valid Firebase ID token is required" }, 401);
         const link = await env.DEI_KV.get(await userKey(uid, "legacy_account_link"), "json");
-        const refresh = link ? await env.DEI_KV.get(await userKey(uid, "gmail_refresh_token")) : null;
-        const status = link ? await env.DEI_KV.get(await userKey(uid, "sync_status"), "json") : null;
-        const latest = link ? await env.DEI_KV.get(await userKey(uid, "latest_bill"), "json") : null;
+        const refresh = await env.DEI_KV.get(await userKey(uid, "gmail_refresh_token"));
+        const status = await env.DEI_KV.get(await userKey(uid, "sync_status"), "json");
+        const latest = await env.DEI_KV.get(await userKey(uid, "latest_bill"), "json");
         return json({ ok: true, linked: Boolean(link), gmailConnected: Boolean(refresh), lastFetchedAt: latest?.fetchedAt || null, syncStatus: status?.lastSyncStatus || "not_synced", lastSyncAt: status?.lastSyncAt || null });
       }
       if (url.pathname === "/api/sync") {
