@@ -13,6 +13,7 @@
 const GOOGLE_AUTH = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN = "https://oauth2.googleapis.com/token";
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
+const GOOGLE_USERINFO = "https://www.googleapis.com/oauth2/v2/userinfo";
 const ALLOWED_ORIGIN = "https://temo75.github.io";
 // Search broadly across DEI mail, then identify invoice-like messages in code.
  // in:anywhere also allows older messages still present in Spam/Trash to be considered.
@@ -173,10 +174,15 @@ async function sha256Hex(value) {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(value)));
   return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
 }
-async function hasT1Session(request, env) {
+async function getT1Session(request, env) {
   const token = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
-  if (!token || !env.DEI_KV) return false;
-  return Boolean(await env.DEI_KV.get("t1_session:" + await sha256Hex(token)));
+  if (!token || !env.DEI_KV) return null;
+  const value = await env.DEI_KV.get("t1_session:" + await sha256Hex(token));
+  if (!value) return null;
+  try {
+    const session = JSON.parse(value);
+    return session && /^[a-f0-9]{64}$/.test(session.emailKey || "") ? session : null;
+  } catch { return null; }
 }
 function assertConfig(env) {
   const missing = [];
@@ -186,8 +192,8 @@ function assertConfig(env) {
   return missing;
 }
 
-async function refreshAccessToken(env) {
-  const refreshToken = await env.DEI_KV.get("gmail_refresh_token");
+async function refreshAccessToken(env, emailKey) {
+  const refreshToken = await env.DEI_KV.get("gmail_refresh_token:" + emailKey);
   if (!refreshToken) throw new Error("GMAIL_NOT_CONNECTED");
   const form = new URLSearchParams({
     client_id: env.GOOGLE_CLIENT_ID,
@@ -205,8 +211,8 @@ async function refreshAccessToken(env) {
   return data.access_token;
 }
 
-async function gmailFetch(env, path, accessToken = "") {
-  const token = accessToken || await refreshAccessToken(env);
+async function gmailFetch(env, emailKey, path, accessToken = "") {
+  const token = accessToken || await refreshAccessToken(env, emailKey);
   const response = await fetch(`${GMAIL_API}${path}`, { headers: { authorization: `Bearer ${token}` } });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(`GMAIL_API_FAILED_${response.status}`);
@@ -226,39 +232,40 @@ function isLikelyInvoice(subject, bodyText) {
 const BILL_PREFIX = "bill_history:";
 const GMAIL_PAGE_SIZE = 20;
 
-async function listStoredBills(env) {
+async function listStoredBills(env, emailKey) {
+  const prefix = BILL_PREFIX + emailKey + ":";
   const bills = [];
   let cursor;
   do {
-    const page = await env.DEI_KV.list({ prefix: BILL_PREFIX, limit: 1000, cursor });
+    const page = await env.DEI_KV.list({ prefix, limit: 1000, cursor });
     for (const key of page.keys || []) {
       const bill = await env.DEI_KV.get(key.name, "json");
       if (bill && bill.gmailMessageId) bills.push(bill);
     }
     cursor = page.list_complete ? undefined : page.cursor;
   } while (cursor);
-  const legacy = await env.DEI_KV.get("bill_history", "json");
+  const legacy = await env.DEI_KV.get("bill_history:" + emailKey, "json");
   if (Array.isArray(legacy)) {
     const seen = new Set(bills.map(x => String(x.gmailMessageId)));
     for (const bill of legacy) {
       if (!bill?.gmailMessageId || seen.has(String(bill.gmailMessageId))) continue;
       bills.push(bill);
       seen.add(String(bill.gmailMessageId));
-      await env.DEI_KV.put(BILL_PREFIX + encodeURIComponent(String(bill.gmailMessageId)), JSON.stringify(bill));
+      await env.DEI_KV.put(prefix + encodeURIComponent(String(bill.gmailMessageId)), JSON.stringify(bill));
     }
   }
   return [...new Map(bills.map(b => [String(b.gmailMessageId), b])).values()];
 }
 
-async function getLatestBill(env, pageToken = "") {
-  const accessToken = await refreshAccessToken(env);
+async function getLatestBill(env, emailKey, pageToken = "") {
+  const accessToken = await refreshAccessToken(env, emailKey);
   const tokenParam = pageToken ? "&pageToken=" + encodeURIComponent(pageToken) : "";
-  const list = await gmailFetch(env, "/messages?q=" + encodeURIComponent(GMAIL_QUERY) + "&maxResults=" + GMAIL_PAGE_SIZE + tokenParam, accessToken);
+  const list = await gmailFetch(env, emailKey, "/messages?q=" + encodeURIComponent(GMAIL_QUERY) + "&maxResults=" + GMAIL_PAGE_SIZE + tokenParam, accessToken);
   const messages = Array.isArray(list.messages) ? list.messages : [];
   let newest = null;
   for (const summary of messages) {
     if (!summary?.id) continue;
-    const full = await gmailFetch(env, "/messages/" + encodeURIComponent(summary.id) + "?format=full", accessToken);
+    const full = await gmailFetch(env, emailKey, "/messages/" + encodeURIComponent(summary.id) + "?format=full", accessToken);
     const headers = full.payload?.headers || [];
     const subject = headerValue(headers, "subject");
     const from = headerValue(headers, "from");
@@ -281,23 +288,24 @@ async function getLatestBill(env, pageToken = "") {
       internalDate: timestamp,
     };
     if (bill.totalEUR === null && bill.dueDate === null) continue;
-    await env.DEI_KV.put(BILL_PREFIX + encodeURIComponent(bill.gmailMessageId), JSON.stringify(bill));
+    await env.DEI_KV.put(BILL_PREFIX + emailKey + ":" + encodeURIComponent(bill.gmailMessageId), JSON.stringify(bill));
     if (!newest || bill.internalDate > newest.internalDate) newest = bill;
   }
-  const existingLatest = await env.DEI_KV.get("latest_bill", "json");
+  const latestKey = "latest_bill:" + emailKey;
+  const existingLatest = await env.DEI_KV.get(latestKey, "json");
   if (newest && (!existingLatest || newest.internalDate >= Number(existingLatest.internalDate || 0))) {
-    await env.DEI_KV.put("latest_bill", JSON.stringify(newest));
+    await env.DEI_KV.put(latestKey, JSON.stringify(newest));
   }
-  const allBills = await listStoredBills(env);
-  const latest = await env.DEI_KV.get("latest_bill", "json") || newest || {
+  const allBills = await listStoredBills(env, emailKey);
+  const latest = await env.DEI_KV.get(latestKey, "json") || newest || {
     found: false, message: "No parseable DEI invoice found in scanned messages",
     emailDate: "", totalEUR: null, dueDate: null, paymentStatus: "unknown", fetchedAt: new Date().toISOString()
   };
   return { ...latest, historyCount: allBills.length, scannedInvoices: messages.length, nextPageToken: list.nextPageToken || null };
 }
 
-async function getBillHistory(env) {
-  const bills = await listStoredBills(env);
+async function getBillHistory(env, emailKey) {
+  const bills = await listStoredBills(env, emailKey);
   const totalPaid = bills.reduce((sum, bill) => {
     const amount = numericBillAmount(bill.totalEUR);
     return bill.paymentStatus === "paid" && amount !== null ? sum + amount : sum;
