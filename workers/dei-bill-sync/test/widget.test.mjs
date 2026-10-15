@@ -164,4 +164,14 @@ windowObject.DEIBillSync.mount(deniedHost);
 await new Promise(resolve => setTimeout(resolve, 30));
 assert.match(deniedHost.children[1].textContent, /თანხმობა გაუქმდა/);
 assert.equal(deniedHost.children[4].children[0].hidden, false, "retry remains visible after denied consent");
+syncMode = "success";
+syncRequests = 0;
+gmailConnected = true;
+locationObject.hash = "#dei_gmail=connected";
+const connectedHost = new FakeElement();
+windowObject.DEIBillSync.mount(connectedHost);
+await new Promise(resolve => setTimeout(resolve, 50));
+assert.equal(syncRequests, 2, "successful OAuth return automatically syncs every page");
+assert.match(connectedHost.children[1].textContent, /სინქრონიზაცია დასრულდა/);
+
 console.log("PASS: Firebase ID token on private API calls; no browser Worker session/API secret; personal history display; multi-page progress; sync errors; prominent Gmail connect button and OAuth navigation.");
