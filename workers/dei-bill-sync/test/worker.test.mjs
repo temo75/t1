@@ -215,9 +215,9 @@ const syncB = await worker.fetch(request("/api/sync?uid=firebase-A", { method: "
 assert.equal(syncB.status, 200, "browser-supplied UID is ignored in favor of signed UID");
 assert.equal((await json(syncB)).bill.totalEUR, "10.00");
 
-const latestA = await json(await worker.fetch(request("/api/latest?uid=firebase-B", { headers: headersA }), env);
+const latestA = await json(await worker.fetch(request("/api/latest?uid=firebase-B", { headers: headersA }), env));
 assert.equal(latestA.bill.totalEUR, "77.00", "latest endpoint derives user A from the signed token");
-const latestB = await json(await worker.fetch(request("/api/latest?uid=firebase-A", { headers: headersB }), env);
+const latestB = await json(await worker.fetch(request("/api/latest?uid=firebase-A", { headers: headersB }), env));
 assert.equal(latestB.bill.totalEUR, "10.00", "latest endpoint ignores a browser-supplied UID");
 
 const historyA = await json(await worker.fetch(request("/api/history?uid=firebase-B", { headers: headersA }), env));
