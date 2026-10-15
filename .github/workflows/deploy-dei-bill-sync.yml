@@ -1,0 +1,25 @@
+name: Deploy DEI bill sync Worker
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "workers/dei-bill-sync/**"
+      - ".github/workflows/deploy-dei-bill-sync.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy DEI bill sync to Cloudflare
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: workers/dei-bill-sync
+          command: deploy --config wrangler.toml
