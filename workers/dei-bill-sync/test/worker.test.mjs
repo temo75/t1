@@ -145,14 +145,26 @@ const tokenC = await makeIdToken("firebase-C");
 const headersA = { authorization: "Bearer " + tokenA, "content-type": "application/json" };
 const headersB = { authorization: "Bearer " + tokenB, "content-type": "application/json" };
 const headersC = { authorization: "Bearer " + tokenC, "content-type": "application/json" };
-assert.equal((await worker.fetch(request("/api/status", { headers: headersA }), env)).status, 200);
+const preLinkStatus = await json(await worker.fetch(request("/api/status", { headers: headersA }), env));
+assert.equal(preLinkStatus.linked, false);
+assert.equal(preLinkStatus.gmailConnected, false);
+assert.equal((await worker.fetch(request("/api/history", { headers: headersA }), env)).status, 403);
+assert.equal((await worker.fetch(request("/api/latest", { headers: headersA }), env)).status, 403);
+assert.equal((await worker.fetch(request("/api/sync", { method: "POST", headers: headersA, body: "{}" }), env)).status, 403);
+assert.equal((await worker.fetch(request("/oauth/start", {
+  method: "POST", headers: headersA, body: JSON.stringify({ returnTo: "https://temo75.github.io/t1/dei-bill.html" })
+}), env)).status, 403, "OAuth cannot start until the existing T1 account is admin-linked");
 assert.equal((await json(await worker.fetch(request("/api/status", { headers: headersB }), env))).linked, false);
 
 const claimA = await issueLinkClaim("legacy-account-A", "firebase-A");
 const claimB = await issueLinkClaim("legacy-account-B", "firebase-B");
 assert.equal((await worker.fetch(request("/api/account/link", { method: "POST", headers: headersB, body: JSON.stringify({ claimCode: claimA }) }), env)).status, 401, "a different UID cannot redeem a claim");
 assert.equal((await worker.fetch(request("/api/account/link", { method: "POST", headers: headersA, body: JSON.stringify({ claimCode: claimA }) }), env)).status, 200);
+assert.equal((await worker.fetch(request("/api/account/link", { method: "POST", headers: headersA, body: JSON.stringify({ claimCode: claimA }) }), env)).status, 401, "claim code is single-use");
 assert.equal((await worker.fetch(request("/api/account/link", { method: "POST", headers: headersB, body: JSON.stringify({ claimCode: claimB }) }), env)).status, 200);
+const linkedStatusA = await json(await worker.fetch(request("/api/status", { headers: headersA }), env));
+assert.equal(linkedStatusA.linked, true);
+assert.equal(linkedStatusA.t1AccountId, "legacy-account-A", "Worker reports only the T1 account mapped to this signed UID");
 const unverified = await makeIdToken("firebase-unverified", { email_verified: false });
 assert.equal((await worker.fetch(request("/api/account/link", {
   method: "POST", headers: { authorization: "Bearer " + unverified, "content-type": "application/json" },
@@ -181,16 +193,16 @@ async function connectGmail(uid, headers, identity) {
 assert.equal((await worker.fetch(request("/oauth/callback?code=invalid&state=not-a-real-state"), env)).status, 400, "unknown OAuth state is rejected");
 await connectGmail("firebase-A", headersA, "A");
 await connectGmail("firebase-B", headersB, "B");
-assert.equal((await json(await worker.fetch(request("/api/status", { headers: headersC }), env))).linked, false,
-  "legacy account linking remains optional for personal DEI access");
-await connectGmail("firebase-C", headersC, "C");
 const statusC = await json(await worker.fetch(request("/api/status", { headers: headersC }), env));
-assert.equal(statusC.linked, false);
-assert.equal(statusC.gmailConnected, true, "status reads this UID Gmail connection without a legacy link");
-const syncC = await worker.fetch(request("/api/sync", { method: "POST", headers: headersC, body: JSON.stringify({ continue: false }) }), env);
-assert.equal(syncC.status, 200, "a Firebase UID can sync without an administrator claim");
-assert.equal((await json(syncC)).complete, true);
-assert.equal((await json(await worker.fetch(request("/api/history", { headers: headersC }), env))).count, 0);
+assert.equal(statusC.linked, false, "unmapped Firebase UID cannot access an existing T1 account");
+assert.equal(statusC.gmailConnected, false);
+for (const path of ["/api/latest", "/api/history"]) {
+  assert.equal((await worker.fetch(request(path, { headers: headersC }), env)).status, 403,
+    "unmapped UID cannot read bill data from " + path);
+}
+assert.equal((await worker.fetch(request("/api/sync", {
+  method: "POST", headers: headersC, body: JSON.stringify({ continue: false })
+}), env)).status, 403, "unmapped UID cannot synchronize Gmail");
 
 
 const deniedStart = await worker.fetch(request("/oauth/start", {
@@ -255,8 +267,10 @@ assert.equal(JSON.stringify(historyB).includes("77.00"), false, "user B response
 const statusA = await json(await worker.fetch(request("/api/status", { headers: headersA }), env));
 assert.equal(statusA.gmailConnected, true);
 assert.equal(statusA.linked, true);
+assert.equal(statusA.t1AccountId, "legacy-account-A");
 const statusB = await json(await worker.fetch(request("/api/status", { headers: headersB }), env));
 assert.equal(statusB.gmailConnected, true);
+assert.equal(statusB.t1AccountId, "legacy-account-B");
 assert.equal(await kv.get("gmail_refresh_token"), "legacy-global-token-fixture", "legacy global Gmail token is neither overwritten nor used");
 await kv.put("latest_bill", JSON.stringify({ totalEUR: "999.00", paymentStatus: "due" }));
 await kv.put("bill_history:old-admin-record", JSON.stringify({ gmailMessageId: "old-admin-record", totalEUR: "999.00", paymentStatus: "due" }));

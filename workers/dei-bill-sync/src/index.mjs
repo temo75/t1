@@ -189,6 +189,12 @@ async function authenticatedUid(request, env) {
   const claims = await verifyFirebaseIdToken(match[1], env.FIREBASE_PROJECT_ID);
   return claims?.sub || null;
 }
+async function linkedT1Account(env, uid) {
+  return await env.DEI_KV.get(await userKey(uid, "legacy_account_link"), "json");
+}
+function t1LinkRequired() {
+  return json({ ok: false, error: "A verified existing T1 account link is required", code: "T1_ACCOUNT_LINK_REQUIRED" }, 403);
+}
 function assertConfig(env) {
   const missing = [];
   if (!env.GOOGLE_CLIENT_ID) missing.push("GOOGLE_CLIENT_ID");
@@ -467,6 +473,7 @@ export default {
         if (missing.length) return json({ ok: false, error: "Worker configuration is incomplete", missing }, 503);
         const uid = await authenticatedUid(request, env);
         if (!uid) return json({ ok: false, error: "A valid Firebase ID token is required" }, 401);
+        if (!(await linkedT1Account(env, uid))?.legacyAccountId) return t1LinkRequired();
         const body = await request.json().catch(() => ({}));
         const returnTo = safeReturnTo(body.returnTo);
         if (!returnTo) return json({ ok: false, error: "Invalid T1 return URL" }, 400);
@@ -498,6 +505,10 @@ export default {
         // Consume state before calling Google so a callback cannot be replayed.
         await env.DEI_KV.delete(stateKey);
         const destination = new URL(stateRecord.returnTo);
+        if (!(await linkedT1Account(env, stateRecord.uid))?.legacyAccountId) {
+          destination.hash = new URLSearchParams({ dei_gmail: "link_required" }).toString();
+          return Response.redirect(destination.toString(), 302);
+        }
         if (url.searchParams.get("error")) {
           destination.hash = new URLSearchParams({ dei_gmail: "denied" }).toString();
           return Response.redirect(destination.toString(), 302);
@@ -529,17 +540,19 @@ export default {
       if (url.pathname === "/api/status") {
         const uid = await authenticatedUid(request, env);
         if (!uid) return json({ ok: false, error: "A valid Firebase ID token is required" }, 401);
-        const link = await env.DEI_KV.get(await userKey(uid, "legacy_account_link"), "json");
+        const link = await linkedT1Account(env, uid);
+        if (!link?.legacyAccountId) return json({ ok: true, linked: false, gmailConnected: false, syncStatus: "account_link_required", lastSyncAt: null });
         const refresh = await env.DEI_KV.get(await userKey(uid, "gmail_refresh_token"));
         const status = await env.DEI_KV.get(await userKey(uid, "sync_status"), "json");
         const latest = await env.DEI_KV.get(await userKey(uid, "latest_bill"), "json");
-        return json({ ok: true, linked: Boolean(link), gmailConnected: Boolean(refresh), lastFetchedAt: latest?.fetchedAt || null, syncStatus: status?.lastSyncStatus || "not_synced", lastSyncAt: status?.lastSyncAt || null });
+        return json({ ok: true, linked: true, t1AccountId: link.legacyAccountId, gmailConnected: Boolean(refresh), lastFetchedAt: latest?.fetchedAt || null, syncStatus: status?.lastSyncStatus || "not_synced", lastSyncAt: status?.lastSyncAt || null });
       }
       if (url.pathname === "/api/sync") {
         if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "POST, OPTIONS" });
         if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
         const uid = await authenticatedUid(request, env);
         if (!uid) return json({ ok: false, error: "A valid Firebase ID token is required" }, 401);
+        if (!(await linkedT1Account(env, uid))?.legacyAccountId) return t1LinkRequired();
         let body = {};
         try { body = await request.json(); } catch { return json({ ok: false, error: "Invalid JSON body" }, 400); }
         const cursorKey = await userKey(uid, "sync_cursor");
@@ -559,12 +572,14 @@ export default {
         if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
         const uid = await authenticatedUid(request, env);
         if (!uid) return json({ ok: false, error: "A valid Firebase ID token is required" }, 401);
+        if (!(await linkedT1Account(env, uid))?.legacyAccountId) return t1LinkRequired();
         return json({ ok: true, ...(await getBillHistory(env, uid)) });
       }
       if (url.pathname === "/api/latest") {
         if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
         const uid = await authenticatedUid(request, env);
         if (!uid) return json({ ok: false, error: "A valid Firebase ID token is required" }, 401);
+        if (!(await linkedT1Account(env, uid))?.legacyAccountId) return t1LinkRequired();
         const latest = await env.DEI_KV.get(await userKey(uid, "latest_bill"), "json");
         return json({ ok: true, bill: publicBill(latest || { found: false, paymentStatus: "unknown" }), cached: true });
       }
@@ -584,6 +599,7 @@ export default {
           const uid = await env.DEI_KV.get(key.name);
           if (!uid) continue;
           try {
+            if (!(await linkedT1Account(env, uid))?.legacyAccountId) continue;
             let pageToken = await env.DEI_KV.get(await userKey(uid, "scheduled_sync_cursor")) || "";
             for (let count = 0; count < 5; count++) {
               const result = await getLatestBill(env, uid, pageToken);

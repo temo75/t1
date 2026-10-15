@@ -14,6 +14,7 @@ class FakeElement {
   className = "";
   value = "";
   type = "";
+  href = "";
   autocomplete = "";
   maxLength = 0;
   style = {};
@@ -29,35 +30,54 @@ class FakeElement {
   setAttribute() {}
 }
 
-const root = new FakeElement();
-const messageEvents = [];
-const calls = [];
-let linked = true;
-let gmailConnected = true;
+const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../");
+const source = await readFile(path.join(rootDir, "dei-bill-sync.js"), "utf8");
+const pageHtml = await readFile(path.join(rootDir, "dei-bill.html"), "utf8");
+assert.match(pageHtml, /\.dei-sync-primary\{[^}]*min-height:58px;width:100%/);
+
+const idToken = "firebase-id-token-fixture";
+const firebaseUser = {
+  uid: "firebase-user-fixture",
+  async getIdToken() { return idToken; }
+};
+let linked = false;
+let gmailConnected = false;
+let t1AccountId = "legacy-account-A";
+let t1SessionId = "legacy-account-A";
+let t1Authorized = true;
 let popupSignIns = 0;
 let selectedGooglePrompt = null;
 let syncMode = "success";
 let syncRequests = 0;
-const idToken = "signed-firebase-id-token-fixture";
-const firebaseUser = {
-  uid: "firebase-user-fixture",
-  email: "person@example.invalid",
-  emailVerified: true,
-  async getIdToken() { return idToken; },
-  async sendEmailVerification() {},
+let claimSubmitted = "";
+const calls = [];
+const events = [];
+const localStorage = {
+  getItem(key) {
+    if (key === "temoWorkTrackerAuthorized") return t1Authorized ? "yes" : null;
+    if (key === "temoWorkTrackerUser") return t1Authorized ? "Existing T1 user" : null;
+    if (key === "temoWorkTrackerUserId") return t1Authorized ? t1SessionId : null;
+    return null;
+  }
 };
 const fakeAuth = {
-  currentUser: firebaseUser,
+  currentUser: null,
   async setPersistence(value) { assert.equal(value, "session"); },
   onAuthStateChanged(callback) { callback(this.currentUser); return () => {}; },
-  async signInWithEmailAndPassword() { this.currentUser = firebaseUser; return { user: firebaseUser }; },
-  async createUserWithEmailAndPassword() { this.currentUser = firebaseUser; return { user: firebaseUser }; },
-  async signInWithPopup(provider) { selectedGooglePrompt = provider.parameters?.prompt; popupSignIns++; this.currentUser = firebaseUser; return { user: firebaseUser }; },
-  async signOut() { this.currentUser = null; },
+  async signInWithPopup(provider) {
+    selectedGooglePrompt = provider.parameters?.prompt;
+    popupSignIns++;
+    this.currentUser = firebaseUser;
+    return { user: firebaseUser };
+  },
+  async signOut() { this.currentUser = null; }
 };
 const fakeFirebase = {
   apps: [],
-  auth: { Auth: { Persistence: { SESSION: "session" } }, GoogleAuthProvider: class { setCustomParameters(parameters) { this.parameters = parameters; } } },
+  auth: {
+    Auth: { Persistence: { SESSION: "session" } },
+    GoogleAuthProvider: class { setCustomParameters(parameters) { this.parameters = parameters; } }
+  },
   initializeApp(config, name) {
     assert.equal(config.projectId, "temo-75");
     const app = { name, auth: () => fakeAuth };
@@ -68,11 +88,21 @@ const fakeFirebase = {
 const response = (status, body) => ({ status, ok: status >= 200 && status < 300, async json() { return body; } });
 const fetchMock = async (url, options = {}) => {
   const parsed = new URL(url);
-  calls.push({ path: parsed.pathname, method: options.method || "GET", authorization: options.headers?.Authorization || "" });
+  const body = options.body ? JSON.parse(options.body) : null;
+  calls.push({ path: parsed.pathname, method: options.method || "GET", authorization: options.headers?.Authorization || "", body });
   if (parsed.pathname === "/api/config") return response(200, {
     ok: true, firebaseConfig: { apiKey: "public-key", authDomain: "temo-75.firebaseapp.com", projectId: "temo-75", appId: "web-app-id" }
   });
-  if (parsed.pathname === "/api/status") return response(200, { ok: true, linked, gmailConnected, lastSyncAt: "2026-10-15T09:00:00Z" });
+  if (parsed.pathname === "/api/status") return response(200, {
+    ok: true, linked, t1AccountId: linked ? t1AccountId : null, gmailConnected,
+    lastSyncAt: "2026-10-15T09:00:00Z"
+  });
+  if (parsed.pathname === "/api/account/link") {
+    claimSubmitted = body?.claimCode || "";
+    if (claimSubmitted !== "admin-claim-fixture") return response(401, { ok: false, error: "Invalid or expired link code" });
+    linked = true;
+    return response(200, { ok: true, linked: true });
+  }
   if (parsed.pathname === "/api/latest") return response(200, {
     ok: true, cached: true, bill: { found: true, totalEUR: "77.00", dueDate: "2026-10-26", paymentStatus: "due", emailDate: "2026-10-06T05:02:02Z" }
   });
@@ -89,16 +119,20 @@ const fetchMock = async (url, options = {}) => {
     annualTotals: [{ year: "2026", count: 1, paidEUR: "0.00", dueEUR: "77.00" }],
     bills: [{ totalEUR: "77.00", dueDate: "2026-10-26", paymentStatus: "due", emailDate: "2026-10-06T05:02:02Z" }]
   });
-  if (parsed.pathname === "/oauth/start") return response(200, { ok: true, authorizationUrl: "https://accounts.google.com/o/oauth2/v2/auth?state=test" });
+  if (parsed.pathname === "/oauth/start") return response(200, {
+    ok: true, authorizationUrl: "https://accounts.google.com/o/oauth2/v2/auth?state=test"
+  });
   throw new Error("Unexpected API request " + parsed.pathname);
 };
 
 const windowObject = {
-  firebase: fakeFirebase,
-  dispatchEvent(event) { messageEvents.push(event); },
-  DEIBillSync: null
+  firebase: fakeFirebase, localStorage,
+  dispatchEvent(event) { events.push(event); }
 };
-const locationObject = { origin: "https://temo75.github.io", pathname: "/t1/dei-bill.html", search: "", hash: "", assign(url) { this.assigned = url; } };
+const locationObject = {
+  origin: "https://temo75.github.io", pathname: "/t1/dei-bill.html", search: "", hash: "",
+  assign(url) { this.assigned = url; }
+};
 const sandbox = {
   window: windowObject,
   document: { createElement() { return new FakeElement(); } },
@@ -108,75 +142,77 @@ const sandbox = {
   fetch: fetchMock,
   Date, Intl, URL, URLSearchParams, Promise, console, setTimeout, clearTimeout
 };
-const here = path.dirname(fileURLToPath(import.meta.url));
-const scriptPath = path.resolve(here, "../../../dei-bill-sync.js");
-const source = await readFile(scriptPath, "utf8");
-const htmlPath = path.resolve(here, "../../../dei-bill.html");
-const pageHtml = await readFile(htmlPath, "utf8");
-assert.match(pageHtml, /\.dei-sync-primary\{[^}]*min-height:58px;width:100%/);
-new vm.Script(source, { filename: scriptPath }).runInNewContext(sandbox);
-const host = new FakeElement();
-windowObject.DEIBillSync.mount(host);
-await new Promise(resolve => setTimeout(resolve, 30));
+new vm.Script(source, { filename: "dei-bill-sync.js" }).runInNewContext(sandbox);
 
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+const createHost = async () => {
+  const host = new FakeElement();
+  windowObject.DEIBillSync.mount(host);
+  await wait(30);
+  return host;
+};
+const firstHost = await createHost();
 assert.ok(calls.some(call => call.path === "/api/config"));
-assert.ok(calls.filter(call => call.path !== "/api/config").every(call => call.authorization === "Bearer " + idToken),
-  "all private Worker API requests carry the Firebase ID token");
-assert.ok(!source.includes("t1.deiBillSession.v1"), "the old browser-issued Worker session is removed");
+assert.equal(firstHost.children[4].children[0].textContent, "Google-თან ჩემი Gmail-ის დაკავშირება");
+assert.equal(firstHost.children[4].children[0].hidden, false);
+assert.equal(firstHost.children[1].textContent.includes("არსებული T1"), true);
+assert.equal(calls.some(call => call.path === "/api/status"), false, "no private status call until Google identity is authenticated");
+assert.ok(!source.includes("createUserWithEmailAndPassword"), "DEI page does not offer a separate account registration form");
 assert.ok(!source.includes("SYNC_API_KEY"), "no API secret is bundled in public browser code");
-assert.ok(!source.includes("/api/account/link"), "the normal user flow has no administrator claim-code step");
-assert.equal(host.children[0].children[1].textContent, "შენი Gmail ანგარიში დაკავშირებულია", "connected Gmail status is visible");
-const historyPanel = host.children[6];
-assert.match(historyPanel.children[1].textContent, /ქვითრები: 1/);
-assert.match(historyPanel.children[2].children[1].textContent, /2026/);
-const actions = host.children[5];
-const syncButton = actions.children[1];
-const clickSync = syncButton.listeners.get("click");
-assert.equal(typeof clickSync, "function");
-await clickSync();
-assert.equal(syncRequests, 2, "the widget keeps paging until Worker complete=true");
-assert.ok(host.children[1].textHistory.some(value => value.includes("ძველ ქვითრებს ვამოწმებ")));
-assert.match(host.children[1].textContent, /ყველა გვერდი შემოწმებულია|სინქრონიზაცია დასრულდა/);
+assert.ok(!source.includes("t1.deiBillSession.v1"), "the browser-issued Worker session is not used");
+
+await firstHost.children[4].children[0].listeners.get("click")();
+assert.equal(popupSignIns, 1, "one-button flow starts Firebase Google Sign-In");
+assert.equal(selectedGooglePrompt, "select_account");
+assert.equal(firstHost.children[5].hidden, false, "unmapped UID is prompted for the one-time admin account link");
+assert.equal(calls.some(call => call.path === "/oauth/start"), false, "Gmail OAuth is not started before T1 account binding");
+
+const linkPanel = firstHost.children[5];
+linkPanel.children[2].value = "admin-claim-fixture";
+await linkPanel.children[3].listeners.get("click")();
+assert.equal(claimSubmitted, "admin-claim-fixture");
+assert.ok(calls.some(call => call.path === "/api/account/link" && call.method === "POST" && call.authorization === "Bearer " + idToken));
+assert.ok(calls.some(call => call.path === "/oauth/start" && call.method === "POST" && call.authorization === "Bearer " + idToken));
+assert.equal(locationObject.assigned, "https://accounts.google.com/o/oauth2/v2/auth?state=test");
+
+linked = true;
+t1AccountId = "legacy-account-A";
+gmailConnected = true;
+fakeAuth.currentUser = firebaseUser;
+locationObject.hash = "#dei_gmail=connected";
+syncRequests = 0;
+const connectedHost = await createHost();
+assert.equal(syncRequests, 2, "OAuth return automatically syncs through every Gmail page");
+assert.match(connectedHost.children[1].textContent, /სინქრონიზაცია დასრულდა/);
+assert.match(connectedHost.children[6].children[1].textContent, /ქვითრები: 1/);
+assert.match(connectedHost.children[6].children[2].children[1].textContent, /2026/);
 
 syncMode = "fail";
-await clickSync();
-assert.match(host.children[1].textContent, /სინქრონიზაცია ვერ შესრულდა/);
+const syncButton = connectedHost.children[4].children[1];
+await syncButton.listeners.get("click")();
+assert.match(connectedHost.children[1].textContent, /სინქრონიზაცია ვერ შესრულდა/);
 assert.equal(syncButton.disabled, false);
-assert.ok(messageEvents.some(event => event.type === "t1:dei-bill"));
+assert.ok(events.some(event => event.type === "t1:dei-bill"));
 
 gmailConnected = false;
-fakeAuth.currentUser = null;
-const connectHost = new FakeElement();
-windowObject.DEIBillSync.mount(connectHost);
-await new Promise(resolve => setTimeout(resolve, 30));
-const connectActions = connectHost.children[5];
-const connectButton = connectActions.children[0];
-assert.equal(connectButton.textContent, "Google-თან ჩემი Gmail-ის დაკავშირება");
-assert.equal(connectButton.hidden, false);
-assert.equal(connectHost.children[3].hidden, true, "password form is hidden by default");
-assert.equal(connectHost.children[2].textContent, "უკვე გაქვს Firebase ანგარიში? შესვლა");
-connectHost.children[2].listeners.get("click")();
-assert.equal(connectHost.children[3].hidden, false, "existing Firebase login is available on request");
-connectHost.children[2].listeners.get("click")();
-await connectButton.listeners.get("click")();
-assert.ok(calls.some(call => call.path === "/oauth/start" && call.method === "POST" && call.authorization === "Bearer " + idToken));
-assert.equal(popupSignIns, 1, "the main Gmail button signs into Firebase with Google when needed");
-assert.equal(selectedGooglePrompt, "select_account");
-assert.match(locationObject.assigned, /^https:\/\/accounts\.google\.com\/o\/oauth2\/v2\/auth\?state=test$/);
 locationObject.hash = "#dei_gmail=denied";
-const deniedHost = new FakeElement();
-windowObject.DEIBillSync.mount(deniedHost);
-await new Promise(resolve => setTimeout(resolve, 30));
+const deniedHost = await createHost();
 assert.match(deniedHost.children[1].textContent, /თანხმობა გაუქმდა/);
-assert.equal(deniedHost.children[5].children[0].hidden, false, "retry remains visible after denied consent");
-syncMode = "success";
-syncRequests = 0;
-gmailConnected = true;
-locationObject.hash = "#dei_gmail=connected";
-const connectedHost = new FakeElement();
-windowObject.DEIBillSync.mount(connectedHost);
-await new Promise(resolve => setTimeout(resolve, 50));
-assert.equal(syncRequests, 2, "successful OAuth return automatically syncs every page");
-assert.match(connectedHost.children[1].textContent, /სინქრონიზაცია დასრულდა/);
+assert.equal(deniedHost.children[4].children[0].hidden, false, "retry button remains available after denied consent");
 
-console.log("PASS: Firebase ID token on private API calls; no browser Worker session/API secret; personal history display; multi-page progress; sync errors; prominent Gmail connect button and OAuth navigation.");
+t1SessionId = "different-t1-account";
+const historyCallsBeforeMismatch = calls.filter(call => call.path === "/api/history").length;
+const latestCallsBeforeMismatch = calls.filter(call => call.path === "/api/latest").length;
+const mismatchHost = await createHost();
+assert.match(mismatchHost.children[1].textContent, /სხვა მომხმარებლის მონაცემების დასაცავად/);
+assert.equal(mismatchHost.children[4].children[1].hidden, true, "account mismatch blocks sync");
+assert.equal(calls.filter(call => call.path === "/api/history").length, historyCallsBeforeMismatch, "mismatched T1 account does not request private history");
+assert.equal(calls.filter(call => call.path === "/api/latest").length, latestCallsBeforeMismatch, "mismatched T1 account does not request the latest bill");
+
+t1Authorized = false;
+const signedOutHost = await createHost();
+assert.equal(signedOutHost.children[2].hidden, false);
+assert.equal(signedOutHost.children[2].href, "./index.html");
+assert.equal(signedOutHost.children[4].children[0].hidden, true, "existing T1 login is required before Gmail linking");
+
+console.log("PASS: existing T1 session gate; one-button Google account selection; admin claim redemption; account mismatch isolation; Gmail OAuth retry; automatic paginated sync; private history and sync errors.");

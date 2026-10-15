@@ -12,12 +12,12 @@ h1{font-size:24px;margin:0 0 8px;color:var(--blue)}p{line-height:1.5}.muted{colo
 .dei-auth-input{width:100%;padding:11px;border:1px solid #b9c9d7;border-radius:8px;font:inherit}.dei-auth-toggle{background:transparent;color:var(--blue);padding:5px 0;text-decoration:underline}
 .dei-auth-panel[hidden],.dei-link-panel[hidden]{display:none}
 .dei-sync-actions{display:flex;gap:8px;flex-wrap:wrap}button,.back{display:inline-block;margin-top:8px;padding:11px 14px;border:0;border-radius:9px;background:var(--blue);color:white;font:inherit;font-weight:700;cursor:pointer;text-decoration:none}
-button:disabled{opacity:.6;cursor:wait}.dei-sync-actions button:not(.dei-sync-primary){background:#e6eef5;color:#243847}.dei-sync-primary{min-height:58px;width:100%;padding:16px 20px;font-size:18px;box-shadow:0 4px 12px #0878d133}
+button:disabled{opacity:.6;cursor:wait}.dei-sync-actions button:not(.dei-sync-primary){background:#e6eef5;color:#243847}.dei-sync-primary{min-height:58px;width:100%;padding:16px 20px;font-size:18px;box-shadow:0 4px 12px #0878d133}.dei-sync-login-link{display:inline-block;margin:8px 0;padding:10px 14px;border-radius:9px;background:#e6eef5;color:#17547e;font-weight:700;text-decoration:none}
 @media(max-width:520px){body{padding:12px}main{padding:17px}.dei-sync-details{grid-template-columns:1fr}.dei-sync-details dd{margin-bottom:8px}}
 </style></head>
 <body><main><h1>ΔΕΗ — ელექტროენერგიის გადასახადი</h1>
 <p class="muted">ბოლო ქვითარი Gmail-იდან იტვირთება დაცული Worker-ის მეშვეობით. Gmail-ის პაროლი და API გასაღები ამ გვერდზე არ შეგყავს.</p>
 <div id="deiCloudBill"></div>
-<p class="muted">დააჭირე „Google-თან ჩემი Gmail-ის დაკავშირება“, აირჩიე ანგარიში და დაადასტურე Gmail-ის მხოლოდ წაკითხვის ნებართვა. ქვითრები თითოეული Firebase ანგარიშისთვის ცალკე ინახება.</p>
+<p class="muted">შედი არსებული T1 ანგარიშით, დააჭირე „Google-თან ჩემი Gmail-ის დაკავშირება“, აირჩიე საკუთარი ანგარიში და დაადასტურე მხოლოდ Gmail-ის წაკითხვის ნებართვა. პირველი მიბმისას შესაძლოა ადმინისტრატორის ერთჯერადი კოდი დაგჭირდეს. ქვითრები T1 ანგარიშთან დადასტურებული Firebase UID-ით ცალკე ინახება.</p>
 <a class="back" href="./bills.html">← ჩემს გადასახადებზე დაბრუნება</a>
 </main><script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js"></script><script src="./dei-bill-sync.js"></script><script>window.DEIBillSync&&window.DEIBillSync.mount(document.getElementById("deiCloudBill"));</script></body></html>

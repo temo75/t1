@@ -5,7 +5,16 @@
   let firebaseAuth;
   let oauthNotice = "";
   let autoSyncAfterOAuth = false;
-  let legacyLoginExpanded = false;
+
+  function t1Session() {
+    try {
+      const storage = window.localStorage;
+      if (!storage || storage.getItem("temoWorkTrackerAuthorized") !== "yes") return null;
+      const accountId = String(storage.getItem("temoWorkTrackerUserId") || "").trim();
+      const name = String(storage.getItem("temoWorkTrackerUser") || "").trim();
+      return accountId && name ? { accountId, name } : null;
+    } catch { return null; }
+  }
 
   async function initializeAuth() {
     if (authPromise) return authPromise;
@@ -28,7 +37,7 @@
     if (options.body !== undefined) headers["Content-Type"] = "application/json";
     if (options.auth !== false) {
       const user = firebaseAuth && firebaseAuth.currentUser;
-      if (!user) throw new Error("პირველ რიგში შედი Firebase ანგარიშში");
+      if (!user) throw new Error("Firebase Google ავტორიზაცია საჭიროა");
       headers.Authorization = "Bearer " + await user.getIdToken();
     }
     const response = await fetch(API + path, {
@@ -75,46 +84,67 @@
     header.append(element("h2", "", "⚡ ΔΕΗ — პირადი ქვითრები"));
     const badge = element("span", "dei-sync-badge", "Firebase Auth-ის ჩატვირთვა…");
     header.append(badge);
-    const message = element("p", "dei-sync-message", "მომხმარებლის პირადი მონაცემებისთვის საჭიროა დადასტურებული Firebase ანგარიში.");
-    const authToggle = element("button", "dei-auth-toggle", "უკვე გაქვს Firebase ანგარიში? შესვლა");
-    authToggle.type = "button";
-    const authPanel = element("section", "dei-auth-panel");
-    authPanel.hidden = true;
-    const email = element("input", "dei-auth-input");
-    email.type = "email"; email.autocomplete = "username"; email.placeholder = "ელფოსტა"; email.setAttribute("aria-label", "Firebase Auth ელფოსტა");
-    const password = element("input", "dei-auth-input");
-    password.type = "password"; password.autocomplete = "current-password"; password.placeholder = "Firebase პაროლი"; password.setAttribute("aria-label", "Firebase Auth პაროლი");
-    const authActions = element("div", "dei-sync-actions");
-    const signIn = element("button", "", "არსებული Firebase ანგარიშით შესვლა");
-    const createAccount = element("button", "", "Firebase ანგარიშის შექმნა");
-    const signOut = element("button", "", "ამ ბრაუზერიდან გამოსვლა");
-    signOut.hidden = true;
-    authActions.append(signIn, createAccount, signOut);
-    authPanel.append(email, password, authActions);
+    const message = element("p", "dei-sync-message", "შედი არსებული T1 ანგარიშით, შემდეგ დაუკავშირე შენი Gmail.");
+    const loginLink = element("a", "dei-sync-login-link", "T1 ანგარიშში შესვლა");
+    loginLink.href = "./index.html";
+    loginLink.style.display = "inline-block";
+    loginLink.style.margin = "8px 0";
+    loginLink.style.padding = "10px 14px";
+    loginLink.style.borderRadius = "9px";
+    loginLink.style.background = "#e6eef5";
+    loginLink.style.color = "#17547e";
+    loginLink.style.fontWeight = "700";
+    loginLink.style.textDecoration = "none";
+    loginLink.hidden = true;
 
-    const details = element("dl", "dei-sync-details"); details.hidden = true;
+    const details = element("dl", "dei-sync-details");
     const values = {};
     [["amount", "თანხა"], ["due", "გადახდის ბოლო ვადა"], ["payment", "გადახდის სტატუსი"], ["email", "ქვითრის წერილის თარიღი"], ["sync", "ბოლო სინქრონიზაცია"]].forEach(([key, label]) => {
       details.append(element("dt", "", label));
-      values[key] = element("dd", "dei-sync-" + key, "—"); details.append(values[key]);
+      values[key] = element("dd", "dei-sync-" + key, "—");
+      details.append(values[key]);
     });
+    details.hidden = true;
+
     const actions = element("div", "dei-sync-actions");
     const connect = element("button", "dei-sync-primary", "Google-თან ჩემი Gmail-ის დაკავშირება");
     const sync = element("button", "", "ახლავე სინქრონიზაცია");
-    connect.hidden = true; sync.hidden = true;
-    actions.append(connect, sync);
+    const firebaseSignOut = element("button", "", "ამ მოწყობილობაზე Google ანგარიშის შეცვლა");
+    connect.hidden = true;
+    sync.hidden = true;
+    firebaseSignOut.hidden = true;
+    actions.append(connect, sync, firebaseSignOut);
+
+    const linkPanel = element("section", "dei-link-panel");
+    linkPanel.hidden = true;
+    linkPanel.append(element("strong", "", "ერთჯერადი, ადმინისტრატორის მიერ დადასტურებული მიბმა"));
+    linkPanel.append(element("p", "muted", "შენი T1 ანგარიში Firebase UID-ს უსაფრთხოდ უნდა დაუკავშირდეს. T1-ის ადმინისტრატორისგან მიიღე ერთჯერადი კოდი და შეიყვანე ქვემოთ."));
+    const claimInput = element("input", "dei-auth-input");
+    claimInput.type = "text";
+    claimInput.autocomplete = "one-time-code";
+    claimInput.maxLength = 64;
+    claimInput.placeholder = "ერთჯერადი მიბმის კოდი";
+    claimInput.setAttribute("aria-label", "ადმინისტრატორის ერთჯერადი მიბმის კოდი");
+    const redeem = element("button", "", "ანგარიშის დადასტურება და გაგრძელება");
+    linkPanel.append(claimInput, redeem);
+
     const historyPanel = element("section", "dei-bill-history");
     const historyTitle = element("h3", "", "შენახული ქვითრების ისტორია");
     const historySummary = element("p", "muted", "პირადი ისტორია ჯერ არ ჩატვირთულა.");
     const annualSummary = element("div", "dei-bill-annual-summary");
     const historyList = element("div", "dei-bill-history-list");
     historyPanel.append(historyTitle, historySummary, annualSummary, historyList);
-    root.append(header, message, authToggle, authPanel, details, actions, historyPanel);
+    root.append(header, message, loginLink, details, actions, linkPanel, historyPanel);
 
     function setStatus(text, good) {
       badge.textContent = text;
       badge.classList.toggle("is-connected", Boolean(good));
       badge.classList.toggle("is-error", good === false);
+    }
+    function clearHistory(text) {
+      historyList.replaceChildren();
+      annualSummary.replaceChildren();
+      historySummary.textContent = text;
     }
     function renderBill(bill) {
       details.hidden = false;
@@ -159,27 +189,80 @@
       result.syncPages = pages;
       return result;
     }
-    async function refresh(force = false) {
-      const user = firebaseAuth?.currentUser;
-      if (!user) {
-        authPanel.hidden = !legacyLoginExpanded; authToggle.hidden = false; details.hidden = true; connect.hidden = false; sync.hidden = true;
-        signIn.hidden = false; createAccount.hidden = false; email.hidden = false; password.hidden = false;
-        signOut.hidden = true;
-        setStatus("Firebase ავტორიზაცია საჭიროა", false);
-        message.textContent = "დააჭირე დიდ Google ღილაკს: აირჩიე ანგარიში, შემდეგ დაადასტურე მხოლოდ Gmail-ის წაკითხვის ნებართვა.";
-        historyList.replaceChildren(); annualSummary.replaceChildren();
-        historySummary.textContent = "შესვლის შემდეგ გამოჩნდება მხოლოდ ამ ანგარიშის DEI ქვითრები.";
+    function sessionMatches(status) {
+      const session = t1Session();
+      return Boolean(session && status?.linked === true && String(status.t1AccountId || "") === session.accountId);
+    }
+    async function beginGmailOAuth() {
+      const session = t1Session();
+      if (!session) throw new Error("ჯერ შედი არსებული T1 ანგარიშით.");
+      const status = await api("/api/status");
+      if (status.linked !== true) {
+        linkPanel.hidden = false;
+        connect.hidden = true;
+        setStatus("T1 ანგარიშის მიბმა საჭიროა", false);
+        message.textContent = "შენი Firebase UID ჯერ არ არის მიბმული ამ T1 ანგარიშზე. შეიყვანე ადმინისტრატორის ერთჯერადი კოდი.";
         return;
       }
-      authToggle.hidden = true; authPanel.hidden = false; signIn.hidden = true; createAccount.hidden = true; signOut.hidden = false;
-      email.hidden = true; password.hidden = true;
+      if (!sessionMatches(status)) {
+        throw new Error("ამ Google ანგარიშის T1 მიბმა სხვა ანგარიშს ეკუთვნის. შეცვალე Google ანგარიში ამ მოწყობილობაზე.");
+      }
+      const result = await api("/oauth/start", { method: "POST", body: { returnTo: location.origin + location.pathname } });
+      location.assign(result.authorizationUrl);
+    }
+    async function refresh(force = false) {
+      const session = t1Session();
+      if (!session) {
+        details.hidden = true;
+        connect.hidden = true;
+        sync.hidden = true;
+        linkPanel.hidden = true;
+        loginLink.hidden = false;
+        firebaseSignOut.hidden = true;
+        setStatus("T1 ანგარიშში შესვლა საჭიროა", false);
+        message.textContent = "DEI ქვითრების სანახავად ჯერ შედი შენს არსებულ T1 ანგარიშში.";
+        clearHistory("T1 ანგარიშში შესვლის შემდეგ გამოჩნდება მხოლოდ ამ ანგარიშთან მიბმული ქვითრები.");
+        return;
+      }
+      loginLink.hidden = true;
+      connect.hidden = false;
+      const user = firebaseAuth?.currentUser;
+      if (!user) {
+        details.hidden = true;
+        sync.hidden = true;
+        linkPanel.hidden = true;
+        firebaseSignOut.hidden = true;
+        setStatus("T1 ანგარიშით შესული ხარ", true);
+        message.textContent = "შედი არსებული T1 ანგარიშით; შემდეგ დააჭირე Gmail-ის დაკავშირებას, აირჩიე Google ანგარიში და დაადასტურე მხოლოდ Gmail-ის წაკითხვის ნებართვა.";
+        clearHistory("Google-თან ავტორიზაციის შემდეგ ჩაიტვირთება მხოლოდ ამ T1 ანგარიშთან მიბმული ისტორია.");
+        return;
+      }
       const status = await api("/api/status");
-      connect.hidden = Boolean(status.gmailConnected); sync.hidden = !status.gmailConnected;
-      setStatus(status.gmailConnected ? "შენი Gmail ანგარიში დაკავშირებულია" : "Google ანგარიშში შესული ხარ", Boolean(status.gmailConnected));
+      if (status.linked !== true) {
+        details.hidden = true; sync.hidden = true; connect.hidden = true;
+        linkPanel.hidden = false; firebaseSignOut.hidden = false;
+        setStatus("ადმინისტრატორის მიბმა საჭიროა", false);
+        message.textContent = "Google-ში შესვლა შესრულდა. არსებული T1 ანგარიშის დასაცავად საჭიროა ერთჯერადი ადმინისტრატორის კოდი.";
+        clearHistory("ჯერ ანგარიში არ არის მიბმული; ქვითრები არ იტვირთება.");
+        return;
+      }
+      if (!sessionMatches(status)) {
+        details.hidden = true; connect.hidden = true; sync.hidden = true; linkPanel.hidden = true;
+        firebaseSignOut.hidden = false;
+        setStatus("T1 ანგარიში არ ემთხვევა", false);
+        message.textContent = "ამ Google UID-ს სხვა T1 ანგარიში აქვს მიბმული. სხვა მომხმარებლის მონაცემების დასაცავად სინქრონიზაცია შეჩერებულია.";
+        clearHistory("სხვა T1 ანგარიშის ისტორია ამ გვერდზე არ ჩაიტვირთება.");
+        return;
+      }
+      firebaseSignOut.hidden = false;
+      linkPanel.hidden = true;
+      connect.hidden = Boolean(status.gmailConnected);
+      sync.hidden = !status.gmailConnected;
+      setStatus(status.gmailConnected ? "შენი Gmail ანგარიში დაკავშირებულია" : "T1 და Firebase ანგარიშები მიბმულია", Boolean(status.gmailConnected));
       if (!status.gmailConnected) {
-        message.textContent = oauthNotice || "დააჭირე დიდ ღილაკს და Google-ში აირჩიე Gmail ანგარიში. T1 ითხოვს მხოლოდ Gmail-ის წაკითხვის ნებართვას.";
-        historyList.replaceChildren(); annualSummary.replaceChildren();
-        historySummary.textContent = "Gmail ჯერ არ არის დაკავშირებული.";
+        details.hidden = true;
+        message.textContent = oauthNotice || "T1 ანგარიშის მიბმა დასრულდა. ახლა დააჭირე Gmail-ის დაკავშირებას და დაადასტურე Gmail-ის წაკითხვის ნებართვა.";
+        clearHistory("Gmail ჯერ არ არის დაკავშირებული.");
         return;
       }
       message.textContent = force ? "სინქრონიზაცია მიმდინარეობს…" : "შენს Worker სივრცეში შენახულ ბოლო ქვითარს ვკითხულობ…";
@@ -200,49 +283,56 @@
         historySummary.textContent = "ისტორია ვერ ჩაიტვირთა: " + error.message;
       }
     }
-    authToggle.addEventListener("click", () => {
-      legacyLoginExpanded = !legacyLoginExpanded;
-      authPanel.hidden = !legacyLoginExpanded;
-      authToggle.textContent = legacyLoginExpanded ? "Firebase შესვლის დახურვა" : "უკვე გაქვს Firebase ანგარიში? შესვლა";
-    });
-    signIn.addEventListener("click", async () => {
-      try {
-        await initializeAuth();
-        await firebaseAuth.signInWithEmailAndPassword(email.value.trim(), password.value);
-        await refresh(false);
-      } catch (error) { message.textContent = "Firebase-ში შესვლა ვერ შესრულდა: " + error.message; setStatus("შესვლის შეცდომა", false); }
-    });
-    createAccount.addEventListener("click", async () => {
-      try {
-        await initializeAuth();
-        await firebaseAuth.createUserWithEmailAndPassword(email.value.trim(), password.value);
-        message.textContent = "Firebase ანგარიში შეიქმნა. ახლა Google ღილაკით დააკავშირე Gmail.";
-        await refresh(false);
-      } catch (error) { message.textContent = "ანგარიშის შექმნა ვერ შესრულდა: " + error.message; setStatus("ანგარიშის შეცდომა", false); }
-    });
-    signOut.addEventListener("click", async () => {
-      if (firebaseAuth) await firebaseAuth.signOut();
-      await refresh(false);
-    });
+
     connect.addEventListener("click", async () => {
-      connect.disabled = true;
-      oauthNotice = "";
+      connect.disabled = true; oauthNotice = "";
       try {
+        if (!t1Session()) { await refresh(false); return; }
         await initializeAuth();
         if (!firebaseAuth.currentUser) {
           const provider = new window.firebase.auth.GoogleAuthProvider();
           provider.setCustomParameters({ prompt: "select_account" });
           await firebaseAuth.signInWithPopup(provider);
         }
-        const result = await api("/oauth/start", { method: "POST", body: { returnTo: location.origin + location.pathname } });
-        location.assign(result.authorizationUrl);
-      } catch (error) { message.textContent = "Google/Gmail დაკავშირება ვერ მოხერხდა: " + error.message; setStatus("OAuth შეცდომა", false); connect.disabled = false; }
+        await beginGmailOAuth();
+      } catch (error) {
+        message.textContent = "Google/Gmail დაკავშირება ვერ მოხერხდა: " + error.message;
+        setStatus("OAuth შეცდომა", false);
+      } finally {
+        connect.disabled = false;
+      }
+    });
+    redeem.addEventListener("click", async () => {
+      redeem.disabled = true;
+      try {
+        const session = t1Session();
+        if (!session) throw new Error("ჯერ შედი არსებული T1 ანგარიშით.");
+        const claimCode = String(claimInput.value || "").trim();
+        if (!claimCode) throw new Error("შეიყვანე ადმინისტრატორის ერთჯერადი კოდი.");
+        await initializeAuth();
+        if (!firebaseAuth.currentUser) throw new Error("ჯერ Google ანგარიშით შედი.");
+        await api("/api/account/link", { method: "POST", body: { claimCode } });
+        claimInput.value = "";
+        const status = await api("/api/status");
+        if (!sessionMatches(status)) throw new Error("ეს კოდი სხვა T1 ანგარიშზეა მიბმული. სინქრონიზაცია არ დაწყებულა; დაუკავშირდი ადმინისტრატორს.");
+        linkPanel.hidden = true;
+        setStatus("ანგარიშები მიბმულია", true);
+        message.textContent = "T1 ანგარიში დადასტურებულია. ახლა Gmail-ს ვაკავშირებ…";
+        await beginGmailOAuth();
+      } catch (error) {
+        message.textContent = "ანგარიშის მიბმა ვერ შესრულდა: " + error.message;
+        setStatus("მიბმის შეცდომა", false);
+      } finally { redeem.disabled = false; }
     });
     sync.addEventListener("click", async () => {
       sync.disabled = true;
       try { await refresh(true); }
       catch (error) { message.textContent = "სინქრონიზაცია ვერ შესრულდა: " + error.message; setStatus("სინქრონიზაციის შეცდომა", false); }
       finally { sync.disabled = false; }
+    });
+    firebaseSignOut.addEventListener("click", async () => {
+      try { await firebaseAuth?.signOut(); await refresh(false); }
+      catch (error) { message.textContent = "Google ანგარიშიდან გამოსვლა ვერ შესრულდა: " + error.message; }
     });
 
     (async () => {
@@ -254,8 +344,8 @@
           if (callbackStatus === "connected") { autoSyncAfterOAuth = true; oauthNotice = "Gmail OAuth წარმატებულია; ვეძებ DEI ქვითრებს…"; }
           else if (callbackStatus === "denied") oauthNotice = "Google-ის თანხმობა გაუქმდა. შეგიძლია ხელახლა ცადო.";
           else if (callbackStatus === "missing_refresh") oauthNotice = "Google-მა განახლების ნებართვა არ დააბრუნა. ხელახლა სცადე დაკავშირება.";
+          else if (callbackStatus === "link_required") oauthNotice = "არსებული T1 ანგარიშის დასაცავად საჭიროა ადმინისტრატორის ერთჯერადი მიბმა.";
           else oauthNotice = "Gmail OAuth ვერ დასრულდა. სცადე თავიდან.";
-          message.textContent = oauthNotice;
         }
         firebaseAuth.onAuthStateChanged(() => {
           const runSync = autoSyncAfterOAuth;
