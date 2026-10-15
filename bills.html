@@ -53,6 +53,9 @@
     return;
   }
   const $=id=>document.getElementById(id), KEY='temoPrivateBillsPrototypeV1:'+encodeURIComponent(currentUserId);
+  const LEGACY_KEY='temoPrivateBillsPrototypeV1';
+  if(currentUser.toUpperCase()==='TEMO'&&!localStorage.getItem(KEY)&&localStorage.getItem(LEGACY_KEY)){try{localStorage.setItem(KEY,localStorage.getItem(LEGACY_KEY));}catch(e){}}
+  let bills=[];try{bills=JSON.parse(localStorage.getItem(KEY)||'[]');if(!Array.isArray(bills))bills=[];}catch(e){bills=[]}
   const userLabel=document.getElementById('billUserName');if(userLabel)userLabel.textContent=currentUser;
   let cloudDeiDue=0, cloudDeiCount=0;
   window.addEventListener('t1:dei-bill',event=>{const b=event.detail;cloudDeiDue=b&&b.paymentStatus==='due'?Math.max(0,Number(b.totalEUR)||0):0;cloudDeiCount=b&&b.paymentStatus==='due'?1:0;render()});
