@@ -125,6 +125,42 @@ assert.equal(JSON.stringify(history.annualTotals), JSON.stringify([
   { year: '2025', count: 1, paidEUR: '0.00', dueEUR: '0.00' },
   { year: '2024', count: 1, paidEUR: '15.50', dueEUR: '0.00' }
 ]));
+
+const localizedKV = new MemoryKV();
+const localizedDigest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(session.sessionToken));
+const localizedSessionHash = [...new Uint8Array(localizedDigest)].map(x => x.toString(16).padStart(2, '0')).join('');
+await localizedKV.put('t1_session:' + localizedSessionHash, '1');
+const localizedBills = [
+  ['2025-paid', '2025-03-01', '45,00 €', 'paid'],
+  ['2025-due', '2025-08-01', '12,50', 'due'],
+  ['2025-unknown', '2025-11-01', '99,00 €', 'unknown'],
+  ['2026-paid-a', '2026-01-01', '20,25 €', 'paid'],
+  ['2026-paid-b', '2026-02-01', '1.234,50 €', 'paid'],
+  ['2026-due-a', '2026-04-01', '22,25 €', 'due'],
+  ['2026-due-b', '2026-05-01', '3,50', 'due'],
+  ['2026-unknown-a', '2026-06-01', '80,00 €', 'unknown'],
+  ['2026-unknown-b', '2026-07-01', '5,00 €', 'unknown']
+];
+for (const [id, day, amount, paymentStatus] of localizedBills) {
+  const internalDate = Date.parse(day + 'T12:00:00Z');
+  await localizedKV.put('bill_history:' + id, JSON.stringify({
+    gmailMessageId: id, internalDate, emailDate: new Date(internalDate).toISOString(),
+    totalEUR: amount, paymentStatus
+  }));
+}
+const localizedEnv = { ...env, DEI_KV: localizedKV };
+r = await worker.fetch(req('/api/history', { headers: authHeaders }), localizedEnv);
+assert.equal(r.status, 200);
+const localizedHistory = await r.json();
+assert.equal(localizedHistory.count, 9);
+assert.equal(localizedHistory.totalPaidEUR, '1299.75');
+assert.equal(localizedHistory.totalDueEUR, '38.25');
+assert.equal(JSON.stringify(localizedHistory.annualTotals), JSON.stringify([
+  { year: '2026', count: 6, paidEUR: '1254.75', dueEUR: '25.75' },
+  { year: '2025', count: 3, paidEUR: '45.00', dueEUR: '12.50' }
+]));
+assert.ok(localizedHistory.bills.some(x => x.totalEUR === '45.00'));
+assert.equal(localizedHistory.totalPaidEUR.includes('99.00'), false, 'unknown status remains excluded');
 assert.equal(new Date(history.bills[0].emailDate).getUTCFullYear(), 2026);
 assert.equal(new Date(history.bills[1].emailDate).getUTCFullYear(), 2025);
 assert.equal(new Date(history.bills[2].emailDate).getUTCFullYear(), 2024);
