@@ -5,7 +5,7 @@ This setup is for the existing Firebase project `temo-75`, the existing `dei-bil
 ## Firebase Console
 
 1. Open the existing Firebase project `temo-75`; do not create another project.
-2. In **Authentication → Sign-in method**, enable **Email/Password**. Keep email verification enabled for new accounts.
+2. In **Authentication → Sign-in method**, enable **Google**. Email/Password may remain enabled only as a fallback for existing Firebase Auth users.
 3. In **Authentication → Settings → Authorized domains**, add `temo75.github.io` if it is not already present.
 4. In **Project settings → General**, use the existing registered web app's public config values. Configure the Worker variables `FIREBASE_API_KEY`, `FIREBASE_AUTH_DOMAIN`, and `FIREBASE_APP_ID`; the project ID is `temo-75` and is already declared in Wrangler config.
 5. Do not change live Realtime Database rules as part of this DEI deployment. The current repository contains no rules file, and the live rules have not been inspected. Review them separately before any RTDB changes.
@@ -25,21 +25,21 @@ Confirm these variables/secrets exist before deployment:
 - Existing variable: `GOOGLE_CLIENT_ID`
 - Existing secrets: `GOOGLE_CLIENT_SECRET` (do not replace if already configured)
 - Secret: `DEI_TOKEN_ENCRYPTION_KEY` — a new random 32-byte key encoded as unpadded base64url. Generate it in a password manager or secure local generator, then enter it only into the Wrangler/Cloudflare secret prompt.
-- Secret: `LEGACY_LINK_ADMIN_KEY` — a separate high-entropy secret used only by an administrator to issue account-link claims.
+- Optional secret: `LEGACY_LINK_ADMIN_KEY` — needed only if you choose to use the retained administrator-controlled legacy-account claim endpoint; ordinary Gmail connection and personal bill sync do not require it.
 
 Use `wrangler secret put <NAME>` from a trusted local terminal; never put secret values in source, GitHub, browser code, chat, or command history. Verify secret *names* with `wrangler secret list`; values cannot be read back.
 
 The current `wrangler.toml` already contains a daily Cron trigger. This branch does not alter that schedule. Do not deploy until the tests pass and the owner gives final deployment approval.
 
-## Existing account linking
+## Optional legacy account mapping
 
-Do not link by email, old password/hash, or browser-stored ID alone.
+Personal Gmail bills are stored by verified Firebase UID and do not require mapping to the old T1 account. This avoids an administrator claim-code step. If a legacy account mapping is separately needed later, do not link by email, old password/hash, or browser-stored ID alone.
 
-1. The user creates/signs into a Firebase Auth account on the DEI page and verifies that account's email.
+1. The user creates/signs into a Firebase Auth account on the DEI page. The main connection button can create/sign in with Google and immediately continue to Gmail OAuth.
 2. An administrator independently confirms which existing T1 account belongs to that person through a trusted channel or in person. Record a non-sensitive verification reference.
 3. The administrator calls `POST /api/admin/link-claim` from a trusted local tool, using the Cloudflare-only `LEGACY_LINK_ADMIN_KEY`. Include the verified legacy account ID, the Firebase UID, the verification method/reference, and `ownershipVerified: true`.
 4. Deliver the returned one-time claim code only to that verified user through the same trusted channel. The code is short-lived and bound to that Firebase UID; another UID cannot redeem it.
-5. The user enters the code on the DEI page. The Worker stores the UID-to-legacy-account link and thereafter scopes Gmail OAuth, sync cursors, bills, latest bill, status, and totals to the verified Firebase UID.
+5. The user can redeem that code on the DEI page only if the optional mapping UI is reintroduced; it is not part of the ordinary Gmail flow. All Gmail data remains scoped to the Firebase UID regardless of legacy mapping.
 
 The legacy shared keys (`gmail_refresh_token`, `latest_bill`, `bill_history`, and old unscoped history keys) are deliberately ignored by the per-user API. No old bill is assigned to a regular user automatically.
 
