@@ -103,7 +103,7 @@
       values[key] = element("dd", "dei-sync-" + key, "—"); details.append(values[key]);
     });
     const actions = element("div", "dei-sync-actions");
-    const connect = element("button", "dei-sync-primary", "ჩემი Gmail-ის უსაფრთხოდ დაკავშირება");
+    const connect = element("button", "dei-sync-primary", "Google-თან ჩემი Gmail-ის დაკავშირება");
     const sync = element("button", "", "ახლავე სინქრონიზაცია");
     connect.hidden = true; sync.hidden = true;
     actions.append(connect, sync);
