@@ -31,5 +31,5 @@ r=await worker.fetch(req('/api/latest',{headers:{origin:'https://temo75.github.i
 r=await worker.fetch(req('/api/latest'),env); assert.equal(r.status,401);
 const badGrant='a'.repeat(64); const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(badGrant)); const hash=[...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,'0')).join(''); await kv.put('oauth_grant:'+hash,JSON.stringify({returnTo:'https://temo75.github.io/t1/dei-bill.html'}));
 r=await worker.fetch(req('/api/session/exchange',{method:'POST',headers:{origin:'https://evil.example','content-type':'application/json'},body:JSON.stringify({code:badGrant})}),env); assert.equal(r.status,403);
-let waited; await worker.scheduled({},env,{waitUntil(p){waited=p;}}); await waited; assert.ok(await kv.get('latest_bill'));
+let waited; await worker.scheduled({},env,{waitUntil(p){waited=p;}}); await waited; assert.ok([...kv.data.keys()].some(key=>key.startsWith('latest_bill:')));
 console.log('PASS: health/config; OAuth state + callback; scoped browser session; Origin rejection; authenticated latest bill parse; KV persistence; scheduled handler.');
