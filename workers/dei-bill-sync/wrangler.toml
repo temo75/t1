@@ -5,6 +5,7 @@ workers_dev = true
 
 [vars]
 GOOGLE_CLIENT_ID = "442729744405-bme30lpmv4huca28slne2hgshtfg3r5i.apps.googleusercontent.com"
+FIREBASE_PROJECT_ID = "temo-75"
 
 [[kv_namespaces]]
 binding = "DEI_KV"
