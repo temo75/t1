@@ -196,7 +196,6 @@ function assertConfig(env) {
   if (!env.DEI_KV) missing.push("DEI_KV binding");
   if (!env.FIREBASE_PROJECT_ID) missing.push("FIREBASE_PROJECT_ID");
   if (!env.DEI_TOKEN_ENCRYPTION_KEY) missing.push("DEI_TOKEN_ENCRYPTION_KEY");
-  if (!env.LEGACY_LINK_ADMIN_KEY) missing.push("LEGACY_LINK_ADMIN_KEY");
   return missing;
 }
 function firebaseClientConfig(env) {
@@ -468,7 +467,6 @@ export default {
         if (missing.length) return json({ ok: false, error: "Worker configuration is incomplete", missing }, 503);
         const uid = await authenticatedUid(request, env);
         if (!uid) return json({ ok: false, error: "A valid Firebase ID token is required" }, 401);
-        if (!(await env.DEI_KV.get(await userKey(uid, "legacy_account_link")))) return json({ ok: false, error: "Link this Firebase account to your T1 account first" }, 403);
         const body = await request.json().catch(() => ({}));
         const returnTo = safeReturnTo(body.returnTo);
         if (!returnTo) return json({ ok: false, error: "Invalid T1 return URL" }, 400);
@@ -542,7 +540,6 @@ export default {
         if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
         const uid = await authenticatedUid(request, env);
         if (!uid) return json({ ok: false, error: "A valid Firebase ID token is required" }, 401);
-        if (!(await env.DEI_KV.get(await userKey(uid, "legacy_account_link")))) return json({ ok: false, error: "T1 account link is required" }, 403);
         let body = {};
         try { body = await request.json(); } catch { return json({ ok: false, error: "Invalid JSON body" }, 400); }
         const cursorKey = await userKey(uid, "sync_cursor");
