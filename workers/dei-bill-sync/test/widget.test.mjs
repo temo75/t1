@@ -34,6 +34,8 @@ const messageEvents = [];
 const calls = [];
 let linked = true;
 let gmailConnected = true;
+let popupSignIns = 0;
+let selectedGooglePrompt = null;
 let syncMode = "success";
 let syncRequests = 0;
 const idToken = "signed-firebase-id-token-fixture";
@@ -47,14 +49,15 @@ const firebaseUser = {
 const fakeAuth = {
   currentUser: firebaseUser,
   async setPersistence(value) { assert.equal(value, "session"); },
-  onAuthStateChanged(callback) { callback(firebaseUser); return () => {}; },
-  async signInWithEmailAndPassword() { return { user: firebaseUser }; },
-  async createUserWithEmailAndPassword() { return { user: firebaseUser }; },
+  onAuthStateChanged(callback) { callback(this.currentUser); return () => {}; },
+  async signInWithEmailAndPassword() { this.currentUser = firebaseUser; return { user: firebaseUser }; },
+  async createUserWithEmailAndPassword() { this.currentUser = firebaseUser; return { user: firebaseUser }; },
+  async signInWithPopup(provider) { selectedGooglePrompt = provider.parameters?.prompt; popupSignIns++; this.currentUser = firebaseUser; return { user: firebaseUser }; },
   async signOut() { this.currentUser = null; },
 };
 const fakeFirebase = {
   apps: [],
-  auth: { Auth: { Persistence: { SESSION: "session" } } },
+  auth: { Auth: { Persistence: { SESSION: "session" } }, GoogleAuthProvider: class { setCustomParameters(parameters) { this.parameters = parameters; } } },
   initializeApp(config, name) {
     assert.equal(config.projectId, "temo-75");
     const app = { name, auth: () => fakeAuth };
@@ -121,6 +124,7 @@ assert.ok(calls.filter(call => call.path !== "/api/config").every(call => call.a
   "all private Worker API requests carry the Firebase ID token");
 assert.ok(!source.includes("t1.deiBillSession.v1"), "the old browser-issued Worker session is removed");
 assert.ok(!source.includes("SYNC_API_KEY"), "no API secret is bundled in public browser code");
+assert.ok(!source.includes("/api/account/link"), "the normal user flow has no administrator claim-code step");
 assert.equal(host.children[0].children[1].textContent, "შენი Gmail ანგარიში დაკავშირებულია", "connected Gmail status is visible");
 const historyPanel = host.children[6];
 assert.match(historyPanel.children[1].textContent, /ქვითრები: 1/);
@@ -141,6 +145,7 @@ assert.equal(syncButton.disabled, false);
 assert.ok(messageEvents.some(event => event.type === "t1:dei-bill"));
 
 gmailConnected = false;
+fakeAuth.currentUser = null;
 const connectHost = new FakeElement();
 windowObject.DEIBillSync.mount(connectHost);
 await new Promise(resolve => setTimeout(resolve, 30));
@@ -150,5 +155,7 @@ assert.equal(connectButton.textContent, "Google-თან ჩემი Gmail-ი
 assert.equal(connectButton.hidden, false);
 await connectButton.listeners.get("click")();
 assert.ok(calls.some(call => call.path === "/oauth/start" && call.method === "POST" && call.authorization === "Bearer " + idToken));
+assert.equal(popupSignIns, 1, "the main Gmail button signs into Firebase with Google when needed");
+assert.equal(selectedGooglePrompt, "select_account");
 assert.match(locationObject.assigned, /^https:\/\/accounts\.google\.com\/o\/oauth2\/v2\/auth\?state=test$/);
 console.log("PASS: Firebase ID token on private API calls; no browser Worker session/API secret; personal history display; multi-page progress; sync errors; prominent Gmail connect button and OAuth navigation.");
