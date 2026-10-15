@@ -17,7 +17,7 @@
 </head>
 <body>
 <div class="app">
-<header><div><h1>💶 ჩემი გადასახადები</h1><small>პირადი ადმინისტრატორის დაფა</small></div><button onclick="location.href='./index.html'">← მთავარზე</button></header>
+<header><div><h1>💶 ჩემი გადასახადები</h1><small>პირადი გადასახადები — <span id="billUserName"></span></small></div><button onclick="location.href='./index.html'">← მთავარზე</button></header>
 <div class="panel">
 <div class="notice">ΔΕΗ-ის ქვემოთ მოცემული მონაცემი განახლებულია შენ მიერ გამოგზავნილი myΔΕΗ აპის სურათით. ეს არის ბოლო ნაჩვენები გადახდა და არა მიმდინარე დავალიანება. გვერდი ჯერ პირდაპირ არ უკავშირდება პროვაიდერის ანგარიშს, ამიტომ ახალი მონაცემები ავტომატურად ჯერ არ ახლდება.</div>
 </div>
@@ -45,13 +45,18 @@
 </div>
 <script>
 (function(){
-  const ADMIN_KEY='temoWorkTrackerUser';
-  if(String(localStorage.getItem(ADMIN_KEY)||'').trim().toUpperCase()!=='TEMO'){
-    document.body.innerHTML='<div style="font:16px Arial,sans-serif;background:#071117;color:#eef7f7;min-height:100vh;display:grid;place-items:center;text-align:center;padding:24px"><div><h2>წვდომა შეზღუდულია</h2><p>ეს გვერდი განკუთვნილია ადმინისტრატორისთვის.</p><a href="./index.html" style="display:inline-block;padding:12px;border-radius:10px;background:#183445;color:white;text-decoration:none">მთავარზე დაბრუნება</a></div></div>';
+  const currentUser=String(localStorage.getItem('temoWorkTrackerUser')||'').trim();
+  const currentUserId=String(localStorage.getItem('temoWorkTrackerUserId')||'').trim();
+  const authorized=localStorage.getItem('temoWorkTrackerAuthorized')==='yes';
+  if(!authorized||!currentUserId){
+    document.body.innerHTML='<div style="font:16px Arial,sans-serif;background:#071117;color:#eef7f7;min-height:100vh;display:grid;place-items:center;text-align:center;padding:24px"><div><h2>შესვლა საჭიროა</h2><p>გადასახადების სანახავად ჯერ შედი TEMO ანგარიშში.</p><a href="./index.html" style="display:inline-block;padding:12px;border-radius:10px;background:#183445;color:white;text-decoration:none">შესვლაზე დაბრუნება</a></div></div>';
     return;
   }
-  const $=id=>document.getElementById(id), KEY='temoPrivateBillsPrototypeV1';
+  const $=id=>document.getElementById(id), KEY='temoPrivateBillsPrototypeV1:'+encodeURIComponent(currentUserId);
+  const LEGACY_KEY='temoPrivateBillsPrototypeV1';
+  if(currentUser.toUpperCase()==='TEMO'&&!localStorage.getItem(KEY)&&localStorage.getItem(LEGACY_KEY)){try{localStorage.setItem(KEY,localStorage.getItem(LEGACY_KEY));}catch(e){}}
   let bills=[];try{bills=JSON.parse(localStorage.getItem(KEY)||'[]');if(!Array.isArray(bills))bills=[];}catch(e){bills=[]}
+  const userLabel=document.getElementById('billUserName');if(userLabel)userLabel.textContent=currentUser;
   let cloudDeiDue=0, cloudDeiCount=0;
   window.addEventListener('t1:dei-bill',event=>{const b=event.detail;cloudDeiDue=b&&b.paymentStatus==='due'?Math.max(0,Number(b.totalEUR)||0):0;cloudDeiCount=b&&b.paymentStatus==='due'?1:0;render()});
   const money=n=>'€'+(Number(n)||0).toLocaleString('en-IE',{minimumFractionDigits:2,maximumFractionDigits:2});

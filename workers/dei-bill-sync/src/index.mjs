@@ -13,6 +13,7 @@
 const GOOGLE_AUTH = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN = "https://oauth2.googleapis.com/token";
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
+const GOOGLE_USERINFO = "https://www.googleapis.com/oauth2/v2/userinfo";
 const ALLOWED_ORIGIN = "https://temo75.github.io";
 const GMAIL_QUERY = 'from:(dei.gr) {subject:ΔΕΗ subject:λογαριασμού}';
 
@@ -153,10 +154,15 @@ async function sha256Hex(value) {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(value)));
   return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
 }
-async function hasT1Session(request, env) {
+async function getT1Session(request, env) {
   const token = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
-  if (!token || !env.DEI_KV) return false;
-  return Boolean(await env.DEI_KV.get("t1_session:" + await sha256Hex(token)));
+  if (!token || !env.DEI_KV) return null;
+  const value = await env.DEI_KV.get("t1_session:" + await sha256Hex(token));
+  if (!value) return null;
+  try {
+    const session = JSON.parse(value);
+    return session && /^[a-f0-9]{64}$/.test(session.emailKey || "") ? session : null;
+  } catch { return null; }
 }
 function assertConfig(env) {
   const missing = [];
@@ -166,8 +172,8 @@ function assertConfig(env) {
   return missing;
 }
 
-async function refreshAccessToken(env) {
-  const refreshToken = await env.DEI_KV.get("gmail_refresh_token");
+async function refreshAccessToken(env, emailKey) {
+  const refreshToken = await env.DEI_KV.get("gmail_refresh_token:" + emailKey);
   if (!refreshToken) throw new Error("GMAIL_NOT_CONNECTED");
   const form = new URLSearchParams({
     client_id: env.GOOGLE_CLIENT_ID,
@@ -185,25 +191,25 @@ async function refreshAccessToken(env) {
   return data.access_token;
 }
 
-async function gmailFetch(env, path) {
-  const token = await refreshAccessToken(env);
+async function gmailFetch(env, emailKey, path) {
+  const token = await refreshAccessToken(env, emailKey);
   const response = await fetch(`${GMAIL_API}${path}`, { headers: { authorization: `Bearer ${token}` } });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(`GMAIL_API_FAILED_${response.status}`);
   return data;
 }
 
-async function getLatestBill(env) {
+async function getLatestBill(env, emailKey) {
   const query = encodeURIComponent(GMAIL_QUERY);
-  const list = await gmailFetch(env, `/messages?q=${query}&maxResults=10`);
+  const list = await gmailFetch(env, emailKey, `/messages?q=${query}&maxResults=10`);
   const messages = list.messages || [];
   if (!messages.length) {
     const empty = { found: false, message: "No matching DEI bill email found", emailDate: "", totalEUR: null, dueDate: null, paymentStatus: "unknown", fetchedAt: new Date().toISOString() };
-    await env.DEI_KV.put("latest_bill", JSON.stringify(empty));
+    await env.DEI_KV.put("latest_bill:" + emailKey, JSON.stringify(empty));
     return empty;
   }
 
-  const full = await gmailFetch(env, `/messages/${encodeURIComponent(messages[0].id)}?format=full`);
+  const full = await gmailFetch(env, emailKey, `/messages/${encodeURIComponent(messages[0].id)}?format=full`);
   const headers = full.payload?.headers || [];
   const htmlBody = findBody(full.payload, "text/html");
   const plainBody = findBody(full.payload, "text/plain");
@@ -219,7 +225,7 @@ async function getLatestBill(env) {
     snippet: String(full.snippet || "").slice(0, 300),
     fetchedAt: new Date().toISOString(),
   };
-  await env.DEI_KV.put("latest_bill", JSON.stringify(result));
+  await env.DEI_KV.put("latest_bill:" + emailKey, JSON.stringify(result));
   return result;
 }
 
@@ -256,8 +262,7 @@ export default {
     try {
       if (url.pathname === "/health") {
         const missing = assertConfig(env);
-        const connected = Boolean(env.DEI_KV && await env.DEI_KV.get("gmail_refresh_token"));
-        return json({ ok: true, service: "TEMO DEI bill sync", configurationComplete: missing.length === 0, missing, oauthConfigured: Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET), kvConfigured: Boolean(env.DEI_KV), gmailConnected: connected });
+        return json({ ok: true, service: "TEMO DEI bill sync", configurationComplete: missing.length === 0, missing, oauthConfigured: Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET), kvConfigured: Boolean(env.DEI_KV) });
       }
 
       if (url.pathname === "/oauth/start") {
@@ -274,7 +279,7 @@ export default {
           client_id: env.GOOGLE_CLIENT_ID,
           redirect_uri: redirectUri,
           response_type: "code",
-          scope: "https://www.googleapis.com/auth/gmail.readonly",
+          scope: "openid email https://www.googleapis.com/auth/gmail.readonly",
           access_type: "offline",
           prompt: "consent",
           include_granted_scopes: "true",
@@ -302,14 +307,26 @@ export default {
         const response = await fetch(GOOGLE_TOKEN, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: form });
         const data = await response.json().catch(() => ({}));
         if (!response.ok || !data.access_token) return html("<h2>Google authorization failed.</h2><p>Verify the OAuth client and exact redirect URI in Google Cloud. Do not expose secrets.</p>", 502);
-        if (data.refresh_token) {
-          await env.DEI_KV.put("gmail_refresh_token", data.refresh_token);
-        } else if (!(await env.DEI_KV.get("gmail_refresh_token"))) {
-          return html("<h2>Google did not return a refresh token.</h2><p>Revoke this app's access in Google Account security, then open /oauth/start again.</p>", 400);
+        const userInfoResponse = await fetch(GOOGLE_USERINFO, { headers: { authorization: "Bearer " + data.access_token } });
+        const userInfo = await userInfoResponse.json().catch(() => ({}));
+        const email = String(userInfo.email || "").trim().toLowerCase();
+        if (!userInfoResponse.ok || !email || userInfo.verified_email !== true) {
+          return html("<h2>Google did not confirm the account email.</h2><p>Please reconnect Gmail and allow the email identity permission.</p>", 502);
         }
-        await env.DEI_KV.put("gmail_connected_at", new Date().toISOString());
+        const emailKey = await sha256Hex(email);
+        const refreshKey = "gmail_refresh_token:" + emailKey;
+        if (data.refresh_token) {
+          await env.DEI_KV.put(refreshKey, data.refresh_token);
+        } else if (!(await env.DEI_KV.get(refreshKey))) {
+          return html("<h2>Google did not return a refresh token.</h2><p>Revoke this app's access in Google Account security, then open T1 and connect Gmail again.</p>", 400);
+        }
+        const knownUsers = await env.DEI_KV.get("gmail_user_keys", "json") || [];
+        if (!knownUsers.includes(emailKey)) {
+          knownUsers.push(emailKey);
+          await env.DEI_KV.put("gmail_user_keys", JSON.stringify(knownUsers));
+        }
         const grant = randomHex(32);
-        await env.DEI_KV.put("oauth_grant:" + await sha256Hex(grant), JSON.stringify({ returnTo: oauthState.returnTo }), { expirationTtl: 180 });
+        await env.DEI_KV.put("oauth_grant:" + await sha256Hex(grant), JSON.stringify({ returnTo: oauthState.returnTo, emailKey }), { expirationTtl: 180 });
         const destination = new URL(oauthState.returnTo);
         destination.hash = new URLSearchParams({ dei_code: grant }).toString();
         return Response.redirect(destination.toString(), 302);
@@ -326,32 +343,37 @@ export default {
         const grantValue = await env.DEI_KV.get(grantKey);
         if (!grantValue) return json({ ok: false, error: "Invalid or expired authorization code" }, 401);
         await env.DEI_KV.delete(grantKey);
+        if (!/^[a-f0-9]{64}$/.test(grantValue.emailKey || "")) return json({ ok: false, error: "Authorization grant has no account identity" }, 401);
         const sessionToken = randomHex(32);
         const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString();
-        await env.DEI_KV.put("t1_session:" + await sha256Hex(sessionToken), "1", { expirationTtl: 8 * 60 * 60 });
+        await env.DEI_KV.put("t1_session:" + await sha256Hex(sessionToken), JSON.stringify({ emailKey: grantValue.emailKey }), { expirationTtl: 8 * 60 * 60 });
         return json({ ok: true, sessionToken, expiresAt });
       }
 
       if (url.pathname === "/api/status") {
-        const connected = Boolean(env.DEI_KV && await env.DEI_KV.get("gmail_refresh_token"));
-        const latest = env.DEI_KV ? await env.DEI_KV.get("latest_bill", "json") : null;
-        return json({ ok: true, gmailConnected: connected, lastFetchedAt: latest?.fetchedAt || null });
+        const session = await getT1Session(request, env);
+        if (!session) return json({ ok: true, gmailConnected: false, lastFetchedAt: null });
+        const latest = await env.DEI_KV.get("latest_bill:" + session.emailKey, "json");
+        return json({ ok: true, gmailConnected: true, lastFetchedAt: latest?.fetchedAt || null });
       }
 
       if (url.pathname === "/api/sync") {
         if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "POST, OPTIONS" });
         if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
-        if (!(await hasT1Session(request, env))) return json({ ok: false, error: "Unauthorized" }, 401);
-        const bill = await getLatestBill(env);
+        const session = await getT1Session(request, env);
+        if (!session) return json({ ok: false, error: "Unauthorized" }, 401);
+        const bill = await getLatestBill(env, session.emailKey);
         return json({ ok: true, bill: publicBill(bill), cached: false });
       }
 
       if (url.pathname === "/api/latest") {
         if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
-        if (!(await hasT1Session(request, env))) return json({ ok: false, error: "Unauthorized" }, 401);
-        const cached = await env.DEI_KV.get("latest_bill", "json");
+        const session = await getT1Session(request, env);
+        if (!session) return json({ ok: false, error: "Unauthorized" }, 401);
+        const cacheKey = "latest_bill:" + session.emailKey;
+        const cached = await env.DEI_KV.get(cacheKey, "json");
         if (cached?.fetchedAt && Date.now() - Date.parse(cached.fetchedAt) < 5 * 60 * 1000) return json({ ok: true, bill: publicBill(cached), cached: true });
-        const bill = await getLatestBill(env);
+        const bill = await getLatestBill(env, session.emailKey);
         return json({ ok: true, bill: publicBill(bill), cached: false });
       }
 
@@ -363,7 +385,13 @@ export default {
   },
 
   async scheduled(controller, env, ctx) {
-    ctx.waitUntil(getLatestBill(env));
+    ctx.waitUntil((async () => {
+      const emailKeys = await env.DEI_KV.get("gmail_user_keys", "json") || [];
+      await Promise.all(emailKeys.map(async emailKey => {
+        try { await getLatestBill(env, emailKey); }
+        catch (error) { console.error("Scheduled DEI sync failed for account key", emailKey, error?.message || error); }
+      }));
+    })());
   },
 };
 
