@@ -64,7 +64,7 @@ globalThis.fetch = async (input, init = {}) => {
     if (failGmail) return new Response(JSON.stringify({ error: { message: 'sanitized fixture error' } }), { status: 403 });
     const parsed = new URL(url);
     assert.equal(parsed.searchParams.get('maxResults'), '20');
-    assert.equal(parsed.searchParams.get('q'), 'in:anywhere {from:(dei.gr) subject:(Fwd) subject:(FW) subject:(Forward) subject:(Προώθηση)}');
+    assert.equal(parsed.searchParams.get('q'), 'in:anywhere {from:(dei.gr) subject:(Fwd) subject:(FW) subject:(Forward) subject:(Προώθηση) subject:(λογαριασμού) subject:(ΔΕΗ) subject:(Ηλεκτρικής)}');
     requestedPages.push(parsed.searchParams.get('pageToken') || '');
     const page = parsed.searchParams.get('pageToken') || '';
     if (!page) return new Response(JSON.stringify({ messages: [{ id: 'security-code' }], nextPageToken: 'page-2' }));
