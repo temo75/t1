@@ -198,11 +198,11 @@ async function gmailFetch(env, ownerKey, path, accessToken = "") {
 }
 
 function isDeiOrigin(from, subject, bodyText) {
-  if (/@(?:[a-z0-9-]+\\.)*dei\\.gr\\b/i.test(String(from || ""))) return true;
-  // Forwarded messages may have the original DEI sender quoted in the body.
-  const forwarded = /(?:^|\\n)\\s*(?:from|από|αποστολέας|αποστολεας)\\s*:/im.test(String(bodyText || ""));
-  const quotedDeiAddress = /(?:<[^>\\n]*@(?:[a-z0-9-]+\\.)*dei\\.gr\\s*>|[a-z0-9._%+-]+@(?:[a-z0-9-]+\\.)*dei\\.gr)\\b?/i.test(String(bodyText || ""));
-  const forwardSubject = /^(?:\\s*(?:fwd?|forwarded message|προώθηση|fw)\\s*[:：])/i.test(String(subject || ""));
+  if (/@(?:[a-z0-9-]+\.)*dei\.gr\b/i.test(String(from || ""))) return true;
+  const body = String(bodyText || "");
+  const forwarded = /(?:^|\n)\s*(?:from|από|αποστολέας|αποστολεας)\s*:/im.test(body);
+  const quotedDeiAddress = /<[^>\n]*@(?:[a-z0-9-]+\.)*dei\.gr\s*>|[a-z0-9._%+-]+@(?:[a-z0-9-]+\.)*dei\.gr/i.test(body);
+  const forwardSubject = /^\s*(?:fwd?|forwarded message|προώθηση|fw)\s*[:：]/i.test(String(subject || ""));
   return (forwarded || forwardSubject) && quotedDeiAddress;
 }
 
@@ -246,10 +246,10 @@ async function getLatestBill(env, ownerKey, pageToken = "") {
     const headers = full.payload?.headers || [];
     const subject = headerValue(headers, "subject");
     const from = headerValue(headers, "from");
-    if (!/@(?:[a-z0-9-]+\.)*dei\.gr\b/i.test(from)) continue;
     const htmlBody = findBody(full.payload, "text/html");
     const plainBody = findBody(full.payload, "text/plain");
     const bodyText = stripHtml([htmlBody, plainBody, full.snippet || ""].filter(Boolean).join("\n"));
+    if (!isDeiOrigin(from, subject, bodyText)) continue;
     if (!isLikelyInvoice(subject, bodyText)) continue;
     const timestamp = Number(full.internalDate || summary.internalDate || 0);
     const headerDate = headerValue(headers, "date");
