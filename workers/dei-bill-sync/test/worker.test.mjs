@@ -101,7 +101,7 @@ const authHeaders = { origin: 'https://temo75.github.io', authorization: 'Bearer
 
 for (const continuation of [false, true, true, true]) {
   r = await worker.fetch(req('/api/sync', { method: 'POST', headers: { ...authHeaders, 'content-type': 'application/json' }, body: JSON.stringify({ continue: continuation }) }), env);
-  assert.equal(r.status, 200);
+  assert.equal(r.status, 200, await r.clone().text());
   const result = await r.json();
   assert.equal(result.ok, true);
   assert.equal(result.complete, continuation && requestedPages.length === 4);
