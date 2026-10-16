@@ -16,7 +16,7 @@ class MemoryKV {
 }
 
 const kv = new MemoryKV();
-const env = { GOOGLE_CLIENT_ID: 'test-client-id', GOOGLE_CLIENT_SECRET: 'test-client-secret', DEI_KV: kv };
+const env = { GOOGLE_CLIENT_ID: 'test-client-id', GOOGLE_CLIENT_SECRET: 'test-client-secret', DEI_KV: kv, TEST_MODE: true };
 const dateHeader = 'Wed, 14 Oct 2026 09:00:00 +0000';
 const samples = {
   'security-code': {
