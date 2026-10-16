@@ -1,17 +1,13 @@
-import assert from "node:assert/strict";
-import worker from "../src/index.mjs";
+import assert from 'node:assert/strict';
+import worker from '../src/index.mjs';
 
 class MemoryKV {
   data = new Map();
-  async get(key, type) {
-    const value = this.data.get(key);
-    if (value === undefined) return null;
-    return type === "json" ? JSON.parse(value) : value;
-  }
-  async put(key, value) { this.data.set(key, String(value)); }
-  async delete(key) { this.data.delete(key); }
-  async list({ prefix = "", limit = 1000, cursor } = {}) {
-    const keys = [...this.data.keys()].filter(key => key.startsWith(prefix)).sort();
+  async get(k, type) { const v = this.data.get(k); if (v === undefined) return null; return type === 'json' ? JSON.parse(v) : v; }
+  async put(k, v) { this.data.set(k, String(v)); }
+  async delete(k) { this.data.delete(k); }
+  async list({ prefix = '', limit = 1000, cursor } = {}) {
+    const keys = [...this.data.keys()].filter(k => k.startsWith(prefix)).sort();
     const offset = cursor ? Number(cursor) : 0;
     const page = keys.slice(offset, offset + limit).map(name => ({ name }));
     const next = offset + page.length;
@@ -19,313 +15,143 @@ class MemoryKV {
   }
 }
 
-const projectId = "temo-75";
-const keyPair = await crypto.subtle.generateKey({
-  name: "RSASSA-PKCS1-v1_5", modulusLength: 2048,
-  publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256"
-}, true, ["sign", "verify"]);
-const publicJwk = await crypto.subtle.exportKey("jwk", keyPair.publicKey);
-Object.assign(publicJwk, { kid: "worker-test-key", alg: "RS256", use: "sig" });
-const base64url = value => Buffer.from(JSON.stringify(value)).toString("base64url");
-async function makeIdToken(uid, overrides = {}) {
-  const now = Math.floor(Date.now() / 1000);
-  const header = base64url({ alg: "RS256", typ: "JWT", kid: publicJwk.kid });
-  const payload = base64url({
-    aud: projectId, iss: "https://securetoken.google.com/" + projectId,
-    sub: uid, iat: now, exp: now + 3600, auth_time: now - 20, email_verified: true, ...overrides
-  });
-  const signingInput = header + "." + payload;
-  const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", keyPair.privateKey, new TextEncoder().encode(signingInput));
-  return signingInput + "." + Buffer.from(signature).toString("base64url");
-}
 const kv = new MemoryKV();
-const env = {
-  GOOGLE_CLIENT_ID: "fixture-client",
-  GOOGLE_CLIENT_SECRET: "fixture-secret",
-  FIREBASE_PROJECT_ID: projectId,
-  FIREBASE_API_KEY: "public-fixture-api-key",
-  FIREBASE_AUTH_DOMAIN: "temo-75.firebaseapp.com",
-  FIREBASE_APP_ID: "1:fixture:web:fixture",
-  DEI_TOKEN_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64url"),
-  LEGACY_LINK_ADMIN_KEY: "admin-fixture-key",
-  LEGACY_LINK_ADMIN_UID: "firebase-admin",
-  DEI_KV: kv
+const env = { GOOGLE_CLIENT_ID: 'test-client-id', GOOGLE_CLIENT_SECRET: 'test-client-secret', DEI_KV: kv };
+const dateHeader = 'Wed, 14 Oct 2026 09:00:00 +0000';
+const samples = {
+  'security-code': {
+    subject: 'Notification', body: 'Your security code is 123456',
+    internalDate: Date.parse('2026-10-15T08:00:00Z'), from: 'noreply@dei.gr'
+  },
+  'bill-2026': {
+    subject: 'DEI bill October', body: 'Πληρωτέο ποσό: 77,00 € Προθεσμία πληρωμής έως 31/10/2026 Οφειλή',
+    internalDate: Date.parse('2026-10-14T09:00:00Z'), from: 'billing@dei.gr', date: dateHeader
+  },
+  'payment-confirmation': {
+    subject: 'DEI update', body: 'Payment received. Total amount 9.00 EUR',
+    internalDate: Date.parse('2026-10-13T09:00:00Z'), from: 'billing@dei.gr'
+  },
+  'bill-2025': {
+    subject: 'DEI electricity bill', body: 'Συνολικό ποσό: 12,00 €',
+    internalDate: Date.parse('2025-12-31T23:30:00Z'), from: 'billing@dei.gr',
+    date: 'Thu, 15 Oct 2026 09:00:00 +0000'
+  },
+  'bill-paid-2024': {
+    subject: 'DEI electricity bill 2024', body: 'Ο λογαριασμός εξοφλήθηκε. Total amount: 15.50 €',
+    internalDate: Date.parse('2024-06-01T10:00:00Z'), from: 'billing@dei.gr'
+  }
 };
+const fullMessage = id => {
+  const m = samples[id];
+  return { internalDate: String(m.internalDate), snippet: m.body,
+    payload: { mimeType: 'text/plain', headers: [
+      { name: 'Subject', value: m.subject }, { name: 'From', value: m.from },
+      { name: 'Date', value: m.date || dateHeader }
+    ], body: { data: Buffer.from(m.body, 'utf8').toString('base64url') } } };
+};
+let failGmail = false;
 const requestedPages = [];
-let failOAuthExchange = false;
-await kv.put("gmail_refresh_token", "legacy-global-token-fixture");
-await kv.put("latest_bill", JSON.stringify({ totalEUR: "999.00", paymentStatus: "due" }));
-await kv.put("bill_history", JSON.stringify([{ gmailMessageId: "legacy-shared", totalEUR: "999.00", paymentStatus: "due" }]));
-const gmailBodies = {
-  "a-current": "Πληρωτέο ποσό: 77,00 € Προθεσμία πληρωμής έως 26/10/2026 Οφειλή",
-  "a-paid": "Ο λογαριασμός εξοφλήθηκε. Total amount: 20,00 €",
-  "b-current": "Payable Amount: 10,00 € Expiration Date: 30/11/2026 due"
-};
 globalThis.fetch = async (input, init = {}) => {
-  const url = new URL(String(input));
-  if (url.href.startsWith("https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com")) {
-    return new Response(JSON.stringify({ keys: [publicJwk] }), { status: 200, headers: { "cache-control": "public, max-age=3600" } });
-  }
-  if (url.href === "https://oauth2.googleapis.com/token") {
+  const url = String(input);
+  if (url === 'https://oauth2.googleapis.com/token') {
     const form = new URLSearchParams(init.body);
-    if (form.get("grant_type") === "authorization_code") {
-      if (failOAuthExchange) return new Response(JSON.stringify({ error: "fixture denial" }), { status: 400 });
-      const identity = form.get("code").replace("code-", "");
-      return new Response(JSON.stringify({ access_token: "access-" + identity, refresh_token: "refresh-" + identity }), { status: 200 });
-    }
-    if (form.get("grant_type") === "refresh_token") {
-      const identity = form.get("refresh_token").replace("refresh-", "");
-      return new Response(JSON.stringify({ access_token: "access-" + identity }), { status: 200 });
-    }
+    if (form.get('grant_type') === 'authorization_code') return new Response(JSON.stringify({ access_token: 'test-access', refresh_token: 'test-refresh' }), { status: 200 });
+    if (form.get('grant_type') === 'refresh_token' && form.get('refresh_token') === 'test-refresh') return new Response(JSON.stringify({ access_token: 'test-access' }), { status: 200 });
   }
-  if (url.hostname === "gmail.googleapis.com" && url.pathname.endsWith("/messages")) {
-    const identity = (init.headers?.authorization || "").replace("Bearer access-", "");
-    requestedPages.push({ identity, page: url.searchParams.get("pageToken") || "" });
-    assert.equal(url.searchParams.get("q"), "in:anywhere from:(dei.gr)");
-    if (identity === "A" && !url.searchParams.has("pageToken")) {
-      return new Response(JSON.stringify({ messages: [{ id: "a-current" }, { id: "a-current" }], nextPageToken: "A-page-2" }));
-    }
-    if (identity === "A" && url.searchParams.get("pageToken") === "A-page-2") {
-      return new Response(JSON.stringify({ messages: [{ id: "a-paid" }] }));
-    }
-    if (identity === "B" && !url.searchParams.has("pageToken")) {
-      return new Response(JSON.stringify({ messages: [{ id: "b-current" }] }));
-    }
-    return new Response(JSON.stringify({ messages: [] }));
+  if (url.includes('/messages?q=')) {
+    if (failGmail) return new Response(JSON.stringify({ error: { message: 'sanitized fixture error' } }), { status: 403 });
+    const parsed = new URL(url);
+    assert.equal(parsed.searchParams.get('maxResults'), '20');
+    assert.equal(parsed.searchParams.get('q'), 'in:anywhere from:(dei.gr)');
+    requestedPages.push(parsed.searchParams.get('pageToken') || '');
+    const page = parsed.searchParams.get('pageToken') || '';
+    if (!page) return new Response(JSON.stringify({ messages: [{ id: 'security-code' }], nextPageToken: 'page-2' }));
+    if (page === 'page-2') return new Response(JSON.stringify({ messages: [{ id: 'bill-2026' }, { id: 'bill-2026' }], nextPageToken: 'page-3' }));
+    if (page === 'page-3') return new Response(JSON.stringify({ messages: [{ id: 'payment-confirmation' }, { id: 'bill-2025' }], nextPageToken: 'page-4' }));
+    if (page === 'page-4') return new Response(JSON.stringify({ messages: [{ id: 'bill-paid-2024' }] }));
   }
-  const match = url.pathname.match(/\/messages\/([^/]+)$/);
-  if (url.hostname === "gmail.googleapis.com" && match) {
-    const identity = (init.headers?.authorization || "").replace("Bearer access-", "");
-    const id = decodeURIComponent(match[1]);
-    const amounts = { "a-current": "77", "a-paid": "20", "b-current": "10" };
-    const dates = { "a-current": "26/10/2026", "a-paid": "31/12/2025", "b-current": "30/11/2026" };
-    const owner = id.startsWith("a-") ? "A" : "B";
-    assert.equal(identity, owner, "a Gmail token can only fetch that user's fixture");
-    const body = gmailBodies[id];
-    const full = {
-      id, internalDate: String(Date.parse(id === "a-paid" ? "2025-12-31T12:00:00Z" : "2026-10-01T12:00:00Z")),
-      snippet: body,
-      payload: {
-        mimeType: "text/plain",
-        headers: [{ name: "Subject", value: "DEI electricity bill" }, { name: "From", value: "billing@dei.gr" }],
-        body: { data: Buffer.from(body).toString("base64url") }
-      }
-    };
-    assert.ok(amounts[id] && dates[id]);
-    return new Response(JSON.stringify(full));
-  }
-  throw new Error("Unexpected fixture request: " + url.origin + url.pathname);
+  const match = url.match(/\/messages\/([^?]+)\?format=full$/);
+  if (match && samples[decodeURIComponent(match[1])]) return new Response(JSON.stringify(fullMessage(decodeURIComponent(match[1]))));
+  throw new Error('Unexpected fixture request');
 };
 
-const request = (path, options = {}) => new Request("https://dei-bill-sync.temo75elia.workers.dev" + path, options);
-const auth = async uid => ({ authorization: "Bearer " + await makeIdToken(uid) });
-async function json(response) { return response.json(); }
-async function issueLinkClaim(legacyAccountId, firebaseUid) {
-  const response = await worker.fetch(request("/api/admin/link-claim", {
-    method: "POST",
-    headers: { authorization: "Bearer " + env.LEGACY_LINK_ADMIN_KEY, "content-type": "application/json" },
-    body: JSON.stringify({
-      legacyAccountId, firebaseUid, ownershipVerified: true,
-      verificationMethod: "owner_review", verificationReference: "test-case-" + legacyAccountId
-    })
-  }), env);
-  assert.equal(response.status, 200);
-  return (await json(response)).claimCode;
+const req = (path, opts = {}) => new Request('https://dei-bill-sync.temo75elia.workers.dev' + path, opts);
+let r = await worker.fetch(req('/health'), env);
+assert.equal(r.status, 200);
+assert.equal((await r.json()).configurationComplete, true);
+
+r = await worker.fetch(req('/oauth/start?return_to=' + encodeURIComponent('https://temo75.github.io/t1/dei-bill.html')), env);
+assert.equal(r.status, 302);
+const auth = new URL(r.headers.get('location'));
+const state = auth.searchParams.get('state');
+assert.ok(state);
+assert.equal(auth.searchParams.get('redirect_uri'), 'https://dei-bill-sync.temo75elia.workers.dev/oauth/callback');
+r = await worker.fetch(req('/oauth/callback?code=test-code&state=' + state), env);
+assert.equal(r.status, 302);
+const returnUrl = new URL(r.headers.get('location'));
+const grant = new URLSearchParams(returnUrl.hash.slice(1)).get('dei_code');
+assert.ok(grant);
+r = await worker.fetch(req('/api/session/exchange', { method: 'POST', headers: { origin: 'https://temo75.github.io', 'content-type': 'application/json' }, body: JSON.stringify({ code: grant }) }), env);
+assert.equal(r.status, 200);
+const session = await r.json();
+assert.ok(session.sessionToken);
+const authHeaders = { origin: 'https://temo75.github.io', authorization: 'Bearer ' + session.sessionToken };
+
+for (const continuation of [false, true, true, true]) {
+  r = await worker.fetch(req('/api/sync', { method: 'POST', headers: { ...authHeaders, 'content-type': 'application/json' }, body: JSON.stringify({ continue: continuation }) }), env);
+  assert.equal(r.status, 200);
+  const result = await r.json();
+  assert.equal(result.ok, true);
+  assert.equal(result.complete, continuation && requestedPages.length === 4);
 }
+assert.equal(JSON.stringify(requestedPages), JSON.stringify(['', 'page-2', 'page-3', 'page-4']));
+const historyKeys = [...kv.data.keys()].filter(k => k.startsWith('bill_history:'));
+assert.equal(historyKeys.length, 3, 'Gmail IDs deduplicate and security/payment messages are excluded');
+const storedLatest = await kv.get('latest_bill', 'json');
+assert.equal(storedLatest.totalEUR, '77.00');
+assert.equal(storedLatest.dueDate, '2026-10-31');
+assert.equal(storedLatest.paymentStatus, 'due');
+assert.equal(storedLatest.emailDate, new Date(samples['bill-2026'].internalDate).toISOString(), 'internalDate overrides Date header');
 
-assert.equal((await worker.fetch(request("/api/status"), env)).status, 401, "status is not public");
-for (const path of ["/api/history", "/api/latest"]) {
-  assert.equal((await worker.fetch(request(path), env)).status, 401, path + " rejects missing identity");
-}
-assert.equal((await worker.fetch(request("/api/sync", { method: "POST", body: "{}" }), env)).status, 401, "sync rejects missing identity");
-assert.equal((await worker.fetch(request("/oauth/start", { method: "POST", body: "{}" }), env)).status, 401, "OAuth start rejects missing identity");
+r = await worker.fetch(req('/api/history', { headers: authHeaders }), env);
+assert.equal(r.status, 200);
+const history = await r.json();
+assert.equal(history.count, 3);
+assert.equal(history.bills.every(x => x.gmailMessageId === undefined), true, 'private Gmail message IDs are not returned');
+assert.equal(history.totalPaidEUR, '15.50');
+assert.equal(history.totalDueEUR, '77.00', 'unknown status must not be counted as due');
+assert.equal(JSON.stringify(history.annualTotals), JSON.stringify([
+  { year: '2026', count: 1, paidEUR: '0.00', dueEUR: '77.00' },
+  { year: '2025', count: 1, paidEUR: '0.00', dueEUR: '0.00' },
+  { year: '2024', count: 1, paidEUR: '15.50', dueEUR: '0.00' }
+]));
+assert.equal(new Date(history.bills[0].emailDate).getUTCFullYear(), 2026);
+assert.equal(new Date(history.bills[1].emailDate).getUTCFullYear(), 2025);
+assert.equal(new Date(history.bills[2].emailDate).getUTCFullYear(), 2024);
+r = await worker.fetch(req('/api/latest', { headers: authHeaders }), env);
+assert.equal(r.status, 200);
+assert.equal((await r.json()).bill.totalEUR, '77.00');
+assert.equal((await worker.fetch(req('/api/history'), env)).status, 401);
+r = await worker.fetch(req('/api/sync', { method: 'GET', headers: authHeaders }), env);
+assert.equal(r.status, 405);
 
-const tokenA = await makeIdToken("firebase-A");
-const tokenB = await makeIdToken("firebase-B");
-const tokenC = await makeIdToken("firebase-C");
-const headersA = { authorization: "Bearer " + tokenA, "content-type": "application/json" };
-const headersB = { authorization: "Bearer " + tokenB, "content-type": "application/json" };
-const headersC = { authorization: "Bearer " + tokenC, "content-type": "application/json" };
-const preLinkStatus = await json(await worker.fetch(request("/api/status", { headers: headersA }), env));
-assert.equal(preLinkStatus.linked, false);
-assert.equal(preLinkStatus.gmailConnected, false);
-assert.equal((await worker.fetch(request("/api/history", { headers: headersA }), env)).status, 403);
-assert.equal((await worker.fetch(request("/api/latest", { headers: headersA }), env)).status, 403);
-assert.equal((await worker.fetch(request("/api/sync", { method: "POST", headers: headersA, body: "{}" }), env)).status, 403);
-assert.equal((await worker.fetch(request("/oauth/start", {
-  method: "POST", headers: headersA, body: JSON.stringify({ returnTo: "https://temo75.github.io/t1/dei-bill.html" })
-}), env)).status, 403, "OAuth cannot start until the existing T1 account is admin-linked");
-assert.equal((await json(await worker.fetch(request("/api/status", { headers: headersB }), env))).linked, false);
+failGmail = true;
+r = await worker.fetch(req('/api/sync', { method: 'POST', headers: { ...authHeaders, 'content-type': 'application/json' }, body: '{}' }), env);
+assert.equal(r.status, 502);
+assert.match((await r.json()).error, /Gmail API request failed/);
 
-const tokenD = await makeIdToken("firebase-D", { email: "pending-user@example.test" });
-const tokenAdmin = await makeIdToken("firebase-admin", { email: "admin@example.test" });
-const headersD = { authorization: "Bearer " + tokenD, "content-type": "application/json" };
-const headersAdmin = { authorization: "Bearer " + tokenAdmin, "content-type": "application/json" };
-assert.equal((await worker.fetch(request("/api/account/link-request", { method: "POST", headers: {}, body: "{}" }), env)).status, 401);
-const unverifiedRequestToken = await makeIdToken("firebase-unverified-request", { email: "unverified@example.test", email_verified: false });
-assert.equal((await worker.fetch(request("/api/account/link-request", {
-  method: "POST", headers: { authorization: "Bearer " + unverifiedRequestToken }, body: "{}"
-}), env)).status, 403, "unverified Firebase email cannot create a link request");
-assert.equal((await worker.fetch(request("/api/account/link-request", { method: "POST", headers: headersD, body: "{}" }), env)).status, 200);
-assert.equal((await worker.fetch(request("/api/account/link-request", { method: "POST", headers: headersD, body: "{}" }), env)).status, 200, "link request is idempotent for the same UID");
-assert.equal((await worker.fetch(request("/api/admin/link-requests", { headers: headersD }), env)).status, 401, "regular user cannot inspect pending link requests");
-const pending = await json(await worker.fetch(request("/api/admin/link-requests", { headers: headersAdmin }), env));
-assert.equal(pending.requests.length, 1);
-assert.equal(pending.requests[0].firebaseUid, "firebase-D");
-assert.equal(pending.requests[0].email, "pending-user@example.test");
-const rejectedClaim = await worker.fetch(request("/api/admin/link-claim", {
-  method: "POST", headers: headersA, body: JSON.stringify({
-    legacyAccountId: "legacy-account-D", firebaseUid: "firebase-D", ownershipVerified: true,
-    verificationMethod: "owner_review", verificationReference: "verified-D"
-  })
-}), env);
-assert.equal(rejectedClaim.status, 401, "non-admin Firebase identity cannot issue link claims");
-const claimDResponse = await worker.fetch(request("/api/admin/link-claim", {
-  method: "POST", headers: headersAdmin, body: JSON.stringify({
-    legacyAccountId: "legacy-account-D", firebaseUid: "firebase-D", ownershipVerified: true,
-    verificationMethod: "owner_review", verificationReference: "verified-D"
-  })
-}), env);
-assert.equal(claimDResponse.status, 200);
-const claimD = (await json(claimDResponse)).claimCode;
-assert.equal((await worker.fetch(request("/api/admin/link-requests", { headers: headersAdmin }), env)).status, 200);
-assert.equal((await worker.fetch(request("/api/account/link", { method: "POST", headers: headersD, body: JSON.stringify({ claimCode: claimD }) }), env)).status, 200);
-assert.equal((await worker.fetch(request("/api/history", { headers: headersD }), env)).status, 200);
-assert.equal((await worker.fetch(request("/api/admin/link-claim", {
-  method: "POST", headers: headersAdmin, body: JSON.stringify({
-    legacyAccountId: "legacy-account-missing", firebaseUid: "firebase-missing", ownershipVerified: true,
-    verificationMethod: "owner_review", verificationReference: "verified-missing"
-  })
-}), env)).status, 409, "admin UI cannot issue a claim without a user-submitted Firebase request");
-
-const claimA = await issueLinkClaim("legacy-account-A", "firebase-A");
-const claimB = await issueLinkClaim("legacy-account-B", "firebase-B");
-assert.equal((await worker.fetch(request("/api/account/link", { method: "POST", headers: headersB, body: JSON.stringify({ claimCode: claimA }) }), env)).status, 401, "a different UID cannot redeem a claim");
-assert.equal((await worker.fetch(request("/api/account/link", { method: "POST", headers: headersA, body: JSON.stringify({ claimCode: claimA }) }), env)).status, 200);
-assert.equal((await worker.fetch(request("/api/account/link", { method: "POST", headers: headersA, body: JSON.stringify({ claimCode: claimA }) }), env)).status, 401, "claim code is single-use");
-assert.equal((await worker.fetch(request("/api/account/link", { method: "POST", headers: headersB, body: JSON.stringify({ claimCode: claimB }) }), env)).status, 200);
-const linkedStatusA = await json(await worker.fetch(request("/api/status", { headers: headersA }), env));
-assert.equal(linkedStatusA.linked, true);
-assert.equal(linkedStatusA.t1AccountId, "legacy-account-A", "Worker reports only the T1 account mapped to this signed UID");
-const unverified = await makeIdToken("firebase-unverified", { email_verified: false });
-assert.equal((await worker.fetch(request("/api/account/link", {
-  method: "POST", headers: { authorization: "Bearer " + unverified, "content-type": "application/json" },
-  body: JSON.stringify({ claimCode: claimA })
-}), env)).status, 403, "unverified Firebase email cannot be linked");
-
-async function connectGmail(uid, headers, identity) {
-  const start = await worker.fetch(request("/oauth/start", {
-    method: "POST", headers, body: JSON.stringify({ returnTo: "https://temo75.github.io/t1/dei-bill.html" })
-  }), env);
-  assert.equal(start.status, 200);
-  const startData = await json(start);
-  const authorizationUrl = new URL(startData.authorizationUrl);
-  assert.equal(authorizationUrl.searchParams.get("redirect_uri"), "https://dei-bill-sync.temo75elia.workers.dev/oauth/callback");
-  assert.equal(authorizationUrl.searchParams.get("scope"), "https://www.googleapis.com/auth/gmail.readonly");
-  assert.equal(authorizationUrl.searchParams.get("prompt"), "select_account");
-  const state = authorizationUrl.searchParams.get("state");
-  const callback = await worker.fetch(request("/oauth/callback?code=code-" + identity + "&state=" + state), env);
-  assert.equal(callback.status, 302);
-  assert.match(callback.headers.get("location"), /dei_gmail=connected/);
-  const before = requestedPages.length;
-  const replay = await worker.fetch(request("/oauth/callback?code=code-" + identity + "&state=" + state), env);
-  assert.equal(replay.status, 400, "consumed OAuth state cannot be replayed");
-  assert.equal(requestedPages.length, before);
-}
-assert.equal((await worker.fetch(request("/oauth/callback?code=invalid&state=not-a-real-state"), env)).status, 400, "unknown OAuth state is rejected");
-await connectGmail("firebase-A", headersA, "A");
-await connectGmail("firebase-B", headersB, "B");
-const statusC = await json(await worker.fetch(request("/api/status", { headers: headersC }), env));
-assert.equal(statusC.linked, false, "unmapped Firebase UID cannot access an existing T1 account");
-assert.equal(statusC.gmailConnected, false);
-for (const path of ["/api/latest", "/api/history"]) {
-  assert.equal((await worker.fetch(request(path, { headers: headersC }), env)).status, 403,
-    "unmapped UID cannot read bill data from " + path);
-}
-assert.equal((await worker.fetch(request("/api/sync", {
-  method: "POST", headers: headersC, body: JSON.stringify({ continue: false })
-}), env)).status, 403, "unmapped UID cannot synchronize Gmail");
-
-
-const deniedStart = await worker.fetch(request("/oauth/start", {
-  method: "POST", headers: headersA, body: JSON.stringify({ returnTo: "https://temo75.github.io/t1/dei-bill.html" })
-}), env);
-const deniedState = new URL((await json(deniedStart)).authorizationUrl).searchParams.get("state");
-const deniedCallback = await worker.fetch(request("/oauth/callback?error=access_denied&state=" + deniedState), env);
-assert.equal(deniedCallback.status, 302, "Google OAuth denial returns to T1");
-assert.match(deniedCallback.headers.get("location"), /dei_gmail=denied/);
-
-const failedStart = await worker.fetch(request("/oauth/start", {
-  method: "POST", headers: headersA, body: JSON.stringify({ returnTo: "https://temo75.github.io/t1/dei-bill.html" })
-}), env);
-const failedState = new URL((await json(failedStart)).authorizationUrl).searchParams.get("state");
-failOAuthExchange = true;
-const failedCallback = await worker.fetch(request("/oauth/callback?code=code-A-failure&state=" + failedState), env);
-failOAuthExchange = false;
-assert.equal(failedCallback.status, 302, "Google token exchange errors do not expose provider data");
-assert.match(failedCallback.headers.get("location"), /dei_gmail=error/);
-
-const userHash = async uid => Buffer.from(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(uid))).toString("hex");
-const userKey = async (uid, suffix) => "dei:user:" + await userHash(uid) + ":" + suffix;
-const encryptedA = await kv.get(await userKey("firebase-A", "gmail_refresh_token"));
-const encryptedB = await kv.get(await userKey("firebase-B", "gmail_refresh_token"));
-assert.ok(encryptedA.startsWith("v1.") && !encryptedA.includes("refresh-A"), "refresh token is encrypted at rest");
-assert.ok(encryptedB.startsWith("v1.") && !encryptedB.includes("refresh-B"), "each user's refresh token is separately encrypted");
-assert.notEqual(encryptedA, encryptedB);
-
-const syncA1 = await worker.fetch(request("/api/sync", { method: "POST", headers: headersA, body: JSON.stringify({ continue: false }) }), env);
-assert.equal(syncA1.status, 200);
-const pageA1 = await json(syncA1);
-assert.equal(pageA1.complete, false);
-assert.equal(pageA1.bill.totalEUR, "77.00");
-const syncA2 = await worker.fetch(request("/api/sync", { method: "POST", headers: headersA, body: JSON.stringify({ continue: true }) }), env);
-assert.equal(syncA2.status, 200);
-assert.equal((await json(syncA2)).complete, true);
-const syncB = await worker.fetch(request("/api/sync?uid=firebase-A", { method: "POST", headers: headersB, body: JSON.stringify({ uid: "firebase-A" }) }), env);
-assert.equal(syncB.status, 200, "browser-supplied UID is ignored in favor of signed UID");
-assert.equal((await json(syncB)).bill.totalEUR, "10.00");
-
-const latestA = await json(await worker.fetch(request("/api/latest?uid=firebase-B", { headers: headersA }), env));
-assert.equal(latestA.bill.totalEUR, "77.00", "latest endpoint derives user A from the signed token");
-const latestB = await json(await worker.fetch(request("/api/latest?uid=firebase-A", { headers: headersB }), env));
-assert.equal(latestB.bill.totalEUR, "10.00", "latest endpoint ignores a browser-supplied UID");
-
-const historyA = await json(await worker.fetch(request("/api/history?uid=firebase-B", { headers: headersA }), env));
-const historyB = await json(await worker.fetch(request("/api/history?uid=firebase-A", { headers: headersB }), env));
-assert.equal(historyA.count, 2, "duplicate Gmail message IDs collapse within the user's history");
-assert.deepEqual(new Set(historyA.bills.map(bill => bill.totalEUR)), new Set(["77.00", "20.00"]));
-assert.equal(historyA.totalPaidEUR, "20.00");
-assert.equal(historyA.totalDueEUR, "77.00");
-assert.deepEqual(historyA.annualTotals, [
-  { year: "2026", count: 1, paidEUR: "0.00", dueEUR: "77.00" },
-  { year: "2025", count: 1, paidEUR: "20.00", dueEUR: "0.00" }
-]);
-assert.equal(historyB.count, 1);
-assert.equal(historyB.totalDueEUR, "10.00");
-assert.equal(historyB.bills[0].totalEUR, "10.00");
-assert.equal(JSON.stringify(historyA).includes("10.00"), false, "user A response contains no user B bill");
-assert.equal(JSON.stringify(historyB).includes("77.00"), false, "user B response contains no user A bill");
-
-const statusA = await json(await worker.fetch(request("/api/status", { headers: headersA }), env));
-assert.equal(statusA.gmailConnected, true);
-assert.equal(statusA.linked, true);
-assert.equal(statusA.t1AccountId, "legacy-account-A");
-const statusB = await json(await worker.fetch(request("/api/status", { headers: headersB }), env));
-assert.equal(statusB.gmailConnected, true);
-assert.equal(statusB.t1AccountId, "legacy-account-B");
-assert.equal(await kv.get("gmail_refresh_token"), "legacy-global-token-fixture", "legacy global Gmail token is neither overwritten nor used");
-await kv.put("latest_bill", JSON.stringify({ totalEUR: "999.00", paymentStatus: "due" }));
-await kv.put("bill_history:old-admin-record", JSON.stringify({ gmailMessageId: "old-admin-record", totalEUR: "999.00", paymentStatus: "due" }));
-const isolatedA = await json(await worker.fetch(request("/api/history", { headers: headersA }), env));
-assert.equal(isolatedA.count, 2, "legacy shared KV history is never assigned to a regular UID");
-assert.equal(isolatedA.totalDueEUR, "77.00");
-
-const badAudience = await makeIdToken("firebase-A", { aud: "wrong-project" });
-assert.equal((await worker.fetch(request("/api/history", { headers: { authorization: "Bearer " + badAudience } }), env)).status, 401);
-const deniedAdmin = await worker.fetch(request("/api/admin/link-claim", {
-  method: "POST", headers: { authorization: "Bearer wrong", "content-type": "application/json" },
-  body: JSON.stringify({ legacyAccountId: "legacy-X", firebaseUid: "firebase-X", ownershipVerified: true, verificationMethod: "owner_review", verificationReference: "x" })
-}), env);
-assert.equal(deniedAdmin.status, 401);
-
-console.log("PASS: signed Firebase UID authorization; unauthorized requests; admin-controlled account claims; UID-bound OAuth; OAuth state replay rejection; encrypted per-user Gmail tokens; paginated Gmail sync; duplicate message IDs; history and annual totals isolation; ignored browser UID; legacy shared KV remains unassigned.");
+failGmail = false;
+const largeKV = new MemoryKV();
+const largeEnv = { ...env, DEI_KV: largeKV };
+const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(session.sessionToken));
+const sessionHash = [...new Uint8Array(digest)].map(x => x.toString(16).padStart(2, '0')).join('');
+await largeKV.put('t1_session:' + sessionHash, '1');
+for (let i = 0; i < 1001; i++) await largeKV.put('bill_history:bulk-' + i, JSON.stringify({ gmailMessageId: 'bulk-' + i, found: true, emailDate: '2020-01-01T00:00:00.000Z', totalEUR: '1.00', dueDate: null, paymentStatus: 'unknown' }));
+r = await worker.fetch(req('/api/history', { headers: authHeaders }), largeEnv);
+assert.equal(r.status, 200);
+assert.equal((await r.json()).count, 1001, 'KV history uses all list pages beyond 1000 keys');
+let scheduled;
+await worker.scheduled({}, env, { waitUntil(p) { scheduled = p; } });
+await scheduled;
+assert.ok(await kv.get('latest_bill'));
+console.log('PASS: OAuth redirect/callback; session authorization; Gmail all-page cursor flow; security/payment exclusions; unique KV history; internalDate precedence; unknown-status totals; annual totals/order; safe Gmail API error; scheduled handler.');
