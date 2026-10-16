@@ -16,7 +16,7 @@ class MemoryKV {
 }
 
 const kv = new MemoryKV();
-const env = { GOOGLE_CLIENT_ID: 'test-client-id', GOOGLE_CLIENT_SECRET: 'test-client-secret', DEI_KV: kv };
+const env = { GOOGLE_CLIENT_ID: 'test-client-id', GOOGLE_CLIENT_SECRET: 'test-client-secret', DEI_KV: kv, TEST_MODE: true };
 const dateHeader = 'Wed, 14 Oct 2026 09:00:00 +0000';
 const samples = {
   'security-code': {
@@ -50,9 +50,11 @@ const fullMessage = id => {
     ], body: { data: Buffer.from(m.body, 'utf8').toString('base64url') } } };
 };
 let failGmail = false;
+let googleIdentity = { sub: 'google-user-1', email: 'temo75elia@gmail.com', email_verified: true };
 const requestedPages = [];
 globalThis.fetch = async (input, init = {}) => {
   const url = String(input);
+  if (url === 'https://openidconnect.googleapis.com/v1/userinfo') return new Response(JSON.stringify(googleIdentity));
   if (url === 'https://oauth2.googleapis.com/token') {
     const form = new URLSearchParams(init.body);
     if (form.get('grant_type') === 'authorization_code') return new Response(JSON.stringify({ access_token: 'test-access', refresh_token: 'test-refresh' }), { status: 200 });
@@ -99,15 +101,16 @@ const authHeaders = { origin: 'https://temo75.github.io', authorization: 'Bearer
 
 for (const continuation of [false, true, true, true]) {
   r = await worker.fetch(req('/api/sync', { method: 'POST', headers: { ...authHeaders, 'content-type': 'application/json' }, body: JSON.stringify({ continue: continuation }) }), env);
-  assert.equal(r.status, 200);
+  assert.equal(r.status, 200, await r.clone().text());
   const result = await r.json();
   assert.equal(result.ok, true);
   assert.equal(result.complete, continuation && requestedPages.length === 4);
 }
 assert.equal(JSON.stringify(requestedPages), JSON.stringify(['', 'page-2', 'page-3', 'page-4']));
-const historyKeys = [...kv.data.keys()].filter(k => k.startsWith('bill_history:'));
+const ownerKey = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('google-user-1')).then(d => [...new Uint8Array(d)].map(x => x.toString(16).padStart(2, '0')).join(''));
+const historyKeys = [...kv.data.keys()].filter(k => k.startsWith('bill_history:' + ownerKey + ':'));
 assert.equal(historyKeys.length, 3, 'Gmail IDs deduplicate and security/payment messages are excluded');
-const storedLatest = await kv.get('latest_bill', 'json');
+const storedLatest = await kv.get('latest_bill:' + ownerKey, 'json');
 assert.equal(storedLatest.totalEUR, '77.00');
 assert.equal(storedLatest.dueDate, '2026-10-31');
 assert.equal(storedLatest.paymentStatus, 'due');
@@ -145,13 +148,34 @@ const largeKV = new MemoryKV();
 const largeEnv = { ...env, DEI_KV: largeKV };
 const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(session.sessionToken));
 const sessionHash = [...new Uint8Array(digest)].map(x => x.toString(16).padStart(2, '0')).join('');
-await largeKV.put('t1_session:' + sessionHash, '1');
-for (let i = 0; i < 1001; i++) await largeKV.put('bill_history:bulk-' + i, JSON.stringify({ gmailMessageId: 'bulk-' + i, found: true, emailDate: '2020-01-01T00:00:00.000Z', totalEUR: '1.00', dueDate: null, paymentStatus: 'unknown' }));
+await largeKV.put('t1_session:' + sessionHash, ownerKey);
+for (let i = 0; i < 1001; i++) await largeKV.put('bill_history:' + ownerKey + ':bulk-' + i, JSON.stringify({ gmailMessageId: 'bulk-' + i, found: true, emailDate: '2020-01-01T00:00:00.000Z', totalEUR: '1.00', dueDate: null, paymentStatus: 'unknown' }));
 r = await worker.fetch(req('/api/history', { headers: authHeaders }), largeEnv);
 assert.equal(r.status, 200);
 assert.equal((await r.json()).count, 1001, 'KV history uses all list pages beyond 1000 keys');
+
+// A second Google account gets a different token/session/history namespace.
+googleIdentity = { sub: 'google-user-2', email: 'iza@example.com', email_verified: true };
+r = await worker.fetch(req('/oauth/start?return_to=' + encodeURIComponent('https://temo75.github.io/t1/dei-bill.html')), env);
+const state2 = new URL(r.headers.get('location')).searchParams.get('state');
+r = await worker.fetch(req('/oauth/callback?code=test-code-2&state=' + state2), env);
+const grant2 = new URL(r.headers.get('location')).hash;
+const code2 = new URLSearchParams(grant2.slice(1)).get('dei_code');
+r = await worker.fetch(req('/api/session/exchange', { method: 'POST', headers: { origin: 'https://temo75.github.io', 'content-type': 'application/json' }, body: JSON.stringify({ code: code2 }) }), env);
+assert.equal(r.status, 200);
+const session2 = await r.json();
+const digest2 = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(session2.sessionToken));
+const sessionHash2 = [...new Uint8Array(digest2)].map(x => x.toString(16).padStart(2, '0')).join('');
+const ownerKey2 = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('google-user-2')).then(d => [...new Uint8Array(d)].map(x => x.toString(16).padStart(2, '0')).join(''));
+assert.equal(await kv.get('t1_session:' + sessionHash2), ownerKey2);
+assert.notEqual(ownerKey, ownerKey2);
+assert.equal(await kv.get('gmail_refresh_token:' + ownerKey2), 'test-refresh');
+assert.equal(await kv.get('gmail_refresh_token:' + ownerKey), 'test-refresh');
+assert.equal((await worker.fetch(req('/api/history', { headers: { authorization: 'Bearer ' + session2.sessionToken } }), env)).status, 200);
+const history2 = await (await worker.fetch(req('/api/history', { headers: { authorization: 'Bearer ' + session2.sessionToken } }), env)).json();
+assert.equal(history2.count, 0, 'new Google account must not see the first account history');
 let scheduled;
 await worker.scheduled({}, env, { waitUntil(p) { scheduled = p; } });
 await scheduled;
-assert.ok(await kv.get('latest_bill'));
-console.log('PASS: OAuth redirect/callback; session authorization; Gmail all-page cursor flow; security/payment exclusions; unique KV history; internalDate precedence; unknown-status totals; annual totals/order; safe Gmail API error; scheduled handler.');
+assert.ok(await kv.get('latest_bill:' + ownerKey));
+console.log('PASS: OAuth identity and per-account tokens/sessions/history; Gmail all-page cursor flow; security/payment exclusions; unique KV history; internalDate precedence; annual totals/order; safe Gmail API error; scheduled handler.');
