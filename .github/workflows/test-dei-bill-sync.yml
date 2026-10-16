@@ -11,6 +11,8 @@ on:
   push:
     branches:
       - fix/dei-historical-bill-search
+      - fix/per-user-dei-main-integration
+      - fix/dei-user-page-only
     paths:
       - 'dei-bill-sync.js'
       - 'workers/dei-bill-sync/**'
