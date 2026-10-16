@@ -428,7 +428,8 @@ export default {
         if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "POST, OPTIONS" });
         if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
         const sessionToken = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
-        if (!sessionToken || !(await hasT1Session(request, env))) return json({ ok: false, error: "Unauthorized" }, 401);
+        const ownerKey = await getT1SessionOwner(request, env);
+        if (!sessionToken || !ownerKey) return json({ ok: false, error: "Unauthorized" }, 401);
         let body = {};
         try { body = await request.json(); } catch { return json({ ok: false, error: "Invalid JSON body" }, 400); }
         const cursorKey = "sync_cursor:" + await sha256Hex(sessionToken);
