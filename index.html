@@ -2573,7 +2573,9 @@ window.addEventListener('DOMContentLoaded',async()=>{
     },{passive:false});
   }
 
-  await syncUsersFromFirebase();
+  // Never keep the whole site hidden if Firebase user sync is slow/unavailable.
+  // The sync function handles its own errors; the timeout only releases the page boot.
+  await Promise.race([syncUsersFromFirebase(), new Promise(resolve => setTimeout(resolve, 5000))]);
   const savedUserId=currentUserId;
   const matched=findUserById(savedUserId);
   const sessionValid=localStorage.getItem(AUTH_KEY)==='yes' && !!savedUserId && !!matched && matched.authorized===true && matched.blocked===false;
