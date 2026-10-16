@@ -27,6 +27,11 @@ const samples = {
     subject: 'DEI bill October', body: 'Πληρωτέο ποσό: 77,00 € Προθεσμία πληρωμής έως 31/10/2026 Οφειλή',
     internalDate: Date.parse('2026-10-14T09:00:00Z'), from: 'billing@dei.gr', date: dateHeader
   },
+  'forwarded-dei-bill': {
+    subject: 'Fwd: Ειδοποίηση έκδοσης λογαριασμού Ηλεκτρικής Ενέργειας ΔΕΗ',
+    body: '---------- Forwarded message ----------\nFrom: DEI <noreply@dei.gr>\nDate: Tue, 6 Oct 2026 08:02:00 +0000\nSubject: Ειδοποίηση έκδοσης λογαριασμού Ηλεκτρικής Ενέργειας ΔΕΗ\nTo: temo75elia@gmail.com\nΠληρωτέο ποσό: 45,20 € Προθεσμία πληρωμής έως 30/10/2026 Οφειλή',
+    internalDate: Date.parse('2026-10-10T08:00:00Z'), from: 'temo75elia@gmail.com', date: dateHeader
+  },
   'payment-confirmation': {
     subject: 'DEI update', body: 'Payment received. Total amount 9.00 EUR',
     internalDate: Date.parse('2026-10-13T09:00:00Z'), from: 'billing@dei.gr'
@@ -64,11 +69,11 @@ globalThis.fetch = async (input, init = {}) => {
     if (failGmail) return new Response(JSON.stringify({ error: { message: 'sanitized fixture error' } }), { status: 403 });
     const parsed = new URL(url);
     assert.equal(parsed.searchParams.get('maxResults'), '20');
-    assert.equal(parsed.searchParams.get('q'), 'in:anywhere from:(dei.gr)');
+    assert.equal(parsed.searchParams.get('q'), 'in:anywhere {from:(dei.gr) subject:(Fwd) subject:(FW) subject:(Forward) subject:(Προώθηση) subject:(λογαριασμού) subject:(ΔΕΗ) subject:(Ηλεκτρικής)}');
     requestedPages.push(parsed.searchParams.get('pageToken') || '');
     const page = parsed.searchParams.get('pageToken') || '';
     if (!page) return new Response(JSON.stringify({ messages: [{ id: 'security-code' }], nextPageToken: 'page-2' }));
-    if (page === 'page-2') return new Response(JSON.stringify({ messages: [{ id: 'bill-2026' }, { id: 'bill-2026' }], nextPageToken: 'page-3' }));
+    if (page === 'page-2') return new Response(JSON.stringify({ messages: [{ id: 'bill-2026' }, { id: 'bill-2026' }, { id: 'forwarded-dei-bill' }], nextPageToken: 'page-3' }));
     if (page === 'page-3') return new Response(JSON.stringify({ messages: [{ id: 'payment-confirmation' }, { id: 'bill-2025' }], nextPageToken: 'page-4' }));
     if (page === 'page-4') return new Response(JSON.stringify({ messages: [{ id: 'bill-paid-2024' }] }));
   }
@@ -109,7 +114,7 @@ for (const continuation of [false, true, true, true]) {
 assert.equal(JSON.stringify(requestedPages), JSON.stringify(['', 'page-2', 'page-3', 'page-4']));
 const ownerKey = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('google-user-1')).then(d => [...new Uint8Array(d)].map(x => x.toString(16).padStart(2, '0')).join(''));
 const historyKeys = [...kv.data.keys()].filter(k => k.startsWith('bill_history:' + ownerKey + ':'));
-assert.equal(historyKeys.length, 3, 'Gmail IDs deduplicate and security/payment messages are excluded');
+assert.equal(historyKeys.length, 4, 'Gmail IDs deduplicate, security/payment messages are excluded, and forwarded DEI bills are recognized');
 const storedLatest = await kv.get('latest_bill:' + ownerKey, 'json');
 assert.equal(storedLatest.totalEUR, '77.00');
 assert.equal(storedLatest.dueDate, '2026-10-31');
@@ -119,18 +124,19 @@ assert.equal(storedLatest.emailDate, new Date(samples['bill-2026'].internalDate)
 r = await worker.fetch(req('/api/history', { headers: authHeaders }), env);
 assert.equal(r.status, 200);
 const history = await r.json();
-assert.equal(history.count, 3);
+assert.equal(history.count, 4);
 assert.equal(history.bills.every(x => x.gmailMessageId === undefined), true, 'private Gmail message IDs are not returned');
 assert.equal(history.totalPaidEUR, '15.50');
-assert.equal(history.totalDueEUR, '77.00', 'unknown status must not be counted as due');
+assert.equal(history.totalDueEUR, '122.20', 'forwarded bill is recognized and unknown status must not be counted as due');
 assert.equal(JSON.stringify(history.annualTotals), JSON.stringify([
-  { year: '2026', count: 1, paidEUR: '0.00', dueEUR: '77.00' },
+  { year: '2026', count: 2, paidEUR: '0.00', dueEUR: '122.20' },
   { year: '2025', count: 1, paidEUR: '0.00', dueEUR: '0.00' },
   { year: '2024', count: 1, paidEUR: '15.50', dueEUR: '0.00' }
 ]));
 assert.equal(new Date(history.bills[0].emailDate).getUTCFullYear(), 2026);
-assert.equal(new Date(history.bills[1].emailDate).getUTCFullYear(), 2025);
-assert.equal(new Date(history.bills[2].emailDate).getUTCFullYear(), 2024);
+assert.equal(new Date(history.bills[1].emailDate).getUTCFullYear(), 2026);
+assert.equal(new Date(history.bills[2].emailDate).getUTCFullYear(), 2025);
+assert.equal(new Date(history.bills[3].emailDate).getUTCFullYear(), 2024);
 r = await worker.fetch(req('/api/latest', { headers: authHeaders }), env);
 assert.equal(r.status, 200);
 assert.equal((await r.json()).bill.totalEUR, '77.00');
@@ -178,4 +184,4 @@ let scheduled;
 await worker.scheduled({}, env, { waitUntil(p) { scheduled = p; } });
 await scheduled;
 assert.ok(await kv.get('latest_bill:' + ownerKey));
-console.log('PASS: OAuth identity and per-account tokens/sessions/history; Gmail all-page cursor flow; security/payment exclusions; unique KV history; internalDate precedence; annual totals/order; safe Gmail API error; scheduled handler.');
+console.log('PASS: OAuth identity and per-account tokens/sessions/history; forwarded DEI bill recognition from quoted noreply@dei.gr; Gmail pagination; exclusions; KV history; annual totals; scheduled handler.');

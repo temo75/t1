@@ -16,7 +16,7 @@ const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
 const ALLOWED_ORIGIN = "https://temo75.github.io";
 // Search broadly across DEI mail, then identify invoice-like messages in code.
  // in:anywhere also allows older messages still present in Spam/Trash to be considered.
-const GMAIL_QUERY = 'in:anywhere from:(dei.gr)';
+const GMAIL_QUERY = 'in:anywhere {from:(dei.gr) subject:(Fwd) subject:(FW) subject:(Forward) subject:(Προώθηση) subject:(λογαριασμού) subject:(ΔΕΗ) subject:(Ηλεκτρικής)}';
 
 function corsHeaders(extra = {}) {
   return {
@@ -83,7 +83,7 @@ function stripHtml(s) {
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
     .replace(/<\/(p|div|tr|li|h[1-6]|br|td|th)>/gi, "\n")
-    .replace(/<[^>]+>/g, " ")
+    .replace(/<\/?[a-z][a-z0-9:-]*(?:\s[^>]*)?>/gi, " ")
     .replace(/&nbsp;|&#160;/gi, " ")
     .replace(/&euro;|&#8364;|&#x20ac;/gi, "€")
     .replace(/&amp;/gi, "&")
@@ -197,6 +197,18 @@ async function gmailFetch(env, ownerKey, path, accessToken = "") {
   return data;
 }
 
+function isDeiOrigin(from, subject, bodyText) {
+  if (/@(?:[a-z0-9-]+\.)*dei\.gr\b/i.test(String(from || ""))) return true;
+  const body = String(bodyText || "");
+  const forwarded = /(?:^|\n)\s*(?:from|από|αποστολέας|αποστολεας)\s*:/im.test(body);
+  const quotedDeiAddress = /<[^>\n]*@(?:[a-z0-9-]+\.)*dei\.gr\s*>|[a-z0-9._%+-]+@(?:[a-z0-9-]+\.)*dei\.gr/i.test(body);
+  const forwardSubject = /^\s*(?:fwd?|forwarded message|προώθηση|fw)\s*[:：]/i.test(String(subject || ""));
+  const deiBillSubject = /(ειδοποίηση έκδοσης λογαριασμού|λογαριασμού ηλεκτρικής ενέργειας|\bδεη\b|\bdei\b)/i.test(String(subject || ""));
+  // Accept a forwarded message when the quoted original DEI sender is present
+  // and either forwarding metadata or the recognizable DEI bill subject survives.
+  return quotedDeiAddress && (forwarded || forwardSubject || deiBillSubject);
+}
+
 function isLikelyInvoice(subject, bodyText) {
   const s = String(subject || "").toLocaleLowerCase("el");
   const t = String(bodyText || "").toLocaleLowerCase("el");
@@ -237,10 +249,10 @@ async function getLatestBill(env, ownerKey, pageToken = "") {
     const headers = full.payload?.headers || [];
     const subject = headerValue(headers, "subject");
     const from = headerValue(headers, "from");
-    if (!/@(?:[a-z0-9-]+\.)*dei\.gr\b/i.test(from)) continue;
     const htmlBody = findBody(full.payload, "text/html");
     const plainBody = findBody(full.payload, "text/plain");
     const bodyText = stripHtml([htmlBody, plainBody, full.snippet || ""].filter(Boolean).join("\n"));
+    if (!isDeiOrigin(from, subject, bodyText)) continue;
     if (!isLikelyInvoice(subject, bodyText)) continue;
     const timestamp = Number(full.internalDate || summary.internalDate || 0);
     const headerDate = headerValue(headers, "date");
