@@ -11,6 +11,7 @@ on:
   push:
     branches:
       - fix/dei-historical-bill-search
+      - fix/dei-per-google-account
     paths:
       - 'dei-bill-sync.js'
       - 'workers/dei-bill-sync/**'
