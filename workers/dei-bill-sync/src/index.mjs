@@ -212,7 +212,10 @@ function assertConfig(env) {
   if (!env.GOOGLE_CLIENT_SECRET) missing.push("GOOGLE_CLIENT_SECRET");
   if (!env.DEI_KV) missing.push("DEI_KV binding");
   if (!env.FIREBASE_PROJECT_ID) missing.push("FIREBASE_PROJECT_ID");
-  if (!env.LEGACY_LINK_ADMIN_UID) missing.push("LEGACY_LINK_ADMIN_UID for the browser admin panel");
+  if (!env.FIREBASE_API_KEY) missing.push("FIREBASE_API_KEY");
+  if (!env.FIREBASE_AUTH_DOMAIN) missing.push("FIREBASE_AUTH_DOMAIN");
+  if (!env.FIREBASE_APP_ID) missing.push("FIREBASE_APP_ID");
+  if (!env.LEGACY_LINK_ADMIN_UID) missing.push("LEGACY_LINK_ADMIN_UID for verified account linking");
   if (!env.DEI_TOKEN_ENCRYPTION_KEY) missing.push("DEI_TOKEN_ENCRYPTION_KEY");
   return missing;
 }
