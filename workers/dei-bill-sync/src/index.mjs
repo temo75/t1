@@ -16,7 +16,7 @@ const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
 const ALLOWED_ORIGIN = "https://temo75.github.io";
 // Search broadly across DEI mail, then identify invoice-like messages in code.
  // in:anywhere also allows older messages still present in Spam/Trash to be considered.
-const GMAIL_QUERY = 'in:anywhere {from:(dei.gr) subject:(Fwd) subject:(FW) subject:(Forward) subject:(Προώθηση)}';
+const GMAIL_QUERY = 'in:anywhere {from:(dei.gr) subject:(Fwd) subject:(FW) subject:(Forward) subject:(Προώθηση) subject:(λογαριασμού) subject:(ΔΕΗ) subject:(Ηλεκτρικής)}';
 
 function corsHeaders(extra = {}) {
   return {
@@ -203,7 +203,10 @@ function isDeiOrigin(from, subject, bodyText) {
   const forwarded = /(?:^|\n)\s*(?:from|από|αποστολέας|αποστολεας)\s*:/im.test(body);
   const quotedDeiAddress = /<[^>\n]*@(?:[a-z0-9-]+\.)*dei\.gr\s*>|[a-z0-9._%+-]+@(?:[a-z0-9-]+\.)*dei\.gr/i.test(body);
   const forwardSubject = /^\s*(?:fwd?|forwarded message|προώθηση|fw)\s*[:：]/i.test(String(subject || ""));
-  return (forwarded || forwardSubject) && quotedDeiAddress;
+  const deiBillSubject = /(ειδοποίηση έκδοσης λογαριασμού|λογαριασμού ηλεκτρικής ενέργειας|\bδεη\b|\bdei\b)/i.test(String(subject || ""));
+  // Accept a forwarded message when the quoted original DEI sender is present
+  // and either forwarding metadata or the recognizable DEI bill subject survives.
+  return quotedDeiAddress && (forwarded || forwardSubject || deiBillSubject);
 }
 
 function isLikelyInvoice(subject, bodyText) {
