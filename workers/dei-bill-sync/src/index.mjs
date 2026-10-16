@@ -83,7 +83,7 @@ function stripHtml(s) {
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
     .replace(/<\/(p|div|tr|li|h[1-6]|br|td|th)>/gi, "\n")
-    .replace(/<[^>]+>/g, " ")
+    .replace(/<\/?[a-z][a-z0-9:-]*(?:\s[^>]*)?>/gi, " ")
     .replace(/&nbsp;|&#160;/gi, " ")
     .replace(/&euro;|&#8364;|&#x20ac;/gi, "€")
     .replace(/&amp;/gi, "&")
