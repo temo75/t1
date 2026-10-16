@@ -455,7 +455,7 @@ export default {
       return json({ service: "TEMO DEI bill sync", routes: ["/health", "/oauth/start", "/oauth/callback", "/api/status", "/api/session/exchange", "/api/sync", "/api/latest"], t1Page: "https://temo75.github.io/t1/dei-bill.html" });
     } catch (error) {
       const safe = safeError(error);
-      return json({ ok: false, error: safe.message }, safe.status);
+      return json({ ok: false, error: safe.message, ...(env.TEST_MODE ? { debug: String(error?.message || error) } : {}) }, safe.status);
     }
   },
 
