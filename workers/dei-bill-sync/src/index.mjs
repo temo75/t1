@@ -395,6 +395,13 @@ async function getLatestBill(env, ownerKey, pageToken = "") {
     // A forwarded duplicate must not replace the original bill as "latest".
   }
   const latestKey = "latest_bill:" + ownerKey;
+  // A payment receipt may have updated the stored copy of the newest invoice
+  // after the local `newest` object was created. Re-read it before writing the
+  // latest pointer so a stale "due" status cannot overwrite the confirmed "paid".
+  if (newest?.gmailMessageId) {
+    const storedNewest = existingById.get(String(newest.gmailMessageId));
+    if (storedNewest) newest = storedNewest;
+  }
   const existingLatest = await env.DEI_KV.get(latestKey, "json");
   if (newest && (!existingLatest || newest.internalDate >= Number(existingLatest.internalDate || 0))) {
     await env.DEI_KV.put(latestKey, JSON.stringify(newest));
