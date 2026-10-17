@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ka">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TEMO — მომხმარებლების აღდგენა</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:20px;font-family:Arial,sans-serif;background:#071117;color:#eef7f7}
+main{max-width:620px;margin:30px auto;padding:22px;border:1px solid #2999df;border-radius:18px;background:#0d1b24;box-shadow:0 0 18px #2999df33}
+h1{font-size:23px;margin-top:0}p{line-height:1.55;color:#c7d4d8}.status{padding:14px;border:1px solid #29404c;border-radius:12px;margin:16px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+button{width:100%;padding:14px;margin:8px 0;border:1px solid #2999df;border-radius:11px;background:#102b3b;color:#fff;font-size:16px;font-weight:bold}
+button:disabled{opacity:.55}small{color:#9fb0b8}
+</style>
+</head>
+<body>
+<main>
+<h1>👥 TEMO — მომხმარებლების აღდგენა</h1>
+<p>ეს ცალკე დამხმარე გვერდია. ის ძველი T1 მისამართის ამ ბრაუზერში შენახულ მომხმარებლებს ამოწმებს და, მხოლოდ ღილაკზე დაჭერის შემდეგ, ახალ Firebase სიას უსაფრთხოდ აერთიანებს. არსებული Firebase მომხმარებლები არ უნდა წაიშალოს.</p>
+<div id="status" class="status">ვამოწმებ ძველი T1-ის ამ ბრაუზერის შენახულ მონაცემებს…</div>
+<button id="migrate" disabled>მომხმარებლების უსაფრთხოდ გადატანა</button>
+<button id="export" disabled>შენახული სიის სარეზერვო ფაილად ჩამოტვირთვა</button>
+<p><small>პაროლები ეკრანზე არ გამოჩნდება. თუ ამ ბრაუზერში ძველი მონაცემები არ არის, ეს გვერდი ახალ მომხმარებლებს ვერ გამოიგონებს.</small></p>
+</main>
+<script>
+(function(){
+'use strict';
+const USERS_KEY='temoWorkTrackerUsers';
+const DB='https://temo-75-default-rtdb.europe-west1.firebasedatabase.app';
+const status=document.getElementById('status');
+const migrate=document.getElementById('migrate');
+const exportBtn=document.getElementById('export');
+let localUsers=[];
+function cleanUser(raw){
+ const u=raw&&typeof raw==='object'?raw:{};
+ const name=String(u.name||'').trim();
+ if(!name||name.toUpperCase()==='TEMOADMIN')return null;
+ const admin=name.toUpperCase()==='TEMO'||u.admin===true;
+ const blocked=admin?false:(typeof u.blocked==='boolean'?u.blocked:u.authorized===false);
+ return {id:String(u.id||('legacy_'+name.toLowerCase())),name,email:String(u.email||''),password:String(u.password??''),admin,authorized:admin?true:!blocked,blocked,_firebaseKey:u._firebaseKey||''};
+}
+function readLocal(){
+ try{
+  const raw=JSON.parse(localStorage.getItem(USERS_KEY)||'null');
+  if(!Array.isArray(raw))return [];
+  return raw.map(cleanUser).filter(Boolean);
+ }catch(e){return [];}
+}
+function say(t){status.textContent=t;}
+localUsers=readLocal();
+const localRegular=localUsers.filter(u=>!u.admin&&u.name.toUpperCase()!=='TEMO');
+say('ძველ მისამართზე შენახული ჩანაწერები: '+localUsers.length+'\nჩვეულებრივი მომხმარებლები: '+localRegular.length+'\n\n'+(localRegular.length?'შეგიძლია ჯერ სარეზერვო ფაილი ჩამოტვირთო, შემდეგ კი გადაიტანო.':'ამ მისამართის ბრაუზერის შენახულ სიაში მომხმარებლები ვერ ვიპოვე.'));
+migrate.disabled=localRegular.length===0;
+exportBtn.disabled=localUsers.length===0;
+exportBtn.addEventListener('click',function(){
+ const blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),source:'old-T1-localStorage',users:localUsers},null,2)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='TEMO_USERS_RECOVERY_BACKUP.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+});
+migrate.addEventListener('click',async function(){
+ if(!localRegular.length)return;
+ if(!confirm('გადავიტანოთ '+localRegular.length+' ძველი მომხმარებელი? არსებული Firebase ჩანაწერები შენარჩუნდება; ერთნაირი ID-ის ან სახელის ჩანაწერი დუბლიკატად არ დაემატება.'))return;
+ migrate.disabled=true;exportBtn.disabled=true;say('Firebase-ის არსებული სიის შემოწმება…');
+ try{
+  const r=await fetch(DB+'/users.json',{cache:'no-store'});
+  if(!r.ok)throw new Error('Firebase წაკითხვა ვერ მოხერხდა (HTTP '+r.status+'). მონაცემები არ შეცვლილა.');
+  const data=await r.json();
+  if(data===null)throw new Error('Firebase /users ცარიელია ან მიუწვდომელია. უსაფრთხოების მიზნით ავტომატური ჩაწერა შეჩერდა.');
+  const remote=Array.isArray(data)?data.filter(Boolean).map(cleanUser).filter(Boolean):Object.entries(data).filter(([,u])=>u).map(([k,u])=>cleanUser({...u,_firebaseKey:k})).filter(Boolean);
+  const merged=remote.slice();
+  let added=0;
+  for(const u of localRegular){
+   const exists=merged.some(v=>String(v.id)===String(u.id)||String(v.name||'').trim().toLowerCase()===u.name.toLowerCase());
+   if(!exists){merged.push({...u,admin:false,blocked:u.blocked===true,authorized:u.blocked!==true});added++;}
+  }
+  if(!merged.some(u=>String(u.name||'').trim().toUpperCase()==='TEMO')){
+   const admin=localUsers.find(u=>u.admin||u.name.toUpperCase()==='TEMO');
+   if(admin)merged.unshift({...admin,admin:true,blocked:false,authorized:true});
+  }
+  if(added===0){say('გადატანა საჭირო არ გახდა: ძველი მომხმარებლები უკვე არსებობს Firebase სიაში. არსებული მონაცემები უცვლელია.');return;}
+  const w=await fetch(DB+'/users.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(merged)});
+  if(!w.ok)throw new Error('Firebase-ში ჩაწერა ვერ მოხერხდა (HTTP '+w.status+').');
+  say('წარმატებით გადაიტანა '+added+' მომხმარებელი.\nFirebase-ში სულ ჩანაწერები: '+merged.length+'\nახლა გახსენი https://temo1.gr და განაახლე გვერდი. თუ შესვლა მაინც არ იმუშავებს, მომხმარებლის პაროლი უნდა შემოწმდეს.');
+ }catch(e){say('გადატანა ვერ დასრულდა.\n'+(e&&e.message?e.message:String(e))+'\nმონაცემები ავტომატურად არ წაიშალა.');migrate.disabled=false;exportBtn.disabled=localUsers.length===0;}
+});
+})();
+</script>
+</body>
+</html>
