@@ -304,10 +304,15 @@ async function getLatestBill(env, ownerKey, pageToken = "") {
       bill.totalEUR ?? "", bill.dueDate ?? "", bill.paymentStatus, canonicalBillContent(bodyText)
     ].join("|"));
     const existingBills = await listStoredBills(env, ownerKey);
-    if (!existingBills.some(existing => isDuplicateBill(existing, bill))) {
+    const sameMessage = existingBills.find(existing => String(existing.gmailMessageId) === bill.gmailMessageId);
+    const duplicateOfOtherMessage = existingBills.some(existing =>
+      String(existing.gmailMessageId) !== bill.gmailMessageId && isDuplicateBill(existing, bill)
+    );
+    if (!sameMessage && !duplicateOfOtherMessage) {
       await env.DEI_KV.put(BILL_PREFIX + ownerKey + ":" + encodeURIComponent(bill.gmailMessageId), JSON.stringify(bill));
     }
-    if (!newest || bill.internalDate > newest.internalDate) newest = bill;
+    // A forwarded duplicate must not replace the original bill as "latest".
+    if (!duplicateOfOtherMessage && (!newest || bill.internalDate > newest.internalDate)) newest = bill;
   }
   const latestKey = "latest_bill:" + ownerKey;
   const existingLatest = await env.DEI_KV.get(latestKey, "json");
