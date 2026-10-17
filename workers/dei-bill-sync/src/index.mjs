@@ -378,8 +378,8 @@ async function cleanForwardedHistoryOnce(env, ownerKey, bills) {
 }
 
 async function getBillHistory(env, ownerKey) {
+  let bills = await listStoredBills(env, ownerKey);
   bills = await cleanForwardedHistoryOnce(env, ownerKey, bills);
-  const bills = await listStoredBills(env, ownerKey);
   const totalPaid = bills.reduce((sum, bill) => bill.paymentStatus === "paid" && Number.isFinite(Number(bill.totalEUR)) ? sum + Number(bill.totalEUR) : sum, 0);
   const totalDue = bills.reduce((sum, bill) => bill.paymentStatus === "due" && Number.isFinite(Number(bill.totalEUR)) ? sum + Number(bill.totalEUR) : sum, 0);
   const years = new Map();
