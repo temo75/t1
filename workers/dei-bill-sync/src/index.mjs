@@ -222,6 +222,39 @@ function isLikelyInvoice(subject, bodyText) {
   const bodyLooksLikeBill = /(πληρωτέο ποσό|συνολικό ποσό|προθεσμία πληρωμής|ημερομηνία λήξης|amount due|due date|electricity bill|λογαριασμός ηλεκτρικού)/i.test(t);
   return subjectLooksLikeBill || bodyLooksLikeBill;
 }
+
+function isPaymentConfirmation(subject, bodyText) {
+  const combined = String(subject || "") + "\\n" + String(bodyText || "");
+  return /(payment confirmation|payment received|receipt for payment|επιβεβαίωση πληρωμής|απόδειξη πληρωμής|εξόφληση λογαριασμού|η πληρωμή σας καταχωρήθηκε|πληρωμή ολοκληρώθηκε|ο λογαριασμός εξοφλήθηκε)/i.test(combined);
+}
+
+async function applyPaymentConfirmation(env, ownerKey, existingBills, existingById, amount, dueDate, fetchedAt) {
+  if (amount == null) return false;
+  const cents = Math.round(Number(amount) * 100);
+  let candidates = existingBills.filter(bill =>
+    Math.round(Number(bill.totalEUR) * 100) === cents &&
+    bill.paymentStatus !== "paid"
+  );
+  if (dueDate) {
+    const exact = candidates.filter(bill => String(bill.dueDate || "") === dueDate);
+    if (exact.length === 1) candidates = exact;
+  }
+  // Never guess when multiple different invoices have the same amount.
+  if (candidates.length !== 1) return false;
+  const matched = candidates[0];
+  const updated = { ...matched, paymentStatus: "paid", paymentConfirmedAt: fetchedAt };
+  const key = BILL_PREFIX + ownerKey + ":" + encodeURIComponent(String(matched.gmailMessageId));
+  await env.DEI_KV.put(key, JSON.stringify(updated));
+  existingById.set(String(matched.gmailMessageId), updated);
+  const index = existingBills.findIndex(bill => String(bill.gmailMessageId) === String(matched.gmailMessageId));
+  if (index >= 0) existingBills[index] = updated;
+  const latestKey = "latest_bill:" + ownerKey;
+  const latest = await env.DEI_KV.get(latestKey, "json");
+  if (latest && String(latest.gmailMessageId) === String(matched.gmailMessageId)) {
+    await env.DEI_KV.put(latestKey, JSON.stringify(updated));
+  }
+  return true;
+}
 function canonicalBillContent(text) {
   return String(text || "")
     .split(/\r?\n/)
@@ -308,8 +341,15 @@ async function getLatestBill(env, ownerKey, pageToken = "") {
     const plainBody = findBody(full.payload, "text/plain");
     const bodyText = stripHtml([plainBody, htmlBody, full.snippet].filter(Boolean).join("\n"));
     if (!isDeiOrigin(from, subject, bodyText)) continue;
-    if (!isLikelyInvoice(subject, bodyText)) continue;
     const timestamp = Number(full.internalDate || summary.internalDate || 0);
+    const fetchedAt = new Date().toISOString();
+    if (isPaymentConfirmation(subject, bodyText)) {
+      await applyPaymentConfirmation(env, ownerKey, existingBills, existingById,
+        extractAmount(bodyText), extractDueDate(bodyText), fetchedAt);
+      // A receipt updates the matching invoice; it is never a separate bill-history row.
+      continue;
+    }
+    if (!isLikelyInvoice(subject, bodyText)) continue;
     const headerDate = headerValue(headers, "date");
     const parsedHeaderDate = Date.parse(headerDate);
     const bill = {
@@ -318,7 +358,7 @@ async function getLatestBill(env, ownerKey, pageToken = "") {
       totalEUR: extractAmount(bodyText),
       dueDate: extractDueDate(bodyText),
       paymentStatus: extractPaymentStatus(bodyText),
-      fetchedAt: new Date().toISOString(),
+      fetchedAt,
       gmailMessageId: String(summary.id),
       internalDate: timestamp,
     };
