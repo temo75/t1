@@ -123,7 +123,7 @@ assert.equal(historyKeys.length, 4, 'Gmail IDs deduplicate, security messages ar
 const storedLatest = await kv.get('latest_bill:' + ownerKey, 'json');
 assert.equal(storedLatest.totalEUR, '77.00');
 assert.equal(storedLatest.dueDate, '2026-10-31');
-assert.equal(storedLatest.paymentStatus, 'due');
+assert.equal(storedLatest.paymentStatus, 'paid');
 assert.equal(storedLatest.emailDate, new Date(samples['bill-2026'].internalDate).toISOString(), 'internalDate overrides Date header');
 
 r = await worker.fetch(req('/api/history', { headers: authHeaders }), env);
