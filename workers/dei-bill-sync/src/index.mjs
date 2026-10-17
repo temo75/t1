@@ -116,13 +116,12 @@ function extractAmount(text) {
 
 function extractPaymentStatus(text) {
   const value = String(text || "").toLocaleLowerCase("el").normalize("NFC");
-  // Negative Greek/English phrases must be checked before the positive "paid" terms:
-  // "δεν έχει εξοφληθεί" contains "έχει εξοφληθεί" but means it is still due.
-  const explicitlyUnpaid = /(δεν\s+(?:έχει\s+)?εξοφληθεί|δεν\s+εξοφλήθηκε|μη\s+εξοφλημέν|ανεξόφλητ|not\s+paid|unpaid|payment\s+pending|οφειλόμενο\s+ποσό|ληξιπρόθεσμ)/i.test(value);
+  const explicitlyUnpaid = /(δεν\s+(?:έχει\s+)?εξοφληθεί|δεν\s+εξοφλήθηκε|μη\s+εξοφλημέν|ανεξόφλητ|not\s+paid|unpaid|payment\s+pending|οφειλόμενο\s+ποσό|ληξιπρόθεσμ|πληρωτέο\s+ποσό|προς\s+πληρωμή|amount\s+due|outstanding|to\s+pay|payment\s+due)/i.test(value);
+  const paid = /(εξοφλήθηκ|έχει\s+εξοφληθεί|εξοφλημέν|πληρώθηκε|έγινε\s+η\s+πληρωμή|πραγματοποιήθηκε\s+η\s+πληρωμή|καταβλήθηκε|πληρωμή\s+ολοκληρώθηκε|paid\s+in\s+full|fully\s+paid|settled|payment\s+received|payment\s+completed|thank\s+you\s+for\s+your\s+payment)/i.test(value);
+  // Only classify as due from an explicit unpaid phrase, or when no paid confirmation exists.
+  if (paid && !explicitlyUnpaid) return "paid";
   if (explicitlyUnpaid) return "due";
-  const paid = /(εξοφλήθηκ|έχει\s+εξοφληθεί|πληρώθηκε|καταβλήθηκε|εξοφλημένο|paid\s+in\s+full|fully\s+paid|settled|payment\s+received)/i.test(value);
-  if (paid) return "paid";
-  const due = /(οφειλ|πληρωτέο|προς\s+πληρωμή|υπόλοιπο\s+πληρωμ|amount\s+due|outstanding|to\s+pay|payment\s+due)/i.test(value);
+  const due = /(οφειλ|υπόλοιπο\s+πληρωμ)/i.test(value);
   if (due) return "due";
   return "unknown";
 }
@@ -239,15 +238,16 @@ const GMAIL_PAGE_SIZE = 20;
 function isDuplicateBill(a, b) {
   if (!a || !b) return false;
   if (a.contentFingerprint && b.contentFingerprint && a.contentFingerprint === b.contentFingerprint) return true;
-  // The same invoice can have a different parsed status in an older/forwarded copy.
   const sameAmount = a.totalEUR != null && b.totalEUR != null &&
     Math.round(Number(a.totalEUR) * 100) === Math.round(Number(b.totalEUR) * 100);
+  if (!sameAmount) return false;
   const sameDueDate = Boolean(a.dueDate && b.dueDate && String(a.dueDate) === String(b.dueDate));
-  if (sameAmount && sameDueDate) return true;
-  // Without a due date, only collapse same-value messages received very close together.
+  if (sameDueDate) return true;
+  // Gmail sometimes delivers the same invoice twice with inconsistent/missing due dates.
+  // Same amount received within 14 days is treated as a duplicate only when one due date is absent.
   const ta = Number(a.internalDate || 0), tb = Number(b.internalDate || 0);
-  return sameAmount && !a.dueDate && !b.dueDate &&
-    ta > 0 && tb > 0 && Math.abs(ta - tb) <= 5 * 60 * 1000;
+  const closeInTime = ta > 0 && tb > 0 && Math.abs(ta - tb) <= 14 * 24 * 60 * 60 * 1000;
+  return closeInTime && (!a.dueDate || !b.dueDate);
 }
 
 function deduplicateBills(bills) {
