@@ -136,7 +136,7 @@
       values.due.textContent = formatDueDate(bill.dueDate);
       values.payment.textContent = paymentLabel(bill.paymentStatus, bill.dueDate);
       values.email.textContent = bill.emailDate || "თარიღი არ არის მითითებული";
-      values.sync.textContent = bill.fetchedAt ? new Date(bill.fetchedAt).toLocaleString("ka-GE") : "ჯერ არ დასინქრონებულა";
+      values.sync.textContent = (bill.lastSyncAt || bill.fetchedAt) ? new Date(bill.lastSyncAt || bill.fetchedAt).toLocaleString("ka-GE") : "ჯერ არ დასინქრონებულა";
       window.dispatchEvent(new CustomEvent("t1:dei-bill", { detail: bill }));
     }
 
