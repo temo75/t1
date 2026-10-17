@@ -27,6 +27,11 @@ const samples = {
     subject: 'DEI bill October', body: 'Πληρωτέο ποσό: 77,00 € Προθεσμία πληρωμής έως 31/10/2026 Οφειλή',
     internalDate: Date.parse('2026-10-14T09:00:00Z'), from: 'billing@dei.gr', date: dateHeader
   },
+  'bill-2026-duplicate': {
+    subject: 'DEI bill October',
+    body: 'Πληρωτέο ποσό: 77,00 € Προθεσμία πληρωμής έως 31/10/2026 Οφειλή',
+    internalDate: Date.parse('2026-10-14T09:01:37Z'), from: 'billing@dei.gr', date: dateHeader
+  },
   'forwarded-dei-bill': {
     subject: 'Fwd: Ειδοποίηση έκδοσης λογαριασμού Ηλεκτρικής Ενέργειας ΔΕΗ',
     body: '---------- Forwarded message ----------\nFrom: DEI <noreply@dei.gr>\nDate: Tue, 6 Oct 2026 08:02:00 +0000\nSubject: Ειδοποίηση έκδοσης λογαριασμού Ηλεκτρικής Ενέργειας ΔΕΗ\nTo: temo75elia@gmail.com\nΠληρωτέο ποσό: 45,20 € Προθεσμία πληρωμής έως 30/10/2026 Οφειλή',
@@ -73,7 +78,7 @@ globalThis.fetch = async (input, init = {}) => {
     requestedPages.push(parsed.searchParams.get('pageToken') || '');
     const page = parsed.searchParams.get('pageToken') || '';
     if (!page) return new Response(JSON.stringify({ messages: [{ id: 'security-code' }], nextPageToken: 'page-2' }));
-    if (page === 'page-2') return new Response(JSON.stringify({ messages: [{ id: 'bill-2026' }, { id: 'bill-2026' }, { id: 'forwarded-dei-bill' }], nextPageToken: 'page-3' }));
+    if (page === 'page-2') return new Response(JSON.stringify({ messages: [{ id: 'bill-2026' }, { id: 'bill-2026' }, { id: 'bill-2026-duplicate' }, { id: 'forwarded-dei-bill' }], nextPageToken: 'page-3' }));
     if (page === 'page-3') return new Response(JSON.stringify({ messages: [{ id: 'payment-confirmation' }, { id: 'bill-2025' }], nextPageToken: 'page-4' }));
     if (page === 'page-4') return new Response(JSON.stringify({ messages: [{ id: 'bill-paid-2024' }] }));
   }
