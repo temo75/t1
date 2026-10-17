@@ -120,6 +120,12 @@ assert.equal(JSON.stringify(requestedPages), JSON.stringify(['', 'page-2', 'page
 const ownerKey = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('google-user-1')).then(d => [...new Uint8Array(d)].map(x => x.toString(16).padStart(2, '0')).join(''));
 const historyKeys = [...kv.data.keys()].filter(k => k.startsWith('bill_history:' + ownerKey + ':'));
 assert.equal(historyKeys.length, 3, 'Gmail IDs deduplicate, security/payment messages and forwarded copies are excluded');
+// Simulate a forwarded copy saved by the older production Worker before the fix.
+await kv.put('bill_history:' + ownerKey + ':' + encodeURIComponent('forwarded-dei-bill'), JSON.stringify({
+  gmailMessageId: 'forwarded-dei-bill', totalEUR: '45.20', dueDate: '2026-10-30',
+  paymentStatus: 'due', emailDate: new Date(samples['forwarded-dei-bill'].internalDate).toISOString(),
+  internalDate: samples['forwarded-dei-bill'].internalDate
+}));
 const storedLatest = await kv.get('latest_bill:' + ownerKey, 'json');
 assert.equal(storedLatest.totalEUR, '77.00');
 assert.equal(storedLatest.dueDate, '2026-10-31');
@@ -129,7 +135,9 @@ assert.equal(storedLatest.emailDate, new Date(samples['bill-2026'].internalDate)
 r = await worker.fetch(req('/api/history', { headers: authHeaders }), env);
 assert.equal(r.status, 200);
 const history = await r.json();
-assert.equal(history.count, 3);
+assert.equal(history.count, 3, 'legacy forwarded record is removed during one-time history cleanup');
+assert.equal(await kv.get('bill_history:' + ownerKey + ':' + encodeURIComponent('forwarded-dei-bill')), null);
+assert.equal(await kv.get('forwarded_history_cleanup_v1:' + ownerKey), 'done');
 assert.equal(history.bills.every(x => x.gmailMessageId === undefined), true, 'private Gmail message IDs are not returned');
 assert.equal(history.totalPaidEUR, '15.50', 'accented Greek εξοφλήθηκε wording is recognized as paid');
 assert.equal(history.totalDueEUR, '77.00', 'forwarded copy is excluded; unknown status is not counted as due');
