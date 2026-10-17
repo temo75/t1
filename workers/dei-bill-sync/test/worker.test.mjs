@@ -38,7 +38,7 @@ const samples = {
     internalDate: Date.parse('2026-10-10T08:00:00Z'), from: 'temo75elia@gmail.com', date: dateHeader
   },
   'payment-confirmation': {
-    subject: 'DEI update', body: 'Payment received. Total amount 9.00 EUR',
+    subject: 'DEI payment confirmation', body: 'Payment received. Total amount 77.00 EUR',
     internalDate: Date.parse('2026-10-13T09:00:00Z'), from: 'billing@dei.gr'
   },
   'bill-2025': {
@@ -119,7 +119,7 @@ for (const continuation of [false, true, true, true]) {
 assert.equal(JSON.stringify(requestedPages), JSON.stringify(['', 'page-2', 'page-3', 'page-4']));
 const ownerKey = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('google-user-1')).then(d => [...new Uint8Array(d)].map(x => x.toString(16).padStart(2, '0')).join(''));
 const historyKeys = [...kv.data.keys()].filter(k => k.startsWith('bill_history:' + ownerKey + ':'));
-assert.equal(historyKeys.length, 4, 'Gmail IDs deduplicate, security/payment messages are excluded, and forwarded DEI bills are recognized');
+assert.equal(historyKeys.length, 4, 'Gmail IDs deduplicate, security messages are excluded, payment receipts update matching invoices, and forwarded DEI bills are recognized');
 const storedLatest = await kv.get('latest_bill:' + ownerKey, 'json');
 assert.equal(storedLatest.totalEUR, '77.00');
 assert.equal(storedLatest.dueDate, '2026-10-31');
@@ -131,8 +131,8 @@ assert.equal(r.status, 200);
 const history = await r.json();
 assert.equal(history.count, 4);
 assert.equal(history.bills.every(x => x.gmailMessageId === undefined), true, 'private Gmail message IDs are not returned');
-assert.equal(history.totalPaidEUR, '15.50');
-assert.equal(history.totalDueEUR, '122.20', 'forwarded bill is recognized and unknown status must not be counted as due');
+assert.equal(history.totalPaidEUR, '92.50', 'payment receipt marks the unique matching 77 EUR invoice as paid');
+assert.equal(history.totalDueEUR, '45.20', 'paid invoice is removed from due totals; forwarded bill is counted once');
 assert.equal(JSON.stringify(history.annualTotals), JSON.stringify([
   { year: '2026', count: 2, paidEUR: '0.00', dueEUR: '122.20' },
   { year: '2025', count: 1, paidEUR: '0.00', dueEUR: '0.00' },
