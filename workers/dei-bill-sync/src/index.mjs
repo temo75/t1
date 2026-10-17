@@ -217,7 +217,6 @@ function isLikelyInvoice(subject, bodyText) {
   const t = String(bodyText || "").toLocaleLowerCase("el");
   const combined = s + "\n" + t;
   if (/(verification code|security code|one[- ]time password|login code|κωδικός επιβεβαίωσης|κωδικός ασφαλείας|κωδικός μιας χρήσης)/i.test(combined)) return false;
-  if (/(payment confirmation|payment received|receipt for payment|επιβεβαίωση πληρωμής|απόδειξη πληρωμής|εξόφληση λογαριασμού|η πληρωμή σας καταχωρήθηκε)/i.test(combined)) return false;
   const subjectLooksLikeBill = /(δεη|δ[εέ]η|λογαριασμ|bill|invoice|electricity|ρεύμα)/i.test(s);
   const bodyLooksLikeBill = /(πληρωτέο ποσό|συνολικό ποσό|προθεσμία πληρωμής|ημερομηνία λήξης|amount due|due date|electricity bill|λογαριασμός ηλεκτρικού)/i.test(t);
   return subjectLooksLikeBill || bodyLooksLikeBill;
@@ -343,7 +342,8 @@ async function getLatestBill(env, ownerKey, pageToken = "") {
     if (!isDeiOrigin(from, subject, bodyText)) continue;
     const timestamp = Number(full.internalDate || summary.internalDate || 0);
     const fetchedAt = new Date().toISOString();
-    if (isPaymentConfirmation(subject, bodyText)) {
+    const subjectLooksLikeBill = /(δεη|δ[εέ]η|λογαριασμ|bill|invoice|electricity|ρεύμα)/i.test(subject);
+    if (isPaymentConfirmation(subject, bodyText) && !subjectLooksLikeBill) {
       await applyPaymentConfirmation(env, ownerKey, existingBills, existingById,
         extractAmount(bodyText), extractDueDate(bodyText), fetchedAt);
       // A receipt updates the matching invoice; it is never a separate bill-history row.
