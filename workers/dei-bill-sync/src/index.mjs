@@ -115,11 +115,14 @@ function extractAmount(text) {
 }
 
 function extractPaymentStatus(text) {
-  const value = String(text || "").toLocaleLowerCase("el");
-  const due = /(οφειλ|ανεξόφλητ|πληρωτέο|προς\s+πληρωμή|υπόλοιπο\s+πληρωμ|amount\s+due|outstanding|to\s+pay|payment\s+due)/i.test(value);
+  const value = String(text || "").toLocaleLowerCase("el").normalize("NFC");
+  // Negative Greek/English phrases must be checked before the positive "paid" terms:
+  // "δεν έχει εξοφληθεί" contains "έχει εξοφληθεί" but means it is still due.
+  const explicitlyUnpaid = /(δεν\s+(?:έχει\s+)?εξοφληθεί|δεν\s+εξοφλήθηκε|μη\s+εξοφλημέν|ανεξόφλητ|not\s+paid|unpaid|payment\s+pending|οφειλόμενο\s+ποσό|ληξιπρόθεσμ)/i.test(value);
+  if (explicitlyUnpaid) return "due";
   const paid = /(εξοφλήθηκ|έχει\s+εξοφληθεί|πληρώθηκε|καταβλήθηκε|εξοφλημένο|paid\s+in\s+full|fully\s+paid|settled|payment\s+received)/i.test(value);
-  if (due && paid) return "unknown";
   if (paid) return "paid";
+  const due = /(οφειλ|πληρωτέο|προς\s+πληρωμή|υπόλοιπο\s+πληρωμ|amount\s+due|outstanding|to\s+pay|payment\s+due)/i.test(value);
   if (due) return "due";
   return "unknown";
 }
@@ -511,7 +514,8 @@ export default {
         if (!ownerKey) return json({ ok: true, gmailConnected: false, lastFetchedAt: null });
         const connected = Boolean(await env.DEI_KV.get("gmail_refresh_token:" + ownerKey));
         const latest = await env.DEI_KV.get("latest_bill:" + ownerKey, "json");
-        return json({ ok: true, gmailConnected: connected, lastFetchedAt: latest?.fetchedAt || null });
+        const lastSyncAt = await env.DEI_KV.get("last_sync_at:" + ownerKey);
+        return json({ ok: true, gmailConnected: connected, lastFetchedAt: lastSyncAt || latest?.fetchedAt || null, lastSyncAt: lastSyncAt || null });
       }
 
       if (url.pathname === "/api/sync") {
@@ -527,10 +531,15 @@ export default {
         const pageToken = body.continue ? await env.DEI_KV.get(cursorKey) : null;
         const result = await getLatestBill(env, ownerKey, pageToken || "");
         if (result.nextPageToken) await env.DEI_KV.put(cursorKey, result.nextPageToken, { expirationTtl: 3600 });
-        else await env.DEI_KV.delete(cursorKey);
+        else {
+          await env.DEI_KV.delete(cursorKey);
+          // This is the actual completion time of the full manual sync, not the invoice date.
+          await env.DEI_KV.put("last_sync_at:" + ownerKey, new Date().toISOString());
+        }
+        const lastSyncAt = result.nextPageToken ? await env.DEI_KV.get("last_sync_at:" + ownerKey) : new Date().toISOString();
         return json({
-          ok: true, bill: publicBill(result), cached: false, scannedCount: result.scannedInvoices,
-          historyCount: result.historyCount, complete: !result.nextPageToken
+          ok: true, bill: { ...publicBill(result), lastSyncAt }, cached: false, scannedCount: result.scannedInvoices,
+          historyCount: result.historyCount, complete: !result.nextPageToken, lastSyncAt
         });
       }
       if (url.pathname === "/api/history") {
@@ -546,7 +555,8 @@ export default {
         const ownerKey = await getT1SessionOwner(request, env);
         if (!ownerKey) return json({ ok: false, error: "Unauthorized" }, 401);
         const cached = await env.DEI_KV.get("latest_bill:" + ownerKey, "json");
-        return json({ ok: true, bill: publicBill(cached || { found: false, paymentStatus: "unknown" }), cached: true });
+        const lastSyncAt = await env.DEI_KV.get("last_sync_at:" + ownerKey);
+        return json({ ok: true, bill: { ...publicBill(cached || { found: false, paymentStatus: "unknown" }), lastSyncAt: lastSyncAt || null }, cached: true, lastSyncAt: lastSyncAt || null });
       }
       return json({ service: "TEMO DEI bill sync", routes: ["/health", "/oauth/start", "/oauth/callback", "/api/status", "/api/session/exchange", "/api/sync", "/api/latest"], t1Page: "https://temo75.github.io/t1/dei-bill.html" });
     } catch (error) {
@@ -563,7 +573,10 @@ export default {
         for (const item of page.keys || []) {
           const ownerKey = item.name.slice("gmail_refresh_token:".length);
           if (!ownerKey) continue;
-          try { await getLatestBill(env, ownerKey, ""); } catch { /* one failed account must not stop others */ }
+          try {
+            await getLatestBill(env, ownerKey, "");
+            await env.DEI_KV.put("last_sync_at:" + ownerKey, new Date().toISOString());
+          } catch { /* one failed account must not stop others */ }
         }
         cursor = page.list_complete ? undefined : page.cursor;
       } while (cursor);

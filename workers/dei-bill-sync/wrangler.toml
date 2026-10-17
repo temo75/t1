@@ -11,5 +11,5 @@ binding = "DEI_KV"
 id = "2e81574e0ad9499aac5c7a4d47f95e1b"
 
 # Enable only after Gmail OAuth and live end-to-end sync are verified:
-# [triggers]
-# crons = ["0 */3 * * *"]
+[triggers]
+crons = ["0 */3 * * *"]
