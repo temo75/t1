@@ -105,6 +105,12 @@ assert.ok(state);
 assert.equal(auth.searchParams.get('redirect_uri'), 'https://dei-bill-sync.temo75elia.workers.dev/oauth/callback');
 r = await worker.fetch(req('/oauth/start?return_to=' + encodeURIComponent('https://temo1.gr/dei-bill.html')), env);
 assert.equal(r.status, 302, 'new temo1.gr DEI page is an allowed OAuth return URL');
+r = await worker.fetch(req('/oauth/start?return_to=' + encodeURIComponent('https://temo1.gr/')), env);
+assert.equal(r.status, 302, 'new domain homepage is an allowed OAuth return URL');
+r = await worker.fetch(req('/oauth/start?return_to=' + encodeURIComponent('https://temo1.gr/index.html')), env);
+assert.equal(r.status, 302, 'new domain main page is an allowed OAuth return URL');
+r = await worker.fetch(req('/oauth/start?return_to=' + encodeURIComponent('https://evil.example/dei-bill.html')), env);
+assert.equal(r.status, 400, 'untrusted external return URL is rejected');
 const newDomainAuth = new URL(r.headers.get('location'));
 assert.ok(newDomainAuth.searchParams.get('state'));
 
