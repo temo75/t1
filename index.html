@@ -7051,6 +7051,39 @@ body.temo-admin-slide-menu-open{overflow:hidden}
 </script>
 
 <footer style="max-width:1100px;margin:24px auto 90px;padding:12px 18px;text-align:center;font-size:13px;color:#9fb0b8"><a href="./privacy-policy.html" style="color:inherit;text-decoration:underline">Privacy Policy / კონფიდენციალურობის პოლიტიკა</a></footer>
+<script id="temo-bottom-neon-active-final-fix">
+(function(){
+  const pageToButton={mainPage:0,settingsPage:1,userManagementPage:2,walletPage:3,expensesPage:3,notesPage:4};
+  let timer=0;
+  function syncFromVisiblePage(){
+    const ids=['mainPage','settingsPage','userManagementPage','walletPage','expensesPage','notesPage'];
+    const page=ids.map(id=>document.getElementById(id)).find(el=>el&&!el.classList.contains('pageHidden'));
+    if(!page)return;
+    const index=pageToButton[page.id];
+    if(index==null)return;
+    document.querySelectorAll('#bottomNav > button').forEach((button,n)=>{
+      const active=n===index;
+      button.classList.toggle('active',active);
+      button.setAttribute('aria-current',active?'page':'false');
+    });
+  }
+  function scheduleSync(delay){clearTimeout(timer);timer=setTimeout(syncFromVisiblePage,delay);}
+  document.addEventListener('click',function(event){
+    if(event.target.closest&&event.target.closest('#bottomNav > button')){
+      scheduleSync(0);scheduleSync(650);
+    }
+  },false);
+  const observer=new MutationObserver(function(){scheduleSync(650);});
+  function start(){
+    ['mainPage','settingsPage','userManagementPage','walletPage','expensesPage','notesPage'].forEach(id=>{
+      const page=document.getElementById(id);
+      if(page)observer.observe(page,{attributes:true,attributeFilter:['class']});
+    });
+    syncFromVisiblePage();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+})();
+</script>
 </body>
 </html>
 <style id="temo-calendar-number-neon">
