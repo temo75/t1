@@ -119,7 +119,7 @@ for (const continuation of [false, true, true, true]) {
 assert.equal(JSON.stringify(requestedPages), JSON.stringify(['', 'page-2', 'page-3', 'page-4']));
 const ownerKey = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('google-user-1')).then(d => [...new Uint8Array(d)].map(x => x.toString(16).padStart(2, '0')).join(''));
 const historyKeys = [...kv.data.keys()].filter(k => k.startsWith('bill_history:' + ownerKey + ':'));
-assert.equal(historyKeys.length, 4, 'Gmail IDs deduplicate, security/payment messages are excluded, and forwarded DEI bills are recognized');
+assert.equal(historyKeys.length, 3, 'Gmail IDs deduplicate, security/payment messages and forwarded copies are excluded');
 const storedLatest = await kv.get('latest_bill:' + ownerKey, 'json');
 assert.equal(storedLatest.totalEUR, '77.00');
 assert.equal(storedLatest.dueDate, '2026-10-31');
@@ -129,19 +129,19 @@ assert.equal(storedLatest.emailDate, new Date(samples['bill-2026'].internalDate)
 r = await worker.fetch(req('/api/history', { headers: authHeaders }), env);
 assert.equal(r.status, 200);
 const history = await r.json();
-assert.equal(history.count, 4);
+assert.equal(history.count, 3);
 assert.equal(history.bills.every(x => x.gmailMessageId === undefined), true, 'private Gmail message IDs are not returned');
 assert.equal(history.totalPaidEUR, '15.50');
-assert.equal(history.totalDueEUR, '122.20', 'forwarded bill is recognized and unknown status must not be counted as due');
+assert.equal(history.totalDueEUR, '77.00', 'forwarded copy is excluded; unknown status is not counted as due');
 assert.equal(JSON.stringify(history.annualTotals), JSON.stringify([
-  { year: '2026', count: 2, paidEUR: '0.00', dueEUR: '122.20' },
+  { year: '2026', count: 1, paidEUR: '0.00', dueEUR: '77.00' },
   { year: '2025', count: 1, paidEUR: '0.00', dueEUR: '0.00' },
   { year: '2024', count: 1, paidEUR: '15.50', dueEUR: '0.00' }
 ]));
 assert.equal(new Date(history.bills[0].emailDate).getUTCFullYear(), 2026);
-assert.equal(new Date(history.bills[1].emailDate).getUTCFullYear(), 2026);
-assert.equal(new Date(history.bills[2].emailDate).getUTCFullYear(), 2025);
-assert.equal(new Date(history.bills[3].emailDate).getUTCFullYear(), 2024);
+assert.equal(new Date(history.bills[1].emailDate).getUTCFullYear(), 2025);
+assert.equal(new Date(history.bills[2].emailDate).getUTCFullYear(), 2024);
+
 r = await worker.fetch(req('/api/latest', { headers: authHeaders }), env);
 assert.equal(r.status, 200);
 assert.equal((await r.json()).bill.totalEUR, '77.00');
