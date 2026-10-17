@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="ka">
 <head>
+<script id="temo-domain-redirect">
+(function(){
+  if (window.location.hostname === "temo75.github.io" && /^\/t1(?:\/|$)/.test(window.location.pathname)) {
+    var targetPath = window.location.pathname.replace(/^\/t1(?=\/|$)/, "") || "/";
+    window.location.replace("https://temo1.gr" + targetPath + window.location.search + window.location.hash);
+  }
+})();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#071117">
