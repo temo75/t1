@@ -118,7 +118,7 @@ function extractPaymentStatus(text) {
   const value = String(text || "").toLocaleLowerCase("el").normalize("NFC").replace(/[\u00a0\s]+/g, " ");
   // Match explicit payment labels across DEI invoice templates and languages.
   const due = /(οφειλ|ανεξόφλητ|πληρωτέο|ποσό προς πληρωμή|ποσό πληρωμής|προς εξόφληση|χρεωστικό υπόλοιπο|υπόλοιπο οφειλής|τελικό ποσό πληρωμής|amount due|payable amount|amount payable|total due|payment due|outstanding|to pay)/i.test(value);
-  const paid = /(εξοφληθ|εξοφλημέν|έχει εξοφληθεί|έχει πληρωθεί|πληρώθηκε|πληρωμένο|καταβλήθηκε|paid in full|fully paid|payment received|settled)/i.test(value);
+  const paid = /(εξοφλ[ήη]θ|εξοφλ[ηή]μέν|έχει εξοφληθεί|έχει πληρωθεί|πληρώθηκε|πληρωμένο|καταβλήθηκε|paid in full|fully paid|payment received|settled)/i.test(value);
   if (due && paid) return "unknown";
   if (paid) return "paid";
   if (due) return "due";
