@@ -116,8 +116,8 @@ function extractAmount(text) {
 
 function extractPaymentStatus(text) {
   const value = String(text || "").toLocaleLowerCase("el");
-  const due = /(οφειλ|ανεξόφλητ|πληρωτέο|amount\s+due|outstanding|to\s+pay)/i.test(value);
-  const paid = /(εξοφλήθηκ|έχει\s+εξοφληθεί|πληρώθηκε|καταβλήθηκε|paid\s+in\s+full|fully\s+paid|settled)/i.test(value);
+  const due = /(οφειλ|ανεξόφλητ|πληρωτέο|προς\s+πληρωμή|υπόλοιπο\s+πληρωμ|amount\s+due|outstanding|to\s+pay|payment\s+due)/i.test(value);
+  const paid = /(εξοφλήθηκ|έχει\s+εξοφληθεί|πληρώθηκε|καταβλήθηκε|εξοφλημένο|paid\s+in\s+full|fully\s+paid|settled|payment\s+received)/i.test(value);
   if (due && paid) return "unknown";
   if (paid) return "paid";
   if (due) return "due";
@@ -290,6 +290,10 @@ async function getLatestBill(env, ownerKey, pageToken = "") {
   const list = await gmailFetch(env, ownerKey, "/messages?q=" + encodeURIComponent(GMAIL_QUERY) + "&maxResults=" + GMAIL_PAGE_SIZE + tokenParam, accessToken);
   const messages = Array.isArray(list.messages) ? list.messages : [];
   let newest = null;
+  // Read existing history once per Gmail page. The previous per-message read
+  // repeatedly listed every stored bill and made sync progressively slower.
+  const existingBills = await listStoredBillsRaw(env, ownerKey);
+  const existingById = new Map(existingBills.map(bill => [String(bill.gmailMessageId), bill]));
   for (const summary of messages) {
     if (!summary?.id) continue;
     const full = await gmailFetch(env, ownerKey, "/messages/" + encodeURIComponent(summary.id) + "?format=full", accessToken);
@@ -318,16 +322,33 @@ async function getLatestBill(env, ownerKey, pageToken = "") {
     bill.contentFingerprint = await sha256Hex([
       bill.totalEUR ?? "", bill.dueDate ?? "", bill.paymentStatus, canonicalBillContent(bodyText)
     ].join("|"));
-    const existingBills = await listStoredBills(env, ownerKey);
-    const sameMessage = existingBills.find(existing => String(existing.gmailMessageId) === bill.gmailMessageId);
+    const sameMessage = existingById.get(bill.gmailMessageId);
     const duplicateOfOtherMessage = existingBills.some(existing =>
       String(existing.gmailMessageId) !== bill.gmailMessageId && isDuplicateBill(existing, bill)
     );
-    if (!sameMessage && !duplicateOfOtherMessage) {
-      await env.DEI_KV.put(BILL_PREFIX + ownerKey + ":" + encodeURIComponent(bill.gmailMessageId), JSON.stringify(bill));
+    const billKey = BILL_PREFIX + ownerKey + ":" + encodeURIComponent(bill.gmailMessageId);
+    if (sameMessage) {
+      // Re-parse already stored messages on each manual sync so stale "unknown"
+      // payment statuses and old amounts/due dates can be repaired from Gmail.
+      const repaired = {
+        ...sameMessage,
+        ...bill,
+        paymentStatus: bill.paymentStatus === "unknown" &&
+          (sameMessage.paymentStatus === "paid" || sameMessage.paymentStatus === "due")
+          ? sameMessage.paymentStatus : bill.paymentStatus
+      };
+      await env.DEI_KV.put(billKey, JSON.stringify(repaired));
+      existingById.set(bill.gmailMessageId, repaired);
+      const index = existingBills.findIndex(existing => String(existing.gmailMessageId) === bill.gmailMessageId);
+      if (index >= 0) existingBills[index] = repaired;
+      if (!duplicateOfOtherMessage && (!newest || bill.internalDate > newest.internalDate)) newest = repaired;
+    } else if (!duplicateOfOtherMessage) {
+      await env.DEI_KV.put(billKey, JSON.stringify(bill));
+      existingBills.push(bill);
+      existingById.set(bill.gmailMessageId, bill);
+      if (!newest || bill.internalDate > newest.internalDate) newest = bill;
     }
     // A forwarded duplicate must not replace the original bill as "latest".
-    if (!duplicateOfOtherMessage && (!newest || bill.internalDate > newest.internalDate)) newest = bill;
   }
   const latestKey = "latest_bill:" + ownerKey;
   const existingLatest = await env.DEI_KV.get(latestKey, "json");
