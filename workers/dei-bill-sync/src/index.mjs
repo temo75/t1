@@ -538,7 +538,7 @@ export default {
         }
         const lastSyncAt = result.nextPageToken ? await env.DEI_KV.get("last_sync_at:" + ownerKey) : new Date().toISOString();
         return json({
-          ok: true, bill: publicBill(result), cached: false, scannedCount: result.scannedInvoices,
+          ok: true, bill: { ...publicBill(result), lastSyncAt }, cached: false, scannedCount: result.scannedInvoices,
           historyCount: result.historyCount, complete: !result.nextPageToken, lastSyncAt
         });
       }
