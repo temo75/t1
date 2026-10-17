@@ -4652,8 +4652,9 @@ async function renderManagedUsers(){
     }
   }
 
-  const list=users.filter(u=>!u.admin&&u.name.toUpperCase()!==ADMIN_USER&&!isRemovedUser(u));
-  const key=JSON.stringify(list.map(u=>[u.id,u.name,u.password,u.email,u.blocked===true]));
+  const adminUser=users.find(u=>u.admin||u.name.toUpperCase()===ADMIN_USER);
+  const list=[...(adminUser?[adminUser]:[]),...users.filter(u=>!u.admin&&u.name.toUpperCase()!==ADMIN_USER&&!isRemovedUser(u))];
+  const key=JSON.stringify(list.map(u=>[u.id,u.name,u.password,u.email,u.blocked===true,u.admin===true]));
 
   if(key===managedUsersRenderKey && box.children.length)return;
   managedUsersRenderKey=key;
@@ -4676,15 +4677,22 @@ async function renderManagedUsers(){
     const details=document.createElement('div');
     details.className='userDetailsPopover';
     details.innerHTML='<div><b>სახელი:</b> '+esc(u.name)+'</div><div><b>პაროლი:</b> '+esc(u.password)+'</div><div><b>📧 ემაილი:</b> '+esc(u.email||'—')+'</div>';
-    const l=document.createElement('button');
-    l.className='backupBtn lockBtn'+(u.blocked===true?' locked':'');
-    l.textContent=u.blocked===true?'🔓 განბლოკვა':'🔒 დაბლოკვა';
-    l.onclick=()=>toggleUserBlock(u.id);
-    const d=document.createElement('button');
-    d.className='backupBtn danger';
-    d.textContent='🗑️ წაშლა';
-    d.onclick=()=>deleteManagedUser(u.id);
-    row.append(b,details,l,d);
+    if(u.admin||u.name.toUpperCase()===ADMIN_USER){
+      b.textContent='👑 '+u.name+' — ადმინი';
+      b.title='ადმინისტრატორის ანგარიში';
+      row.classList.add('adminUserRow');
+      row.append(b,details);
+    }else{
+      const l=document.createElement('button');
+      l.className='backupBtn lockBtn'+(u.blocked===true?' locked':'');
+      l.textContent=u.blocked===true?'🔓 განბლოკვა':'🔒 დაბლოკვა';
+      l.onclick=()=>toggleUserBlock(u.id);
+      const d=document.createElement('button');
+      d.className='backupBtn danger';
+      d.textContent='🗑️ წაშლა';
+      d.onclick=()=>deleteManagedUser(u.id);
+      row.append(b,details,l,d);
+    }
     frag.appendChild(row);
   });
   box.replaceChildren(frag);
@@ -5088,6 +5096,7 @@ async function registerNewUser(){
 </script>
 
 
+<style id="temo-admin-user-row">#userManagementList .adminUserRow{border-color:#2999df;background:linear-gradient(145deg,#102b3b,#0a151d);box-shadow:inset 0 0 10px rgba(41,153,223,.22)}#userManagementList .adminUserRow .userNameBtn{color:#8fd0ff;font-weight:800}</style>
 <style id="temo-user-details-popover">
 #userManagementList .userRow{
   position:relative !important;
