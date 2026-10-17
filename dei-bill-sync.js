@@ -98,7 +98,6 @@
       ["sync", "ბოლო სინქრონიზაცია"]
     ];
     const values = {};
-    let currentBill = null;
     fields.forEach(([key, label]) => {
       details.append(element("dt", "", label));
       values[key] = element("dd", "dei-sync-" + key, "—");
@@ -132,7 +131,6 @@
     }
 
     function renderBill(bill) {
-      currentBill = bill || null;
       details.hidden = false;
       values.amount.textContent = formatAmount(bill.totalEUR);
       values.due.textContent = formatDueDate(bill.dueDate);
@@ -167,19 +165,7 @@
         historyList.append(element("p", "muted", "ჯერ შენახული ქვითრები არ არის. დააჭირე სინქრონიზაციას."));
         return;
       }
-      const seenBills = new Set();
       result.bills.forEach((bill) => {
-        // The current invoice is already shown in the summary block above.
-        if (currentBill && String(bill.emailDate || "") === String(currentBill.emailDate || "") &&
-            Number(bill.totalEUR) === Number(currentBill.totalEUR)) return;
-
-        // Do not render the same invoice twice if old stored records survived
-        // an earlier sync; keep separate bills with different due dates/status.
-        const amountKey = Number.isFinite(Number(bill.totalEUR)) ? Number(bill.totalEUR).toFixed(2) : String(bill.totalEUR ?? "");
-        const duplicateKey = [amountKey, String(bill.paymentStatus || "unknown"), String(bill.dueDate || "")].join("|");
-        if (seenBills.has(duplicateKey)) return;
-        seenBills.add(duplicateKey);
-
         const row = element("article", "dei-bill-history-item");
         row.append(element("strong", "", formatAmount(bill.totalEUR)));
         row.append(element("span", "", paymentLabel(bill.paymentStatus, bill.dueDate)));
