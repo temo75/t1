@@ -47,7 +47,7 @@ const samples = {
     date: 'Thu, 15 Oct 2026 09:00:00 +0000'
   },
   'bill-paid-2024': {
-    subject: 'DEI electricity bill 2024', body: 'Ο λογαριασμός εξοφλήθηκε. Total amount: 15.50 €',
+    subject: 'DEI electricity bill 2024', body: 'Ο λογαριασμός εξοφλήθηκε. Πληρωτέο ποσό: 15.50 € Total amount: 15.50 €',
     internalDate: Date.parse('2024-06-01T10:00:00Z'), from: 'billing@dei.gr'
   }
 };
