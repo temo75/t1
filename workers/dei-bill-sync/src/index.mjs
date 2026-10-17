@@ -116,11 +116,13 @@ function extractAmount(text) {
 
 function extractPaymentStatus(text) {
   const value = String(text || "").toLocaleLowerCase("el").normalize("NFC").replace(/[\u00a0\s]+/g, " ");
-  // Match explicit payment labels across DEI invoice templates and languages.
-  const due = /(οφειλ|ανεξόφλητ|πληρωτέο|ποσό προς πληρωμή|ποσό πληρωμής|προς εξόφληση|χρεωστικό υπόλοιπο|υπόλοιπο οφειλής|τελικό ποσό πληρωμής|amount due|payable amount|amount payable|total due|payment due|outstanding|to pay)/i.test(value);
+  // An explicit unpaid statement wins; generic invoice labels like "amount due"
+  // can coexist with a payment confirmation elsewhere in the same HTML email.
+  const explicitlyUnpaid = /(δεν\s+(?:έχει\s+)?εξοφληθεί|δεν\s+εξοφλήθηκε|ανεξόφλητ|not\s+paid|unpaid|payment\s+pending)/i.test(value);
+  if (explicitlyUnpaid) return "due";
   const paid = /(εξοφλ[ήη]θ|εξοφλ[ηή]μέν|έχει εξοφληθεί|έχει πληρωθεί|πληρώθηκε|πληρωμένο|καταβλήθηκε|paid in full|fully paid|payment received|settled)/i.test(value);
-  if (due && paid) return "unknown";
   if (paid) return "paid";
+  const due = /(οφειλ|ανεξόφλητ|πληρωτέο|ποσό προς πληρωμή|ποσό πληρωμής|προς εξόφληση|χρεωστικό υπόλοιπο|υπόλοιπο οφειλής|τελικό ποσό πληρωμής|amount due|payable amount|amount payable|total due|payment due|outstanding|to pay)/i.test(value);
   if (due) return "due";
   return "unknown";
 }
@@ -304,7 +306,7 @@ async function getLatestBill(env, ownerKey, pageToken = "") {
     const from = headerValue(headers, "from");
     const htmlBody = findBody(full.payload, "text/html");
     const plainBody = findBody(full.payload, "text/plain");
-    const bodyText = stripHtml(plainBody || htmlBody || full.snippet || "");
+    const bodyText = stripHtml([plainBody, htmlBody, full.snippet].filter(Boolean).join("\n"));
     if (!isDeiOrigin(from, subject, bodyText)) continue;
     if (!isLikelyInvoice(subject, bodyText)) continue;
     const timestamp = Number(full.internalDate || summary.internalDate || 0);
