@@ -92,7 +92,7 @@ let r = await worker.fetch(req('/health'), env);
 assert.equal(r.status, 200);
 assert.equal((await r.json()).configurationComplete, true);
 
-r = await worker.fetch(req('/oauth/start?return_to=' + encodeURIComponent('https://temo75.github.io/t1/dei-bill.html')), env);
+r = await worker.fetch(req('/oauth/start?return_to=' + encodeURIComponent('https://temo1.gr/dei-bill.html')), env);
 assert.equal(r.status, 302);
 const auth = new URL(r.headers.get('location'));
 const state = auth.searchParams.get('state');
