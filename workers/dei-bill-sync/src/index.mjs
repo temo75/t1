@@ -219,8 +219,45 @@ function isLikelyInvoice(subject, bodyText) {
   const bodyLooksLikeBill = /(πληρωτέο ποσό|συνολικό ποσό|προθεσμία πληρωμής|ημερομηνία λήξης|amount due|due date|electricity bill|λογαριασμός ηλεκτρικού)/i.test(t);
   return subjectLooksLikeBill || bodyLooksLikeBill;
 }
+function canonicalBillContent(text) {
+  return String(text || "")
+    .split(/\r?\n/)
+    .filter(line => !/^\s*(?:[-_]{3,}\s*)?(?:forwarded message|original message)\s*[-_]*\s*$/i.test(line))
+    .filter(line => !/^\s*(?:from|date|subject|to|cc|bcc|από|αποστολέας|αποστολεας)\s*:/i.test(line))
+    .join(" ")
+    .toLocaleLowerCase("el")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 const BILL_PREFIX = "bill_history:";
 const GMAIL_PAGE_SIZE = 20;
+
+function isDuplicateBill(a, b) {
+  if (!a || !b) return false;
+  if (a.contentFingerprint && b.contentFingerprint && a.contentFingerprint === b.contentFingerprint) return true;
+  // Also catch the same bill when Gmail changes forwarding/HTML wrappers around its content.
+  const sameAmount = a.totalEUR != null && String(a.totalEUR) === String(b.totalEUR);
+  const sameStatus = String(a.paymentStatus || "unknown") === String(b.paymentStatus || "unknown");
+  const sameDueDate = Boolean(a.dueDate && b.dueDate && String(a.dueDate) === String(b.dueDate));
+  // A DEI bill is the same invoice when amount, due date and status match,
+  // even if Gmail receives the forwarded copy hours or days later.
+  if (sameAmount && sameDueDate && sameStatus) return true;
+  // If no due date was extracted, only collapse same-value messages received very close together.
+  const ta = Number(a.internalDate || 0), tb = Number(b.internalDate || 0);
+  return sameAmount && !a.dueDate && !b.dueDate && sameStatus &&
+    ta > 0 && tb > 0 && Math.abs(ta - tb) <= 5 * 60 * 1000;
+}
+
+function deduplicateBills(bills) {
+  const byMessageId = [...new Map(bills.map(b => [String(b.gmailMessageId), b])).values()]
+    .sort((a, b) => Number(a.internalDate || 0) - Number(b.internalDate || 0));
+  const unique = [];
+  for (const bill of byMessageId) {
+    if (!unique.some(existing => isDuplicateBill(existing, bill))) unique.push(bill);
+  }
+  return unique;
+}
 
 async function listStoredBills(env, ownerKey) {
   const bills = [];
@@ -233,8 +270,8 @@ async function listStoredBills(env, ownerKey) {
     }
     cursor = page.list_complete ? undefined : page.cursor;
   } while (cursor);
-  // Never expose legacy shared history to an individual account.
-  return [...new Map(bills.map(b => [String(b.gmailMessageId), b])).values()];
+  // Deduplicate by Gmail message ID/content, including legacy near-time duplicates.
+  return deduplicateBills(bills);
 }
 
 async function getLatestBill(env, ownerKey, pageToken = "") {
@@ -251,7 +288,7 @@ async function getLatestBill(env, ownerKey, pageToken = "") {
     const from = headerValue(headers, "from");
     const htmlBody = findBody(full.payload, "text/html");
     const plainBody = findBody(full.payload, "text/plain");
-    const bodyText = stripHtml([htmlBody, plainBody, full.snippet || ""].filter(Boolean).join("\n"));
+    const bodyText = stripHtml(plainBody || htmlBody || full.snippet || "");
     if (!isDeiOrigin(from, subject, bodyText)) continue;
     if (!isLikelyInvoice(subject, bodyText)) continue;
     const timestamp = Number(full.internalDate || summary.internalDate || 0);
@@ -268,8 +305,19 @@ async function getLatestBill(env, ownerKey, pageToken = "") {
       internalDate: timestamp,
     };
     if (bill.totalEUR === null && bill.dueDate === null) continue;
-    await env.DEI_KV.put(BILL_PREFIX + ownerKey + ":" + encodeURIComponent(bill.gmailMessageId), JSON.stringify(bill));
-    if (!newest || bill.internalDate > newest.internalDate) newest = bill;
+    bill.contentFingerprint = await sha256Hex([
+      bill.totalEUR ?? "", bill.dueDate ?? "", bill.paymentStatus, canonicalBillContent(bodyText)
+    ].join("|"));
+    const existingBills = await listStoredBills(env, ownerKey);
+    const sameMessage = existingBills.find(existing => String(existing.gmailMessageId) === bill.gmailMessageId);
+    const duplicateOfOtherMessage = existingBills.some(existing =>
+      String(existing.gmailMessageId) !== bill.gmailMessageId && isDuplicateBill(existing, bill)
+    );
+    if (!sameMessage && !duplicateOfOtherMessage) {
+      await env.DEI_KV.put(BILL_PREFIX + ownerKey + ":" + encodeURIComponent(bill.gmailMessageId), JSON.stringify(bill));
+    }
+    // A forwarded duplicate must not replace the original bill as "latest".
+    if (!duplicateOfOtherMessage && (!newest || bill.internalDate > newest.internalDate)) newest = bill;
   }
   const latestKey = "latest_bill:" + ownerKey;
   const existingLatest = await env.DEI_KV.get(latestKey, "json");
