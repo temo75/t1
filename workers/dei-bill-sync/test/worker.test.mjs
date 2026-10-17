@@ -59,6 +59,7 @@ await kv.put("bill_history", JSON.stringify([{ gmailMessageId: "legacy-shared", 
 const gmailBodies = {
   "a-current": "Πληρωτέο ποσό: 77,00 € Προθεσμία πληρωμής έως 26/10/2026 Οφειλή",
   "a-paid": "Ο λογαριασμός εξοφλήθηκε. Total amount: 20,00 €",
+  "a-forwarded": "Forwarded message\\nFrom: billing@dei.gr\\nΠοσό προς πληρωμή: 142,00 €",
   "b-current": "Payable Amount: 10,00 € Expiration Date: 30/11/2026 due"
 };
 globalThis.fetch = async (input, init = {}) => {
@@ -83,7 +84,7 @@ globalThis.fetch = async (input, init = {}) => {
     requestedPages.push({ identity, page: url.searchParams.get("pageToken") || "" });
     assert.equal(url.searchParams.get("q"), "in:anywhere from:(dei.gr)");
     if (identity === "A" && !url.searchParams.has("pageToken")) {
-      return new Response(JSON.stringify({ messages: [{ id: "a-current" }, { id: "a-current" }], nextPageToken: "A-page-2" }));
+      return new Response(JSON.stringify({ messages: [{ id: "a-current" }, { id: "a-current" }, { id: "a-forwarded" }], nextPageToken: "A-page-2" }));
     }
     if (identity === "A" && url.searchParams.get("pageToken") === "A-page-2") {
       return new Response(JSON.stringify({ messages: [{ id: "a-paid" }] }));
@@ -97,8 +98,8 @@ globalThis.fetch = async (input, init = {}) => {
   if (url.hostname === "gmail.googleapis.com" && match) {
     const identity = (init.headers?.authorization || "").replace("Bearer access-", "");
     const id = decodeURIComponent(match[1]);
-    const amounts = { "a-current": "77", "a-paid": "20", "b-current": "10" };
-    const dates = { "a-current": "26/10/2026", "a-paid": "31/12/2025", "b-current": "30/11/2026" };
+    const amounts = { "a-current": "77", "a-paid": "20", "a-forwarded": "142", "b-current": "10" };
+    const dates = { "a-current": "26/10/2026", "a-paid": "31/12/2025", "a-forwarded": "25/08/2026", "b-current": "30/11/2026" };
     const owner = id.startsWith("a-") ? "A" : "B";
     assert.equal(identity, owner, "a Gmail token can only fetch that user's fixture");
     const body = gmailBodies[id];
@@ -107,7 +108,10 @@ globalThis.fetch = async (input, init = {}) => {
       snippet: body,
       payload: {
         mimeType: "text/plain",
-        headers: [{ name: "Subject", value: "DEI electricity bill" }, { name: "From", value: "billing@dei.gr" }],
+        headers: [
+          { name: "Subject", value: "DEI electricity bill" },
+          { name: "From", value: id === "a-forwarded" ? "Temo <temo@example.test>" : "billing@dei.gr" }
+        ],
         body: { data: Buffer.from(body).toString("base64url") }
       }
     };
