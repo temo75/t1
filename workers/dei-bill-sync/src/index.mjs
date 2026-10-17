@@ -13,7 +13,7 @@
 const GOOGLE_AUTH = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN = "https://oauth2.googleapis.com/token";
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
-const ALLOWED_ORIGINS = new Set(["https://temo75.github.io", "https://temo1.gr"]);
+const ALLOWED_ORIGINS = new Set(["https://temo75.github.io", "https://temo1.gr", "https://www.temo1.gr"]);
 // Search broadly across DEI mail, then identify invoice-like messages in code.
  // in:anywhere also allows older messages still present in Spam/Trash to be considered.
 const GMAIL_QUERY = 'in:anywhere {from:(dei.gr) subject:(Fwd) subject:(FW) subject:(Forward) subject:(Προώθηση) subject:(λογαριασμού) subject:(ΔΕΗ) subject:(Ηλεκτρικής)}';
@@ -150,6 +150,12 @@ const T1_RETURN_PATHS = new Set([
   "https://temo75.github.io/t1/bills.html",
   "https://temo1.gr/dei-bill.html",
   "https://temo1.gr/bills.html",
+  "https://temo1.gr/t1/dei-bill.html",
+  "https://temo1.gr/t1/bills.html",
+  "https://www.temo1.gr/dei-bill.html",
+  "https://www.temo1.gr/bills.html",
+  "https://www.temo1.gr/t1/dei-bill.html",
+  "https://www.temo1.gr/t1/bills.html",
 ]);
 function safeReturnTo(value) {
   try {

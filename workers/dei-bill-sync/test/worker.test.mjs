@@ -93,6 +93,11 @@ assert.equal(r.status, 200);
 assert.equal((await r.json()).configurationComplete, true);
 
 r = await worker.fetch(req('/oauth/start?return_to=' + encodeURIComponent('https://temo1.gr/dei-bill.html')), env);
+r = await worker.fetch(req('/oauth/start?return_to=' + encodeURIComponent('https://temo1.gr/t1/dei-bill.html')), env);
+assert.equal(r.status, 302, 'new domain /t1 path is also allowed for OAuth return');
+r = await worker.fetch(req('/oauth/start?return_to=' + encodeURIComponent('https://www.temo1.gr/dei-bill.html')), env);
+assert.equal(r.status, 302, 'www new domain is also allowed for OAuth return');
+
 assert.equal(r.status, 302);
 const auth = new URL(r.headers.get('location'));
 const state = auth.searchParams.get('state');
