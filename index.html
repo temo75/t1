@@ -7082,6 +7082,38 @@ body.temo-admin-slide-menu-open{overflow:hidden}
 })();
 </script>
 </body>
+<style id="temo-bottom-neon-css-final">
+/* ქვედა მენიუს ნეონი მხოლოდ აქტიურ ღილაკზეა; წინა ღილაკზე გადასული glow/transition არ რჩება. */
+#bottomNav > button,
+#bottomNav > button .navLogo{
+  transition:none !important;
+  animation:none !important;
+}
+#bottomNav > button:not(.active) .navLogo{
+  border:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  background:transparent !important;
+  filter:none !important;
+}
+#bottomNav > button.active{
+  outline:none !important;
+  box-shadow:none !important;
+}
+#bottomNav > button.active .navLogo{
+  border:2px solid var(--neon-control,#ff2020) !important;
+  border-radius:12px !important;
+  background:transparent !important;
+  box-shadow:
+    0 0 5px var(--neon-control,#ff2020),
+    0 0 12px rgba(var(--neon-control-rgb,255,32,32),.78),
+    0 0 22px rgba(var(--neon-control-rgb,255,32,32),.48),
+    inset 0 0 6px rgba(var(--neon-control-rgb,255,32,32),.62) !important;
+}
+#bottomNav > button.logoutNav.active .navLogo{
+  border-color:var(--neon-control,#ff2020) !important;
+}
+</style>
 </html>
 <style id="temo-calendar-number-neon">
 #calendarGrid .dayCell:not(.empty){box-shadow:none !important;text-shadow:none !important;}
