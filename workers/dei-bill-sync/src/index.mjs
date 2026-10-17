@@ -235,8 +235,8 @@ const GMAIL_PAGE_SIZE = 20;
 
 function isDuplicateBill(a, b) {
   if (!a || !b) return false;
-  if (a.contentFingerprint && b.contentFingerprint) return a.contentFingerprint === b.contentFingerprint;
-  // Legacy records lack fingerprints: collapse only same-value records received within five minutes.
+  if (a.contentFingerprint && b.contentFingerprint && a.contentFingerprint === b.contentFingerprint) return true;
+  // Also catch the same bill when Gmail changes forwarding/HTML wrappers around its content.
   const sameBillFields = a.totalEUR != null && String(a.totalEUR) === String(b.totalEUR) &&
     String(a.dueDate || "") === String(b.dueDate || "") &&
     String(a.paymentStatus || "unknown") === String(b.paymentStatus || "unknown");
