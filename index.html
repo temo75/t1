@@ -7054,34 +7054,31 @@ body.temo-admin-slide-menu-open{overflow:hidden}
 <script id="temo-bottom-neon-active-final-fix">
 (function(){
   const pageToButton={mainPage:0,settingsPage:1,userManagementPage:2,walletPage:3,expensesPage:3,notesPage:4};
-  let timer=0;
-  function syncFromVisiblePage(){
-    const ids=['mainPage','settingsPage','userManagementPage','walletPage','expensesPage','notesPage'];
-    const page=ids.map(id=>document.getElementById(id)).find(el=>el&&!el.classList.contains('pageHidden'));
-    if(!page)return;
-    const index=pageToButton[page.id];
-    if(index==null)return;
+  function setActive(index){
     document.querySelectorAll('#bottomNav > button').forEach((button,n)=>{
       const active=n===index;
       button.classList.toggle('active',active);
       button.setAttribute('aria-current',active?'page':'false');
     });
   }
-  function scheduleSync(delay){clearTimeout(timer);timer=setTimeout(syncFromVisiblePage,delay);}
-  document.addEventListener('click',function(event){
-    if(event.target.closest&&event.target.closest('#bottomNav > button')){
-      scheduleSync(0);scheduleSync(650);
+  function bind(){
+    if(typeof window.temoNavigatePage==='function'&&!window.temoNavigatePage.__neonFixed){
+      const original=window.temoNavigatePage;
+      const wrapped=function(pageId){
+        const result=original.apply(this,arguments);
+        if(Object.prototype.hasOwnProperty.call(pageToButton,pageId)){
+          setActive(pageToButton[pageId]);
+        }
+        return result;
+      };
+      wrapped.__neonFixed=true;
+      window.temoNavigatePage=wrapped;
     }
-  },false);
-  const observer=new MutationObserver(function(){scheduleSync(650);});
-  function start(){
-    ['mainPage','settingsPage','userManagementPage','walletPage','expensesPage','notesPage'].forEach(id=>{
-      const page=document.getElementById(id);
-      if(page)observer.observe(page,{attributes:true,attributeFilter:['class']});
-    });
-    syncFromVisiblePage();
+    /* swipe დასრულებისას გამოიყენე ერთადერთი გვერდი, რომელიც საბოლოოდ დარჩა ხილული */
+    const visible=document.querySelectorAll('#mainPage:not(.pageHidden),#settingsPage:not(.pageHidden),#userManagementPage:not(.pageHidden),#walletPage:not(.pageHidden),#expensesPage:not(.pageHidden),#notesPage:not(.pageHidden)');
+    if(visible.length===1&&pageToButton[visible[0].id]!==undefined)setActive(pageToButton[visible[0].id]);
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
 })();
 </script>
 </body>
