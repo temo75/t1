@@ -128,9 +128,10 @@ function numericBillAmount(value) {
 }
 
 function extractPaymentStatus(text) {
-  const value = String(text || "").toLocaleLowerCase("el");
-  const due = /(οφειλ|ανεξόφλητ|πληρωτέο|τελικό\s+ποσό\s+πληρωμής|amount\s+due|payable\s+amount|outstanding|to\s+pay)/i.test(value);
-  const paid = /(εξοφλήθηκ|έχει\s+εξοφληθεί|πληρώθηκε|καταβλήθηκε|paid\s+in\s+full|fully\s+paid|settled)/i.test(value);
+  const value = String(text || "").toLocaleLowerCase("el").normalize("NFC").replace(/[\u00a0\s]+/g, " ");
+  // Match explicit payment labels across DEI invoice templates and languages.
+  const due = /(οφειλ|ανεξόφλητ|πληρωτέο|ποσό προς πληρωμή|ποσό πληρωμής|προς εξόφληση|χρεωστικό υπόλοιπο|υπόλοιπο οφειλής|τελικό ποσό πληρωμής|amount due|payable amount|amount payable|total due|payment due|outstanding|to pay)/i.test(value);
+  const paid = /(εξοφληθ|εξοφλημέν|έχει εξοφληθεί|έχει πληρωθεί|πληρώθηκε|πληρωμένο|καταβλήθηκε|paid in full|fully paid|payment received|settled)/i.test(value);
   if (due && paid) return "unknown";
   if (paid) return "paid";
   if (due) return "due";
@@ -286,7 +287,7 @@ function isLikelyInvoice(subject, bodyText) {
   if (/(verification code|security code|one[- ]time password|login code|κωδικός επιβεβαίωσης|κωδικός ασφαλείας|κωδικός μιας χρήσης)/i.test(combined)) return false;
   if (/(payment confirmation|payment received|receipt for payment|επιβεβαίωση πληρωμής|απόδειξη πληρωμής|εξόφληση λογαριασμού|η πληρωμή σας καταχωρήθηκε)/i.test(combined)) return false;
   const subjectLooksLikeBill = /(δεη|δ[εέ]η|λογαριασμ|bill|invoice|electricity|ρεύμα)/i.test(s);
-  const bodyLooksLikeBill = /(πληρωτέο ποσό|συνολικό ποσό|προθεσμία πληρωμής|ημερομηνία λήξης|amount due|due date|electricity bill|λογαριασμός ηλεκτρικού)/i.test(t);
+  const bodyLooksLikeBill = /(πληρωτέο ποσό|ποσό προς πληρωμή|οφειλόμενο ποσό|χρεωστικό υπόλοιπο|συνολικό ποσό|προθεσμία πληρωμής|ημερομηνία λήξης|amount due|payable amount|due date|electricity bill|λογαριασμός ηλεκτρικού)/i.test(t);
   return subjectLooksLikeBill || bodyLooksLikeBill;
 }
 const BILL_PREFIX = "bill_history:";
@@ -319,6 +320,7 @@ async function getLatestBill(env, uid, pageToken = "") {
     const headers = full.payload?.headers || [];
     const subject = headerValue(headers, "subject");
     const from = headerValue(headers, "from");
+    // Reject forwarded copies: the actual sender must be a DEI domain.
     if (!/@(?:[a-z0-9-]+\.)*dei\.gr\b/i.test(from)) continue;
     const htmlBody = findBody(full.payload, "text/html");
     const plainBody = findBody(full.payload, "text/plain");
