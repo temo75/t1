@@ -335,7 +335,50 @@ async function getLatestBill(env, ownerKey, pageToken = "") {
   return { ...latest, historyCount: allBills.length, scannedInvoices: messages.length, nextPageToken: list.nextPageToken || null };
 }
 
+async function cleanForwardedHistoryOnce(env, ownerKey, bills) {
+  const flagKey = "forwarded_history_cleanup_v1:" + ownerKey;
+  if (await env.DEI_KV.get(flagKey) === "done" || bills.length > 100) return bills;
+  let accessToken;
+  try {
+    accessToken = await refreshAccessToken(env, ownerKey);
+  } catch {
+    return bills;
+  }
+  let complete = true;
+  const removedIds = new Set();
+  for (const bill of bills) {
+    const messageId = String(bill.gmailMessageId || "");
+    if (!messageId) { complete = false; continue; }
+    let full;
+    try {
+      full = await gmailFetch(env, ownerKey, "/messages/" + encodeURIComponent(messageId) + "?format=full", accessToken);
+    } catch {
+      complete = false;
+      continue;
+    }
+    const from = headerValue(full.payload?.headers || [], "from");
+    if (!from) { complete = false; continue; }
+    // Legacy history may already contain forwarded mail saved by older versions.
+    if (!/@(?:[a-z0-9-]+\.)*dei\.gr\b/i.test(from)) {
+      await env.DEI_KV.delete(BILL_PREFIX + ownerKey + ":" + encodeURIComponent(messageId));
+      removedIds.add(messageId);
+    }
+  }
+  if (complete) await env.DEI_KV.put(flagKey, "done");
+  if (!removedIds.size) return bills;
+  const remaining = await listStoredBills(env, ownerKey);
+  const latestKey = "latest_bill:" + ownerKey;
+  const latest = await env.DEI_KV.get(latestKey, "json");
+  if (latest?.gmailMessageId && removedIds.has(String(latest.gmailMessageId))) {
+    remaining.sort((a, b) => Number(b.internalDate || 0) - Number(a.internalDate || 0));
+    if (remaining.length) await env.DEI_KV.put(latestKey, JSON.stringify(remaining[0]));
+    else await env.DEI_KV.delete(latestKey);
+  }
+  return remaining;
+}
+
 async function getBillHistory(env, ownerKey) {
+  bills = await cleanForwardedHistoryOnce(env, ownerKey, bills);
   const bills = await listStoredBills(env, ownerKey);
   const totalPaid = bills.reduce((sum, bill) => bill.paymentStatus === "paid" && Number.isFinite(Number(bill.totalEUR)) ? sum + Number(bill.totalEUR) : sum, 0);
   const totalDue = bills.reduce((sum, bill) => bill.paymentStatus === "due" && Number.isFinite(Number(bill.totalEUR)) ? sum + Number(bill.totalEUR) : sum, 0);
