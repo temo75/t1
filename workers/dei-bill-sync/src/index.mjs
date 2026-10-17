@@ -160,7 +160,13 @@ const T1_RETURN_PATHS = new Set([
 function safeReturnTo(value) {
   try {
     const target = new URL(value || "https://temo75.github.io/t1/dei-bill.html");
-    if (!ALLOWED_ORIGINS.has(target.origin) || !T1_RETURN_PATHS.has(target.origin + target.pathname)) return null;
+    if (!ALLOWED_ORIGINS.has(target.origin)) return null;
+    // temo1.gr is the new full T1 site: OAuth may be launched from the home
+    // page or any nested page, not only the two standalone DEI pages.
+    // Keep the old GitHub Pages domain restricted to the original T1 DEI pages.
+    const isNewT1Domain = target.origin === "https://temo1.gr" || target.origin === "https://www.temo1.gr";
+    if (!isNewT1Domain && !T1_RETURN_PATHS.has(target.origin + target.pathname)) return null;
+    if (target.username || target.password) return null;
     return target.origin + target.pathname;
   } catch { return null; }
 }
