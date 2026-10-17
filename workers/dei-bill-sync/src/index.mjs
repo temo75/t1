@@ -13,14 +13,14 @@
 const GOOGLE_AUTH = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN = "https://oauth2.googleapis.com/token";
 const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
-const ALLOWED_ORIGIN = "https://temo75.github.io";
+const ALLOWED_ORIGINS = new Set(["https://temo75.github.io", "https://temo1.gr"]);
 // Search broadly across DEI mail, then identify invoice-like messages in code.
  // in:anywhere also allows older messages still present in Spam/Trash to be considered.
 const GMAIL_QUERY = 'in:anywhere {from:(dei.gr) subject:(Fwd) subject:(FW) subject:(Forward) subject:(Προώθηση) subject:(λογαριασμού) subject:(ΔΕΗ) subject:(Ηλεκτρικής)}';
 
 function corsHeaders(extra = {}) {
   return {
-    "access-control-allow-origin": ALLOWED_ORIGIN,
+    "access-control-allow-origin": "*",
     "access-control-allow-methods": "GET, POST, OPTIONS",
     "access-control-allow-headers": "Authorization, Content-Type",
     "access-control-max-age": "86400",
@@ -145,11 +145,16 @@ function extractDueDate(text) {
   return null;
 }
 
-const T1_RETURN_PATHS = new Set(["/t1/dei-bill.html", "/t1/bills.html"]);
+const T1_RETURN_PATHS = new Set([
+  "https://temo75.github.io/t1/dei-bill.html",
+  "https://temo75.github.io/t1/bills.html",
+  "https://temo1.gr/dei-bill.html",
+  "https://temo1.gr/bills.html",
+]);
 function safeReturnTo(value) {
   try {
-    const target = new URL(value || ALLOWED_ORIGIN + "/t1/dei-bill.html");
-    if (target.origin !== ALLOWED_ORIGIN || !T1_RETURN_PATHS.has(target.pathname)) return null;
+    const target = new URL(value || "https://temo75.github.io/t1/dei-bill.html");
+    if (!ALLOWED_ORIGINS.has(target.origin) || !T1_RETURN_PATHS.has(target.origin + target.pathname)) return null;
     return target.origin + target.pathname;
   } catch { return null; }
 }
@@ -541,7 +546,7 @@ export default {
       if (url.pathname === "/api/session/exchange") {
         if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "POST, OPTIONS" });
         if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
-        if (request.headers.get("origin") !== ALLOWED_ORIGIN) return json({ ok: false, error: "Forbidden" }, 403);
+        if (!ALLOWED_ORIGINS.has(request.headers.get("origin"))) return json({ ok: false, error: "Forbidden" }, 403);
         const body = await request.json().catch(() => ({}));
         const grant = String(body.code || "");
         if (!/^[a-f0-9]{64}$/i.test(grant)) return json({ ok: false, error: "Invalid or expired authorization code" }, 401);
