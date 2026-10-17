@@ -526,7 +526,8 @@ export default {
         if (!ownerKey) return json({ ok: true, gmailConnected: false, lastFetchedAt: null });
         const connected = Boolean(await env.DEI_KV.get("gmail_refresh_token:" + ownerKey));
         const latest = await env.DEI_KV.get("latest_bill:" + ownerKey, "json");
-        return json({ ok: true, gmailConnected: connected, lastFetchedAt: latest?.fetchedAt || null });
+        const lastSyncAt = await env.DEI_KV.get("last_sync_at:" + ownerKey);
+        return json({ ok: true, gmailConnected: connected, lastFetchedAt: latest?.fetchedAt || null, lastSyncAt: lastSyncAt || null });
       }
 
       if (url.pathname === "/api/sync") {
@@ -541,10 +542,12 @@ export default {
         if (!body.continue) await env.DEI_KV.delete(cursorKey);
         const pageToken = body.continue ? await env.DEI_KV.get(cursorKey) : null;
         const result = await getLatestBill(env, ownerKey, pageToken || "");
+        const lastSyncAt = new Date().toISOString();
+        await env.DEI_KV.put("last_sync_at:" + ownerKey, lastSyncAt);
         if (result.nextPageToken) await env.DEI_KV.put(cursorKey, result.nextPageToken, { expirationTtl: 3600 });
         else await env.DEI_KV.delete(cursorKey);
         return json({
-          ok: true, bill: publicBill(result), cached: false, scannedCount: result.scannedInvoices,
+          ok: true, bill: { ...publicBill(result), lastSyncAt }, lastSyncAt, cached: false, scannedCount: result.scannedInvoices,
           historyCount: result.historyCount, complete: !result.nextPageToken
         });
       }
@@ -561,7 +564,8 @@ export default {
         const ownerKey = await getT1SessionOwner(request, env);
         if (!ownerKey) return json({ ok: false, error: "Unauthorized" }, 401);
         const cached = await env.DEI_KV.get("latest_bill:" + ownerKey, "json");
-        return json({ ok: true, bill: publicBill(cached || { found: false, paymentStatus: "unknown" }), cached: true });
+        const lastSyncAt = await env.DEI_KV.get("last_sync_at:" + ownerKey);
+        return json({ ok: true, bill: { ...publicBill(cached || { found: false, paymentStatus: "unknown" }), lastSyncAt: lastSyncAt || null }, cached: true, lastSyncAt: lastSyncAt || null });
       }
       return json({ service: "TEMO DEI bill sync", routes: ["/health", "/oauth/start", "/oauth/callback", "/api/status", "/api/session/exchange", "/api/sync", "/api/latest"], t1Page: "https://temo75.github.io/t1/dei-bill.html" });
     } catch (error) {
