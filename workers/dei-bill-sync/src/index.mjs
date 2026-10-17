@@ -237,11 +237,16 @@ function isDuplicateBill(a, b) {
   if (!a || !b) return false;
   if (a.contentFingerprint && b.contentFingerprint && a.contentFingerprint === b.contentFingerprint) return true;
   // Also catch the same bill when Gmail changes forwarding/HTML wrappers around its content.
-  const sameBillFields = a.totalEUR != null && String(a.totalEUR) === String(b.totalEUR) &&
-    String(a.dueDate || "") === String(b.dueDate || "") &&
-    String(a.paymentStatus || "unknown") === String(b.paymentStatus || "unknown");
+  const sameAmount = a.totalEUR != null && String(a.totalEUR) === String(b.totalEUR);
+  const sameStatus = String(a.paymentStatus || "unknown") === String(b.paymentStatus || "unknown");
+  const sameDueDate = Boolean(a.dueDate && b.dueDate && String(a.dueDate) === String(b.dueDate));
+  // A DEI bill is the same invoice when amount, due date and status match,
+  // even if Gmail receives the forwarded copy hours or days later.
+  if (sameAmount && sameDueDate && sameStatus) return true;
+  // If no due date was extracted, only collapse same-value messages received very close together.
   const ta = Number(a.internalDate || 0), tb = Number(b.internalDate || 0);
-  return sameBillFields && ta > 0 && tb > 0 && Math.abs(ta - tb) <= 5 * 60 * 1000;
+  return sameAmount && !a.dueDate && !b.dueDate && sameStatus &&
+    ta > 0 && tb > 0 && Math.abs(ta - tb) <= 5 * 60 * 1000;
 }
 
 function deduplicateBills(bills) {
