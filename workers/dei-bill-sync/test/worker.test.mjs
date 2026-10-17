@@ -131,7 +131,7 @@ assert.equal(r.status, 200);
 const history = await r.json();
 assert.equal(history.count, 3);
 assert.equal(history.bills.every(x => x.gmailMessageId === undefined), true, 'private Gmail message IDs are not returned');
-assert.equal(history.totalPaidEUR, '15.50');
+assert.equal(history.totalPaidEUR, '15.50', 'accented Greek εξοφλήθηκε wording is recognized as paid');
 assert.equal(history.totalDueEUR, '77.00', 'forwarded copy is excluded; unknown status is not counted as due');
 assert.equal(JSON.stringify(history.annualTotals), JSON.stringify([
   { year: '2026', count: 1, paidEUR: '0.00', dueEUR: '77.00' },
