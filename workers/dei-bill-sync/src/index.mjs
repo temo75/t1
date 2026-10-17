@@ -115,13 +115,12 @@ function extractAmount(text) {
 }
 
 function extractPaymentStatus(text) {
-  const value = String(text || "").toLocaleLowerCase("el").normalize("NFC");
-  const explicitlyUnpaid = /(δεν\s+(?:έχει\s+)?εξοφληθεί|δεν\s+εξοφλήθηκε|μη\s+εξοφλημέν|ανεξόφλητ|not\s+paid|unpaid|payment\s+pending|οφειλόμενο\s+ποσό|ληξιπρόθεσμ|πληρωτέο\s+ποσό|προς\s+πληρωμή|amount\s+due|outstanding|to\s+pay|payment\s+due)/i.test(value);
-  const paid = /(εξοφλήθηκ|έχει\s+εξοφληθεί|εξοφλημέν|πληρώθηκε|έγινε\s+η\s+πληρωμή|πραγματοποιήθηκε\s+η\s+πληρωμή|καταβλήθηκε|πληρωμή\s+ολοκληρώθηκε|paid\s+in\s+full|fully\s+paid|settled|payment\s+received|payment\s+completed|thank\s+you\s+for\s+your\s+payment)/i.test(value);
-  // Only classify as due from an explicit unpaid phrase, or when no paid confirmation exists.
-  if (paid && !explicitlyUnpaid) return "paid";
-  if (explicitlyUnpaid) return "due";
-  const due = /(οφειλ|υπόλοιπο\s+πληρωμ)/i.test(value);
+  const value = String(text || "").toLocaleLowerCase("el").normalize("NFC").replace(/[\u00a0\s]+/g, " ");
+  // Match explicit payment labels across DEI invoice templates and languages.
+  const due = /(οφειλ|ανεξόφλητ|πληρωτέο|ποσό προς πληρωμή|ποσό πληρωμής|προς εξόφληση|χρεωστικό υπόλοιπο|υπόλοιπο οφειλής|τελικό ποσό πληρωμής|amount due|payable amount|amount payable|total due|payment due|outstanding|to pay)/i.test(value);
+  const paid = /(εξοφλ[ήη]θ|εξοφλ[ηή]μέν|έχει εξοφληθεί|έχει πληρωθεί|πληρώθηκε|πληρωμένο|καταβλήθηκε|paid in full|fully paid|payment received|settled)/i.test(value);
+  if (due && paid) return "unknown";
+  if (paid) return "paid";
   if (due) return "due";
   return "unknown";
 }
