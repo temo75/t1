@@ -134,7 +134,7 @@ assert.equal(history.bills.every(x => x.gmailMessageId === undefined), true, 'pr
 assert.equal(history.totalPaidEUR, '92.50', 'payment receipt marks the unique matching 77 EUR invoice as paid');
 assert.equal(history.totalDueEUR, '45.20', 'paid invoice is removed from due totals; forwarded bill is counted once');
 assert.equal(JSON.stringify(history.annualTotals), JSON.stringify([
-  { year: '2026', count: 2, paidEUR: '0.00', dueEUR: '122.20' },
+  { year: '2026', count: 2, paidEUR: '77.00', dueEUR: '45.20' },
   { year: '2025', count: 1, paidEUR: '0.00', dueEUR: '0.00' },
   { year: '2024', count: 1, paidEUR: '15.50', dueEUR: '0.00' }
 ]));
