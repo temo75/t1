@@ -1,6 +1,7 @@
 name: Deploy TEMO AI Worker
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
