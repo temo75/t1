@@ -32,9 +32,9 @@ jobs:
               problems = []
               if not value:
                   problems.append("EMPTY")
-              if "\\r" in value:
+              if "\r" in value:
                   problems.append("CONTAINS_CR")
-              if "\\n" in value:
+              if "\n" in value:
                   problems.append("CONTAINS_LF")
               if value != value.strip():
                   problems.append("LEADING_OR_TRAILING_WHITESPACE")
