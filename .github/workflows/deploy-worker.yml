@@ -33,6 +33,8 @@ jobs:
               problems = []
               if not value:
                   problems.append("EMPTY")
+              if name == "CF_ACCOUNT_ID" and len(value) != 32:
+                  problems.append("ACCOUNT_ID_LENGTH_NOT_32")
               if "\r" in value:
                   problems.append("CONTAINS_CR")
               if "\n" in value:
