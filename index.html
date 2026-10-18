@@ -4098,6 +4098,27 @@ function toggleTEMOAIListening(){
   }
 }
 
+function aiSpeakReply(text){
+  const clean=String(text||'').trim();
+  if(!clean||!('speechSynthesis' in window)||typeof SpeechSynthesisUtterance==='undefined')return;
+  try{
+    window.speechSynthesis.cancel();
+    const utterance=new SpeechSynthesisUtterance(clean);
+    const lang=aiCurrentLanguage();
+    utterance.lang=lang==='el'?'el-GR':lang==='en'?'en-US':'ka-GE';
+    utterance.rate=0.96;
+    utterance.pitch=1;
+    const speakWithAvailableVoice=()=>{
+      const voices=window.speechSynthesis.getVoices();
+      const prefix=lang==='el'?'el':lang==='en'?'en':'ka';
+      const match=voices.find(v=>String(v.lang||'').toLowerCase()===utterance.lang.toLowerCase())
+        ||voices.find(v=>String(v.lang||'').toLowerCase().startsWith(prefix));
+      if(match)utterance.voice=match;
+      window.speechSynthesis.speak(utterance);
+    };
+    speakWithAvailableVoice();
+  }catch(e){console.warn('TEMO AI speech output unavailable:',e);}
+}
 function aiCurrentLanguage(){
   return typeof window.getCurrentLanguage==='function'?String(window.getCurrentLanguage()||'ka'):'ka';
 }
@@ -4404,6 +4425,7 @@ async function sendAIMessage(){
     const status=Array.from(document.querySelectorAll('#aiChatMessages .aiMsg.system')).find(x=>x.textContent.includes(aiLangText('connecting')));
     if(status)status.remove();
     aiAddMessage('assistant',reply);
+    aiSpeakReply(reply);
     if(data.memoryRequest&&data.memoryText){
       const ok=await saveAIMemory(data.memoryText);
       aiAddMessage('system',ok?'🧠 '+(language==='el'?'Η μνήμη αποθηκεύτηκε.':language==='en'?'🧠 Memory saved.':'🧠 მეხსიერებაში შევინახე.'):'⚠️ '+(language==='el'?'Η μνήμη δεν αποθηκεύτηκε.':language==='en'?'Memory could not be saved.':'მეხსიერებაში შენახვა ვერ მოხერხდა.'));
