@@ -19,6 +19,34 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Check Cloudflare secret formatting safely
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          python - <<'PY'
+          import os, sys
+          failed = False
+          for name in ("CF_TOKEN", "CF_ACCOUNT_ID"):
+              value = os.environ.get(name, "")
+              problems = []
+              if not value:
+                  problems.append("EMPTY")
+              if "\\r" in value:
+                  problems.append("CONTAINS_CR")
+              if "\\n" in value:
+                  problems.append("CONTAINS_LF")
+              if value != value.strip():
+                  problems.append("LEADING_OR_TRAILING_WHITESPACE")
+              label = "CLOUDFLARE_API_TOKEN" if name == "CF_TOKEN" else "CLOUDFLARE_ACCOUNT_ID"
+              print(f"{label}: set={bool(value)}, length={len(value)}, checks={'OK' if not problems else ','.join(problems)}")
+              if problems:
+                  failed = True
+          if failed:
+              print("Fix only the secret(s) listed above in GitHub Settings > Secrets and variables > Actions. Secret values were not printed.")
+              sys.exit(1)
+          PY
+
       - name: Deploy Worker to Cloudflare
         uses: cloudflare/wrangler-action@v4
         with:
