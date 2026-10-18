@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - 'worker.js'
+      - '.github/workflows/deploy-worker.yml'
 
 jobs:
   deploy:
