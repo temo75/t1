@@ -116,7 +116,7 @@
 
     const actions = element("div", "dei-sync-actions");
     const connect = element("button", "dei-sync-primary", "Gmail-ის უსაფრთხოდ დაკავშირება");
-    const sync = element("button", "", "ახლავე სინქრონიზაცია");
+    const sync = element("button", "", "განახლება");
     const signOut = element("button", "", "ამ ბრაუზერის სესიის დასრულება");
     sync.hidden = true;
     signOut.hidden = true;
@@ -235,18 +235,9 @@
     }
 
 async function syncAllPages(session) {
-      let result = null;
-      let continueSync = false;
-      let pages = 0;
-      do {
-        message.textContent = pages
-          ? "Gmail-ის ძველი ქვითრების გვერდებს ვამოწმებ… (" + pages + ")"
-          : "Gmail-იდან DEI ქვითრებს ვკითხულობ…";
-        result = await api("/api/sync", session, { method: "POST", body: { continue: continueSync } });
-        pages++;
-        continueSync = result.complete === false;
-      } while (continueSync);
-      result.syncPages = pages;
+      message.textContent = "განახლება…";
+      const result = await api("/api/sync", session, { method: "POST", body: { continue: false } });
+      result.syncPages = 1;
       return result;
     }
 
@@ -271,7 +262,7 @@ async function syncAllPages(session) {
         renderBill(result.bill);
         message.textContent = result.cached
           ? "ბოლო ქვითარი უსაფრთხოდ ჩაიტვირთა KV-დან."
-          : "Gmail-ის ყველა გვერდი შემოწმებულია. დამუშავებული გვერდები: " + (result.syncPages ?? "—") + ".";
+          : "განახლებულია. შემოწმებული გვერდები: " + (result.syncPages ?? "—") + ".";
       } else {
         details.hidden = true;
         message.textContent = force
@@ -311,7 +302,7 @@ async function syncAllPages(session) {
     sync.addEventListener("click", async () => {
       sync.disabled = true;
       try { await refresh(true); }
-      catch (error) { message.textContent = "სინქრონიზაცია ვერ შესრულდა: " + error.message; setStatus("სინქრონიზაციის შეცდომა", false); }
+      catch (error) { message.textContent = "განახლება ვერ შესრულდა: " + error.message; setStatus("სინქრონიზაციის შეცდომა", false); }
       finally { sync.disabled = false; }
     });
     signOut.addEventListener("click", () => {
