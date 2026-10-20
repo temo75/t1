@@ -129,7 +129,7 @@
     const clearHistory = element("button", "dei-bill-clear-history", "ყველა შენახული ქვითრის წაშლა");
     clearHistory.type = "button";
     clearHistory.style.cssText = "margin:12px 0;background:#45242a;border:1px solid #74333d;color:#fff;padding:12px;border-radius:10px;width:100%;";
-    historyPanel.append(historyTitle, historySummary, annualSummary, historyList, clearHistory);
+    historyPanel.append(historyTitle, clearHistory, historySummary, annualSummary, historyList);
     root.append(header, message, details, actions, historyPanel);
 
     function setStatus(text, good) {
