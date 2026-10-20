@@ -126,7 +126,10 @@
     const historySummary = element("p", "muted", "ისტორია ჯერ არ ჩატვირთულა.");
     const annualSummary = element("div", "dei-bill-annual-summary");
     const historyList = element("div", "dei-bill-history-list");
-    historyPanel.append(historyTitle, historySummary, annualSummary, historyList);
+    const clearHistory = element("button", "dei-bill-clear-history", "ყველა შენახული ქვითრის წაშლა");
+    clearHistory.type = "button";
+    clearHistory.style.cssText = "margin:12px 0;background:#45242a;border:1px solid #74333d;color:#fff;padding:12px;border-radius:10px;width:100%;";
+    historyPanel.append(historyTitle, historySummary, annualSummary, historyList, clearHistory);
     root.append(header, message, details, actions, historyPanel);
 
     function setStatus(text, good) {
@@ -193,9 +196,31 @@
       }
       result.bills.forEach((bill) => {
         const row = element("article", "dei-bill-history-item");
+        row.style.cssText = "display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:12px 0;border-bottom:1px solid #254253;overflow-wrap:anywhere;";
         row.append(element("strong", "", formatAmount(bill.totalEUR)));
         row.append(element("span", "", paymentLabel(bill.paymentStatus, bill.dueDate)));
         row.append(element("small", "", formatEmailDate(bill.emailDate) + " · ვადა: " + formatDueDate(bill.dueDate)));
+        const deleteButton = element("button", "dei-bill-delete", "ამ ქვითრის წაშლა");
+        deleteButton.type = "button";
+        deleteButton.style.cssText = "margin-top:4px;background:#45242a;border:1px solid #74333d;color:#fff;padding:8px 12px;border-radius:8px;";
+        deleteButton.addEventListener("click", async () => {
+          if (!bill.recordId) {
+            message.textContent = "ამ ჩანაწერს უსაფრთხო ID არ აქვს. განაახლე Worker და ხელახლა გახსენი გვერდი.";
+            return;
+          }
+          if (!window.confirm("წავშალო ეს ქვითარი საიტზე შენახული ისტორიიდან? Gmail-ის წერილი არ წაიშლება. ხელახალი სინქრონიზაცია მას ისევ დაამატებს.")) return;
+          deleteButton.disabled = true;
+          try {
+            await api("/api/history/delete", session, { method: "POST", body: { recordId: bill.recordId } });
+            message.textContent = "ქვითარი საიტზე შენახული ისტორიიდან წაიშალა. Gmail-ის წერილი უცვლელია.";
+            await refreshHistory(session);
+          } catch (error) {
+            message.textContent = "ქვითრის წაშლა ვერ მოხერხდა: " + error.message;
+          } finally {
+            deleteButton.disabled = false;
+          }
+        });
+        row.append(deleteButton);
         historyList.append(row);
       });
     }
@@ -253,6 +278,25 @@ async function syncAllPages(session) {
         historySummary.textContent = "ისტორია ვერ ჩაიტვირთა: " + error.message;
       }
     }
+    clearHistory.addEventListener("click", async () => {
+      const session = getSession();
+      if (!session) {
+        message.textContent = "ჯერ Gmail უნდა დააკავშირო.";
+        return;
+      }
+      if (!window.confirm("წავშალო ყველა ქვითარი საიტზე შენახული ისტორიიდან? Gmail-ის წერილები არ წაიშლება. შემდეგ სინქრონიზაციით ქვითრები თავიდან აღდგება.")) return;
+      clearHistory.disabled = true;
+      try {
+        const result = await api("/api/history/clear", session, { method: "POST", body: {} });
+        message.textContent = "შენახული ისტორია გასუფთავდა (" + (result.deletedCount || 0) + " ჩანაწერი). დააჭირე „ახლავე სინქრონიზაციას“, რომ Gmail-იდან თავიდან ჩაიტვირთოს.";
+        await refreshHistory(session);
+      } catch (error) {
+        message.textContent = "ისტორიის გასუფთავება ვერ მოხერხდა: " + error.message;
+      } finally {
+        clearHistory.disabled = false;
+      }
+    });
+
     connect.addEventListener("click", connectGmail);
     sync.addEventListener("click", async () => {
       sync.disabled = true;
