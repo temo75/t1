@@ -26,7 +26,7 @@
 </head>
 <body>
 <div class="app">
-<header class="bill-header"><div><h1>💶 ჩემი გადასახადები</h1><small>პირადი გადასახადები — <span id="billUserName"></span></small></div><div class="bill-header-actions"><button onclick="location.href='./index.html'">← მთავარზე</button></div></header>
+<header class="bill-header"><div><h1>💶 ჩემი გადასახადები</h1><small>პირადი გადასახადები — <span id="billUserName"></span></small></div><div class="bill-header-actions"><button onclick="location.href='./index.html'">← მთავარზე</button><button id="deiBillClearHistory" class="dei-bill-clear-history" type="button">ისტორიის წაშლა</button></div></header>
 <div id="deiCloudBill" class="panel"></div>
 <div class="panel">
 <h2 style="margin-top:0">＋ გადასახადის დამატება</h2>
@@ -78,6 +78,6 @@
   render();
 })();
 </script>
-<script src="./dei-bill-sync-v2.js?v=20261020-header-clear-button-1"></script><script>if(window.DEIBillSync){const root=document.getElementById("deiCloudBill");if(root)window.DEIBillSync.mount(root)}</script>
+<script src="./dei-bill-sync-v2.js?v=20261020-header-clear-button-2"></script><script>if(window.DEIBillSync){const root=document.getElementById("deiCloudBill");if(root)window.DEIBillSync.mount(root)}</script>
 </body>
 </html>
