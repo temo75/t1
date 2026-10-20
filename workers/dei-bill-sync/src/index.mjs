@@ -282,6 +282,19 @@ function canonicalBillContent(text) {
     .trim();
 }
 
+function extractInvoiceReference(text) {
+  const source = String(text || "");
+  const patterns = [
+    /(?:invoice|bill|account)\s*(?:number|no\.?|#|id)\s*[:#-]?\s*([A-Z0-9][A-Z0-9/-]{4,})/i,
+    /(?:αριθμός\s*(?:λογαριασμού|τιμολογίου)|αρ\.?\s*λογαριασμού|κωδικός\s*λογαριασμού)\s*[:#-]?\s*([A-Z0-9][A-Z0-9/-]{4,})/i,
+  ];
+  for (const pattern of patterns) {
+    const match = source.match(pattern);
+    if (match) return match[1].toUpperCase().replace(/[^A-Z0-9]/g, "");
+  }
+  return null;
+}
+
 const BILL_PREFIX = "bill_history:";
 const GMAIL_PAGE_SIZE = 20;
 
@@ -291,6 +304,9 @@ function isDuplicateBill(a, b) {
   const sameAmount = a.totalEUR != null && b.totalEUR != null &&
     Math.round(Number(a.totalEUR) * 100) === Math.round(Number(b.totalEUR) * 100);
   if (!sameAmount) return false;
+  const refA = String(a.invoiceReference || "").replace(/[^A-Z0-9]/gi, "").toUpperCase();
+  const refB = String(b.invoiceReference || "").replace(/[^A-Z0-9]/gi, "").toUpperCase();
+  if (refA && refB && refA === refB) return true;
   const sameDueDate = Boolean(a.dueDate && b.dueDate && String(a.dueDate) === String(b.dueDate));
   if (sameDueDate) return true;
   // Gmail sometimes delivers the same invoice twice with inconsistent/missing due dates.
@@ -374,6 +390,7 @@ async function getLatestBill(env, ownerKey, pageToken = "") {
       emailDate: timestamp ? new Date(timestamp).toISOString() : (Number.isFinite(parsedHeaderDate) ? new Date(parsedHeaderDate).toISOString() : ""),
       totalEUR: extractAmount(bodyText),
       dueDate: extractDueDate(bodyText),
+      invoiceReference: extractInvoiceReference(bodyText),
       paymentStatus: extractPaymentStatus(bodyText),
       fetchedAt,
       gmailMessageId: String(summary.id),
