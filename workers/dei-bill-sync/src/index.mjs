@@ -452,11 +452,12 @@ async function getBillHistory(env, ownerKey) {
     .map(row => ({ year: row.year, count: row.count, paidEUR: row.paidEUR.toFixed(2), dueEUR: row.dueEUR.toFixed(2) }));
   bills.sort((a, b) => Number(b.internalDate || 0) - Number(a.internalDate || 0));
   return {
-    bills: bills.map(bill => ({
+    bills: await Promise.all(bills.map(async bill => ({
+      recordId: await sha256Hex(String(bill.gmailMessageId)),
       emailDate: String(bill.emailDate || ""), internalDate: Number(bill.internalDate || 0) || null,
       totalEUR: bill.totalEUR ?? null, dueDate: bill.dueDate ?? null,
       paymentStatus: bill.paymentStatus || "unknown", fetchedAt: bill.fetchedAt || null
-    })),
+    }))),
     count: bills.length, totalPaidEUR: totalPaid.toFixed(2), totalDueEUR: totalDue.toFixed(2), annualTotals
   };
 }
@@ -615,6 +616,45 @@ export default {
         return json({ ok: true, ...(await getBillHistory(env, ownerKey)) });
       }
 
+      if (url.pathname === "/api/history/delete") {
+        if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "POST, OPTIONS" });
+        if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
+        const ownerKey = await getT1SessionOwner(request, env);
+        if (!ownerKey) return json({ ok: false, error: "Unauthorized" }, 401);
+        const body = await request.json().catch(() => ({}));
+        const recordId = String(body.recordId || "");
+        if (!/^[a-f0-9]{64}$/i.test(recordId)) return json({ ok: false, error: "Invalid record ID" }, 400);
+        const bills = await listStoredBillsRaw(env, ownerKey);
+        const match = await bills.reduce(async (foundPromise, bill) => { const found = await foundPromise; if (found) return found; return bill.gmailMessageId && await sha256Hex(String(bill.gmailMessageId)) === recordId ? bill : null; }, Promise.resolve(null));
+        if (!match) return json({ ok: false, error: "Saved bill not found" }, 404);
+        const key = BILL_PREFIX + ownerKey + ":" + encodeURIComponent(String(match.gmailMessageId));
+        await env.DEI_KV.delete(key);
+        const latestKey = "latest_bill:" + ownerKey;
+        const latest = await env.DEI_KV.get(latestKey, "json");
+        if (latest && String(latest.gmailMessageId) === String(match.gmailMessageId)) await env.DEI_KV.delete(latestKey);
+        return json({ ok: true, deleted: true });
+      }
+
+      if (url.pathname === "/api/history/clear") {
+        if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "POST, OPTIONS" });
+        if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
+        const ownerKey = await getT1SessionOwner(request, env);
+        if (!ownerKey) return json({ ok: false, error: "Unauthorized" }, 401);
+        const bills = await listStoredBillsRaw(env, ownerKey);
+        for (const bill of bills) {
+          if (bill.gmailMessageId) await env.DEI_KV.delete(BILL_PREFIX + ownerKey + ":" + encodeURIComponent(String(bill.gmailMessageId)));
+        }
+        await env.DEI_KV.delete("latest_bill:" + ownerKey);
+        await env.DEI_KV.delete("last_sync_at:" + ownerKey);
+        let cursor;
+        do {
+          const page = await env.DEI_KV.list({ prefix: "sync_cursor:" + ownerKey + ":", limit: 1000, cursor });
+          for (const item of page.keys || []) await env.DEI_KV.delete(item.name);
+          cursor = page.list_complete ? undefined : page.cursor;
+        } while (cursor);
+        return json({ ok: true, deletedCount: bills.length });
+      }
+
       if (url.pathname === "/api/latest") {
         if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
         const ownerKey = await getT1SessionOwner(request, env);
@@ -623,7 +663,7 @@ export default {
         const lastSyncAt = await env.DEI_KV.get("last_sync_at:" + ownerKey);
         return json({ ok: true, bill: { ...publicBill(cached || { found: false, paymentStatus: "unknown" }), lastSyncAt: lastSyncAt || null }, cached: true, lastSyncAt: lastSyncAt || null });
       }
-      return json({ service: "TEMO DEI bill sync", routes: ["/health", "/oauth/start", "/oauth/callback", "/api/status", "/api/session/exchange", "/api/sync", "/api/latest"], t1Page: "https://temo75.github.io/t1/dei-bill.html" });
+      return json({ service: "TEMO DEI bill sync", routes: ["/health", "/oauth/start", "/oauth/callback", "/api/status", "/api/session/exchange", "/api/sync", "/api/history", "/api/history/delete", "/api/history/clear", "/api/latest"], t1Page: "https://temo75.github.io/t1/dei-bill.html" });
     } catch (error) {
       const safe = safeError(error);
       return json({ ok: false, error: safe.message, ...(env.TEST_MODE ? { debug: String(error?.message || error) } : {}) }, safe.status);
