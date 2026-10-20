@@ -68,6 +68,16 @@
     return Number.isNaN(date.getTime()) ? "ვადა წერილში ვერ მოიძებნა" : date.toLocaleDateString("ka-GE", { timeZone: "UTC" });
   }
 
+  function formatEmailDate(value) {
+    if (!value) return "თარიღი უცნობია";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "თარიღი უცნობია";
+    return new Intl.DateTimeFormat("ka-GE", {
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit"
+    }).format(date);
+  }
+
   function paymentLabel(status, dueDate) {
     if (status === "paid") return "გადახდილია";
     if (status === "due") {
@@ -135,7 +145,7 @@
       values.amount.textContent = formatAmount(bill.totalEUR);
       values.due.textContent = formatDueDate(bill.dueDate);
       values.payment.textContent = paymentLabel(bill.paymentStatus, bill.dueDate);
-      values.email.textContent = bill.emailDate || "თარიღი არ არის მითითებული";
+      values.email.textContent = formatEmailDate(bill.emailDate);
       values.sync.textContent = (bill.lastSyncAt || bill.fetchedAt) ? new Date(bill.lastSyncAt || bill.fetchedAt).toLocaleString("ka-GE") : "ჯერ არ დასინქრონებულა";
       window.dispatchEvent(new CustomEvent("t1:dei-bill", { detail: bill }));
     }
@@ -146,16 +156,32 @@
         throw new Error("Worker-ის /api/history endpoint არ აბრუნებს ქვითრების ისტორიას. განახლებული Worker ჯერ არ არის აქტიური.");
       }
       historyList.replaceChildren();
+      const amountOf = bill => {
+        const amount = Number(bill.totalEUR);
+        return bill.totalEUR !== null && bill.totalEUR !== undefined && bill.totalEUR !== "" && Number.isFinite(amount) ? amount : 0;
+      };
+      const unknownBills = result.bills.filter(bill => bill.paymentStatus !== "paid" && bill.paymentStatus !== "due");
+      const unknownTotal = unknownBills.reduce((sum, bill) => sum + amountOf(bill), 0);
       historySummary.textContent = "ქვითრები: " + result.count +
-        " · გადახდილი ჯამი: " + formatAmount(result.totalPaidEUR) +
-        " · გადასახდელი ჯამი: " + formatAmount(result.totalDueEUR);
+        " · გადახდილი: " + formatAmount(result.totalPaidEUR) +
+        " · გადასახდელი: " + formatAmount(result.totalDueEUR) +
+        " · სტატუსი დასადგენია: " + formatAmount(unknownTotal);
+      const unknownByYear = new Map();
+      unknownBills.forEach(bill => {
+        const timestamp = Number(bill.internalDate || 0);
+        const date = timestamp ? new Date(timestamp) : new Date(bill.emailDate || "");
+        if (Number.isNaN(date.getTime())) return;
+        const year = String(date.getUTCFullYear());
+        unknownByYear.set(year, (unknownByYear.get(year) || 0) + amountOf(bill));
+      });
       annualSummary.replaceChildren();
       annualSummary.append(element("h4", "", "წლიური ჯამები"));
       if (Array.isArray(result.annualTotals) && result.annualTotals.length) {
         result.annualTotals.forEach((year) => {
           const line = element("p", "dei-bill-year-total");
           line.textContent = year.year + " — გადახდილი: " + formatAmount(year.paidEUR) +
-            " · გადასახდელი: " + formatAmount(year.dueEUR);
+            " · გადასახდელი: " + formatAmount(year.dueEUR) +
+            " · სტატუსი დასადგენია: " + formatAmount(unknownByYear.get(String(year.year)) || 0);
           annualSummary.append(line);
         });
       } else {
@@ -169,7 +195,7 @@
         const row = element("article", "dei-bill-history-item");
         row.append(element("strong", "", formatAmount(bill.totalEUR)));
         row.append(element("span", "", paymentLabel(bill.paymentStatus, bill.dueDate)));
-        row.append(element("small", "", (bill.emailDate || "თარიღი უცნობია") + " · ვადა: " + formatDueDate(bill.dueDate)));
+        row.append(element("small", "", formatEmailDate(bill.emailDate) + " · ვადა: " + formatDueDate(bill.dueDate)));
         historyList.append(row);
       });
     }
