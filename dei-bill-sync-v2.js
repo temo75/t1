@@ -127,7 +127,7 @@
     const historySummary = element("p", "muted", "ისტორია ჯერ არ ჩატვირთულა.");
     const annualSummary = element("div", "dei-bill-annual-summary");
     const historyList = element("div", "dei-bill-history-list");
-    const clearHistory = element("button", "dei-bill-clear-history", "ისტორიის წაშლა");
+    const clearHistory = document.getElementById("deiBillClearHistory") || element("button", "dei-bill-clear-history", "ისტორიის წაშლა");
     clearHistory.type = "button";
     clearHistory.setAttribute("data-dei-clear-history", "true");
     clearHistory.style.setProperty("display", "block", "important");
@@ -137,7 +137,7 @@
     clearHistory.style.setProperty("z-index", "10", "important");
     clearHistory.style.cssText += ";margin:12px 0;background:#7b1824;border:2px solid #ff7c84;color:#fff;padding:14px;border-radius:10px;width:100%;min-height:48px;font-weight:700;";
     const headerActions = document.querySelector(".bill-header-actions");
-    if (headerActions) headerActions.append(clearHistory);
+    if (headerActions && !clearHistory.isConnected) headerActions.append(clearHistory);
     historyPanel.append(historyTitle, historySummary, annualSummary, historyList);
     root.append(header, message, details, actions, historyPanel);
 
