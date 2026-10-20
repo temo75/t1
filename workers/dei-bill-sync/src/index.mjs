@@ -284,6 +284,13 @@ function canonicalBillContent(text) {
 
 function extractInvoiceReference(text) {
   const source = String(text || "");
+  // DEI's RF electronic-payment code identifies the individual bill more
+  // reliably than the contract account number, which is reused across bills.
+  const paymentCode = source.match(/\b(RF\s*\d(?:[\s-]*\d){10,})\b/i);
+  if (paymentCode) {
+    const normalized = paymentCode[1].toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (normalized.length >= 14) return normalized;
+  }
   const patterns = [
     /(?:invoice|bill|account)\s*(?:number|no\.?|#|id)\s*[:#-]?\s*([A-Z0-9][A-Z0-9/-]{4,})/i,
     /(?:αριθμός\s*(?:λογαριασμού|τιμολογίου)|αρ\.?\s*λογαριασμού|κωδικός\s*λογαριασμού)\s*[:#-]?\s*([A-Z0-9][A-Z0-9/-]{4,})/i,
