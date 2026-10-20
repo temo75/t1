@@ -213,7 +213,7 @@
           try {
             await api("/api/history/delete", session, { method: "POST", body: { recordId: bill.recordId } });
             message.textContent = "ქვითარი საიტზე შენახული ისტორიიდან წაიშალა. Gmail-ის წერილი უცვლელია.";
-            await refreshHistory(session);
+            await refresh(false);
           } catch (error) {
             message.textContent = "ქვითრის წაშლა ვერ მოხერხდა: " + error.message;
           } finally {
@@ -288,8 +288,9 @@ async function syncAllPages(session) {
       clearHistory.disabled = true;
       try {
         const result = await api("/api/history/clear", session, { method: "POST", body: {} });
-        message.textContent = "შენახული ისტორია გასუფთავდა (" + (result.deletedCount || 0) + " ჩანაწერი). დააჭირე „ახლავე სინქრონიზაციას“, რომ Gmail-იდან თავიდან ჩაიტვირთოს.";
-        await refreshHistory(session);
+        message.textContent = "შენახული ისტორია გასუფთავდა (" + (result.deletedCount || 0) + " ჩანაწერი). Gmail-ის წერილები უცვლელია.";
+        await refresh(false);
+        message.textContent = "შენახული ისტორია გასუფთავებულია. დააჭირე „ახლავე სინქრონიზაციას“, რომ Gmail-იდან ქვითრები თავიდან ჩაიტვირთოს.";
       } catch (error) {
         message.textContent = "ისტორიის გასუფთავება ვერ მოხერხდა: " + error.message;
       } finally {
