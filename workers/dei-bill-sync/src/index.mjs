@@ -313,12 +313,13 @@ function isDuplicateBill(a, b) {
 
   const refA = String(a.invoiceReference || "").replace(/[^A-Z0-9]/gi, "").toUpperCase();
   const refB = String(b.invoiceReference || "").replace(/[^A-Z0-9]/gi, "").toUpperCase();
-  // Explicit invoice references are only duplicates when the references match.
-  // Different references mean different bills, even when amount/date are identical.
-  if (refA && refB) return refA === refB;
+  // Older records stored the reusable DEI contract/account number here, not
+  // a per-bill identifier. Only an RF electronic-payment code identifies a bill.
+  const isBillPaymentCode = value => /^RF[0-9]{10,}$/.test(value);
+  if (isBillPaymentCode(refA) && isBillPaymentCode(refB)) return refA === refB;
 
-  // Amount and due date alone are NOT sufficient evidence of a duplicate.
-  // Different real DEI bills can have the same amount and due date.
+  // Legacy account numbers must not collapse separate bills. If the normalized
+  // full-content fingerprint matches, the earlier check above handles duplicates.
   return false;
 }
 
