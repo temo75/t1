@@ -380,10 +380,10 @@ async function getLatestBill(env, ownerKey, pageToken = "") {
     if (isPaymentConfirmation(subject, bodyText) && !subjectLooksLikeBill) {
       await applyPaymentConfirmation(env, ownerKey, existingBills, existingById,
         extractAmount(bodyText), extractDueDate(bodyText), fetchedAt);
-      // A receipt updates the matching invoice; it is never a separate bill-history row.
-      continue;
+      // Keep the payment email itself in history too; it is still a Gmail message.
     }
-    if (!isLikelyInvoice(subject, bodyText)) continue;
+    // Keep every identified DEI-related message, even if the parser cannot
+    // extract its amount/date or the subject does not resemble a standard invoice.
     const headerDate = headerValue(headers, "date");
     const parsedHeaderDate = Date.parse(headerDate);
     const bill = {
@@ -397,7 +397,7 @@ async function getLatestBill(env, ownerKey, pageToken = "") {
       gmailMessageId: String(summary.id),
       internalDate: timestamp,
     };
-    if (bill.totalEUR === null && bill.dueDate === null) continue;
+    // Do not discard a real message just because amount/date extraction failed.
     bill.contentFingerprint = await sha256Hex([
       bill.totalEUR ?? "", bill.dueDate ?? "", bill.paymentStatus, canonicalBillContent(bodyText)
     ].join("|"));
