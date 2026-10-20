@@ -300,20 +300,19 @@ const GMAIL_PAGE_SIZE = 20;
 
 function isDuplicateBill(a, b) {
   if (!a || !b) return false;
+
+  // A matching normalized full-content fingerprint is strong evidence of a duplicate.
   if (a.contentFingerprint && b.contentFingerprint && a.contentFingerprint === b.contentFingerprint) return true;
-  const sameAmount = a.totalEUR != null && b.totalEUR != null &&
-    Math.round(Number(a.totalEUR) * 100) === Math.round(Number(b.totalEUR) * 100);
-  if (!sameAmount) return false;
+
   const refA = String(a.invoiceReference || "").replace(/[^A-Z0-9]/gi, "").toUpperCase();
   const refB = String(b.invoiceReference || "").replace(/[^A-Z0-9]/gi, "").toUpperCase();
-  if (refA && refB && refA === refB) return true;
-  const sameDueDate = Boolean(a.dueDate && b.dueDate && String(a.dueDate) === String(b.dueDate));
-  if (sameDueDate) return true;
-  // Gmail sometimes delivers the same invoice twice with inconsistent/missing due dates.
-  // Same amount received within 14 days is treated as a duplicate only when one due date is absent.
-  const ta = Number(a.internalDate || 0), tb = Number(b.internalDate || 0);
-  const closeInTime = ta > 0 && tb > 0 && Math.abs(ta - tb) <= 14 * 24 * 60 * 60 * 1000;
-  return closeInTime && (!a.dueDate || !b.dueDate);
+  // Explicit invoice references are only duplicates when the references match.
+  // Different references mean different bills, even when amount/date are identical.
+  if (refA && refB) return refA === refB;
+
+  // Amount and due date alone are NOT sufficient evidence of a duplicate.
+  // Different real DEI bills can have the same amount and due date.
+  return false;
 }
 
 function deduplicateBills(bills) {
