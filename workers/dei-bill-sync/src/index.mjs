@@ -16,7 +16,7 @@ const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
 const ALLOWED_ORIGINS = new Set(["https://temo75.github.io", "https://temo1.gr", "https://www.temo1.gr"]);
 // Search broadly across DEI mail, then identify invoice-like messages in code.
  // in:anywhere also allows older messages still present in Spam/Trash to be considered.
-const GMAIL_QUERY = 'in:anywhere {from:(dei.gr) from:(noreply@dei.gr) subject:(ΔΕΗ) subject:(λογαριασμού) subject:(λογαριασμου) subject:(Ηλεκτρικής) subject:(ρεύμα) subject:(Fwd) subject:(FW) subject:(Forward) subject:(Προώθηση)}';
+const GMAIL_QUERY = 'in:anywhere {from:(dei.gr) subject:(Fwd) subject:(FW) subject:(Forward) subject:(Προώθηση) subject:(λογαριασμού) subject:(ΔΕΗ) subject:(Ηλεκτρικής)}';
 
 function corsHeaders(extra = {}) {
   return {
@@ -282,39 +282,22 @@ function canonicalBillContent(text) {
     .trim();
 }
 
-function extractInvoiceReference(text) {
-  const source = String(text || "");
-  // DEI's RF electronic-payment code identifies the individual bill more
-  // reliably than the contract account number, which is reused across bills.
-  const paymentCode = source.match(/\b(RF\s*\d(?:[\s-]*\d){10,})\b/i);
-  if (paymentCode) {
-    const normalized = paymentCode[1].toUpperCase().replace(/[^A-Z0-9]/g, "");
-    if (normalized.length >= 14) return normalized;
-  }
-  const patterns = [
-    /(?:invoice|bill|account)\s*(?:number|no\.?|#|id)\s*[:#-]?\s*([A-Z0-9][A-Z0-9/-]{4,})/i,
-    /(?:αριθμός\s*(?:λογαριασμού|τιμολογίου)|αρ\.?\s*λογαριασμού|κωδικός\s*λογαριασμού)\s*[:#-]?\s*([A-Z0-9][A-Z0-9/-]{4,})/i,
-  ];
-  for (const pattern of patterns) {
-    const match = source.match(pattern);
-    if (match) return match[1].toUpperCase().replace(/[^A-Z0-9]/g, "");
-  }
-  return null;
-}
-
 const BILL_PREFIX = "bill_history:";
 const GMAIL_PAGE_SIZE = 20;
 
 function isDuplicateBill(a, b) {
   if (!a || !b) return false;
-
-  const refA = String(a.invoiceReference || "").replace(/[^A-Z0-9]/gi, "").toUpperCase();
-  const refB = String(b.invoiceReference || "").replace(/[^A-Z0-9]/gi, "").toUpperCase();
-  // Only a per-bill RF electronic-payment reference is strong enough to merge
-  // separate Gmail messages. A text fingerprint can differ by forwarding headers,
-  // and a contract number/amount can repeat across genuine bills.
-  const isBillPaymentCode = value => /^RF[0-9]{10,}$/.test(value);
-  return isBillPaymentCode(refA) && isBillPaymentCode(refB) && refA === refB;
+  if (a.contentFingerprint && b.contentFingerprint && a.contentFingerprint === b.contentFingerprint) return true;
+  const sameAmount = a.totalEUR != null && b.totalEUR != null &&
+    Math.round(Number(a.totalEUR) * 100) === Math.round(Number(b.totalEUR) * 100);
+  if (!sameAmount) return false;
+  const sameDueDate = Boolean(a.dueDate && b.dueDate && String(a.dueDate) === String(b.dueDate));
+  if (sameDueDate) return true;
+  // Gmail sometimes delivers the same invoice twice with inconsistent/missing due dates.
+  // Same amount received within 14 days is treated as a duplicate only when one due date is absent.
+  const ta = Number(a.internalDate || 0), tb = Number(b.internalDate || 0);
+  const closeInTime = ta > 0 && tb > 0 && Math.abs(ta - tb) <= 14 * 24 * 60 * 60 * 1000;
+  return closeInTime && (!a.dueDate || !b.dueDate);
 }
 
 function deduplicateBills(bills) {
@@ -380,10 +363,10 @@ async function getLatestBill(env, ownerKey, pageToken = "") {
     if (isPaymentConfirmation(subject, bodyText) && !subjectLooksLikeBill) {
       await applyPaymentConfirmation(env, ownerKey, existingBills, existingById,
         extractAmount(bodyText), extractDueDate(bodyText), fetchedAt);
-      // Keep the payment email itself in history too; it is still a Gmail message.
+      // A receipt updates the matching invoice; it is never a separate bill-history row.
+      continue;
     }
-    // Keep every identified DEI-related message, even if the parser cannot
-    // extract its amount/date or the subject does not resemble a standard invoice.
+    if (!isLikelyInvoice(subject, bodyText)) continue;
     const headerDate = headerValue(headers, "date");
     const parsedHeaderDate = Date.parse(headerDate);
     const bill = {
@@ -391,13 +374,12 @@ async function getLatestBill(env, ownerKey, pageToken = "") {
       emailDate: timestamp ? new Date(timestamp).toISOString() : (Number.isFinite(parsedHeaderDate) ? new Date(parsedHeaderDate).toISOString() : ""),
       totalEUR: extractAmount(bodyText),
       dueDate: extractDueDate(bodyText),
-      invoiceReference: extractInvoiceReference(bodyText),
       paymentStatus: extractPaymentStatus(bodyText),
       fetchedAt,
       gmailMessageId: String(summary.id),
       internalDate: timestamp,
     };
-    // Do not discard a real message just because amount/date extraction failed.
+    if (bill.totalEUR === null && bill.dueDate === null) continue;
     bill.contentFingerprint = await sha256Hex([
       bill.totalEUR ?? "", bill.dueDate ?? "", bill.paymentStatus, canonicalBillContent(bodyText)
     ].join("|"));
