@@ -16,7 +16,7 @@ const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
 const ALLOWED_ORIGINS = new Set(["https://temo75.github.io", "https://temo1.gr", "https://www.temo1.gr"]);
 // Search broadly across DEI mail, then identify invoice-like messages in code.
  // in:anywhere also allows older messages still present in Spam/Trash to be considered.
-const GMAIL_QUERY = 'in:anywhere {from:(dei.gr) subject:(Fwd) subject:(FW) subject:(Forward) subject:(Προώθηση) subject:(λογαριασμού) subject:(ΔΕΗ) subject:(Ηλεκτρικής)}';
+const GMAIL_QUERY = 'in:anywhere {from:(dei.gr) from:(noreply@dei.gr) subject:(ΔΕΗ) subject:(λογαριασμού) subject:(λογαριασμου) subject:(Ηλεκτρικής) subject:(ρεύμα) subject:(Fwd) subject:(FW) subject:(Forward) subject:(Προώθηση)}';
 
 function corsHeaders(extra = {}) {
   return {
@@ -308,19 +308,13 @@ const GMAIL_PAGE_SIZE = 20;
 function isDuplicateBill(a, b) {
   if (!a || !b) return false;
 
-  // A matching normalized full-content fingerprint is strong evidence of a duplicate.
-  if (a.contentFingerprint && b.contentFingerprint && a.contentFingerprint === b.contentFingerprint) return true;
-
   const refA = String(a.invoiceReference || "").replace(/[^A-Z0-9]/gi, "").toUpperCase();
   const refB = String(b.invoiceReference || "").replace(/[^A-Z0-9]/gi, "").toUpperCase();
-  // Older records stored the reusable DEI contract/account number here, not
-  // a per-bill identifier. Only an RF electronic-payment code identifies a bill.
+  // Only a per-bill RF electronic-payment reference is strong enough to merge
+  // separate Gmail messages. A text fingerprint can differ by forwarding headers,
+  // and a contract number/amount can repeat across genuine bills.
   const isBillPaymentCode = value => /^RF[0-9]{10,}$/.test(value);
-  if (isBillPaymentCode(refA) && isBillPaymentCode(refB)) return refA === refB;
-
-  // Legacy account numbers must not collapse separate bills. If the normalized
-  // full-content fingerprint matches, the earlier check above handles duplicates.
-  return false;
+  return isBillPaymentCode(refA) && isBillPaymentCode(refB) && refA === refB;
 }
 
 function deduplicateBills(bills) {
