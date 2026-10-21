@@ -152,7 +152,7 @@ function extractDueDate(text) {
     }
     const date = new Date(Date.UTC(year, month - 1, day));
     if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
-      return \`\${year}-\${String(month).padStart(2, "0")}-\${String(day).padStart(2, "0")}\`;
+      return year + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0");
     }
   }
   const named = /(?:ημερομηνια\s+(?:ληξησ|πληρωμησ)|ληξη\s+πληρωμησ|προθεσμια\s+πληρωμησ|due\s+date|payment\s+deadline|εωσ|μεχρι)[^\n]{0,80}?(\d{1,2})\s+([\p{L}]+)[^\d]{0,8}(\d{4})/iu.exec(value);
@@ -169,7 +169,7 @@ function extractDueDate(text) {
     if (month) {
       const date = new Date(Date.UTC(year, month - 1, day));
       if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
-        return \`\${year}-\${String(month).padStart(2, "0")}-\${String(day).padStart(2, "0")}\`;
+        return year + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0");
       }
     }
   }
