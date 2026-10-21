@@ -317,6 +317,117 @@ function canonicalBillContent(text) {
 }
 
 const BILL_PREFIX = "bill_history:";
+const NOVA_BILL_PREFIX = "nova_bill_history:";
+const NOVA_GMAIL_QUERY = 'in:anywhere {from:(nova.gr) from:(ebill.nova.gr)}';
+
+async function listStoredNovaBills(env, ownerKey) {
+  const bills = [];
+  let cursor;
+  do {
+    const page = await env.DEI_KV.list({ prefix: NOVA_BILL_PREFIX + ownerKey + ":", limit: 1000, cursor });
+    for (const key of page.keys || []) {
+      const bill = await env.DEI_KV.get(key.name, "json");
+      if (bill && bill.gmailMessageId) bills.push(bill);
+    }
+    cursor = page.list_complete ? undefined : page.cursor;
+  } while (cursor);
+  return bills.sort((a, b) => Number(b.internalDate || 0) - Number(a.internalDate || 0));
+}
+
+function extractNovaAmount(text) {
+  const value = String(text || "").replace(/\u00a0/g, " ");
+  const patterns = [
+    /(?:ποσό(?:\s+του\s+τρέχοντος\s+λογαριασμού)?|συνολικό ποσό πληρωμής|payable amount|amount due|amount paid|total amount)[^\d€]{0,80}(?:€\s*)?(\d{1,5}(?:[.,]\d{1,2})?)/i,
+    /(\d{1,5}[.,]\d{1,2})\s*€/i,
+    /€\s*(\d{1,5}[.,]\d{1,2})/i
+  ];
+  for (const re of patterns) {
+    const m = value.match(re);
+    if (!m) continue;
+    const normalized = m[1].includes(",") ? m[1].replace(/\./g, "").replace(",", ".") : m[1];
+    const amount = Number(normalized);
+    if (Number.isFinite(amount) && amount >= 0 && amount < 100000) return amount.toFixed(2);
+  }
+  return null;
+}
+
+async function syncNovaBills(env, ownerKey) {
+  const accessToken = await refreshAccessToken(env, ownerKey);
+  const list = await gmailFetch(env, ownerKey, "/messages?q=" + encodeURIComponent(NOVA_GMAIL_QUERY) + "&maxResults=100", accessToken);
+  const messages = Array.isArray(list.messages) ? list.messages : [];
+  const existing = await listStoredNovaBills(env, ownerKey);
+  const byId = new Map(existing.map(b => [String(b.gmailMessageId), b]));
+  let scanned = 0;
+  for (const summary of messages) {
+    if (!summary?.id) continue;
+    const full = await gmailFetch(env, ownerKey, "/messages/" + encodeURIComponent(summary.id) + "?format=full", accessToken);
+    const headers = full.payload?.headers || [];
+    const subject = headerValue(headers, "subject");
+    const from = headerValue(headers, "from");
+    if (!/@(?:[a-z0-9-]+\.)*nova\.gr\b/i.test(from)) continue;
+    const htmlBody = findBody(full.payload, "text/html");
+    const plainBody = findBody(full.payload, "text/plain");
+    const bodyText = stripHtml([plainBody, htmlBody, full.snippet].filter(Boolean).join("\n"));
+    const combined = subject + "\n" + bodyText;
+    const paymentReceipt = isPaymentConfirmation(subject, bodyText) ||
+      /(η πληρωμή.{0,60}ολοκληρώθηκε επιτυχώς|payment.{0,40}completed successfully|απόδειξη συναλλαγής)/i.test(combined);
+    const looksLikeBill = /(λογαριασμ|e-bill|ebill|ποσό τρέχοντος|ημερομηνία λήξης|ημερομηνία έκδοσης|bill issued|invoice|amount due)/i.test(combined);
+    if (!paymentReceipt && !looksLikeBill) continue;
+    const amount = extractAmount(bodyText);
+    if (amount == null) continue;
+    scanned++;
+    const timestamp = Number(full.internalDate || summary.internalDate || 0);
+    const headerDate = Date.parse(headerValue(headers, "date"));
+    const emailDate = timestamp ? new Date(timestamp).toISOString() : (Number.isFinite(headerDate) ? new Date(headerDate).toISOString() : "");
+    const dueDate = extractDueDate(bodyText);
+    const messageId = String(summary.id);
+    const key = NOVA_BILL_PREFIX + ownerKey + ":" + encodeURIComponent(messageId);
+    if (paymentReceipt) {
+      const candidates = existing.filter(b => b.paymentStatus !== "paid" &&
+        Math.round(Number(b.totalEUR) * 100) === Math.round(Number(amount) * 100));
+      if (candidates.length === 1) {
+        const matched = candidates[0];
+        matched.paymentStatus = "paid";
+        matched.paymentDate = emailDate;
+        matched.paymentReceiptMessageId = messageId;
+        matched.fetchedAt = new Date().toISOString();
+        await env.DEI_KV.put(NOVA_BILL_PREFIX + ownerKey + ":" + encodeURIComponent(String(matched.gmailMessageId)), JSON.stringify(matched));
+        continue;
+      }
+      // Store unmatched payment confirmations as paid entries instead of guessing which invoice they belong to.
+      const receipt = { found: true, provider: "NOVA", subject, from, emailDate, internalDate: timestamp || (Number.isFinite(headerDate) ? headerDate : 0),
+        totalEUR: amount, dueDate: null, paymentStatus: "paid", paymentDate: emailDate, gmailMessageId: messageId,
+        fetchedAt: new Date().toISOString(), kind: "payment-receipt" };
+      if (!byId.has(messageId)) {
+        await env.DEI_KV.put(key, JSON.stringify(receipt));
+        existing.push(receipt); byId.set(messageId, receipt);
+      }
+      continue;
+    }
+    const bill = { found: true, provider: "NOVA", subject, from, emailDate, internalDate: timestamp || (Number.isFinite(headerDate) ? headerDate : 0),
+      totalEUR: amount, dueDate, paymentStatus: extractPaymentStatus(bodyText), gmailMessageId: messageId,
+      fetchedAt: new Date().toISOString(), kind: "invoice" };
+    const same = byId.get(messageId);
+    if (same) {
+      const repaired = { ...same, ...bill };
+      if (bill.paymentStatus === "unknown" && (same.paymentStatus === "paid" || same.paymentStatus === "due")) repaired.paymentStatus = same.paymentStatus;
+      await env.DEI_KV.put(key, JSON.stringify(repaired)); byId.set(messageId, repaired);
+      const idx = existing.findIndex(b => String(b.gmailMessageId) === messageId); if (idx >= 0) existing[idx] = repaired;
+    } else {
+      // Same amount and due date is a strong duplicate signal for NOVA invoices.
+      const duplicate = existing.some(b => b.kind !== "payment-receipt" && Number(b.totalEUR) === Number(amount) && dueDate && b.dueDate === dueDate);
+      if (!duplicate) { await env.DEI_KV.put(key, JSON.stringify(bill)); existing.push(bill); byId.set(messageId, bill); }
+    }
+  }
+  const bills = await listStoredNovaBills(env, ownerKey);
+  const totalPaid = bills.reduce((sum,b) => b.paymentStatus === "paid" ? sum + Number(b.totalEUR || 0) : sum, 0);
+  const totalDue = bills.reduce((sum,b) => b.paymentStatus === "due" ? sum + Number(b.totalEUR || 0) : sum, 0);
+  await env.DEI_KV.put("nova_last_sync_at:" + ownerKey, new Date().toISOString());
+  return { ok: true, bills, count: bills.length, totalPaidEUR: totalPaid.toFixed(2), totalDueEUR: totalDue.toFixed(2), scanned };
+}
+
+const GMAIL_PAGE_SIZE = 20;
+
 const GMAIL_PAGE_SIZE = 20;
 
 function isDuplicateBill(a, b) {
@@ -700,6 +811,23 @@ export default {
         return json({ ok: true, deletedCount: bills.length });
       }
 
+      if (url.pathname === "/api/nova/sync") {
+        if (request.method !== "POST") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "POST, OPTIONS" });
+        if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
+        const ownerKey = await getT1SessionOwner(request, env);
+        if (!ownerKey) return json({ ok: false, error: "Unauthorized" }, 401);
+        return json(await syncNovaBills(env, ownerKey));
+      }
+      if (url.pathname === "/api/nova/history") {
+        if (request.method !== "GET") return json({ ok: false, error: "Method not allowed" }, 405, { allow: "GET, OPTIONS" });
+        if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
+        const ownerKey = await getT1SessionOwner(request, env);
+        if (!ownerKey) return json({ ok: false, error: "Unauthorized" }, 401);
+        const bills = await listStoredNovaBills(env, ownerKey);
+        const totalPaid = bills.reduce((sum,b) => b.paymentStatus === "paid" ? sum + Number(b.totalEUR || 0) : sum, 0);
+        const totalDue = bills.reduce((sum,b) => b.paymentStatus === "due" ? sum + Number(b.totalEUR || 0) : sum, 0);
+        return json({ ok: true, bills, count: bills.length, totalPaidEUR: totalPaid.toFixed(2), totalDueEUR: totalDue.toFixed(2), lastSyncAt: await env.DEI_KV.get("nova_last_sync_at:" + ownerKey) });
+      }
       if (url.pathname === "/api/latest") {
         if (!env.DEI_KV) return json({ ok: false, error: "DEI_KV binding is not configured" }, 503);
         const ownerKey = await getT1SessionOwner(request, env);
