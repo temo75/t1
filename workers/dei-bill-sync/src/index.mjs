@@ -91,6 +91,10 @@ function stripHtml(s) {
     .replace(/&gt;/gi, ">")
     .replace(/&quot;/gi, '"')
     .replace(/&#39;|&apos;/gi, "'")
+    // Decode numeric HTML entities used by Gmail's HTML invoice body, including slash characters in dates.
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/&#x([\da-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
+    .replace(/&sol;/gi, "/")
     .replace(/[ \t]+/g, " ")
     .replace(/\n[ \t]+/g, "\n")
     .trim();
