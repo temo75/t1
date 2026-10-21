@@ -405,7 +405,7 @@ async function syncNovaBills(env, ownerKey) {
       continue;
     }
     const bill = { found: true, provider: "NOVA", subject, from, emailDate, internalDate: timestamp || (Number.isFinite(headerDate) ? headerDate : 0),
-      totalEUR: amount, dueDate, paymentStatus: extractPaymentStatus(bodyText), gmailMessageId: messageId,
+      totalEUR: amount, dueDate, paymentStatus: extractPaymentStatus(bodyText) === "unknown" && dueDate ? "due" : extractPaymentStatus(bodyText), gmailMessageId: messageId,
       fetchedAt: new Date().toISOString(), kind: "invoice" };
     const same = byId.get(messageId);
     if (same) {
