@@ -382,7 +382,18 @@ async function getLatestBill(env, ownerKey, pageToken = "") {
   // repeatedly listed every stored bill and made sync progressively slower.
   const existingBills = await listStoredBillsRaw(env, ownerKey);
   const existingById = new Map(existingBills.map(bill => [String(bill.gmailMessageId), bill]));
-  for (const summary of messages) {
+  // Gmail search can stop matching older forwarded DEI emails after their subject/sender
+  // differs from the current query. Re-fetch every saved invoice by message ID on the
+  // first sync page so stored rows can be repaired even when search omits them.
+  const summariesToProcess = pageToken
+    ? messages
+    : [
+        ...messages,
+        ...existingBills
+          .filter(bill => bill.gmailMessageId && !messages.some(message => String(message.id) === String(bill.gmailMessageId)))
+          .map(bill => ({ id: String(bill.gmailMessageId), internalDate: bill.internalDate || 0 }))
+      ];
+  for (const summary of summariesToProcess) {
     if (!summary?.id) continue;
     const full = await gmailFetch(env, ownerKey, "/messages/" + encodeURIComponent(summary.id) + "?format=full", accessToken);
     const headers = full.payload?.headers || [];
