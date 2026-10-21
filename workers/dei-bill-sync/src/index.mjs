@@ -131,50 +131,50 @@ function extractPaymentStatus(text) {
   return "unknown";
 }
 function extractDueDate(text) {
-  // Gmail DEI invoices commonly use "Ημερομηνία Λήξης 02/06/2026".
+  // Normalize Gmail plain text and stripped HTML; labels and dates can be split by table cells/newlines.
   const value = String(text || "")
     .replace(/\u00a0/g, " ")
+    .replace(/&#0*47;|&#x0*2f;|&sol;/gi, "/")
+    .replace(/&#0*46;|&#x0*2e;/gi, ".")
     .replace(/[–—]/g, "-")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/ς/g, "σ");
-  const label = "(?:ημερομηνια\\s+(?:ληξησ|πληρωμησ)|ληξη\\s+πληρωμησ|προθεσμια\\s+πληρωμησ|πληρωτεο\\s+εωσ|εξοφληση\\s+εωσ|due\\s+date|payment\\s+deadline|pay(?:ment)?\\s+by)";
-  const patterns = [
-    new RegExp(label + "[^\\d]{0,120}(\\d{1,2})[/.\\-](\\d{1,2})[/.\\-](\\d{2,4})", "i"),
-    new RegExp(label + "[^\\d]{0,120}(\\d{4})-(\\d{1,2})-(\\d{1,2})", "i"),
-    new RegExp("(\\d{1,2})[/.\\-](\\d{1,2})[/.\\-](\\d{2,4})[^\\n]{0,50}" + label, "i")
-  ];
-  for (let i = 0; i < patterns.length; i++) {
-    const match = patterns[i].exec(value);
-    if (!match) continue;
+    .toLocaleLowerCase("el")
+    .replace(/ς/g, "σ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\s*\.\s*/g, ".")
+    .replace(/\s*\/\s*/g, "/")
+    .replace(/\s*-\s*/g, "-");
+  const label = /(?:ημερομηνια[\s:：-]*(?:ληξησ|πληρωμησ)|ληξη[\s:：-]*πληρωμησ|προθεσμια[\s:：-]*πληρωμησ|πληρωτεο[\s:：-]*εωσ|εξοφληση[\s:：-]*εωσ|due[\s:：-]*date|payment[\s:：-]*deadline|pay(?:ment)?[\s:：-]*by)/i;
+  const numericDate = /(\d{1,2})\s*[/.\\-]\s*(\d{1,2})\s*[/.\\-]\s*(\d{2,4})/;
+  const isoDate = /(\d{4})-(\d{1,2})-(\d{1,2})/;
+  // Prefer dates near an explicit due-date label; do not grab the email's receipt date.
+  const labelMatches = [...value.matchAll(new RegExp(label.source, "ig"))];
+  for (const lm of labelMatches) {
+    const segment = value.slice(lm.index + lm[0].length, lm.index + lm[0].length + 350);
+    const numeric = numericDate.exec(segment);
+    const iso = isoDate.exec(segment);
     let year, month, day;
-    if (i === 1) {
-      year = Number(match[2]); month = Number(match[3]); day = Number(match[4]);
-    } else {
-      day = Number(match[1]); month = Number(match[2]);
-      year = Number(match[3].length === 2 ? "20" + match[3] : match[3]);
-    }
+    if (numeric) {
+      day = Number(numeric[1]); month = Number(numeric[2]);
+      year = Number(numeric[3].length === 2 ? "20" + numeric[3] : numeric[3]);
+    } else if (iso) {
+      year = Number(iso[1]); month = Number(iso[2]); day = Number(iso[3]);
+    } else continue;
     const date = new Date(Date.UTC(year, month - 1, day));
     if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
       return year + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0");
     }
   }
-  const named = /(?:ημερομηνια\s+(?:ληξησ|πληρωμησ)|ληξη\s+πληρωμησ|προθεσμια\s+πληρωμησ|due\s+date|payment\s+deadline|εωσ|μεχρι)[^\n]{0,80}?(\d{1,2})\s+([\p{L}]+)[^\d]{0,8}(\d{4})/iu.exec(value);
-  if (named) {
-    const monthMap = {
-      ιανουαριου:1, ιανουαριοσ:1, φεβρουαριου:2, φεβρουαριοσ:2,
-      μαρτιου:3, μαρτιοσ:3, απριλιου:4, απριλιοσ:4, μαιου:5, μαιοσ:5,
-      ιουνιου:6, ιουνιοσ:6, ιουλιου:7, ιουλιοσ:7, αυγουστου:8, αυγουστοσ:8,
-      σεπτεμβριου:9, σεπτεμβριοσ:9, οκτωβριου:10, οκτωβριοσ:10,
-      νοεμβριου:11, νοεμβριοσ:11, δεκεμβριου:12, δεκεμβριοσ:12
-    };
-    const month = monthMap[named[2].toLocaleLowerCase("el")];
-    const day = Number(named[1]), year = Number(named[3]);
-    if (month) {
-      const date = new Date(Date.UTC(year, month - 1, day));
-      if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
-        return year + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0");
-      }
+  // If the date is before the label in a table cell, accept a nearby labelled date.
+  const reverse = new RegExp(numericDate.source + "[^\\n]{0,100}" + label.source, "ig");
+  const rm = reverse.exec(value);
+  if (rm) {
+    const day = Number(rm[1]), month = Number(rm[2]);
+    const year = Number(rm[3].length === 2 ? "20" + rm[3] : rm[3]);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
+      return year + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0");
     }
   }
   return null;
