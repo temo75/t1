@@ -131,7 +131,8 @@ function extractPaymentStatus(text) {
   return "unknown";
 }
 function extractDueDate(text) {
-  // Normalize Gmail plain text and stripped HTML; labels and dates can be split by table cells/newlines.
+  // DEI invoices may be localized in English or Greek. The same bill can use
+  // "Expiration Date", "Ημερομηνία Λήξης", or other equivalent labels.
   const value = String(text || "")
     .replace(/\u00a0/g, " ")
     .replace(/&#0*47;|&#x0*2f;|&sol;/gi, "/")
@@ -145,10 +146,9 @@ function extractDueDate(text) {
     .replace(/\s*\.\s*/g, ".")
     .replace(/\s*\/\s*/g, "/")
     .replace(/\s*-\s*/g, "-");
-  const label = /(?:ημερομηνια[\s:：-]*(?:ληξησ|πληρωμησ)|ληξη[\s:：-]*πληρωμησ|προθεσμια[\s:：-]*πληρωμησ|πληρωτεο[\s:：-]*εωσ|εξοφληση[\s:：-]*εωσ|due[\s:：-]*date|payment[\s:：-]*deadline|pay(?:ment)?[\s:：-]*by)/i;
+  const label = /(?:expiration\s+date|expiry\s+date|expires?\s+on|payment\s+deadline|due\s+date|payment\s+due|date\s+of\s+expiry|ημερομηνια[\s:：-]*(?:ληξησ|πληρωμησ)|ληξη[\s:：-]*πληρωμησ|προθεσμια[\s:：-]*πληρωμησ|πληρωτεο[\s:：-]*εωσ|εξοφληση[\s:：-]*εωσ)/i;
   const numericDate = /(\d{1,2})\s*[/.\\-]\s*(\d{1,2})\s*[/.\\-]\s*(\d{2,4})/;
   const isoDate = /(\d{4})-(\d{1,2})-(\d{1,2})/;
-  // Prefer dates near an explicit due-date label; do not grab the email's receipt date.
   const labelMatches = [...value.matchAll(new RegExp(label.source, "ig"))];
   for (const lm of labelMatches) {
     const segment = value.slice(lm.index + lm[0].length, lm.index + lm[0].length + 350);
@@ -166,7 +166,6 @@ function extractDueDate(text) {
       return year + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0");
     }
   }
-  // If the date is before the label in a table cell, accept a nearby labelled date.
   const reverse = new RegExp(numericDate.source + "[^\\n]{0,100}" + label.source, "ig");
   const rm = reverse.exec(value);
   if (rm) {
