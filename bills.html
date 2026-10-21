@@ -28,6 +28,13 @@
 <div class="app">
 <header class="bill-header"><div><h1>💶 ჩემი გადასახადები</h1><small>პირადი გადასახადები — <span id="billUserName"></span></small></div><div class="bill-header-actions"><button onclick="location.href='./index.html'">← მთავარზე</button><button id="deiBillClearHistory" class="dei-bill-clear-history" type="button" style="display:inline-flex!important;visibility:visible!important;opacity:1!important;width:auto!important;flex:0 0 auto;position:relative;z-index:20">ისტორიის წაშლა</button></div></header>
 <div id="deiCloudBill" class="panel"></div>
+<section id="novaCloudBills" class="panel" aria-live="polite">
+<h2 style="margin-top:0">📶 NOVA — ანგარიშები</h2>
+<p id="novaBillMessage" class="muted">NOVA-ს წერილები იტვირთება…</p>
+<div id="novaBillSummary" class="muted"></div>
+<div class="actions" style="margin:12px 0"><button id="novaBillRefresh" class="primary" type="button">განახლება</button></div>
+<div id="novaBillList"></div>
+</section>
 <div class="panel">
 <h2 style="margin-top:0">＋ გადასახადის დამატება</h2>
 <form id="billForm" class="form">
@@ -79,5 +86,28 @@
 })();
 </script>
 <script src="./dei-bill-sync-v2.js?v=20261021-readable-bill-cards-2"></script><script>if(window.DEIBillSync){const root=document.getElementById("deiCloudBill");if(root)window.DEIBillSync.mount(root)}</script>
+<script>
+(function(){
+const API="https://dei-bill-sync.temo75elia.workers.dev", KEY="t1.deiBillSession.v1";
+const $=id=>document.getElementById(id), msg=$("novaBillMessage"), summary=$("novaBillSummary"), list=$("novaBillList"), refresh=$("novaBillRefresh");
+const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;};
+const money=v=>new Intl.NumberFormat("el-GR",{style:"currency",currency:"EUR"}).format(Number(v)||0);
+const date=v=>{if(!v)return "თარიღი წერილში ვერ მოიძებნა";const d=new Date(v);return Number.isNaN(d.getTime())?"თარიღი წერილში ვერ მოიძებნა":new Intl.DateTimeFormat("ka-GE",{year:"numeric",month:"long",day:"numeric",timeZone:"Europe/Athens"}).format(d);};
+function getSession(){try{const s=JSON.parse(sessionStorage.getItem(KEY)||"null");return s&&s.token&&Date.parse(s.expiresAt)>Date.now()?s:null;}catch{return null;}}
+async function api(path,s,method="GET"){const r=await fetch(API+path,{method,headers:{Accept:"application/json",Authorization:"Bearer "+s.token},cache:"no-store"});let d={};try{d=await r.json();}catch{}if(!r.ok)throw new Error(d.error||("HTTP "+r.status));return d;}
+function render(data){list.replaceChildren();summary.textContent="წერილები: "+data.count+" · გადახდილია: "+money(data.totalPaidEUR)+" · გადასახდელია: "+money(data.totalDueEUR);
+if(!data.bills.length){list.append(el("p","muted","NOVA-ს ქვითრები ჯერ არ მოიძებნა. დააჭირე „განახლება“-ს."));return;}
+data.bills.forEach(b=>{const card=el("article","bill");card.style.cssText="display:flex;flex-direction:column;gap:8px";
+const head=el("div","billhead");head.append(el("div","billname",b.kind==="payment-receipt"?"NOVA — გადახდის ქვითარი":"NOVA — ანგარიშის ქვითარი"));
+const paid=b.paymentStatus==="paid", label=paid?"გადახდილია":b.paymentStatus==="due"?"გადასახდელია":"სტატუსი დასადგენია";head.append(el("span","tag"+(!paid?" due":""),label));card.append(head,el("div","amount",money(b.totalEUR)),el("div","muted","წერილის თარიღი: "+date(b.emailDate)));
+if(b.dueDate)card.append(el("div","muted","გადახდის ბოლო ვადა: "+date(b.dueDate)));
+if(b.paymentDate)card.append(el("div","muted","გადახდის თარიღი: "+date(b.paymentDate)));
+if(b.subject)card.append(el("div","notice","თემა: "+b.subject));list.append(card);});}
+async function load(sync){const s=getSession();if(!s){msg.textContent="ჯერ დააკავშირე Gmail უსაფრთხოდ DEI ბლოკიდან; NOVA იგივე ავტორიზაციას იყენებს.";list.replaceChildren();return;}
+refresh.disabled=true;msg.textContent=sync?"NOVA-ს Gmail წერილებს ვამოწმებ…":"NOVA-ს შენახულ ქვითრებს ვტვირთავ…";
+try{if(sync)await api("/api/nova/sync",s,"POST");const data=await api("/api/nova/history",s);render(data);msg.textContent="NOVA-ს წერილები დამუშავდა.";}catch(e){msg.textContent="NOVA-ს მონაცემები ვერ ჩაიტვირთა: "+e.message;}finally{refresh.disabled=false;}}
+refresh.addEventListener("click",()=>load(true));load(false);
+})();
+</script>
 </body>
 </html>
