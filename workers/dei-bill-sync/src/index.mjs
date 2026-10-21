@@ -428,8 +428,6 @@ async function syncNovaBills(env, ownerKey) {
 
 const GMAIL_PAGE_SIZE = 20;
 
-const GMAIL_PAGE_SIZE = 20;
-
 function isDuplicateBill(a, b) {
   if (!a || !b) return false;
   if (a.contentFingerprint && b.contentFingerprint && a.contentFingerprint === b.contentFingerprint) return true;
