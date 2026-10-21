@@ -73,8 +73,7 @@
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "თარიღი უცნობია";
     return new Intl.DateTimeFormat("ka-GE", {
-      year: "numeric", month: "2-digit", day: "2-digit",
-      hour: "2-digit", minute: "2-digit"
+      year: "numeric", month: "long", day: "numeric", timeZone: "Europe/Athens"
     }).format(date);
   }
 
@@ -205,10 +204,22 @@
       }
       result.bills.forEach((bill) => {
         const row = element("article", "dei-bill-history-item");
-        row.style.cssText = "display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:12px 0;border-bottom:1px solid #254253;overflow-wrap:anywhere;";
-        row.append(element("strong", "", formatAmount(bill.totalEUR)));
-        row.append(element("span", "", paymentLabel(bill.paymentStatus, bill.dueDate)));
-        row.append(element("small", "", formatEmailDate(bill.emailDate) + " · ვადა: " + formatDueDate(bill.dueDate)));
+        row.style.cssText = "display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:14px;margin:10px 0;border:1px solid #254253;border-radius:12px;background:rgba(8,25,34,.55);overflow-wrap:anywhere;";
+        const topLine = element("div", "");
+        topLine.style.cssText = "display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;";
+        const amount = element("strong", "", formatAmount(bill.totalEUR));
+        amount.style.cssText = "font-size:1.2rem;";
+        const status = element("span", "", paymentLabel(bill.paymentStatus, bill.dueDate));
+        status.style.cssText = "font-weight:700;padding:5px 9px;border-radius:8px;background:" + (bill.paymentStatus === "paid" ? "rgba(40,150,95,.18)" : bill.paymentStatus === "due" ? "rgba(220,155,35,.18)" : "rgba(130,145,155,.15)") + ";";
+        topLine.append(amount, status);
+        row.append(topLine);
+        const emailLine = element("div", "");
+        emailLine.style.cssText = "font-size:.95rem;line-height:1.5;";
+        emailLine.append(element("span", "", "ქვითრის თარიღი: "), element("strong", "", formatEmailDate(bill.emailDate)));
+        const dueLine = element("div", "");
+        dueLine.style.cssText = "font-size:.95rem;line-height:1.5;";
+        dueLine.append(element("span", "", "გადახდის საბოლოო ვადა: "), element("strong", "", formatDueDate(bill.dueDate)));
+        row.append(emailLine, dueLine);
         const deleteButton = element("button", "dei-bill-delete", "ამ ქვითრის წაშლა");
         deleteButton.type = "button";
         deleteButton.style.cssText = "margin-top:4px;background:#45242a;border:1px solid #74333d;color:#fff;padding:8px 12px;border-radius:8px;";
