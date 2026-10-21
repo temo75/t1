@@ -217,8 +217,10 @@
         emailLine.style.cssText = "font-size:.95rem;line-height:1.5;";
         emailLine.append(element("span", "", "ქვითრის თარიღი: "), element("strong", "", formatEmailDate(bill.emailDate)));
         const dueLine = element("div", "");
-        dueLine.style.cssText = "font-size:.95rem;line-height:1.5;";
-        dueLine.append(element("span", "", "გადახდის საბოლოო ვადა: "), element("strong", "", formatDueDate(bill.dueDate)));
+        dueLine.style.cssText = "display:flex;flex-direction:column;align-items:flex-start;gap:4px;font-size:.95rem;line-height:1.5;min-width:0;";
+        const dueValue = element("strong", "", formatDueDate(bill.dueDate));
+        dueValue.style.cssText = "white-space:nowrap;font-variant-numeric:tabular-nums;";
+        dueLine.append(element("span", "", "გადახდის საბოლოო ვადა:"), dueValue);
         row.append(emailLine, dueLine);
         const deleteButton = element("button", "dei-bill-delete", "ამ ქვითრის წაშლა");
         deleteButton.type = "button";
