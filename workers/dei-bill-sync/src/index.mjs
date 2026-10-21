@@ -127,36 +127,56 @@ function extractPaymentStatus(text) {
   return "unknown";
 }
 function extractDueDate(text) {
-  const value = String(text || "").replace(/\u00a0/g, " ").replace(/[–—]/g, "-");
-  const numericPatterns = [
-    /(?:ημερομηνία\s+(?:λήξης|πληρωμής)|λήξη\s+πληρωμής|προθεσμία\s+πληρωμής|πληρωτέο\s+έως|εξόφληση\s+έως|due\s+date|payment\s+deadline|pay(?:ment)?\s+by)[^\d]{0,60}(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/i,
-    /(?:έως|μέχρι|μέχριs+τις|πρινs+από|until|by|before)\s+(?:τις\s+)?(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/i,
-    /(?:ημερομηνία\s+(?:λήξης|πληρωμής)|λήξη\s+πληρωμής|προθεσμία\s+πληρωμής|due\s+date|payment\s+deadline)[^\d]{0,60}(\d{4})-(\d{1,2})-(\d{1,2})/i,
+  // Normalize Greek accents/spacing first: Gmail's HTML and plain-text versions
+  // often encode the same label differently (e.g. "Ημερομηνία Λήξης").
+  const raw = String(text || "").replace(/\\u00a0/g, " ").replace(/[–—]/g, "-");
+  const value = raw.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/ς/g, "σ");
+  const datePattern = "(\\\\d{1,2})[\\\\/.\\\\-](\\\\d{1,2})[\\\\/.\\\\-](\\\\d{2,4})";
+  const isoPattern = "(\\\\d{4})-(\\\\d{1,2})-(\\\\d{1,2})";
+  const labels = [
+    "ημερομηνια\\\\s+(?:ληξησ|πληρωμησ)",
+    "ληξη\\\\s+πληρωμησ",
+    "προθεσμια\\\\s+πληρωμησ",
+    "πληρωτεο\\\\s+εωσ",
+    "εξοφληση\\\\s+εωσ",
+    "due\\\\s+date",
+    "payment\\\\s+deadline",
+    "pay(?:ment)?\\\\s+by",
+    "τελικο\\\\s+ποσο\\\\s+πληρωμησ"
   ];
-  for (let index = 0; index < numericPatterns.length; index++) {
-    const match = value.match(numericPatterns[index]);
-    if (!match) continue;
-    let day, month, year;
-    if (index === 2) {
-      year = Number(match[1]); month = Number(match[2]); day = Number(match[3]);
-    } else {
-      day = Number(match[1]); month = Number(match[2]);
-      year = Number(match[3].length === 2 ? `20${match[3]}` : match[3]);
-    }
+  for (const label of labels) {
+    const before = new RegExp(label + "[^\\\\d]{0,100}" + datePattern, "i").exec(value);
+    const after = new RegExp(datePattern + "[^\\\\n]{0,45}" + label, "i").exec(value);
+    const iso = new RegExp(label + "[^\\\\d]{0,100}" + isoPattern, "i").exec(value);
+    let year, month, day;
+    if (before) {
+      day = Number(before[1]); month = Number(before[2]);
+      year = Number(before[3].length === 2 ? "20" + before[3] : before[3]);
+    } else if (after) {
+      day = Number(after[1]); month = Number(after[2]);
+      year = Number(after[3].length === 2 ? "20" + after[3] : after[3]);
+    } else if (iso) {
+      year = Number(iso[1]); month = Number(iso[2]); day = Number(iso[3]);
+    } else continue;
     const date = new Date(Date.UTC(year, month - 1, day));
     if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
       return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     }
   }
-  const monthNames = "(Ιανουαρίου|Ιανουάριος|Φεβρουαρίου|Φεβρουάριος|Μαρτίου|Μάρτιος|Απριλίου|Απρίλιος|Μαΐου|Μάιος|Ιουνίου|Ιούνιος|Ιουλίου|Ιούλιος|Αυγούστου|Αύγουστος|Σεπτεμβρίου|Σεπτέμβριος|Οκτωβρίου|Οκτώβριος|Νοεμβρίου|Νοέμβριος|Δεκεμβρίου|Δεκέμβριος|January|February|March|April|May|June|July|August|September|October|November|December)";
-  const named = value.match(new RegExp("(?:ημερομηνία\\s+(?:λήξης|πληρωμής)|λήξη\\s+πληρωμής|προθεσμία\\s+πληρωμής|due\\s+date|payment\\s+deadline|έως|μέχρι|until|by)[^\\n]{0,50}?(\\d{1,2})\\s+" + monthNames + "[^\\d]{0,8}(\\d{4})", "i"));
+  // Also handle Greek month names when the invoice prints a written date.
+  const monthMap = new Map([
+    ["ιανουαριου",1],["ιανουαριοσ",1],["φεβρουαριου",2],["φεβρουαριοσ",2],
+    ["μαρτιου",3],["μαρτιοσ",3],["απριλιου",4],["απριλιοσ",4],
+    ["μαιου",5],["μαιοσ",5],["ιουνιου",6],["ιουνιοσ",6],
+    ["ιουλιου",7],["ιουλιοσ",7],["αυγουστου",8],["αυγουστοσ",8],
+    ["σεπτεμβριου",9],["σεπτεμβριοσ",9],["οκτωβριου",10],["οκτωβριοσ",10],
+    ["νοεμβριου",11],["νοεμβριοσ",11],["δεκεμβριου",12],["δεκεμβριοσ",12]
+  ]);
+  const named = new RegExp("(?:ημερομηνια\\\\s+(?:ληξησ|πληρωμησ)|ληξη\\\\s+πληρωμησ|προθεσμια\\\\s+πληρωμησ|due\\\\s+date|payment\\\\s+deadline|εωσ|μεχρι)[^\\\\n]{0,80}?(\\\\d{1,2})\\\\s+([\\\\p{L}]+)[^\\\\d]{0,8}(\\\\d{4})", "iu").exec(value);
   if (named) {
-    const months = ["ιανουαρίου","ιανουάριος","january","φεβρουαρίου","φεβρουάριος","february","μαρτίου","μάρτιος","march","απριλίου","απρίλιος","april","μαΐου","μάιος","may","ιουνίου","ιούνιος","june","ιουλίου","ιούλιος","july","αυγούστου","αύγουστος","august","σεπτεμβρίου","σεπτέμβριος","september","οκτωβρίου","οκτώβριος","october","νοεμβρίου","νοέμβριος","november","δεκεμβρίου","δεκέμβριος","december"];
-    const monthToken = named[2].toLocaleLowerCase("el");
-    const monthIndex = months.indexOf(monthToken);
-    if (monthIndex >= 0) {
-      const month = Math.floor(monthIndex / 3) + 1;
-      const day = Number(named[1]), year = Number(named[3]);
+    const month = monthMap.get(named[2].toLocaleLowerCase("el"));
+    const day = Number(named[1]), year = Number(named[3]);
+    if (month) {
       const date = new Date(Date.UTC(year, month - 1, day));
       if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
         return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
