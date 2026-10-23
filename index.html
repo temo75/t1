@@ -3302,7 +3302,7 @@ function exportMyDataPdf(){
  }
  async function check(){
   try{
-   const r=await fetch(url,{cache:'no-store'});
+   const r=await fetch(url+'?check='+Date.now(),{cache:'no-store'});
    if(!r.ok)return;
    const data=await r.json();
    if(data&&data.enabled===false)showDisabled();
@@ -3310,7 +3310,7 @@ function exportMyDataPdf(){
   }catch(e){console.warn('T1 availability check failed:',e);}
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',check,{once:true});else check();
- window.setInterval(check,30000);
+ window.setInterval(check,5000);
 })();
 </script>
 </body></html>`);
