@@ -23,6 +23,13 @@ html.auth-booting.site-white-boot{background:#fff!important}
   document.documentElement.classList.add('auth-booting');
 })();
 </script>
+<script id="temo-auth-boot-failsafe">
+/* Prevent a startup error or stalled network request from leaving T1 permanently black. */
+window.setTimeout(function(){
+  document.documentElement.classList.remove('auth-booting');
+  document.documentElement.classList.remove('site-white-boot');
+},4000);
+</script>
 <!-- TEMO AI FIX 021 -->
 <!-- iPhone Home Screen icon -->
 <link rel="apple-touch-icon" sizes="180x180" href="./icon.png">
