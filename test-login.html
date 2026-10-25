@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="ka">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TEMO Bridge · სატესტო შესვლა</title>
+  <style>
+    :root{color-scheme:dark;font:16px Arial,sans-serif;background:#071117;color:#eef7f7}
+    body{max-width:780px;margin:32px auto;padding:0 16px}
+    section{margin:16px 0;padding:16px;background:#0d1b24;border:1px solid #29404c;border-radius:12px}
+    input,textarea,button,select{font:inherit;padding:10px;border-radius:8px;border:1px solid #29404c;background:#071117;color:inherit}
+    input,textarea,select{width:100%;margin:6px 0 12px;box-sizing:border-box}
+    textarea{min-height:90px}button{cursor:pointer;background:#183445;margin:4px 4px 4px 0}
+    button:disabled{opacity:.5;cursor:not-allowed}.muted{color:#9fb0b8}.error{color:#ff8990;white-space:pre-wrap}
+    .message{padding:12px;margin:8px 0;background:#09161e;border:1px solid #29404c;border-radius:9px;white-space:pre-wrap;overflow-wrap:anywhere}
+    #app[hidden],#login[hidden]{display:none}
+  </style>
+</head>
+<body>
+  <h1>TEMO Bridge-ის სატესტო გვერდი</h1>
+  <p id="guard" class="error" role="alert"></p>
+  <p class="muted">გამოიყენე მხოლოდ იზოლირებული სატესტო Firebase პროექტის ანგარიშები და სატესტო Bridge. გვერდი არ უკავშირდება Firebase-ს პირდაპირ.</p>
+  <section id="bridgeSettings">
+    <label for="bridgeEndpoint">სატესტო Bridge-ის HTTPS მისამართი</label>
+    <input id="bridgeEndpoint" type="url" inputmode="url" placeholder="https://temo1-firebase-bridge-test.example.workers.dev" autocomplete="url">
+    <button id="connectButton" type="button">სატესტო Bridge-ის არჩევა</button>
+    <p class="muted">მისამართის host-ში უნდა ეწეროს <b>test</b> ან <b>staging</b>. Worker CORS-ში დაშვებული Origin უნდა იყოს https://temo75.github.io.</p>
+    <p id="configStatus" class="muted" aria-live="polite"></p>
+  </section>
+  <section id="login">
+    <h2>სატესტო შესვლა</h2>
+    <label for="username">მომხმარებლის სახელი</label>
+    <input id="username" autocomplete="username">
+    <label for="password">სატესტო პაროლი</label>
+    <input id="password" type="password" autocomplete="current-password">
+    <button id="loginButton" type="button">შესვლა</button>
+    <p id="loginError" class="error" role="alert"></p>
+  </section>
+  <main id="app" hidden>
+    <section>
+      <b id="identity"></b>
+      <button id="refreshButton" type="button">განახლება</button>
+      <button id="logoutButton" type="button">გამოსვლა</button>
+      <p id="status" class="muted" aria-live="polite"></p>
+      <p id="appError" class="error" role="alert"></p>
+    </section>
+    <section id="userPanel" hidden>
+      <h2>ჩემი შეტყობინებები</h2>
+      <div id="userMessages"></div>
+      <label for="messageText">ახალი შეტყობინება</label>
+      <textarea id="messageText" maxlength="4000"></textarea>
+      <button id="sendButton" type="button">გაგზავნა</button>
+    </section>
+    <section id="adminPanel" hidden>
+      <h2>მომხმარებლის შეტყობინებები</h2>
+      <label for="threadSelect">სატესტო მომხმარებლის დიალოგი</label>
+      <select id="threadSelect"><option value="">აირჩიე დიალოგი</option></select>
+      <div id="adminMessages"></div>
+      <label for="replyText">Администраторын хариу</label>
+      <textarea id="replyText" maxlength="4000"></textarea>
+      <button id="replyButton" type="button">Хариу илгээх</button>
+    </section>
+  </main>
+  <script>
+  (()=>{
+    'use strict';
+    let BRIDGE_URL=sessionStorage.getItem('temoBridgeTestEndpoint')||'';
+    const TOKEN_KEY='temoBridgeTestSession';
+    const $=id=>document.getElementById(id);
+    const localHost=['localhost','127.0.0.1','[::1]'].includes(location.hostname);
+    const allowedPage=localHost||location.hostname==='temo75.github.io';
+    const state={user:null,thread:[],selectedUserKey:''};
+    const guard=$('guard');
+    if(!allowedPage){guard.textContent='ეს სატესტო გვერდი მხოლოდ temo75.github.io-ზე ან localhost-ზე მუშაობს.';disableControls();return;}
+    function disableControls(){document.querySelectorAll('button,input,textarea,select').forEach(el=>el.disabled=true);}
+    function encodeUserKey(id){return encodeURIComponent(String(id)).replace(/%/g,'_');}
+    function make(tag,text){const el=document.createElement(tag);if(text!==undefined)el.textContent=String(text);return el;}
+    function validateBridgeEndpoint(raw){
+      let url;try{url=new URL(String(raw||'').trim());}catch{throw new Error('Bridge-ის URL არასწორია');}
+      if(localHost){if(!['localhost','127.0.0.1','[::1]'].includes(url.hostname)||!['http:','https:'].includes(url.protocol))throw new Error('ლოკალურ გვერდზე მიუთითე მხოლოდ localhost Bridge');}
+      else if(url.protocol!=='https:'||!/(test|staging)/i.test(url.hostname)||url.hostname==='temo1-firebase-bridge.temo75elia.workers.dev')throw new Error('დაშვებულია მხოლოდ HTTPS სატესტო Bridge-ის მისამართი (host-ში test ან staging)');
+      return url.toString().replace(/\/$/,'');
+    }
+    async function bridge(action,payload={},token=sessionStorage.getItem(TOKEN_KEY)||''){
+      if(!BRIDGE_URL)throw new Error('ჯერ მიუთითე იზოლირებული სატესტო Bridge-ის URL');
+      const response=await fetch(BRIDGE_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...payload,sessionToken:token})});
+      const data=await response.json().catch(()=>({error:'Bridge буруу хариу буцаалаа'}));
+      if(!response.ok){if(response.status===401&&action!=='login')logout(false);throw new Error(data.error||'Bridge хүсэлт амжилтгүй');}
+      return data;
+    }
+    function logout(showLogin=true){sessionStorage.removeItem(TOKEN_KEY);state.user=null;state.thread=[];state.selectedUserKey='';$('app').hidden=true;$('login').hidden=!showLogin;$('identity').textContent='';}
+    function showMessage(box,item,admin){
+      const card=make('article');card.className='message';
+      const who=admin?(item.userName||item.userId||'მომხმარებელი'):'შენ';
+      card.append(make('b',`${who} · ${item.createdAt?new Date(Number(item.createdAt)).toLocaleString():''}`));
+      card.append(make('p',item.text||''));
+      if(item.reply)card.append(make('p',`Администраторын хариу · ${item.replyAt?new Date(Number(item.replyAt)).toLocaleString():''}\n${item.reply}`));
+      box.append(card);
+    }
+    async function loadUserThread(){
+      const key=encodeUserKey(state.user.id);
+      const data=await bridge('db',{path:'adminMessages/'+key,method:'GET'});
+      state.thread=Array.isArray(data)?data.filter(Boolean):data&&typeof data==='object'?Object.entries(data).map(([id,item])=>({...item,id:String(item?.id||id)})).filter(Boolean):[];
+      const box=$('userMessages');box.replaceChildren();
+      state.thread.sort((a,b)=>Number(a.createdAt||0)-Number(b.createdAt||0)).forEach(item=>showMessage(box,item,false));
+      let changed=false;
+      state.thread.forEach(item=>{if(item.reply&&item.replyReadByUser!==true){item.replyReadByUser=true;changed=true;}});
+      if(changed)await bridge('db',{path:'adminMessages/'+key,method:'PUT',data:state.thread});
+      $('status').textContent='ჩემი შეტყობინებების ნაკადი განახლდა.';
+    }
+    async function loadAdminInbox(){
+      const data=await bridge('db',{path:'adminMessages',method:'GET'});
+      const select=$('threadSelect'),previous=state.selectedUserKey;select.replaceChildren(new Option('აირჩიე დიალოგი',''));
+      Object.entries(data||{}).forEach(([key,thread])=>{
+        const messages=Array.isArray(thread)?thread:Object.values(thread||{});
+        if(!messages.some(message=>message?.text))return;
+        const label=String(messages.find(message=>message?.userName)?.userName||messages[0]?.userId||key);
+        select.add(new Option(label,key));
+      });
+      if([...select.options].some(option=>option.value===previous))select.value=previous;
+      state.selectedUserKey=select.value;
+      if(state.selectedUserKey)await loadAdminThread();else{$('adminMessages').replaceChildren();$('status').textContent='სატესტო inbox ჩაიტვირთა.';}
+    }
+    async function loadAdminThread(){
+      const key=state.selectedUserKey;if(!key)return;
+      const data=await bridge('db',{path:'adminMessages/'+key,method:'GET'});
+      state.thread=Array.isArray(data)?data.filter(Boolean):data&&typeof data==='object'?Object.entries(data).map(([id,item])=>({...item,id:String(item?.id||id)})).filter(Boolean):[];
+      state.thread.sort((a,b)=>Number(a.createdAt||0)-Number(b.createdAt||0));
+      state.thread.forEach(item=>item.readByAdmin=true);
+      const box=$('adminMessages');box.replaceChildren();state.thread.forEach(item=>showMessage(box,item,true));
+      await bridge('db',{path:'adminMessages/'+key,method:'PUT',data:state.thread});
+      $('status').textContent='დიალოგი ჩაიტვირთა და წაკითხვის სტატუსი შენახულია.';
+    }
+    async function refresh(){
+      $('appError').textContent='';
+      try{if(state.user.admin||state.user.name==='TEMO')await loadAdminInbox();else await loadUserThread();}
+      catch(error){$('appError').textContent=error.message;}
+    }
+    async function login(){
+      $('loginError').textContent='';
+      try{
+        const result=await bridge('login',{username:$('username').value.trim(),password:$('password').value},'');
+        if(!result?.user||!result?.sessionToken)throw new Error('Нэвтрэх хариу дутуу байна');
+        state.user=result.user;sessionStorage.setItem(TOKEN_KEY,result.sessionToken);
+        $('login').hidden=true;$('app').hidden=false;$('identity').textContent=`Нэвтэрсэн: ${result.user.name} (${result.user.admin?'админ':'хэрэглэгч'})`;
+        $('adminPanel').hidden=!(result.user.admin||result.user.name==='TEMO');$('userPanel').hidden=!$('adminPanel').hidden;
+        $('password').value='';await refresh();
+      }catch(error){$('password').value='';$('loginError').textContent=error.message;}
+    }
+    async function sendMessage(){
+      const text=$('messageText').value.trim();if(!text)return;
+      try{await loadUserThread();state.thread.push({id:crypto.randomUUID(),userId:String(state.user.id),userName:String(state.user.name),text,createdAt:Date.now(),reply:'',replyAt:0,readByAdmin:false,replyReadByUser:true});await bridge('db',{path:'adminMessages/'+encodeUserKey(state.user.id),method:'PUT',data:state.thread});$('messageText').value='';await loadUserThread();$('appError').textContent='';}
+      catch(error){$('appError').textContent=error.message;}
+    }
+    async function sendReply(){
+      const key=state.selectedUserKey,reply=$('replyText').value.trim();if(!key||!reply)return;
+      try{
+        await loadAdminThread();
+        const target=[...state.thread].reverse().find(item=>item.text);if(!target)throw new Error('არჩეულ დიალოგში შეტყობინება არ არის');
+        target.reply=reply;target.replyAt=Date.now();target.replyReadByUser=false;
+        await bridge('db',{path:'adminMessages/'+key,method:'PUT',data:state.thread});$('replyText').value='';await loadAdminThread();$('appError').textContent='';
+      }catch(error){$('appError').textContent=error.message;}
+    }
+    $('loginButton').addEventListener('click',login);$('password').addEventListener('keydown',event=>{if(event.key==='Enter')login();});
+    $('refreshButton').addEventListener('click',refresh);$('logoutButton').addEventListener('click',()=>logout());
+    $('sendButton').addEventListener('click',sendMessage);$('replyButton').addEventListener('click',sendReply);
+    $('threadSelect').addEventListener('change',async()=>{state.selectedUserKey=$('threadSelect').value;if(state.selectedUserKey)await refresh();});
+    $('bridgeEndpoint').value=BRIDGE_URL;
+    $('loginButton').disabled=!BRIDGE_URL;
+    $('connectButton').addEventListener('click',()=>{try{const next=validateBridgeEndpoint($('bridgeEndpoint').value);if(next!==BRIDGE_URL){sessionStorage.removeItem(TOKEN_KEY);logout();}BRIDGE_URL=next;sessionStorage.setItem('temoBridgeTestEndpoint',next);$('loginButton').disabled=false;$('configStatus').textContent='სატესტო Bridge მითითებულია. Production Bridge არ გამოიყენება.';$('guard').textContent='';$('configStatus').className='muted';}catch(error){$('configStatus').textContent=error.message;$('configStatus').className='error';$('loginButton').disabled=true;}});
+    if(BRIDGE_URL){try{BRIDGE_URL=validateBridgeEndpoint(BRIDGE_URL);$('bridgeEndpoint').value=BRIDGE_URL;$('loginButton').disabled=false;$('configStatus').textContent='სატესტო Bridge მითითებულია. Production Bridge არ გამოიყენება.';}catch{BRIDGE_URL='';sessionStorage.removeItem('temoBridgeTestEndpoint');}}
+    const token=sessionStorage.getItem(TOKEN_KEY);
+    if(token){bridge('session',{},token).then(({user})=>{state.user=user;$('login').hidden=true;$('app').hidden=false;$('identity').textContent=`Нэвтэрсэн: ${user.name} (${user.admin?'админ':'хэрэглэгч'})`;$('adminPanel').hidden=!(user.admin||user.name==='TEMO');$('userPanel').hidden=!$('adminPanel').hidden;refresh();}).catch(()=>logout());}
+  })();
+  </script>
+</body>
+</html>
+
