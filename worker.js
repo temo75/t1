@@ -143,6 +143,10 @@ async function pfget(path){const r=await fetch(TEMO_FIREBASE_DB_URL+path+'.json'
 async function pfput(path,v){const r=await fetch(TEMO_FIREBASE_DB_URL+path+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(v)});if(!r.ok)throw new Error('Firebase PUT '+r.status);}
 function pkey(id){return encodeURIComponent(String(id||'')).replace(/%/g,'_');}
 function dueUtc(date,time,tz){const m=String(date).match(/^(\d{4})-(\d{2})-(\d{2})$/),t=String(time).match(/^(\d{1,2}):(\d{2})$/);if(!m||!t)return NaN;const base=Date.UTC(+m[1],+m[2]-1,+m[3],+t[1],+t[2]);try{const z=String(tz||'Europe/Athens'),parts=new Intl.DateTimeFormat('en-US',{timeZone:z,timeZoneName:'longOffset'}).formatToParts(new Date(base)),zn=parts.find(x=>x.type==='timeZoneName')?.value||'GMT',q=zn.match(/GMT([+-])(\d{2}):(\d{2})/),off=q?(+q[2]*60+ +q[3])*(q[1]=='-'?-1:1):0;const u=base-off*60000,p2=new Intl.DateTimeFormat('en-US',{timeZone:z,timeZoneName:'longOffset'}).formatToParts(new Date(u)),zn2=p2.find(x=>x.type==='timeZoneName')?.value||'GMT',q2=zn2.match(/GMT([+-])(\d{2}):(\d{2})/),off2=q2?(+q2[2]*60+ +q2[3])*(q2[1]=='-'?-1:1):off;return base-off2*60000;}catch(e){return base;}}
+function pushNotificationTitle(subscription){
+  const name=String(subscription?.userName||'').trim();
+  return '📖 '+(name||'მომხმარებელი');
+}
 async function runPushCron(env){
   if(!env.VAPID_PRIVATE_JWK)return;
   try{await validateVapidPrivateJwk(env.VAPID_PRIVATE_JWK);}catch(e){console.error('TEMO VAPID configuration is invalid');return;}
@@ -164,7 +168,7 @@ async function runPushCron(env){
         if(!endpoint||seenEndpoints.has(endpoint))continue;
         seenEndpoints.add(endpoint);
         try{
-          const r=await sendPush(s,{title:'📖 TEMO — ჩანაწერის შეხსენება',body:String(n.text||'შეხსენების დრო მოვიდა'),icon:'https://temo75.github.io/t1/icon.png',badge:'https://temo75.github.io/t1/icon.png',tag:'temo-note-'+String(n.id||i),url:'https://temo75.github.io/t1/'},env);
+          const r=await sendPush(s,{title:pushNotificationTitle(s),body:String(n.text||'შეხსენების დრო მოვიდა'),icon:'https://temo75.github.io/t1/icon.png',badge:'https://temo75.github.io/t1/icon.png',tag:'temo-note-'+String(n.id||i),url:'https://temo75.github.io/t1/'},env);
           if(r.ok)delivered=true;
           else if(r.status===404||r.status===410)await pfput('/pushSubscriptions/'+uk+'/'+sk,null);
           else console.error('TEMO push delivery failed with HTTP '+r.status);
@@ -291,6 +295,7 @@ export default {
       if (action === "push-subscribe") {
         const userId = String(body.userId || "").trim();
         const deviceId = String(body.deviceId || "").trim();
+        const userName = String(body.userName || "").trim().slice(0, 80);
         const subscription = body.subscription && typeof body.subscription === "object" ? body.subscription : null;
         if (!userId || deviceId.length > 128 || !subscription?.endpoint || !subscription?.keys?.p256dh || !subscription?.keys?.auth) {
           return new Response(JSON.stringify({ ok: false, error: "Invalid push subscription" }), { status: 400, headers: corsHeaders });
@@ -312,6 +317,7 @@ export default {
         }
         await pfput('/pushSubscriptions/'+uk+'/'+dk, {
           ...(deviceId ? { deviceId } : {}),
+          ...(userName ? { userName } : {}),
           endpoint,
           expirationTime: subscription.expirationTime ?? null,
           keys: {
