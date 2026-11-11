@@ -6147,7 +6147,9 @@ async function ensureTEMOPushSubscription(){
     if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey});
     const payload=sub.toJSON();
     if(!payload?.endpoint||!payload?.keys?.p256dh||!payload?.keys?.auth)throw new Error('Push subscription მონაცემები არასრულია');
-    const r=await fetch(TEMO_PUSH_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'push-subscribe',userId:String(currentUserId),userName:String(currentUser||'').trim(),deviceId:temoPushDeviceId(),subscription:payload})});
+    const pushAccount=getUsers().find(u=>String(u.id)===String(currentUserId));
+    if(!pushAccount?.password)throw new Error('ანგარიშის გადამოწმება ვერ მოხერხდა');
+    const r=await fetch(TEMO_PUSH_WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'push-subscribe',userId:String(currentUserId),userName:String(currentUser||'').trim(),password:String(pushAccount.password),deviceId:temoPushDeviceId(),subscription:payload})});
     if(!r.ok){
       let detail='';
       try{detail=(await r.text()).slice(0,300);}catch(_){}
