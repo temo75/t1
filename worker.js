@@ -143,9 +143,8 @@ async function pfget(path){const r=await fetch(TEMO_FIREBASE_DB_URL+path+'.json'
 async function pfput(path,v){const r=await fetch(TEMO_FIREBASE_DB_URL+path+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(v)});if(!r.ok)throw new Error('Firebase PUT '+r.status);}
 function pkey(id){return encodeURIComponent(String(id||'')).replace(/%/g,'_');}
 function dueUtc(date,time,tz){const m=String(date).match(/^(\d{4})-(\d{2})-(\d{2})$/),t=String(time).match(/^(\d{1,2}):(\d{2})$/);if(!m||!t)return NaN;const base=Date.UTC(+m[1],+m[2]-1,+m[3],+t[1],+t[2]);try{const z=String(tz||'Europe/Athens'),parts=new Intl.DateTimeFormat('en-US',{timeZone:z,timeZoneName:'longOffset'}).formatToParts(new Date(base)),zn=parts.find(x=>x.type==='timeZoneName')?.value||'GMT',q=zn.match(/GMT([+-])(\d{2}):(\d{2})/),off=q?(+q[2]*60+ +q[3])*(q[1]=='-'?-1:1):0;const u=base-off*60000,p2=new Intl.DateTimeFormat('en-US',{timeZone:z,timeZoneName:'longOffset'}).formatToParts(new Date(u)),zn2=p2.find(x=>x.type==='timeZoneName')?.value||'GMT',q2=zn2.match(/GMT([+-])(\d{2}):(\d{2})/),off2=q2?(+q2[2]*60+ +q2[3])*(q2[1]=='-'?-1:1):off;return base-off2*60000;}catch(e){return base;}}
-function pushNotificationTitle(subscription){
-  const name=String(subscription?.userName||'').trim();
-  return '📖 '+(name||'მომხმარებელი');
+function pushNotificationTitle(){
+  return '📖 TEMO';
 }
 async function runPushCron(env){
   if(!env.VAPID_PRIVATE_JWK)return;
