@@ -51,17 +51,18 @@ self.addEventListener('push', event => {
     data = event.data ? event.data.json() : {};
   } catch (e) {
     data = {
-      title: '📖 TEMO',
+      title: '',
       body: event.data ? event.data.text() : 'ახალი შეხსენება'
     };
   }
 
-  const title = data.title || '📖 TEMO — ჩანაწერის შეხსენება';
+  const title = data.title === '' ? '' : (data.title || '📖 TEMO — ჩანაწერის შეხსენება');
 
   const options = {
     body: data.body || 'შეხსენების დრო მოვიდა',
     icon: data.icon || './icon.png',
     badge: data.badge || './icon.png',
+    image: data.image || undefined,
     tag: data.tag || 'temo-note-reminder',
     requireInteraction: true,
     renotify: true,
