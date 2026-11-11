@@ -152,8 +152,8 @@ async function firebaseIdToken(env){
   if(!auth?.idToken)throw new Error('Firebase authentication returned no token');
   return auth.idToken;
 }
-async function pfget(path,token){const r=await fetch(TEMO_FIREBASE_DB_URL+path+'.json',{cache:'no-store',headers:{Authorization:'Bearer '+token}});if(!r.ok)throw new Error('Firebase GET '+r.status);return r.json();}
-async function pfput(path,v,token){const r=await fetch(TEMO_FIREBASE_DB_URL+path+'.json',{method:'PUT',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify(v)});if(!r.ok)throw new Error('Firebase PUT '+r.status);}
+async function pfget(path,token){const r=await fetch(TEMO_FIREBASE_DB_URL+path+'.json?auth='+encodeURIComponent(token),{cache:'no-store'});if(!r.ok)throw new Error('Firebase GET '+r.status);return r.json();}
+async function pfput(path,v,token){const r=await fetch(TEMO_FIREBASE_DB_URL+path+'.json?auth='+encodeURIComponent(token),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(v)});if(!r.ok)throw new Error('Firebase PUT '+r.status);}
 function pkey(id){return encodeURIComponent(String(id||'')).replace(/%/g,'_');}
 function legacyUserId(name,password){const str=String(name||'').trim().toLowerCase()+'\u0000'+String(password??'');let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return 'legacy_'+(h>>>0).toString(16);}
 function pushUserIsAuthorized(users,userId,userName,password){
