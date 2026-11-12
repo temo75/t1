@@ -51,15 +51,15 @@ self.addEventListener('push', event => {
     data = event.data ? event.data.json() : {};
   } catch (e) {
     data = {
-      title: '',
+      title: 'TEMO',
       body: event.data ? event.data.text() : 'ახალი შეხსენება'
     };
   }
 
-  const title = data.title === '' ? '' : (data.title || '📖 TEMO — ჩანაწერის შეხსენება');
+  const title = data.title || 'TEMO';
 
   const options = {
-    body: data.body || 'შეხსენების დრო მოვიდა',
+    body: data.body ?? 'შეხსენების დრო მოვიდა',
     icon: data.icon || './icon.png',
     badge: data.badge || './icon.png',
     image: data.image || undefined,
